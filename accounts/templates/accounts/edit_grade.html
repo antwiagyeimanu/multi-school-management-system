@@ -1,0 +1,40 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block content %}
+<div style="max-width:500px; margin:0 auto; padding:30px 20px;">
+    <div style="background:white; padding:24px; border-radius:16px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+        <h2 style="margin:0 0 8px 0; font-weight:700; color:#1f2937;">Edit Grade</h2>
+        <p style="margin:0 0 24px 0; color:#6b7280; font-weight:600;">
+            {{ assignment.student.first_name }} - {{ assignment.subject.name }}
+        </p>
+        
+        <form method="POST">
+            {% csrf_token %}
+            
+            <div style="margin-bottom:20px;">
+                <label style="display:block; font-weight:600; color:#374151; margin-bottom:8px;">Score (0-100)</label>
+                <input type="number" name="score" min="0" max="100" 
+                       value="{{ assignment.score|default:'' }}"
+                       style="width:100%; padding:12px; border:2px solid #d1d5db; border-radius:8px; font-size:16px; font-weight:600;">
+            </div>
+            
+            <div style="margin-bottom:24px;">
+                <label style="display:block; font-weight:600; color:#374151; margin-bottom:8px;">Grade (A, B, C, D, F)</label>
+                <input type="text" name="grade" maxlength="2" 
+                       value="{{ assignment.grade|default:'' }}"
+                       style="width:100%; padding:12px; border:2px solid #d1d5db; border-radius:8px; font-size:16px; font-weight:600;">
+            </div>
+            
+            <div style="display:flex; gap:12px; justify-content:flex-end;">
+                <a href="{% url 'accounts:view-student-grades' assignment.student.id %}" 
+                   style="padding:10px 24px; background:#6b7280; color:white; text-decoration:none; border-radius:8px; font-weight:600;">
+                   Cancel
+                </a>
+                <button type="submit" 
+                        style="padding:10px 24px; background:#3b82f6; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">
+                    Save Grade
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

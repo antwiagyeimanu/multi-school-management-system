@@ -1,0 +1,607 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block content %}
+
+<style>
+
+/* ===============================
+   PREMIUM SCHOOL SETTINGS UI
+================================ */
+
+.settings-wrapper {
+    padding: 25px;
+}
+
+.settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.settings-header h2 {
+    font-size: 30px;
+    font-weight: 800;
+    color: #1f2937;
+}
+
+.school-name-badge {
+    background: linear-gradient(135deg,#2563eb,#4f46e5);
+    color: white;
+    padding: 10px 18px;
+    border-radius: 30px;
+    font-weight: 600;
+}
+
+
+/* CARD */
+
+.settings-card {
+    background: white;
+    border-radius: 18px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 
+        0 10px 25px rgba(0,0,0,0.08);
+    border: none;
+}
+
+
+.section-title {
+    font-size: 20px;
+    font-weight: 750;
+    color:#111827;
+    margin-bottom:20px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+
+/* FORM */
+
+.form-label {
+    font-weight:600;
+    color:#374151;
+}
+
+
+.form-control,
+.form-select {
+
+    border-radius:12px;
+    padding:12px 15px;
+    border:1px solid #d1d5db;
+    transition:.3s;
+
+}
+
+
+.form-control:focus,
+.form-select:focus {
+
+    border-color:#4f46e5;
+    box-shadow:0 0 0 .2rem rgba(79,70,229,.15);
+
+}
+
+
+/* LOGO */
+
+.logo-preview {
+
+    width:100px;
+    height:100px;
+    border-radius:15px;
+    object-fit:cover;
+    border:3px solid #e5e7eb;
+    padding:5px;
+
+}
+
+
+/* SWITCH */
+
+.form-switch .form-check-input {
+
+    width:50px;
+    height:25px;
+
+}
+
+
+.form-switch .form-check-input:checked {
+
+    background-color:#4f46e5;
+    border-color:#4f46e5;
+
+}
+
+
+.description-text {
+
+    margin-top:12px;
+    color:#6b7280;
+    font-size:14px;
+
+}
+
+
+
+/* BUTTON */
+
+.save-btn {
+
+    background:linear-gradient(
+        135deg,
+        #2563eb,
+        #4f46e5
+    );
+
+    border:none;
+    border-radius:12px;
+    padding:12px 30px;
+    font-weight:700;
+    color:white;
+
+}
+
+
+.save-btn:hover {
+
+    transform:translateY(-2px);
+    box-shadow:0 8px 20px rgba(37,99,235,.3);
+
+}
+
+
+
+/* TERM CARD */
+
+.term-card {
+
+    display:block;
+    text-decoration:none;
+    color:inherit;
+
+}
+
+
+.term-card:hover {
+
+    transform:translateY(-3px);
+
+}
+
+
+/* MOBILE */
+
+@media(max-width:768px){
+
+.settings-wrapper{
+    padding:15px;
+}
+
+.settings-header h2{
+    font-size:24px;
+}
+
+}
+
+
+</style>
+
+
+
+<div class="settings-wrapper">
+
+
+<!-- HEADER -->
+
+<div class="settings-header">
+
+<h2>
+⚙️ School Settings
+</h2>
+
+
+{% if school %}
+
+<div class="school-name-badge">
+🏫 {{ school.name }}
+</div>
+
+{% endif %}
+
+
+</div>
+
+
+
+<!-- SCHOOL DETAILS -->
+
+<form method="post" enctype="multipart/form-data">
+
+{% csrf_token %}
+
+
+<div class="settings-card">
+
+
+<h4 class="section-title">
+🏫 School Profile
+</h4>
+
+
+
+<div class="row">
+
+
+<div class="col-md-8">
+
+
+<div class="mb-3">
+
+<label class="form-label">
+School Name
+</label>
+
+
+<input 
+type="text"
+name="name"
+value="{{ school.name|default:'' }}"
+class="form-control"
+required>
+
+</div>
+
+
+
+<div class="mb-3">
+
+<label class="form-label">
+Address
+</label>
+
+
+<textarea
+name="address"
+class="form-control"
+rows="3">{{ school.address|default:'' }}</textarea>
+
+
+</div>
+
+
+
+<div class="row">
+
+
+<div class="col-md-4 mb-3">
+
+<label class="form-label">
+Phone
+</label>
+
+
+<input
+type="text"
+name="phone"
+value="{{ school.phone|default:'' }}"
+class="form-control">
+
+</div>
+
+
+
+<div class="col-md-4 mb-3">
+
+<label class="form-label">
+Email
+</label>
+
+
+<input
+type="email"
+name="email"
+value="{{ school.email|default:'' }}"
+class="form-control">
+
+</div>
+
+
+
+<div class="col-md-4 mb-3">
+
+<label class="form-label">
+GPS Address
+</label>
+
+
+<input
+type="text"
+name="gps_address"
+value="{{ school.gps_address|default:'' }}"
+class="form-control">
+
+</div>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+<div class="col-md-4 text-center">
+
+
+<label class="form-label d-block">
+School Logo
+</label>
+
+
+{% if school.logo %}
+
+<img 
+src="{{ school.logo.url }}"
+class="logo-preview mb-3">
+
+{% endif %}
+
+
+<input 
+type="file"
+name="logo"
+accept="image/*"
+class="form-control">
+
+
+</div>
+
+
+
+</div>
+
+
+</div>
+
+<!-- TEACHER PERMISSIONS -->
+
+<div class="settings-card">
+
+<h4 class="section-title">
+👨‍🏫 Teacher Permissions
+</h4>
+
+
+<div class="form-check form-switch d-flex align-items-center gap-3">
+
+<input 
+class="form-check-input"
+type="checkbox"
+name="can_teachers_manage_students"
+id="teacherPermission"
+
+{% if school and school.can_teachers_manage_students %}
+checked
+{% endif %}
+>
+
+
+<label 
+class="form-check-label"
+for="teacherPermission">
+
+Allow teachers to manage students in their classes
+
+</label>
+
+
+</div>
+
+
+<div class="description-text">
+
+When enabled, teachers can add or remove students assigned to their classes.
+<br>
+
+When disabled, only administrators can manage student assignments.
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- ATTENDANCE SETTINGS -->
+
+
+<div class="settings-card">
+
+
+<h4 class="section-title">
+🎯 Attendance Configuration
+</h4>
+
+
+
+<label class="form-label">
+Attendance Mode
+</label>
+
+
+<select 
+name="attendance_mode"
+class="form-select">
+
+
+<option 
+value="subject"
+{% if setting.attendance_mode == "subject" %}
+selected
+{% endif %}
+>
+
+Per Subject Attendance
+
+</option>
+
+
+
+<option
+value="class_teacher"
+{% if setting.attendance_mode == "class_teacher" %}
+selected
+{% endif %}
+>
+
+Class Teacher Only
+
+</option>
+
+
+</select>
+
+
+<div class="description-text">
+
+Choose how teachers will mark attendance in the school.
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+<button 
+type="submit"
+name="update_school"
+class="btn save-btn mb-4">
+
+💾
+
+{% if school %}
+Save School Settings
+
+{% else %}
+
+Create School
+
+{% endif %}
+
+</button>
+
+
+
+</form>
+
+
+
+
+
+{% if school %}
+
+
+
+<!-- TERM SETTINGS -->
+
+
+<a 
+href="{% url 'accounts:term_settings' %}"
+class="settings-card term-card">
+
+
+<h4 class="section-title">
+
+📅 Academic Term Settings
+
+</h4>
+
+
+
+<div class="description-text">
+
+
+Manage academic terms, CA totals, examination totals and active sessions.
+
+
+
+<br><br>
+
+
+<strong>
+Current Active Term:
+</strong>
+
+
+{% if active_term %}
+
+
+{{ active_term.get_term_number_display }}
+
+<br>
+
+
+<strong>
+Academic Year:
+</strong>
+
+{{ active_term.academic_year }}
+
+
+<br><br>
+
+
+<span>
+
+CA:
+{{ active_term.ca_total }}
+
+|
+
+Exam:
+{{ active_term.exam_total }}
+
+</span>
+
+
+{% else %}
+
+
+No active term configured.
+
+
+{% endif %}
+
+
+
+</div>
+
+
+
+</a>
+
+
+
+
+{% endif %}
+
+
+
+</div>
+
+
+{% endblock %}

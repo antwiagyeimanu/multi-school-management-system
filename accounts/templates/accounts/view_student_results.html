@@ -1,0 +1,1195 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block title %}My Results{% endblock %}
+
+{% block content %}
+
+<style>
+
+/* =========================
+   PAGE WRAPPER
+========================= */
+
+.results-page {
+    max-width: 1200px;
+    margin: auto;
+    padding: 25px 18px;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #f8fafc;
+    min-height: 100vh;
+}
+
+
+/* =========================
+   HEADER
+========================= */
+
+.results-header {
+    background: linear-gradient(135deg,#111827,#1e3a8a);
+    border-radius: 24px;
+    padding: 30px;
+    color:white;
+    margin-bottom:25px;
+    box-shadow:0 15px 35px rgba(15,23,42,.15);
+}
+
+.results-header h1 {
+    margin:0;
+    font-size:32px;
+    font-weight:800;
+}
+
+.results-header p {
+    margin-top:8px;
+    opacity:.85;
+    font-size:16px;
+}
+
+
+/* =========================
+   FILTER CARD
+========================= */
+
+.filter-card {
+
+    background:white;
+    border-radius:22px;
+    padding:25px;
+    margin-bottom:25px;
+    box-shadow:0 10px 25px rgba(0,0,0,.06);
+}
+
+
+.filter-title {
+
+    font-size:18px;
+    font-weight:800;
+    color:#111827;
+    margin-bottom:15px;
+}
+
+
+.filter-form {
+
+    display:flex;
+    gap:15px;
+    flex-wrap:wrap;
+    align-items:end;
+}
+
+
+.filter-group {
+
+    flex:1;
+    min-width:220px;
+}
+
+
+.filter-group label {
+
+    display:block;
+    font-weight:700;
+    font-size:13px;
+    margin-bottom:7px;
+    color:#475569;
+}
+
+
+.filter-group select {
+
+    width:100%;
+    padding:12px 14px;
+    border-radius:12px;
+    border:2px solid #e5e7eb;
+    background:white;
+    font-size:15px;
+}
+
+
+.filter-btn {
+
+    background:linear-gradient(135deg,#667eea,#764ba2);
+    color:white;
+    border:none;
+    padding:12px 28px;
+    border-radius:12px;
+    font-weight:700;
+    cursor:pointer;
+}
+
+
+/* =========================
+   SUMMARY CARDS
+========================= */
+
+.summary-grid {
+
+    display:grid;
+    grid-template-columns:
+    repeat(5,1fr);
+
+    gap:15px;
+    margin-bottom:30px;
+}
+
+
+.summary-card {
+
+    border-radius:20px;
+    padding:20px;
+    color:white;
+    min-height:130px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    box-shadow:
+    0 12px 25px rgba(0,0,0,.12);
+
+    transition:.3s ease;
+}
+
+
+.summary-card:hover {
+
+    transform:translateY(-5px);
+}
+
+
+.summary-label {
+
+    font-size:12px;
+    font-weight:800;
+    text-transform:uppercase;
+    opacity:.85;
+}
+
+
+.summary-value {
+
+    margin-top:10px;
+    font-size:25px;
+    font-weight:900;
+}
+
+
+.summary-small {
+
+    margin-top:5px;
+    font-size:13px;
+    font-weight:600;
+}
+
+
+/* COLORS */
+
+.grade-card {
+
+    background:
+    linear-gradient(135deg,#111827,#374151);
+}
+
+
+.average-card {
+
+    background:
+    linear-gradient(135deg,#f59e0b,#d97706);
+}
+
+
+.position-card {
+
+    background:
+    linear-gradient(135deg,#047857,#065f46);
+}
+
+
+.status-card {
+
+    background:
+    linear-gradient(135deg,#2563eb,#1d4ed8);
+}
+
+
+.subject-card {
+
+    background:
+    linear-gradient(135deg,#7c3aed,#5b21b6);
+}
+
+
+/* =========================
+ MOBILE
+========================= */
+
+@media(max-width:900px){
+
+.summary-grid {
+
+grid-template-columns:
+repeat(2,1fr);
+
+}
+
+}
+
+
+@media(max-width:600px){
+
+.results-page {
+
+padding:15px 10px;
+
+}
+
+
+.results-header {
+
+padding:22px;
+border-radius:18px;
+
+}
+
+
+.results-header h1 {
+
+font-size:24px;
+
+}
+
+
+.filter-form {
+
+flex-direction:column;
+
+}
+
+
+.filter-group {
+
+width:100%;
+
+}
+
+
+.filter-btn {
+
+width:100%;
+
+}
+
+
+.summary-grid {
+
+grid-template-columns:1fr;
+
+}
+
+
+.summary-card {
+
+min-height:110px;
+
+}
+
+}
+
+</style>
+
+
+<div class="results-page">
+
+
+<!-- HEADER -->
+
+<div class="results-header">
+
+<h1>
+📊 My Results
+</h1>
+
+<p>
+{{ current_term_display }} Results Report
+</p>
+
+</div>
+
+
+
+<!-- FILTER -->
+
+<div class="filter-card">
+
+
+<div class="filter-title">
+🔎 Select Result Period
+</div>
+
+
+<form method="get" class="filter-form">
+
+<div class="filter-group">
+<label>Academic Term</label>
+<select name="term">
+{% for t in terms %}
+<option value="{{ t.term_number }}" {% if selected_term == t.term_number|stringformat:"s" %}selected{% endif %}>
+{{ t.get_term_number_display }}
+</option>
+{% endfor %}
+</select>
+</div>
+
+<div class="filter-group">
+<label>Academic Year</label>
+<select name="year">
+{% for y in years %}
+<option value="{{ y.id }}" {% if selected_year == y.id|stringformat:"s" %}selected{% endif %}>
+{{ y.name }}
+</option>
+{% endfor %}
+</select>
+</div>
+
+<button class="filter-btn">
+View Results
+</button>
+
+</form>
+
+
+</div>
+
+
+
+
+<!-- SUMMARY -->
+
+<div class="summary-grid">
+
+
+
+<div class="summary-card grade-card">
+
+<div class="summary-label">
+🏆 Overall Grade
+</div>
+
+<div class="summary-value">
+
+{{ overall_grade }}
+
+</div>
+
+<div class="summary-small">
+
+{{ overall_remark }}
+
+</div>
+
+</div>
+
+
+
+<div class="summary-card average-card">
+
+<div class="summary-label">
+📈 Average Score
+</div>
+
+<div class="summary-value">
+
+{{ average_score }}%
+
+</div>
+
+</div>
+
+
+
+
+<div class="summary-card position-card">
+
+<div class="summary-label">
+🥇 Class Position
+</div>
+
+<div class="summary-value">
+
+{{ position }}
+
+</div>
+
+<div class="summary-small">
+
+Out of {{ total_students }} Students
+
+</div>
+
+</div>
+
+
+
+
+<div class="summary-card status-card">
+
+<div class="summary-label">
+✅ Result Status
+</div>
+
+<div class="summary-value">
+
+Published
+
+</div>
+
+</div>
+
+
+
+
+<div class="summary-card subject-card">
+
+<div class="summary-label">
+📚 Subjects
+</div>
+
+<div class="summary-value">
+
+{{ results|length }}
+
+</div>
+
+</div>
+
+</div>
+
+<!-- =========================
+     RESULTS SECTION
+========================= -->
+
+<div class="results-container">
+
+
+<div class="results-title">
+📚 Subject Performance Breakdown
+</div>
+
+
+{% if results %}
+
+
+<!-- DESKTOP TABLE -->
+
+<div class="desktop-results">
+
+
+<table class="results-table">
+
+
+<thead>
+
+<tr>
+
+<th>Subject</th>
+<th>Class Score</th>
+<th>Exam Score</th>
+<th>Total</th>
+<th>Grade</th>
+<th>Remark</th>
+
+</tr>
+
+</thead>
+
+
+<tbody>
+
+
+{% for result in results %}
+
+
+<tr>
+
+
+<td class="subject-cell">
+
+<a href="{% url 'accounts:student_subject_progress' result.subject.id %}">
+
+{{ result.subject.name }}
+
+</a>
+
+</td>
+
+
+
+<td>
+
+<div class="score-box">
+
+{{ result.class_score|floatformat:0 }}
+
+/
+
+{{ result.term.ca_total }}
+
+</div>
+
+</td>
+
+
+
+
+<td>
+
+<div class="score-box">
+
+{{ result.exam_score|floatformat:0 }}
+
+/
+
+{{ result.term.exam_total }}
+
+</div>
+
+</td>
+
+
+
+
+<td>
+
+
+<span class="percentage-pill
+
+{% if result.percentage >= 80 %}
+excellent
+
+{% elif result.percentage >= 70 %}
+good
+
+{% elif result.percentage >= 50 %}
+average
+
+{% else %}
+poor
+
+{% endif %}
+
+">
+
+
+{{ result.total|floatformat:0 }}
+/
+{{ result.total_max|floatformat:0 }}
+
+
+</span>
+
+
+</td>
+
+
+
+
+<td>
+
+
+<span class="grade-pill
+
+
+{% if result.grade == 'A' %}
+grade-a
+
+{% elif result.grade == 'B' %}
+grade-b
+
+{% elif result.grade == 'C' %}
+grade-c
+
+{% elif result.grade == 'D' %}
+grade-d
+
+{% else %}
+grade-f
+
+{% endif %}
+
+">
+
+
+{{ result.grade }}
+
+
+</span>
+
+
+</td>
+
+
+
+
+<td>
+
+<span class="remark-text">
+
+{{ result.remark }}
+
+</span>
+
+</td>
+
+
+</tr>
+
+
+{% endfor %}
+
+
+
+</tbody>
+
+
+
+<tfoot>
+
+
+<tr>
+
+<td>
+<strong>Total</strong>
+</td>
+
+
+<td>
+
+{{ grand_class_score|floatformat:0 }}
+
+/
+
+{{ grand_class_max|floatformat:0 }}
+
+</td>
+
+
+
+<td>
+
+{{ grand_exam_score|floatformat:0 }}
+
+/
+
+{{ grand_exam_max|floatformat:0 }}
+
+</td>
+
+
+
+<td colspan="3">
+
+
+{{ grand_total_score|floatformat:0 }}
+
+/
+
+{{ grand_total_max|floatformat:0 }}
+
+
+</td>
+
+
+</tr>
+
+
+</tfoot>
+
+
+
+</table>
+
+
+</div>
+
+
+
+
+
+
+<!-- MOBILE CARDS -->
+
+
+<div class="mobile-results">
+
+
+{% for result in results %}
+
+
+<div class="result-mobile-card">
+
+
+<div class="mobile-subject">
+
+
+<a href="{% url 'accounts:student_subject_progress' result.subject.id %}">
+
+📘 {{ result.subject.name }}
+
+</a>
+
+
+</div>
+
+
+
+<div class="mobile-row">
+
+<span>
+Class Score
+</span>
+
+<strong>
+
+{{ result.class_score|floatformat:0 }}
+/
+{{ result.term.ca_total }}
+
+</strong>
+
+</div>
+
+
+
+
+<div class="mobile-row">
+
+<span>
+Exam Score
+</span>
+
+<strong>
+
+{{ result.exam_score|floatformat:0 }}
+/
+{{ result.term.exam_total }}
+
+</strong>
+
+</div>
+
+
+
+
+
+<div class="mobile-row">
+
+<span>
+Total
+</span>
+
+
+<strong>
+
+{{ result.total|floatformat:0 }}
+/
+{{ result.total_max|floatformat:0 }}
+
+</strong>
+
+
+</div>
+
+
+
+
+
+<div class="mobile-bottom">
+
+
+<span class="grade-pill
+
+{% if result.grade == 'A' %}
+grade-a
+
+{% elif result.grade == 'B' %}
+grade-b
+
+{% elif result.grade == 'C' %}
+grade-c
+
+{% elif result.grade == 'D' %}
+grade-d
+
+{% else %}
+grade-f
+
+{% endif %}
+
+">
+
+
+{{ result.grade }}
+
+</span>
+
+
+
+<span>
+
+{{ result.remark }}
+
+</span>
+
+
+</div>
+
+
+
+</div>
+
+
+{% endfor %}
+
+
+</div>
+
+
+
+{% else %}
+
+
+<div class="empty-results">
+
+📄
+
+<h4>No Results Published Yet</h4>
+
+<p>
+No results available for {{ current_term_display }}.
+</p>
+
+</div>
+
+
+{% endif %}
+
+
+</div>
+
+
+
+
+
+
+<style>
+
+
+/* =========================
+ RESULTS CONTAINER
+========================= */
+
+
+.results-container {
+
+background:white;
+border-radius:24px;
+padding:25px;
+box-shadow:
+0 10px 30px rgba(0,0,0,.06);
+
+}
+
+
+
+.results-title {
+
+font-size:20px;
+font-weight:900;
+text-align:center;
+margin-bottom:25px;
+color:#111827;
+
+}
+
+
+
+
+/* TABLE */
+
+
+.results-table {
+
+width:100%;
+border-collapse:collapse;
+
+}
+
+
+
+.results-table thead th {
+
+background:#111827;
+color:white;
+padding:15px;
+font-size:13px;
+text-align:center;
+
+}
+
+
+.results-table td {
+
+padding:14px;
+text-align:center;
+border-bottom:1px solid #e5e7eb;
+
+}
+
+
+
+.subject-cell {
+
+text-align:left!important;
+font-weight:800;
+
+}
+
+
+.subject-cell a {
+
+color:#111827;
+text-decoration:none;
+
+}
+
+
+
+.subject-cell a:hover {
+
+color:#667eea;
+
+}
+
+
+
+
+.score-box {
+
+font-weight:700;
+
+}
+
+
+
+.percentage-pill {
+
+padding:7px 14px;
+border-radius:999px;
+font-weight:800;
+font-size:13px;
+
+}
+
+
+.excellent {
+
+background:#dcfce7;
+color:#166534;
+
+}
+
+
+.good {
+
+background:#dbeafe;
+color:#1e40af;
+
+}
+
+
+.average {
+
+background:#fef3c7;
+color:#92400e;
+
+}
+
+
+.poor {
+
+background:#fee2e2;
+color:#991b1b;
+
+}
+
+
+
+
+.grade-pill {
+
+padding:7px 15px;
+border-radius:999px;
+font-weight:900;
+
+}
+
+
+
+.grade-a {
+
+background:#16a34a;
+color:white;
+
+}
+
+
+.grade-b {
+
+background:#2563eb;
+color:white;
+
+}
+
+
+.grade-c {
+
+background:#eab308;
+color:#111;
+
+}
+
+
+.grade-d {
+
+background:#f97316;
+color:white;
+
+}
+
+
+.grade-f {
+
+background:#dc2626;
+color:white;
+
+}
+
+
+
+.results-table tfoot {
+
+background:#374151;
+color:white;
+font-weight:800;
+
+}
+
+
+
+
+
+/* MOBILE CARDS */
+
+
+.mobile-results {
+
+display:none;
+
+}
+
+
+
+.result-mobile-card {
+
+background:#f8fafc;
+border-radius:18px;
+padding:18px;
+margin-bottom:15px;
+border:1px solid #e5e7eb;
+
+}
+
+
+
+.mobile-subject {
+
+font-size:18px;
+font-weight:900;
+margin-bottom:15px;
+
+}
+
+
+.mobile-subject a {
+
+text-decoration:none;
+color:#111827;
+
+}
+
+
+
+.mobile-row {
+
+display:flex;
+justify-content:space-between;
+padding:8px 0;
+border-bottom:1px dashed #ddd;
+
+}
+
+
+
+.mobile-bottom {
+
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-top:15px;
+font-weight:700;
+
+}
+
+
+
+
+.empty-results {
+
+text-align:center;
+padding:50px;
+background:#f8fafc;
+border-radius:20px;
+
+}
+
+
+
+
+
+@media(max-width:768px){
+
+
+.desktop-results {
+
+display:none;
+
+}
+
+
+.mobile-results {
+
+display:block;
+
+}
+
+
+.results-container {
+
+padding:18px;
+border-radius:18px;
+
+}
+
+
+}
+
+
+</style>
+{% endblock%}

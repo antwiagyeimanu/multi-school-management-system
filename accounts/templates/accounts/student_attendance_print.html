@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+@page{
+    size:A4 landscape;
+    margin:8mm;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Inter,Segoe UI,Arial,sans-serif;
+    background:#f4f7fb;
+    color:#1f2937;
+}
+
+.wrap{
+    position:relative;
+    width:98%;
+    margin:auto;
+    background:#fff;
+    padding:18px;
+    border-radius:20px;
+    box-shadow:0 12px 40px rgba(0,0,0,.08);
+    overflow:hidden;
+}
+
+.watermark{
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%) rotate(-28deg);
+    font-size:90px;
+    font-weight:900;
+    color:rgba(37,99,235,.04);
+    letter-spacing:6px;
+    z-index:0;
+    user-select:none;
+}
+
+.header{
+    display:flex;
+    align-items:center;
+    gap:20px;
+    padding:18px;
+    border-radius:18px;
+    background:linear-gradient(135deg,#0f172a,#1e40af);
+    color:#fff;
+    position:relative;
+    z-index:2;
+    box-shadow:0 8px 25px rgba(0,0,0,.18);
+}
+
+.logo{
+    width:120px;
+    height:120px;
+    object-fit:contain;
+    background:#fff;
+    border-radius:18px;
+    padding:10px;
+    border:3px solid rgba(255,255,255,.25);
+}
+
+.mid{
+    flex:1;
+    text-align:center;
+}
+
+.mid h2{
+    font-size:28px;
+    margin-bottom:8px;
+    font-weight:800;
+    letter-spacing:1px;
+}
+
+.mid p{
+    margin:4px 0;
+    font-size:13px;
+    color:#e2e8f0;
+}
+
+.badge{
+    display:inline-block;
+    margin-top:12px;
+    background:#fff;
+    color:#1e3a8a;
+    padding:8px 20px;
+    border-radius:40px;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:1px;
+    box-shadow:0 4px 15px rgba(0,0,0,.15);
+}
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:18px;
+    margin:22px 0;
+    position:relative;
+    z-index:2;
+}
+
+.card{
+    background:linear-gradient(135deg,#ffffff,#f8fafc);
+    border:none;
+    border-radius:18px;
+    padding:20px;
+    text-align:center;
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+    transition:.3s;
+}
+
+.card:hover{
+    transform:translateY(-4px);
+}
+
+.card small{
+    display:block;
+    color:#64748b;
+    font-size:12px;
+    margin-bottom:10px;
+    text-transform:uppercase;
+    font-weight:700;
+    letter-spacing:.5px;
+}
+
+.card b{
+    font-size:30px !important;
+    color:#1e3a8a;
+}
+
+.class-title{
+    margin-top:24px;
+    margin-bottom:10px;
+    padding:12px 18px;
+    background:linear-gradient(90deg,#2563eb,#3b82f6);
+    color:#fff;
+    border-radius:12px;
+    font-size:15px;
+    font-weight:800;
+    letter-spacing:.5px;
+    position:relative;
+    z-index:2;
+}
+
+table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    overflow:hidden;
+    border-radius:16px;
+    background:#fff;
+    box-shadow:0 8px 20px rgba(0,0,0,.06);
+    margin-bottom:18px;
+}
+
+th{
+    background:linear-gradient(135deg,#0f172a,#1e3a8a);
+    color:#fff;
+    padding:13px 10px;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    text-align:center;
+}
+
+th:first-child{
+    text-align:left;
+    width:30%;
+}
+
+td{
+    padding:12px 10px;
+    border-bottom:1px solid #e5e7eb;
+    font-size:12px;
+    text-align:center;
+}
+
+td:first-child{
+    text-align:left;
+    font-weight:600;
+}
+
+tbody tr:nth-child(even),
+table tr:nth-child(even){
+    background:#f8fafc;
+}
+
+table tr:hover{
+    background:#eef4ff;
+}
+
+.footer{
+    margin-top:24px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding-top:14px;
+    border-top:2px dashed #cbd5e1;
+    font-size:11px;
+    color:#475569;
+    position:relative;
+    z-index:2;
+}
+
+.no-print{
+    text-align:center;
+    margin-top:25px;
+}
+
+.no-print button{
+    background:linear-gradient(135deg,#1e3a8a,#2563eb);
+    color:#fff;
+    border:none;
+    padding:13px 38px;
+    border-radius:40px;
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+    box-shadow:0 8px 20px rgba(37,99,235,.35);
+    transition:.3s;
+}
+
+.no-print button:hover{
+    transform:translateY(-2px);
+    box-shadow:0 12px 25px rgba(37,99,235,.45);
+}
+
+@media print{
+
+    body{
+        background:#fff;
+    }
+
+    .wrap{
+        box-shadow:none;
+        border-radius:0;
+        padding:0;
+    }
+
+    .card,
+    table{
+        box-shadow:none;
+    }
+
+    .no-print{
+        display:none;
+    }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="watermark">{{ school.name|upper }}</div>
+
+  <div class="header">
+    {% if school.logo %}
+      <img class="logo" src="{{ school.logo.url }}">
+    {% else %}
+      <div class="logo" style="display:flex; align-items:center; justify-content:center; font-weight:900;">{{ school.name|slice:":2"|upper }}</div>
+    {% endif %}
+    <div class="mid">
+      <h2>{{ school.name|upper }}</h2>
+      <p>{{ school.address|default:"" }} {% if school.gps_address %}| {{ school.gps_address }}{% endif %}</p>
+      <p>Tel: {{ school.phone|default:"" }} {% if school.email %}| {{ school.email }}{% endif %}</p>
+      <div class="badge">STUDENT ATTENDANCE REPORT - {% if selected_class_obj %}{{ selected_class_obj.name|upper }}{% else %}ALL CLASSES{% endif %}</div>
+    </div>
+    <div style="text-align:right; font-size:10px;">
+      <b>{% now "d M Y" %}</b><br>Term: All Term
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card"><small>Total Present</small><br><b style="font-size:18px;">{{ total_present }}</b></div>
+    <div class="card"><small>Total Absent</small><br><b style="font-size:18px;">{{ total_absent }}</b></div>
+    <div class="card"><small>Total Records</small><br><b style="font-size:18px;">{{ total_present|add:total_absent }}</b></div>
+    <div class="card"><small>Attendance Rate</small><br><b style="font-size:18px;">{{ attendance_rate }}%</b></div>
+  </div>
+
+  {% if selected_class %}
+    <table>
+      <tr><th>Date</th><th>Present</th><th>Absent</th><th>Total</th></tr>
+      {% for day in merged_days %}
+      <tr>
+        <td>{{ day.date|date:"d M Y" }}</td>
+
+        <td>{{ day.present_count }}</td>
+        <td>{{ day.absent_count }}</td>
+        <td>{{ day.total }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    {% for group in grouped_by_class %}
+      <div class="class-title">{{ group.klass.name }} - {{ group.total_days }} Days</div>
+      <table>
+        <tr><th>Date</th><th>Present</th><th>Absent</th><th>Total</th></tr>
+        {% for day in group.days %}
+        <tr>
+          <td>{{ day.date|date:"d M Y" }}</td>
+          <td>{{ day.present_count }}</td>
+          <td>{{ day.absent_count }}</td>
+          <td>{{ day.total }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    {% endfor %}
+  {% endif %}
+
+<div class="footer">
+    <span><strong>Authorized Signature</strong></span>
+    <span><strong>{% now "d M Y h:i A" %}</strong></span>
+    <span><strong>School Stamp</strong></span>
+</div>
+  <div class="no-print" style="text-align:center; margin:18px;">
+    <button onclick="window.print()" style="background:#000; color:#fff; padding:10px 28px; border:none; border-radius:20px; font-weight:800;">Print Now</button>
+  </div>
+</div>
+</body>
+</html>

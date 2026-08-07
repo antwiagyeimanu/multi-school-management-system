@@ -1,0 +1,68 @@
+{% extends "accounts/dashboard_base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+.profile-wrapper { max-width: 900px; margin: 0 auto; padding: 20px; }
+.profile-header { background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); color: white; padding: 40px 30px; border-radius: 16px 16px 0 0; text-align: center; }
+.profile-header img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 4px solid rgba(255,255,255,0.3); margin-bottom: 15px; }
+.profile-header h1 { margin: 0 0 8px 0; font-size: 28px; font-weight: 700; }
+.profile-header p { margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
+.profile-body { background: white; padding: 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+.info-section { margin-bottom: 30px; }
+.info-section h3 { margin: 0 0 20px 0; font-size: 18px; color: #111827; border-bottom: 2px solid #7c3aed; padding-bottom: 8px; }
+.info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 40px; }
+.info-item { display: grid; grid-template-columns: 140px 1fr; gap: 15px; padding: 12px 0; border-bottom: 1px solid #f3f4f6; }
+.label { font-weight: 600; color: #6b7280; font-size: 14px; }
+.value { color: #111827; font-size: 14px; }
+@media (max-width: 768px) { .info-grid { grid-template-columns: 1fr; } }
+</style>
+
+<div class="profile-wrapper">
+    <h1 style="margin-bottom: 24px; font-size: 28px; color: #111827;">Admin Profile</h1>
+    
+    <div class="profile-header">
+        {% if admin.photo %}
+            <img src="{{ admin.photo.url }}" alt="{{ admin.username }}">
+        {% else %}
+            <img src="https://ui-avatars.com/api/?name={{ admin.first_name|default:admin.username }}+{{ admin.last_name }}&background=ffffff&color=7c3aed&size=200&bold=true" alt="Default">
+        {% endif %}
+        
+        <h1>
+            {% if admin.title and admin.title != "" %}{{ admin.title }} {% endif %}
+            {{ admin.first_name }} {{ admin.last_name }}
+        </h1>
+        <p>Administrator</p>
+    </div>
+
+    <div class="profile-body">
+        <div class="info-section">
+            <h3>Account Information</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="label">Username:</span>
+                    <span class="value">{{ admin.username }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Email:</span>
+                    <span class="value">{{ admin.email|default:"Not provided" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Phone:</span>
+                    <span class="value">{{ admin.phone|default:"Not provided" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Date Joined:</span>
+                    <span class="value">{{ admin.date_joined|date:"M d, Y" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Status:</span>
+                    <span class="value" style="color:{% if admin.is_active %}#16a34a{% else %}#dc2626{% endif %}; font-weight: 700;">
+                        {% if admin.is_active %}Active{% else %}Inactive{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

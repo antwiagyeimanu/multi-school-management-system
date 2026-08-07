@@ -1,0 +1,90 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block content %}
+<div style="max-width:1000px; margin:20px auto; padding:0 20px;">
+    <div style="background:#1e40af; color:white; padding:25px; border-radius:12px 12px 0 0;">
+        <h1 style="margin:0;">{{ school_class.name }} - {{ subject.name }}</h1>
+<p style="margin:8px 0 0 0; opacity:0.9;">
+    {{ active_term.get_term_number_display }} | {{ active_term.academic_year.name }}
+</p>
+    </div>
+
+    <!-- Term/Year Filter -->
+    <div style="background:white; padding:20px; border-bottom:1px solid #e2e8f0;">
+<form method="get" style="display:flex; gap:15px; align-items:center; background:#f8fafc; padding:15px; border-radius:12px; margin-bottom:30px; flex-wrap:wrap;">
+    
+    <label style="font-weight:600; color:#334155; white-space:nowrap;">Term:</label>
+    <select name="term" style="flex:1; min-width:50px; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-weight:600;">
+        <option value="">All Terms</option>
+        {% for t in terms %}
+        <option value="{{ t.term_number }}" {% if term|stringformat:"s" == t.term_number|stringformat:"s" %}selected{% endif %}>
+            {{ t.get_term_number_display }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <label style="font-weight:600; color:#334155; white-space:nowrap;">Academic Year:</label>
+    <select name="year" style="flex:1; min-width:40px; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-weight:600;">
+        {% for y in years %}
+        <option value="{{ y.id }}" {% if year_id|stringformat:"s" == y.id|stringformat:"s" %}selected{% endif %}>
+            {{ y.name }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <button type="submit" style="padding:10px 20px; background:#2563eb; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Filter</button>
+</form>
+    </div>
+
+    <div style="background:white; border-radius:0 0 12px 12px; box-shadow:0 4px 6px rgba(0,0,0,0.1); overflow:hidden;">
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr style="background:#f1f5f9; border-bottom:2px solid #e2e8f0;">
+                    <th style="padding:16px; text-align:left; font-weight:700; color:#334155;">STUDENT</th>
+                      <th style="padding:16px; text-align:left; font-weight:700; color:#334155;">STUDENT ID</th>
+                    <th style="padding:16px; text-align:center; font-weight:700; color:#334155;">CLASS SCORE</th>
+                    <th style="padding:16px; text-align:center; font-weight:700; color:#334155;">EXAM SCORE</th>
+                    <th style="padding:16px; text-align:center; font-weight:700; color:#334155;">TOTAL</th>
+                    <th style="padding:16px; text-align:center; font-weight:700; color:#334155;">GRADE</th>
+                    <th style="padding:16px; text-align:center; font-weight:700; color:#334155;">REMARK</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in results %}
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                    <td style="padding:16px; font-weight:600; color:#0f172a;">{{ r.student.first_name }} {{ r.student.last_name }}</td>
+                    <td style="padding:16px; font-weight:600; color:#0f172a;">{{ r.student.student_number }}</td>
+
+                    <td style="padding:16px; text-align:center;">
+                        {{ r.class_score|floatformat:0 }}
+                    </td>
+                    <td style="padding:16px; text-align:center;">
+                        {{ r.exam_score|floatformat:0 }}
+                    </td>
+                    <td style="padding:16px; text-align:center;">
+                        <span style="font-weight:800; font-size:16px; 
+                            {% if r.percentage >= 80 %}color:#059669;
+                            {% elif r.percentage >= 70 %}color:#2563eb;
+                            {% elif r.percentage >= 50 %}color:#d97706;
+                            {% elif r.percentage >= 40 %}color:#d97706;
+                            {% else %}color:#dc2626;{% endif %}">
+                            {{ r.total }}%
+                        </span>
+                    </td>
+                    <td style="padding:16px; text-align:center; font-weight:700;">{{ r.grade }}</td>
+                    <td style="padding:16px; text-align:center; color:#64748b;">{{ r.remark }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" style="padding:40px; text-align:center; color:#64748b;">No results found</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div style="text-align:center; margin-top:30px;">
+        <a href="{% url 'accounts:results_by_subject' school_class.id %}?term={{ term }}&year={{ year }}" 
+           style="padding:12px 28px; background:#475569; color:white; text-decoration:none; border-radius:10px; font-weight:700;">
+           ← Back to Subjects
+        </a>
+    </div>
+</div>
+{% endblock %}

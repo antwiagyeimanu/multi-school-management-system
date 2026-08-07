@@ -1,0 +1,613 @@
+{% extends "accounts/dashboard_base.html" %}
+
+{% block content %}
+<style>
+/* cursor fix */
+.settings-card, .card-body, label, p, div {
+    cursor: default;
+}
+/* ===================================
+   VERIFY PAYMENT PREMIUM UI
+=================================== */
+
+.verify-hero{
+
+    background:linear-gradient(135deg,#0f172a,#2563eb);
+
+    color:#fff;
+
+    border-radius:22px;
+
+    padding:24px 30px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    flex-wrap:wrap;
+
+    gap:20px;
+
+}
+
+.verify-hero h2{
+
+    font-weight:800;
+
+    margin:0;
+
+}
+
+.verify-hero p{
+
+    opacity:.9;
+
+}
+
+.verify-pill{
+
+    background:rgba(255,255,255,.15);
+
+    padding:12px 20px;
+
+    border-radius:40px;
+
+    font-weight:700;
+
+}
+
+.verify-search-card{
+
+    border-radius:20px;
+
+}
+
+.verify-search-card .form-control{
+
+    border-radius:0 14px 14px 0;
+
+    height:58px;
+
+    font-size:16px;
+
+}
+
+.verify-search-card .input-group-text{
+
+    border-radius:14px 0 0 14px;
+
+    font-size:18px;
+
+}
+
+.verify-search-card .btn{
+
+    border-radius:14px;
+
+    font-weight:700;
+
+}
+
+.info-card{
+
+    background:#fff;
+
+    border-radius:18px;
+
+    padding:22px;
+
+    text-align:center;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+
+    transition:.3s;
+
+    height:100%;
+
+}
+
+.info-card:hover{
+
+    transform:translateY(-5px);
+
+}
+
+.info-icon{
+
+    width:65px;
+
+    height:65px;
+
+    border-radius:50%;
+
+    color:#fff;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    margin:auto auto 15px;
+
+    font-size:24px;
+
+}
+
+.info-card small{
+
+    color:#6b7280;
+
+    font-weight:600;
+
+}
+
+.info-card h5{
+
+    margin-top:8px;
+
+    font-weight:800;
+
+    color:#111827;
+
+}
+
+@media(max-width:768px){
+
+.verify-hero{
+
+flex-direction:column;
+
+align-items:flex-start;
+
+}
+
+}
+/* ===========================
+   PAYMENT HISTORY TABLE
+=========================== */
+
+.payment-history-table{
+
+    border-collapse:separate;
+
+    border-spacing:0 10px;
+
+}
+
+.payment-history-table thead th{
+
+    background:#0f172a;
+
+    color:#fff;
+
+    border:none;
+
+    padding:16px;
+
+    font-weight:700;
+
+}
+
+.payment-history-table tbody tr{
+
+    background:#fff;
+
+    box-shadow:0 5px 15px rgba(0,0,0,.06);
+
+    transition:.25s;
+
+}
+
+.payment-history-table tbody tr:hover{
+
+    transform:translateY(-2px);
+
+}
+
+.payment-history-table td{
+
+    padding:16px;
+
+    border-top:none;
+
+    border-bottom:none;
+
+}
+
+.receipt-badge{
+
+    display:inline-block;
+
+    background:#eff6ff;
+
+    color:#2563eb;
+
+    font-weight:700;
+
+    padding:8px 16px;
+
+    border-radius:30px;
+
+}
+
+.amount-pill{
+
+    display:inline-block;
+
+    background:#dcfce7;
+
+    color:#15803d;
+
+    font-weight:800;
+
+    padding:8px 18px;
+
+    border-radius:30px;
+
+}
+</style>
+<div class="container-fluid px-4">
+
+   <!-- PREMIUM HERO -->
+<div class="verify-hero mb-4">
+
+    <div>
+
+        <h2 class="mb-2">
+            <i class="fas fa-shield-check me-2"></i>
+            Verify Student Payment
+        </h2>
+
+        <p class="mb-0">
+            Search receipts or students and verify payment records securely.
+        </p>
+
+    </div>
+
+    <div class="verify-pill">
+        <i class="fas fa-lock me-2"></i>
+        Accountant Verification Portal
+    </div>
+
+</div>
+
+    <!-- SEARCH BOX -->
+<div class="card verify-search-card shadow-sm border-0 mb-4">
+
+    <div class="card-body p-4">
+
+        <form method="GET">
+
+            <div class="input-group input-group-lg">
+
+                <span class="input-group-text bg-white border-end-0">
+                    <i class="fas fa-search text-primary"></i>
+                </span>
+
+                <input
+                    type="text"
+                    name="query"
+                    value="{{ query }}"
+                    class="form-control border-start-0"
+                    placeholder="Receipt Number, Student ID or Student Name">
+
+                <button class="btn btn-primary px-4">
+                    <i class="fas fa-search me-2"></i>
+                    Search
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+    <!-- RESULT -->
+    {% if receipt or student %}
+
+        <div class="card shadow-sm">
+
+            <div class="card-header bg-dark text-white">
+                Payment Verification Result
+            </div>
+
+            <div class="card-body">
+
+<!-- STUDENT INFO -->
+{% if student %}
+<div class="row g-3 mb-4">
+
+    <div class="col-lg-4 col-md-6">
+
+        <div class="info-card">
+
+            <div class="info-icon bg-primary">
+                <i class="fas fa-user-graduate"></i>
+            </div>
+
+            <small>Student Name</small>
+
+            <h5>{{ student.get_full_name }}</h5>
+
+        </div>
+
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+
+        <div class="info-card">
+
+            <div class="info-icon bg-success">
+                <i class="fas fa-id-card"></i>
+            </div>
+
+            <small>Student ID</small>
+
+            <h5>{{ student.student_number }}</h5>
+
+        </div>
+
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+
+        <div class="info-card">
+
+            <div class="info-icon bg-warning">
+                <i class="fas fa-school"></i>
+            </div>
+
+            <small>Current Class</small>
+
+            <h5>{{ student.school_class.name }}</h5>
+
+        </div>
+
+    </div>
+
+</div>
+{% endif %}
+
+                <!-- SINGLE RECEIPT VIEW -->
+                {% if receipt %}
+<div class="card border-0 shadow-sm mb-4" style="border-radius:20px; overflow:hidden;">
+
+    <div class="card-header text-white"
+         style="background:linear-gradient(135deg,#16a34a,#22c55e);">
+
+        <div class="d-flex justify-content-between align-items-center">
+
+            <div>
+                <i class="fas fa-check-circle me-2"></i>
+                <strong>Payment Verified</strong>
+            </div>
+
+            <span class="badge bg-light text-success px-3 py-2">
+                {{ receipt.receipt_number }}
+            </span>
+
+        </div>
+
+    </div>
+
+    <div class="card-body">
+
+        <div class="row g-4">
+
+            <div class="col-md-6">
+
+                <small class="text-muted">Amount Paid</small>
+
+                <h4 class="fw-bold text-success">
+                    GH₵ {{ receipt.amount_paid|floatformat:2 }}
+                </h4>
+
+            </div>
+
+            <div class="col-md-6">
+
+                <small class="text-muted">Date</small>
+
+                <h5 class="fw-bold">
+                    {{ receipt.created_at|date:"d M Y" }}
+                </h5>
+
+                <small class="text-muted">
+                    {{ receipt.created_at|date:"h:i A" }}
+                </small>
+
+            </div>
+
+            <div class="col-md-6">
+
+                <small class="text-muted">Term</small>
+
+                <h6 class="fw-bold">
+                    {{ receipt.term }}
+                </h6>
+
+            </div>
+
+            <div class="col-md-6">
+
+                <small class="text-muted">Academic Year</small>
+
+                <h6 class="fw-bold">
+                    {{ receipt.academic_year }}
+                </h6>
+
+            </div>
+
+        </div>
+
+        <hr>
+
+        <div class="d-flex flex-wrap gap-2">
+
+            <a href="{% url 'accounts:view_receipt' receipt.id %}"
+               class="btn btn-success rounded-pill px-4">
+
+                <i class="fas fa-print me-2"></i>
+
+                Print Receipt
+
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+                {% endif %}
+
+                <!-- FULL PAYMENT HISTORY -->
+                {% if payments %}
+                <hr>
+                <div class="mb-3 text-dark">
+                <h2>All Payments</h2>
+                </div>
+
+               <div class="table-responsive">
+
+<table class="table align-middle payment-history-table">
+
+    <thead>
+
+        <tr>
+
+            <th>Date</th>
+
+            <th>Receipt No.</th>
+
+            <th class="text-end">Amount</th>
+
+            <th class="text-center">Action</th>
+
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+        {% for p in payments %}
+
+        <tr>
+
+            <td class="text-nowrap">
+
+                <div class="fw-semibold">
+
+                    {{ p.created_at|date:"d M Y" }}
+
+                </div>
+
+                <small class="text-muted">
+
+                    {{ p.created_at|date:"h:i A" }}
+
+                </small>
+
+            </td>
+
+            <td>
+
+                <span class="receipt-badge">
+
+                    {{ p.receipt_number }}
+
+                </span>
+
+            </td>
+
+            <td class="text-end">
+
+                <span class="amount-pill">
+
+                    GH₵ {{ p.amount_paid|floatformat:2 }}
+
+                </span>
+
+            </td>
+
+            <td class="text-center">
+
+                <a href="{% url 'accounts:view_receipt' p.id %}"
+
+                   class="btn btn-outline-primary btn-sm rounded-pill px-3">
+
+                    <i class="fas fa-eye me-1"></i>
+
+                    View
+
+                </a>
+
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+</div>
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    {% elif query %}
+<div class="card border-0 shadow-sm text-center py-5" style="border-radius:22px;">
+
+    <div class="mb-3">
+
+        <div style="
+            width:90px;
+            height:90px;
+            margin:auto;
+            border-radius:50%;
+            background:#fff7ed;
+            display:flex;
+            align-items:center;
+            justify-content:center;">
+
+            <i class="fas fa-search fa-2x text-warning"></i>
+
+        </div>
+
+    </div>
+
+    <h4 class="fw-bold mb-2">
+        No Payment Record Found
+    </h4>
+
+    <p class="text-muted mb-4">
+        We couldn't find any payment record matching
+        <strong>"{{ query }}"</strong>.
+    </p>
+
+    <div>
+
+        <a href="{% url 'accounts:verify_payment' %}"
+           class="btn btn-primary rounded-pill px-4">
+
+            <i class="fas fa-search me-2"></i>
+
+            Search Again
+
+        </a>
+
+    </div>
+
+</div>
+    {% endif %}
+
+</div>
+
+{% endblock %}

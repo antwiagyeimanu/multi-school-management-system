@@ -1,0 +1,187 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% load custom_filters %}
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-dark text-white">
+            <h3>Mark Attendance</h3>
+            <p class="mb-0">{{ session.school_class.name }} | {{ session.subject.name }} | {{ session.date|date:"F d, Y" }}</p>
+        </div>
+        <div class="card-body">
+           <form method="POST">
+    {% csrf_token %}
+    <h1 style="color: red;">TEST: {{ existing }}</h1>
+                <table class="table table-bordered" style="table-layout: fixed; width: 100%">
+    <colgroup>
+        <col style="width: 30%">  <!-- Student Name: more space -->
+        <col style="width: 45%">  <!-- Status: less space -->
+    </colgroup>
+    <thead>
+        <tr>
+            <th style="color: black !important; font-weight: bold;">Student Name</th>
+            <th style="color: black !important; font-weight: bold;">Status</th>
+        </tr>
+    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td style="color: black !important; font-weight: bold;">{{ student.get_full_name }}</td>
+                            <td>
+                    <div class="status-options">
+                    <label class="custom-radio">
+                        <input type="radio" name="status_{{ student.id }}" value="P" required>
+                        <span class="radio-mark"></span>
+                        <span class="status-label success">Present</span>
+                    </label>
+                    
+                    <label class="custom-radio">
+                        <input type="radio" name="status_{{ student.id }}" value="A" required>
+                        <span class="radio-mark"></span>
+                        <span class="status-label danger">Absent</span>
+                    </label>
+                    
+                    <label class="custom-radio">
+                        <input type="radio" name="status_{{ student.id }}" value="L" required>
+                        <span class="radio-mark"></span>
+                        <span class="status-label warning">Late</span>
+                    </label>
+                    
+                    <label class="custom-radio">
+                        <input type="radio" name="status_{{ student.id }}" value="E" required>
+                        <span class="radio-mark"></span>
+                        <span class="status-label purple">Excused</span>
+                    </label>
+                </div>
+
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="2">No students found in this class.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <button type="submit" class="btn btn-primary">Save Attendance</button>
+                <a href="{% url 'accounts:attendance_report' %}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+<style>
+/* Strong table borders */
+.table, 
+.table th, 
+.table td {
+    border: 2px solid #ccc !important;
+}
+
+/* Make borders clearer */
+.table th {
+    border-bottom: 2px solid #bbb !important;
+}
+
+
+/* 🔥 Make ALL table text bigger (header + body) */
+.table th,
+.table td {
+    font-size: 20px !important;
+    font-weight: 600;
+}
+
+/* Let long names use their space and wrap nicely */
+.table td:first-child {
+    word-wrap: break-word;
+    white-space: normal;
+}
+
+/* Keep status buttons from wrapping */
+.table td:last-child {
+    white-space: nowrap;
+}
+.status-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.custom-radio {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin-bottom: 0;
+}
+
+/* Hide the real radio */
+.custom-radio input {
+    display: none;
+}
+
+/* The round checkmark circle */
+.radio-mark {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    margin-right: 2px;
+    position: relative;
+    background: #fff;
+    flex-shrink: 0;
+}
+
+/* Add the tick when checked */
+.custom-radio input:checked + .radio-mark::after {
+    content: '✓';
+    position: absolute;
+    top: -8px;
+    left: 2px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #1f02d7;
+}
+
+/* The colored box around the text */
+.status-label {
+    padding: 4px 12px;
+    border: 1px solid;
+    border-radius: 6px;
+    font-weight: bold;
+}
+
+/* Colors for each status box */
+.status-label.success {
+    color: #198754;
+    border-color: #198754;
+}
+.status-label.danger {
+    color: #dc3545;
+    border-color: #dc3545;
+}
+.status-label.warning {
+    color: #ffc107;
+    border-color: #ffc107;
+}
+.status-label.purple {
+    color: #6f42c1;
+    border-color: #6f42c1;
+}
+
+/* Fill the box when selected */
+.custom-radio input:checked ~ .status-label.success {
+    background-color: #198754;
+    color: #fff;
+}
+.custom-radio input:checked ~ .status-label.danger {
+    background-color: #dc3545;
+    color: #fff;
+}
+.custom-radio input:checked ~ .status-label.warning {
+    background-color: #ffc107;
+    color: #000;
+}
+.custom-radio input:checked ~ .status-label.purple {
+    background-color: #6f42c1;
+    color: #fff;
+    
+}
+
+</style>
+{% endblock %}

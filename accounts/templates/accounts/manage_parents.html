@@ -1,0 +1,825 @@
+{% extends "accounts/base.html" %}
+{% load static %}
+
+{% block content %}
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+
+<style>
+
+/* PAGE */
+.parent-page{
+    background:#f8fafc;
+    min-height:100vh;
+    padding:25px;
+}
+
+
+/* HEADER */
+.parent-header{
+
+    background:linear-gradient(
+        135deg,
+        #2563eb,
+        #1e40af
+    );
+
+    color:white;
+    padding:35px;
+    border-radius:24px;
+    margin-bottom:25px;
+    box-shadow:0 15px 35px rgba(37,99,235,.25);
+
+}
+
+
+.parent-header h1{
+
+    margin:0;
+    font-size:34px;
+    font-weight:900;
+
+}
+
+
+.parent-header p{
+
+    margin-top:10px;
+    opacity:.85;
+    font-size:17px;
+
+}
+
+
+/* SUMMARY CARD */
+
+.parent-summary{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:white;
+    padding:20px 25px;
+    border-radius:18px;
+    margin-bottom:25px;
+    box-shadow:0 8px 25px rgba(0,0,0,.06);
+
+}
+
+
+.parent-summary h3{
+
+    margin:0;
+    font-size:22px;
+    font-weight:800;
+    color:#111827;
+
+}
+
+
+
+/* GRID */
+
+.parent-grid {
+
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:25px;
+
+}
+
+
+
+@media(max-width:900px){
+
+    .parent-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+
+    .parent-page{
+
+        padding:15px;
+
+    }
+
+
+    .parent-header h1{
+
+        font-size:26px;
+
+    }
+
+}
+
+
+
+/* CARD */
+
+.parent-card{
+
+    background:white;
+    border-radius:24px;
+    overflow:hidden;
+    border:1px solid #e5e7eb;
+    box-shadow:0 8px 25px rgba(0,0,0,.08);
+    transition:.3s;
+
+}
+
+
+.parent-card:hover{
+
+    transform:translateY(-5px);
+    box-shadow:0 15px 35px rgba(37,99,235,.18);
+
+}
+
+
+
+/* PHOTO */
+
+.card-photo-section{
+
+    background:linear-gradient(
+        135deg,
+        #3b82f6,
+        #1d4ed8
+    );
+
+    padding:25px;
+    text-align:center;
+
+}
+
+
+
+.card-photo-section img{
+
+    width:100px;
+    height:100px;
+    border-radius:50%;
+    object-fit:cover;
+    border:5px solid white;
+
+}
+
+
+
+/* INFO */
+
+.card-info-section{
+
+    padding:25px;
+
+}
+
+
+.parent-name{
+
+    font-size:24px;
+    font-weight:900;
+    color:#111827;
+    margin-bottom:20px;
+
+}
+
+
+
+.info-row{
+
+    display:flex;
+    gap:10px;
+    margin-bottom:12px;
+    font-size:15px;
+
+}
+
+
+.info-row .label{
+
+    width:100px;
+    font-weight:800;
+    color:#6b7280;
+
+}
+
+
+.info-row .value{
+
+    font-weight:600;
+    color:#111827;
+    word-break:break-word;
+
+}
+
+
+
+/* BUTTONS */
+
+.card-buttons-section{
+
+    padding:20px;
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+
+}
+
+
+.btn-big{
+
+    padding:12px;
+    border-radius:12px;
+    text-align:center;
+    text-decoration:none;
+    font-weight:800;
+
+}
+
+
+.btn-view{
+    background:#2563eb;
+    color:white;
+}
+
+
+.btn-edit{
+    background:#f97316;
+    color:white;
+}
+
+
+.btn-link{
+    background:#10b981;
+    color:white;
+}
+
+
+
+@media(max-width:500px){
+
+.card-buttons-section{
+
+    grid-template-columns:1fr;
+
+}
+
+
+.info-row{
+
+    flex-direction:column;
+    gap:3px;
+
+}
+
+
+.info-row .label{
+
+    width:auto;
+
+}
+
+}
+
+
+</style>
+
+
+
+<div class="parent-page">
+
+
+<div class="parent-header">
+
+<h1>
+👨‍👩‍👧 Manage Parents
+</h1>
+
+<p>
+Manage parents, guardians and their linked students.
+</p>
+
+</div>
+
+
+<div class="parent-summary">
+
+<h3>
+Total Parents: {{ parents.paginator.count }}
+</h3>
+
+
+<a href="{% url 'accounts:deactivated_parents' %}" 
+class="btn btn-secondary">
+
+View Deactivated
+
+</a>
+
+
+</div>
+
+
+<div class="parent-grid">
+
+   {% for parent in parents %}
+
+<div class="parent-card">
+
+
+    <!-- PHOTO -->
+    <div class="card-photo-section">
+
+        {% if parent.photo %}
+
+            <img src="{{ parent.photo.url }}">
+
+        {% else %}
+
+            <img src="https://ui-avatars.com/api/?name={{ parent.first_name }}+{{ parent.last_name }}&background=2563eb&color=fff">
+
+        {% endif %}
+
+    </div>
+
+
+
+    <!-- INFORMATION -->
+
+    <div class="card-info-section">
+
+
+        <h2 class="parent-name">
+
+            {{ parent.first_name }} {{ parent.last_name }}
+
+        </h2>
+
+
+
+        <div class="info-row">
+
+            <span class="label">
+                Username:
+            </span>
+
+            <span class="value">
+                {{ parent.username }}
+            </span>
+
+        </div>
+
+
+
+        <div class="info-row">
+
+            <span class="label">
+                Phone:
+            </span>
+
+            <span class="value">
+                {{ parent.phone|default:"N/A" }}
+            </span>
+
+        </div>
+
+
+
+        <div class="info-row">
+
+            <span class="label">
+                Email:
+            </span>
+
+            <span class="value">
+                {{ parent.email|default:"N/A" }}
+            </span>
+
+        </div>
+
+
+
+        <div class="info-row">
+
+            <span class="label">
+                Status:
+            </span>
+
+
+            <span class="value"
+            style="color:{% if parent.is_active %}#16a34a{% else %}#dc2626{% endif %};">
+
+                {% if parent.is_active %}
+                    Active
+                {% else %}
+                    Inactive
+                {% endif %}
+
+            </span>
+
+        </div>
+
+
+
+        <div class="info-row">
+
+            <span class="label">
+                Joined:
+            </span>
+
+            <span class="value">
+                {{ parent.date_joined|date:"M d, Y" }}
+            </span>
+
+        </div>
+
+
+
+        <div class="info-row">
+
+            <span class="label">
+                Students:
+            </span>
+
+            <span class="value">
+                {{ parent.student_links.count }}
+            </span>
+
+        </div>
+
+
+    </div>
+
+
+
+
+    <!-- ACTION BUTTONS -->
+
+    <div class="card-buttons-section">
+
+
+        <a href="{% url 'accounts:view_parent' parent.id %}" 
+           class="btn-big btn-view">
+
+            View
+
+        </a>
+
+
+
+        <a href="{% url 'accounts:edit-parent' parent.id %}" 
+           class="btn-big btn-edit">
+
+            Edit
+
+        </a>
+
+
+
+        <a href="{% url 'accounts:link-students-to-parent' parent.id %}" 
+           class="btn-big btn-link">
+
+            Link
+
+        </a>
+
+
+
+        <button type="button"
+        onclick="openDeleteModal('{% url 'accounts:delete_parent' parent.id %}', '{{ parent.get_full_name }}', 'Parent')"
+        class="btn-big"
+        style="background:#dc2626;color:white;border:none;cursor:pointer;">
+
+            Deactivate
+
+        </button>
+
+
+    </div>
+
+
+</div>
+
+
+{% empty %}
+
+<p style="text-align:center;">
+    No parents found.
+</p>
+
+
+{% endfor %}
+
+</div>
+<!-- PAGINATION -->
+
+<div class="pagination-box">
+
+
+    {% if parents.has_previous %}
+
+    <a href="?page={{ parents.previous_page_number }}&q={{ search_query }}"
+       class="page-btn">
+
+        ← Previous
+
+    </a>
+
+    {% endif %}
+
+
+
+    <span class="page-info">
+
+        Page {{ parents.number }} of {{ parents.paginator.num_pages }}
+
+    </span>
+
+
+
+    {% if parents.has_next %}
+
+    <a href="?page={{ parents.next_page_number }}&q={{ search_query }}"
+       class="page-btn">
+
+        Next →
+
+    </a>
+
+    {% endif %}
+
+
+</div>
+
+
+<style>
+
+.pagination-box{
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:20px;
+    margin:40px 0;
+    flex-wrap:wrap;
+
+}
+
+
+.page-btn{
+
+    background:#2563eb;
+    color:white;
+    padding:12px 22px;
+    border-radius:12px;
+    text-decoration:none;
+    font-weight:700;
+
+}
+
+
+.page-info{
+
+    background:white;
+    padding:12px 20px;
+    border-radius:12px;
+    font-weight:800;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+
+}
+
+
+</style>
+</div>
+<script>
+    setTimeout(function() {
+        var msg = document.getElementById("msg");
+        if (msg) {
+            msg.style.display = "none";
+        }
+    }, 10000);
+</script>
+<!-- DELETE MODAL -->
+
+<div id="deleteModal" class="delete-overlay">
+
+
+    <div class="delete-box">
+
+
+        <h3>
+            Deactivate Parent
+        </h3>
+
+
+        <p id="deleteModalText">
+            Are you sure?
+        </p>
+
+
+
+        <form id="deleteForm" method="POST">
+
+            {% csrf_token %}
+
+
+            <div class="delete-actions">
+
+
+                <button type="submit" class="confirm-delete">
+
+                    Yes, Deactivate
+
+                </button>
+
+
+
+                <button type="button"
+                        onclick="closeDeleteModal()"
+                        class="cancel-delete">
+
+                    Cancel
+
+                </button>
+
+
+            </div>
+
+
+        </form>
+
+
+    </div>
+
+
+</div>
+
+
+
+<style>
+
+.delete-overlay{
+
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.55);
+    z-index:9999;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+
+}
+
+
+
+.delete-box{
+
+    background:white;
+    width:420px;
+    max-width:100%;
+    padding:30px;
+    border-radius:20px;
+    text-align:center;
+    box-shadow:0 20px 50px rgba(0,0,0,.25);
+
+}
+
+
+
+.delete-box h3{
+
+    color:#dc2626;
+    font-size:24px;
+    font-weight:900;
+
+}
+
+
+
+.delete-box p{
+
+    color:#4b5563;
+    margin:20px 0;
+    font-size:16px;
+
+}
+
+
+
+.delete-actions{
+
+    display:flex;
+    gap:12px;
+
+}
+
+
+
+.confirm-delete,
+.cancel-delete{
+
+    flex:1;
+    padding:12px;
+    border:none;
+    border-radius:12px;
+    font-weight:800;
+    cursor:pointer;
+
+}
+
+
+
+.confirm-delete{
+
+    background:#dc2626;
+    color:white;
+
+}
+
+
+
+.cancel-delete{
+
+    background:#6b7280;
+    color:white;
+
+}
+
+
+
+@media(max-width:500px){
+
+.delete-actions{
+
+    flex-direction:column;
+
+}
+
+}
+
+</style>
+
+
+
+<script>
+
+
+setTimeout(function(){
+
+    var msg = document.getElementById("msg");
+
+    if(msg){
+
+        msg.style.display="none";
+
+    }
+
+},10000);
+
+
+
+function openDeleteModal(url, name, type){
+
+
+    document.getElementById('deleteForm').action = url;
+
+
+    let displayType = type.toLowerCase() === 'class' ? 'classes' : type;
+
+
+
+    document.getElementById('deleteModalText').innerHTML =
+
+    `Deactivate <strong>${name}</strong>? They will be removed from all ${displayType} and cannot log in. Past records will be kept.`;
+
+
+
+    document.getElementById('deleteModal').style.display='flex';
+
+
+}
+
+
+
+function closeDeleteModal(){
+
+    document.getElementById('deleteModal').style.display='none';
+
+}
+
+
+</script>
+
+
+{% endblock %}

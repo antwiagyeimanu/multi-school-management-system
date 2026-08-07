@@ -1,0 +1,281 @@
+from django.urls import path
+from .views import dashboard_dispatcher
+
+from .views import (
+    
+    login_view, logout_view, signup_view, dashboard, download_class_defaulters_pdf, parent_payment_history, deactivated_students,
+    manage_students, add_student, edit_student, delete_student, assign_student_class, student_payment_history,
+    manage_teachers_grid, edit_teacher, delete_teacher, apply_fee_structure, save_student_remark, reject_manual_payment,
+    manage_users, edit_user, delete_user, generate_report_excel, expense_list, mark_announcements_read, approve_manual_payment,
+    manage_parents, edit_parent, delete_parent, download_defaulters_pdf, print_student_report, my_children, parent_notifications,
+    teacher_classes, teacher_student_list, report_filters, generate_fees_for_term, school_payment_settings, teacher_notifications,
+    student_performance_report, teacher_attendance_report, fee_structure_settings, reactivate_teacher,  #get_notification_count,
+    view_student_subjects, view_student_results, view_student_fees, edit_expense,  delete_event, student_terminal_report,
+    view_child_results, view_child_fees, view_child_progress, edit_student_fee, class_remarks_list, submit_manual_payment,
+    send_message, system_settings, view_reports, generate_report, verify_expense, manage_timetable, pending_payments, reactivate_student,
+    add_result, assign_subject, add_teacher, all_students_fees_list, receipt_pdf, accountant_profile, parent_attendance,
+    add_parent, view_student, export_students_excel, view_teacher, add_class,  verify_payment, link_students_to_parent,
+    export_teachers_excel, edit_assignment, delete_assignment, test_view, teacher_published_results, parent_timetable, break_edit,
+    assign_teacher, manage_assignments, admin_dashboard, teacher_dashboard, change_password, fee_history, notifications_list, 
+    student_dashboard, parent_dashboard, teacher_assignments, upload_result, admin_profile, fee_list_page, edit_announcement, 
+    teacher_results, upload_results_list, profile_view, edit_result, attendance_report, edit_event, pending_payment_detail,
+    mark_attendance, add_subject_to_class, admin_classes, delete_class, edit_class, class_detail, reactivate_parent, void_transaction, 
+    assign_teacher_subject, subject_list, delete_subject, edit_subject, view_receipt, deactivated_teachers, delete_announcement,
+    assigned_teachers_list, assign_students_to_class, school_settings, attendance_mark, create_announcement, student_notifications, 
+     attendance_detail, student_results_table_view, student_fees_list, payment_history, acknowledge_announcement, admin_fee_monitoring,
+     submit_results_to_admin, remove_student_subject, edit_student_assignment, view_students_by_class, deactivated_parents,  mark_teacher_attendance,
+     view_students_in_class, add_subjects_to_class, student_profile, student_subject_progress, verify_paystack_payment, teacher_check_out,
+     download_results_pdf, student_attendance, export_attendance_excel, admin_review_results, toggle_student_login, student_attendance_report,
+     approve_result, return_result, teacher_profile, add_subject_to_student, edit_student_grade, all_results, add_subject, teacher_check_in, 
+    results_by_class, results_by_subject, results_detail, view_student_grades,  print_class_report, view_parent, edit_teacher_attendance,
+    term_settings, set_active_term, edit_term, timetable_manager_create_timetable,  timetable_manager_delete, school_sms_settings,
+    student_timetable,  delete_term, timetable_manager_edit, record_payment, add_expense, set_student_fee, accountant_notifications,
+    add_calendar_event, calendar_list, teacher_timetable, accountant_dashboard, add_accountant, manage_accountant_grid,
+    view_accountant, edit_accountant, delete_accountant, deactivated_accountants, reactivate_accountant, my_attendance,
+)
+print(">>> ACCOUNTS URLS FILE LOADED")
+app_name = "accounts"
+
+urlpatterns = [
+
+    
+    # Auth
+path('term/edit/<int:pk>/', edit_term, name='edit_term'),
+path('term/delete/<int:pk>/', delete_term, name='delete_term'),    
+path('term-settings/', term_settings, name='term_settings'),
+path('communication/announcements/', create_announcement, name='create_announcement'),
+path('acknowledge/<int:pk>/', acknowledge_announcement, name='acknowledge_announcement'),
+path('activate-term/', set_active_term, name='activate_term_default'),
+path('activate-term/<int:ca>/<int:exam>/', set_active_term, name='activate_term'),
+path('subject/add/', add_subject, name='add_subject'), 
+path('class/<int:class_id>/add-subjects/', add_subject_to_class, name='add_subject_to_class'),
+path('classes/', admin_classes, name='admin_classes'),
+path('class/edit/<int:pk>/', edit_class, name='edit_class'),
+path('class/delete/<int:pk>/', delete_class, name='delete_class'),
+path('admin/class/<int:pk>/', class_detail, name='class_detail'),
+path('assign-teacher-subject/', assign_teacher_subject, name='assign_teacher_subject'),
+path('subjects/', subject_list, name='subject_list'),
+path('mark-announcements-read/', mark_announcements_read, name='mark_announcements_read'),
+path('subjects/<int:pk>/edit/', edit_subject, name='edit_subject'),        
+path('subjects/<int:pk>/delete/', delete_subject, name='delete_subject'),  
+path('teacher-assignments/', teacher_assignments, name='teacher_assignments'),
+path('assignment/<int:id>/edit/', edit_assignment, name='edit_assignment'),
+path('assignment/<int:id>/delete/', delete_assignment, name='delete_assignment'),
+path('assigned-teachers/', assigned_teachers_list, name='assigned_teachers_list'),
+path('assignments/<int:id>/edit/', edit_assignment, name='edit_assignment'),
+path('school/settings/', school_settings, name='school_settings'),
+path('attendance/report/', attendance_report, name='attendance_report'), 
+path('attendance/mark/', mark_attendance, name='mark_attendance'), # <-- ADD THIS
+path('attendance/detail/<int:session_id>/', attendance_detail, name='attendance_detail'),
+path('students/', view_students_by_class, name='view-students-by-class'),
+path('change-password/', change_password, name='change-password'),
+path('admin-dashboard/',admin_dashboard, name='admin_dashboard'),
+path('student/dashboard/', student_dashboard, name='student_dashboard'),
+path('parent/dashboard/', parent_dashboard, name='parent_dashboard'),
+path('admin/review-results/', admin_review_results, name='admin_review_results'),
+path('admin/result/<int:pk>/approve/', approve_result, name='approve_result'),
+path('admin/result/<int:pk>/return/', return_result, name='return_result'),
+path('print-class-report/<int:class_id>/',print_class_report,name='print_class_report'),
+path('timetable/manage/create/', timetable_manager_create_timetable, name='timetable_create'),
+path('timetable/manage/delete/<int:timetable_id>/', timetable_manager_delete, name='timetable_delete'),
+path('timetable/manage/edit/<int:timetable_id>/', timetable_manager_edit, name='timetable_manager_edit'),
+path('add-accountant/', add_accountant, name='add_accountant'),
+path('deactivated-accountants/', deactivated_accountants, name='deactivated_accountants'),
+path('reactivate-accountant/<int:user_id>/', reactivate_accountant, name='reactivate_accountant'),
+path('fee-structure-settings/', fee_structure_settings, name='fee_structure_settings'),
+path('student-fees/edit/<int:fee_id>/', edit_student_fee, name='edit_student_fee'),
+path('expenses/verify/<int:pk>/', verify_expense, name='verify_expense'),
+path('print-student-report/<int:student_id>/', print_student_report, name='print_student_report'),
+path('save-remark/<int:student_id>/', save_student_remark, name='save_student_remark'),
+path('class-remarks/', class_remarks_list, name='class_remarks_list'),
+path('toggle-student-login/<int:student_id>/', toggle_student_login, name='toggle-student-login'),
+path('admin/profile/', admin_profile, name='admin_profile'),
+path('deactivated-teachers/', deactivated_teachers, name='deactivated_teachers'),
+path('reactivate-teacher/<int:user_id>/', reactivate_teacher, name='reactivate_teacher'),
+path('fees/verify/', verify_paystack_payment, name='verify_paystack_payment'),
+path('fee/<int:fee_id>/history/', fee_history, name='fee_history'),
+path('parent/<int:parent_id>/link-students/', link_students_to_parent, name='link-students-to-parent'),
+path('parent/<int:parent_id>/', view_parent, name='view_parent'),
+path('deactivated-parents/', deactivated_parents, name='deactivated_parents'),
+path('reactivate-parent/<int:user_id>/', reactivate_parent, name='reactivate_parent'),
+path('notifications/', notifications_list, name='notifications'),
+path('communication/announcements/<int:pk>/delete/', delete_announcement, name='delete_announcement'),
+path('communication/announcements/<int:pk>/edit/', edit_announcement, name='edit_announcement'),
+path('settings/sms/', school_sms_settings, name='school_sms_settings'),
+path('admin-monitoring/', admin_fee_monitoring, name='admin_fee_monitoring'),
+path('void/<int:txn_id>/', void_transaction, name='void_transaction'),
+path('reports/student-attendance/', student_attendance_report, name='student_attendance_report'),
+path('reports/teacher-attendance/', teacher_attendance_report, name='teacher_attendance_report'),
+path('teacher-attendance/mark/', mark_teacher_attendance, name='mark_teacher_attendance'),
+path("teacher-attendance/edit/<int:attendance_id>/", edit_teacher_attendance, name="edit-teacher-attendance"),
+path('timetable/manage/break/edit/<int:break_id>/', break_edit, name='break_edit'),
+
+
+#path('api/notifications/count/', get_notification_count, name='notif_count'),
+
+path("calendar/edit/<int:pk>/", edit_event, name="edit_event"),
+path("calendar/delete/<int:pk>/", delete_event, name="delete_event"),
+
+path('calendar/', calendar_list, name='calendar_list'),
+path('calendar/add/', add_calendar_event, name='add_event'),
+path('dashboard/', dashboard_dispatcher, name='dashboard'),  
+    
+    path('', dashboard, name='home'),
+# Auth
+path('login/', login_view, name='login'),
+path('logout/', logout_view, name='logout'),  
+path('signup/', signup_view, name='signup'),
+
+
+        #PROFILE
+        path('profile/', profile_view, name='profile'),
+
+
+   # Admin - Students
+    path("students/deactivated/<int:class_id>/", deactivated_students, name="deactivated-students",),
+    path('students/reactivate/<int:student_id>/', reactivate_student, name='reactivate-student'),
+    path('students/add/', add_student, name='add-student'),  
+    path('students/edit/<int:student_id>/', edit_student, name='edit-student'),
+    path('students/view/<int:student_id>/', view_student, name='view-student'), 
+    path('students/delete/<int:student_id>/', delete_student, name='delete-student'),
+    path('students/export/', export_students_excel, name='export-students-excel'),
+    path('classes/add/', add_class, name='add-class'),
+    path('student/<int:student_id>/remove-subject/<int:subject_id>/', remove_student_subject, name='remove_student_subject'),
+    path('student-assignment/<int:id>/edit/', edit_student_assignment, name='edit_student_assignment'),
+    path('students/', view_students_by_class, name='view-students-by-class'),
+    path('students/list/', manage_students, name='manage-students'),
+    path('students/class/<int:class_id>/', view_students_in_class, name='view-students-in-class'),
+    path('add-subjects-to-class/', add_subjects_to_class, name='add_subjects_to_class'),    
+    path('student/<int:student_id>/add-subject/', add_subject_to_student, name='add_subject_to_student'),
+    path('student/<int:student_id>/grades/', view_student_grades, name='view-student-grades'),
+    path('grade/<int:assignment_id>/edit/', edit_student_grade, name='edit_student_grade'),
+    path('academics/all-results/', all_results, name='all_results'),
+    path('academics/results/', results_by_class, name='results_by_class'),
+    path('academics/results/class/<int:class_id>/', results_by_subject, name='results_by_subject'), 
+    path('academics/results/class/<int:class_id>/subject/<int:subject_id>/', results_detail, name='results_detail'),
+    path("timetable/manage/", manage_timetable, name="manage_timetable"),
+    path('settings/payment/', school_payment_settings, name='school_payment_settings'),
+    path('finance/fees/', fee_list_page, name='finance_fee_list'),
+
+
+
+
+    # Admin - Teachers
+    path('manage-accountants/', manage_accountant_grid, name='manage_accountant_grid'),
+    path('accountant/<int:accountant_id>/', view_accountant, name='view_accountant'),
+    path('accountant/<int:accountant_id>/edit/', edit_accountant, name='edit_accountant'),
+    path('accountant/<int:accountant_id>/delete/', delete_accountant, name='delete_accountant'),
+    path('teachers/', manage_teachers_grid, name='manage-teachers-grid'),
+    path('teachers/add/', add_teacher, name='add-teacher'),
+    path('teachers/edit/<int:teacher_id>/', edit_teacher, name='edit-teacher'),
+    path('teachers/delete/<int:teacher_id>/', delete_teacher, name='delete-teacher'),
+    path('teachers/<int:teacher_id>/assign-subject/', assign_subject, name='assign-subject'),
+    path('teachers/view/<int:teacher_id>/', view_teacher, name='view-teacher'),
+    path('teachers/edit-assignment/<int:id>/', edit_assignment, name='edit-assignment'),
+    path('teachers/delete-assignment/<int:id>/', delete_assignment, name='delete-assignment'),
+    path('teachers/export/', export_teachers_excel, name='export-teachers-excel'),
+    path('assign-teacher/<int:teacher_id>/', assign_teacher, name='assign-teacher'),
+    path('assignments/', manage_assignments, name='manage_assignments'),
+    path('teacher/timetable/', teacher_timetable, name='teacher_timetable'),
+    
+
+    # Admin - Users
+    path('users/', manage_users, name='manage-users'),
+    path('users/edit/<int:user_id>/', edit_user, name='edit-user'),
+    path('users/delete/<int:user_id>/', delete_user, name='delete-user'),
+
+    # Admin - Parents
+    path('parents/', manage_parents, name='manage-parents'),
+    path('parents/edit/<int:parent_id>/', edit_parent, name='edit-parent'),
+   path('parents/delete/<int:parent_id>/',delete_parent, name='delete_parent'),
+    path('parents/add/', add_parent, name='add-parent'),
+    path('parent/notifications/', parent_notifications, name='parent_notifications'),
+    # Reports & System
+    path('view-reports/', view_reports, name='view-reports'),
+    path('system-settings/', system_settings, name='system-settings'),
+    path('add-result/', add_result, name='add-result'),
+
+    # Teacher views
+    path('teacher/dashboard/', teacher_dashboard, name='teacher-dashboard'),
+    path('teacher/assignments/', teacher_assignments, name='teacher-assignments'),
+    path('teacher/classes/', teacher_classes, name='teacher-classes'),
+    path('teacher/upload-results/<int:class_id>/<int:subject_id>/', upload_result, name='teacher-upload-results'),
+    path('teacher/student-list/', teacher_student_list, name='teacher-student-list'),
+    path('teacher/student-performance/', student_performance_report, name='student-performance-report'),
+    path('teacher/results/', teacher_results, name='teacher-results'),
+    path( 'teacher/upload-results/', upload_results_list, name='upload-results-list'),
+    path('teacher/edit-result/<int:pk>/', edit_result, name='edit-result'),
+    path('teacher/assign-to-class/', assign_students_to_class, name='assign_students_to_class'),
+    path('results-table/', student_results_table_view, name='results_table'),
+    path('teacher/submit-results/', submit_results_to_admin, name='submit_results_to_admin'),
+    path('attendance/export/<int:session_id>/', export_attendance_excel, name='export_attendance'),
+    path('teacher/profile/<int:user_id>/', teacher_profile, name='teacher_profile'),
+    path('teacher/published-results/',teacher_published_results,name='teacher_published_results'),
+    path('teacher/notifications/', teacher_notifications, name='teacher_notifications'),
+    path("my-attendance/", my_attendance, name="my-attendance",),
+    path("teacher/check-in/", teacher_check_in, name="teacher-check-in"),
+    path("teacher/check-out/",  teacher_check_out,  name="teacher-check-out"),
+    
+
+    # Student views
+    path('student/subjects/', view_student_subjects, name='view-student-subjects'),
+    path('student/results/', view_student_results, name='view-student-results'),
+    path('student/fees/', view_student_fees, name='view-student-fees'),
+    path('student/profile/', student_profile, name='student_profile'),
+    path('student-profile/<int:student_id>/', student_profile, name='student_profile_detail'),
+    path('results/download-pdf/', download_results_pdf, name='download_results_pdf'),
+    path('student/subject/<int:subject_id>/progress/', student_subject_progress, name='student_subject_progress'),
+    path('student/attendance/', student_attendance, name='student_attendance'),
+    path('student/timetable/', student_timetable, name='student_timetable'),
+   path('student/payment-history/', student_payment_history, name='student_payment_history'),
+   path('my-result/', student_terminal_report, name='my_result'),
+   path('student/notifications/', student_notifications, name='student_notifications'),
+
+
+
+    
+    # Parent views
+    path('parent/results/', view_child_results, name='view-child-results'),
+    path('parent/fees/', view_child_fees, name='view-child-fees'),
+    path('parent/progress/', view_child_progress, name='view-child-progress'),
+    path('parent/my-children/', my_children, name='my-children'),
+    path('parent/payment-history/', parent_payment_history, name='parent_payment_history'),
+    path('payment/manual/<int:student_fee_id>/', submit_manual_payment, name='submit_manual_payment'),
+    path('parent/timetable/', parent_timetable, name='parent_timetable'),
+    path('parent/attendance/', parent_attendance, name='parent_attendance'),
+
+
+    # Accountant 
+    path('accountant/', accountant_dashboard, name='accountant_dashboard'),
+    path('record-payment/<int:fee_id>/', record_payment, name='record_payment'),
+    path('add-expense/', add_expense, name='add_expense'),
+    path('student-fees/', student_fees_list, name='student_fees_list'),
+    path('set-fees/', set_student_fee, name='set_student_fee'),
+    path('fees/all-students/', all_students_fees_list, name='all_students_fees_list'),
+    path('payment-history/', payment_history, name='payment_history'),
+    path('generate-report/', generate_report, name='generate_report'),
+    path('report-filters/', report_filters, name='report_filters'),
+    path('generate-report-excel/', generate_report_excel, name='generate_report_excel'),
+    path('fees/defaulters/download-pdf/', download_defaulters_pdf, name='download_defaulters_pdf'),
+    path('fees/defaulters/class/<int:class_id>/download-pdf/', download_class_defaulters_pdf, name='download_class_defaulters_pdf'),
+    path('record-payment/', record_payment, name='record_payment_search'),  
+    path('apply-fees/', apply_fee_structure, name='apply_fee_structure'),
+    path('generate-fees/', generate_fees_for_term, name='generate_fees_for_term'),
+    path('receipt/<int:payment_id>/', view_receipt, name='view_receipt'),
+    path('receipt/<int:payment_id>/pdf/', receipt_pdf, name='receipt_pdf'),
+    path('expenses/', expense_list, name='expense_list'),
+    path('edit-expense/<int:pk>/', edit_expense, name='edit_expense'),
+    path('accountant/profile/',accountant_profile, name='accountant_profile'),
+    path('verify-payment/', verify_payment, name='verify_payment'),
+    path('pending-payments/', pending_payments, name='pending_payments'),
+    path('pending-payment/<int:payment_id>/', pending_payment_detail, name='pending_payment_detail'),
+    path('pending-payment/<int:payment_id>/approve/', approve_manual_payment, name='approve_manual_payment'),
+    path('pending-payment/<int:payment_id>/reject/', reject_manual_payment, name='reject_manual_payment'),
+    path('accountant/notifications/', accountant_notifications, name='accountant_notifications'),
+
+
+    # Messages
+    path('send-message/', send_message, name='send-message'),
+
+    path('test/', test_view),
+]

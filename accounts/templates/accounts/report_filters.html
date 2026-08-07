@@ -1,0 +1,30 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h3>Generate Financial Report</h3>
+    <form method="POST">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-4">
+                <label>Start Date</label>
+                <input type="date" name="start_date" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+                <label>End Date</label>
+                <input type="date" name="end_date" class="form-control" value="{{ today }}" required>
+            </div>
+            <div class="col-md-4">
+                <label>&nbsp;</label>
+                <div>
+                    <button type="submit" name="format" value="pdf" class="btn btn-primary">Generate PDF</button>
+                    <button type="submit" name="format" value="excel" class="btn btn-success">Generate Excel</button>
+                </div>
+            </div>
+        </div>
+    </form>
+    <hr>
+    <a href="{% url 'accounts:generate_report' %}" class="btn btn-secondary">
+        Or Generate Current Term Report
+    </a>
+</div>
+{% endblock %}

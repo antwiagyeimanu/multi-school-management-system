@@ -1,0 +1,967 @@
+{% extends "accounts/dashboard_base.html" %}
+
+{% block content %}
+<style>
+.table thead th {
+    background-color: #3b82f6!important;
+    color: #ffffff!important;
+    font-weight: 600;
+    border-color: #3b82f6!important;
+}
+
+.card-header {
+    background-color: #4b5563!important;
+    color: #ffffff!important;
+    font-weight: 600;
+}
+
+.btn-outline-secondary {
+    color: #404245;
+    border-color: #363739;
+}
+.btn-outline-secondary:hover {
+    background-color: #3b82f6;
+    color: white;
+}
+@media (max-width: 768px) {
+ .d-flex.justify-content-between {
+    flex-direction: column;
+    gap: 12px;
+  }
+ .d-flex.justify-content-between > div {
+    width: 100%!important;
+    justify-content: center!important;
+  }
+}
+/* ===========================
+   PREMIUM HERO
+=========================== */
+
+.hero-card{
+    background:linear-gradient(135deg,#4f46e5,#2563eb);
+    border-radius:24px;
+    padding:28px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    color:#fff;
+    box-shadow:0 18px 40px rgba(0,0,0,.12);
+    margin-bottom:28px;
+    flex-wrap:wrap;
+    gap:20px;
+}
+
+.hero-left{
+    display:flex;
+    align-items:center;
+    gap:18px;
+}
+
+.hero-icon{
+    width:70px;
+    height:70px;
+    border-radius:18px;
+    background:rgba(255,255,255,.18);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:30px;
+}
+
+.hero-title{
+    font-size:30px;
+    font-weight:800;
+    margin:0;
+}
+
+.hero-subtitle{
+    margin-top:6px;
+    opacity:.9;
+    font-size:15px;
+}
+
+.hero-badge{
+    background:#fff;
+    color:#2563eb;
+    padding:12px 22px;
+    border-radius:30px;
+    font-weight:700;
+}
+
+@media(max-width:768px){
+
+.hero-card{
+    text-align:center;
+    justify-content:center;
+}
+
+.hero-left{
+    flex-direction:column;
+}
+
+}
+/* ===========================
+   WEEK NAVIGATION
+=========================== */
+
+.week-navigation-card{
+
+    background:#fff;
+
+    border-radius:22px;
+
+    padding:24px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    box-shadow:0 10px 28px rgba(0,0,0,.06);
+
+    border:1px solid #eef2f7;
+
+    margin-bottom:25px;
+
+    gap:18px;
+
+}
+
+.week-center{
+
+    text-align:center;
+
+    flex:1;
+
+}
+
+.week-center h3{
+
+    font-size:24px;
+
+    font-weight:800;
+
+    margin:0;
+
+    color:#111827;
+
+}
+
+.week-badge{
+
+    display:inline-block;
+
+    background:#eef2ff;
+
+    color:#4f46e5;
+
+    padding:8px 18px;
+
+    border-radius:30px;
+
+    font-weight:700;
+
+}
+
+.week-nav-btn{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    padding:11px 18px;
+
+    border-radius:30px;
+
+    background:#f8fafc;
+
+    color:#2563eb;
+
+    text-decoration:none;
+
+    font-weight:700;
+
+    transition:.3s;
+
+}
+
+.week-nav-btn:hover{
+
+    background:#2563eb;
+
+    color:#fff;
+
+}
+
+@media(max-width:768px){
+
+.week-navigation-card{
+
+    flex-direction:column;
+
+    text-align:center;
+
+}
+
+}
+/* Premium Timetable Cards */
+.card{
+    transition:.25s ease;
+}
+
+.card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 18px 35px rgba(0,0,0,.10)!important;
+}
+
+.table tbody tr:hover{
+    background:#f8fbff;
+}
+
+.table td,
+.table th{
+    vertical-align:middle;
+}
+
+.badge{
+    font-size:.8rem;
+    border-radius:999px;
+}
+
+.table-primary th{
+    background:#4f46e5!important;
+    border-color:#4f46e5!important;
+    color:#fff!important;
+}
+
+.alert{
+    border-radius:0;
+    margin-bottom:0;
+}
+
+.card-body{
+    padding:1.4rem;
+}
+.child-card{
+    background:white;
+    border-radius:20px;
+    padding:16px;
+    display:flex;
+    align-items:center;
+    gap:15px;
+    position:relative;
+    border:2px solid #eef2f7;
+    transition:.3s;
+    box-shadow:0 6px 18px rgba(0,0,0,.05);
+}
+
+.child-card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 15px 30px rgba(0,0,0,.10);
+}
+
+.child-active{
+    border-color:#4f46e5;
+    background:#eef2ff;
+}
+
+.child-photo,
+.child-avatar{
+    width:65px;
+    height:65px;
+    border-radius:50%;
+    object-fit:cover;
+}
+
+.child-avatar{
+    background:linear-gradient(135deg,#4f46e5,#2563eb);
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:22px;
+    font-weight:800;
+}
+
+.child-info h6{
+    margin:0;
+    font-weight:800;
+    color:#111827;
+}
+
+.child-info p{
+    margin:4px 0;
+    color:#6b7280;
+    font-size:14px;
+}
+
+.child-info span{
+    font-size:12px;
+    color:#9ca3af;
+    font-weight:600;
+}
+
+.selected-badge{
+    position:absolute;
+    top:10px;
+    right:12px;
+    background:#4f46e5;
+    color:white;
+    padding:4px 10px;
+    border-radius:20px;
+    font-size:11px;
+    font-weight:700;
+}
+.week-navigation-card{
+
+    background:white;
+    border-radius:24px;
+    padding:25px;
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    gap:20px;
+
+    box-shadow:0 12px 30px rgba(0,0,0,.07);
+
+    border:1px solid #eef2f7;
+
+}
+
+
+.week-center{
+    text-align:center;
+    flex:1;
+}
+
+
+.week-center h3{
+
+    margin:0;
+    font-size:24px;
+    font-weight:800;
+    color:#111827;
+
+}
+
+
+.week-center p{
+
+    margin:8px 0;
+    color:#6b7280;
+    font-weight:600;
+
+}
+
+
+.week-badge{
+
+    display:inline-block;
+
+    background:#eef2ff;
+
+    color:#4f46e5;
+
+    padding:8px 18px;
+
+    border-radius:30px;
+
+    font-weight:700;
+
+}
+
+
+
+.week-nav-btn{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    padding:12px 20px;
+
+    border-radius:30px;
+
+    background:#f8fafc;
+
+    color:#2563eb;
+
+    text-decoration:none;
+
+    font-weight:700;
+
+    transition:.3s;
+
+}
+
+
+.week-nav-btn:hover{
+
+    background:#2563eb;
+    color:white;
+
+}
+
+
+.today-btn{
+
+    background:#4f46e5;
+    color:white;
+
+}
+
+
+
+@media(max-width:768px){
+
+.week-navigation-card{
+
+    flex-direction:column;
+
+}
+
+
+.week-center h3{
+
+    font-size:20px;
+
+}
+
+}
+.timetable-row{
+
+    transition:.25s;
+
+}
+
+
+.timetable-row:hover{
+
+    background:#f8fafc;
+
+}
+
+
+
+.period-pill{
+
+    background:#111827;
+
+    color:white;
+
+    padding:8px 14px;
+
+    border-radius:30px;
+
+    font-weight:700;
+
+    font-size:13px;
+
+}
+
+
+
+.subject-box{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+}
+
+
+
+.subject-icon{
+
+    width:38px;
+
+    height:38px;
+
+    border-radius:12px;
+
+    background:#eef2ff;
+
+    color:#4f46e5;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+}
+
+
+
+.teacher-box{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    color:#374151;
+
+    font-weight:600;
+
+}
+
+
+
+.teacher-box i{
+
+    color:#4f46e5;
+
+}
+
+
+
+.time-pill{
+
+    background:#ecfdf5;
+
+    color:#047857;
+
+    padding:8px 14px;
+
+    border-radius:30px;
+
+    font-size:13px;
+
+    font-weight:700;
+
+    white-space:nowrap;
+
+}
+@media(max-width:768px){
+
+    .table-responsive{
+        border-radius:16px;
+        overflow:hidden;
+    }
+
+
+    .table thead{
+        display:none;
+    }
+
+
+    .timetable-row{
+        display:block;
+        background:white;
+        margin-bottom:15px;
+        border-radius:18px;
+        box-shadow:0 6px 18px rgba(0,0,0,.06);
+        padding:15px;
+    }
+
+
+    .timetable-row td{
+
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+
+        border:0!important;
+
+        padding:10px!important;
+
+    }
+
+
+    .timetable-row td:before{
+
+        content:"";
+
+        font-weight:700;
+
+        color:#6b7280;
+
+    }
+
+
+    .subject-box{
+
+        justify-content:flex-end;
+
+    }
+
+
+    .teacher-box{
+
+        justify-content:flex-end;
+
+        text-align:right;
+
+    }
+
+
+    .week-nav-btn{
+
+        width:100%;
+
+        justify-content:center;
+
+    }
+
+
+    .week-navigation-card .d-flex{
+
+        width:100%;
+
+    }
+
+
+}
+.card,
+.child-card,
+.week-navigation-card,
+.hero-card{
+
+    animation:fadeUp .4s ease;
+
+}
+
+
+@keyframes fadeUp{
+
+from{
+    opacity:0;
+    transform:translateY(10px);
+}
+
+to{
+    opacity:1;
+    transform:translateY(0);
+}
+
+}
+</style>
+<div class="d-flex justify-content-between align-items-center mb-3">
+</div>
+
+{% if show_switcher %}
+<div id="child-switcher" class="mb-4">
+
+    <h6 class="fw-bold text-secondary mb-3">
+        <i class="fas fa-users me-2"></i>Select Child
+    </h6>
+
+    <div class="row g-3">
+
+    {% for child in children %}
+
+        <div class="col-md-6 col-lg-4">
+
+            <a href="?child={{ child.id }}&week={{ week_offset }}#child-switcher"
+               style="text-decoration:none;">
+
+                <div class="child-card
+                {% if selected_child.id == child.id %}
+                    child-active
+                {% endif %}">
+
+                    {% if child.photo %}
+
+                    <img src="{{ child.photo.url }}"
+                         class="child-photo">
+
+                    {% else %}
+
+                    <div class="child-avatar">
+                        {{ child.first_name|first }}{{ child.last_name|first }}
+                    </div>
+
+                    {% endif %}
+
+
+                    <div class="child-info">
+
+                        <h6>
+                            {{ child.first_name }} {{ child.last_name }}
+                        </h6>
+
+                        <p>
+                            {{ child.school_class.name|default:"No Class" }}
+                        </p>
+
+                        <span>
+                            ID: {{ child.student_number|default:"-" }}
+                        </span>
+
+                    </div>
+
+
+                    {% if selected_child.id == child.id %}
+                    <div class="selected-badge">
+                        Selected
+                    </div>
+                    {% endif %}
+
+
+                </div>
+
+            </a>
+
+        </div>
+
+    {% endfor %}
+
+    </div>
+
+</div>
+{% endif %}
+
+<div class="container">
+
+<div class="hero-card">
+    <div class="hero-left">
+        <div class="hero-icon"><i class="fas fa-calendar-alt"></i></div>
+        <div>
+            <h2 class="hero-title">Weekly Timetable</h2>
+            <div class="hero-subtitle">View your child's class timetable for the selected week.</div>
+        </div>
+    </div>
+    <div class="hero-badge">{{ selected_child.school_class.name|default:"No Class" }}</div>
+</div>
+
+<div class="week-navigation-card">
+
+    <a href="?child={{ selected_child.id }}&week={{ prev_week }}#child-switcher"
+       class="week-nav-btn">
+
+        <i class="fas fa-arrow-left"></i>
+        Previous
+
+    </a>
+
+
+    <div class="week-center">
+
+        <h3>
+            {{ selected_child.get_full_name }}'s Timetable
+        </h3>
+
+        <p>
+            <i class="fas fa-school me-1"></i>
+            {{ selected_child.school_class.name|default:"No Class" }}
+        </p>
+
+
+        <div class="week-badge">
+
+            {% if week_offset == 0 %}
+                <i class="fas fa-calendar-check me-1"></i>
+                Current Week • Week {{ active_week }}
+
+            {% elif week_offset > 0 %}
+
+                Week +{{ week_offset }}
+
+            {% else %}
+
+                Week {{ week_offset }}
+
+            {% endif %}
+
+        </div>
+
+
+        <div class="text-muted small mt-2">
+
+            {{ week_start|date:"M d, Y" }}
+            -
+            {{ week_end|date:"M d, Y" }}
+
+        </div>
+
+
+    </div>
+
+
+
+    <div class="d-flex gap-2">
+
+
+        {% if week_offset != 0 %}
+
+        <a href="?child={{ selected_child.id }}&week=0#child-switcher"
+           class="week-nav-btn today-btn">
+
+            Today
+
+        </a>
+
+        {% endif %}
+
+
+
+        <a href="?child={{ selected_child.id }}&week={{ next_week }}#child-switcher"
+           class="week-nav-btn">
+
+            Next
+            <i class="fas fa-arrow-right"></i>
+
+        </a>
+
+
+    </div>
+
+
+</div>
+
+    {% if not selected_child %}
+        <div class="alert alert-info text-center"><p class="mb-0">Please select a child to view timetable.</p></div>
+    {% elif not selected_child.school_class %}
+        <div class="alert alert-info text-center">
+            <h5>No class assigned</h5>
+            <p class="mb-0">{{ selected_child.get_full_name }} is not assigned to a class yet.</p>
+        </div>
+    {% elif not has_timetable %}
+        <div class="alert alert-warning text-center">
+            <h5>No timetable available</h5>
+            <p class="mb-0">There is no timetable record for {{ selected_child.school_class.name }} yet.</p>
+        </div>
+    {% else %}
+        {% for day in timetable_by_day %}
+        <div class="card border-0 shadow-lg mb-4" style="border-radius:22px; overflow:hidden;">
+
+    <div style="
+        background:{% if day.num == today_weekday %}
+        linear-gradient(135deg,#2563eb,#4f46e5)
+        {% else %}
+        linear-gradient(135deg,#475569,#374151)
+        {% endif %};
+        color:white;
+        padding:18px 24px;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+    ">
+
+        <div>
+            <h4 style="margin:0;font-weight:800;">{{ day.name }}</h4>
+            <small style="opacity:.9;">{{ day.date|date:"l, d M Y" }}</small>
+        </div>
+
+        {% if day.num == today_weekday %}
+        <span style="
+            background:white;
+            color:#2563eb;
+            padding:7px 16px;
+            border-radius:30px;
+            font-weight:700;
+            font-size:13px;
+        ">
+            TODAY
+        </span>
+        {% endif %}
+
+    </div>
+
+    {% if day.event %}
+    <div style="
+        background:{% if day.event.affects_timetable %}#fff7ed{% else %}#eff6ff{% endif %};
+        padding:16px;
+        text-align:center;
+        border-bottom:1px solid #e5e7eb;
+    ">
+        <h5 class="mb-1">
+            {% if day.event.affects_timetable %}
+                🎉 {{ day.event.name }}
+            {% else %}
+                📚 {{ day.event.name }}
+            {% endif %}
+        </h5>
+
+        {% if day.event.affects_timetable %}
+            <small>No classes scheduled</small>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="card-body p-4">
+                {% if day.entries %}
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-primary">
+                            <tr><th>Period</th><th>Subject</th><th>Teacher</th><th>Time</th></tr>
+                        </thead>
+                        <tbody>
+                        {% for entry in day.entries %}
+<tr class="timetable-row">
+
+    <td>
+        <span class="period-pill">
+            {{ entry.period|default:"-" }}
+        </span>
+    </td>
+
+    <td>
+        <div class="subject-box">
+            <div class="subject-icon">
+                <i class="fas fa-book"></i>
+            </div>
+
+            <strong>
+                {{ entry.subject.name }}
+            </strong>
+        </div>
+    </td>
+
+
+    <td>
+
+        <div class="teacher-box">
+
+            <i class="fas fa-user-tie"></i>
+
+            {{ entry.teacher.get_full_name|default:"No teacher assigned" }}
+
+        </div>
+
+    </td>
+
+
+    <td>
+
+        <span class="time-pill">
+
+            <i class="fas fa-clock me-1"></i>
+
+            {{ entry.start_time|time:"h:i A" }}
+            -
+            {{ entry.end_time|time:"h:i A" }}
+
+        </span>
+
+    </td>
+
+</tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% elif not day.event or not day.event.affects_timetable %}
+                <div class="text-center py-5">
+                    <i class="fas fa-calendar-times fa-3x text-secondary mb-3"></i>
+                    <h6 class="fw-bold text-secondary">No Classes Scheduled</h6>
+                    <p class="text-muted mb-0">Enjoy your day.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+</div>
+{% endblock%}

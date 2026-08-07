@@ -1,0 +1,1348 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block title %}My Fees{% endblock %}
+
+{% block content %}
+
+<style>
+
+/* ===============================
+   PREMIUM FEES PAGE
+================================ */
+
+.fees-page {
+
+    max-width:1200px;
+    margin:auto;
+    padding:25px 18px;
+    font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+    background:#f8fafc;
+    min-height:100vh;
+
+}
+
+
+
+/* SUCCESS MESSAGE */
+
+.payment-success {
+
+    background:#dcfce7;
+    border:2px solid #16a34a;
+    color:#166534;
+    padding:16px;
+    border-radius:16px;
+    margin-bottom:25px;
+    text-align:center;
+    font-weight:800;
+
+}
+
+
+
+/* HEADER */
+
+.fees-header {
+
+    background:
+    linear-gradient(
+        135deg,
+        #0f172a,
+        #1e3a8a
+    );
+
+    color:white;
+
+    border-radius:28px;
+
+    padding:35px;
+
+    margin-bottom:25px;
+
+    box-shadow:
+    0 15px 35px rgba(15,23,42,.18);
+
+}
+
+
+.fees-header h1 {
+
+    margin:0;
+
+    font-size:32px;
+
+    font-weight:900;
+
+}
+
+
+.fees-header p {
+
+    margin-top:10px;
+
+    opacity:.85;
+
+    font-size:16px;
+
+}
+
+
+
+
+
+/* TERM CARD */
+
+.term-card {
+
+    background:white;
+
+    border-radius:22px;
+
+    padding:25px;
+
+    margin-bottom:25px;
+
+    box-shadow:
+    0 10px 30px rgba(0,0,0,.06);
+
+}
+
+
+.term-title {
+
+    font-size:20px;
+
+    font-weight:900;
+
+    color:#111827;
+
+    margin-bottom:20px;
+
+}
+
+
+
+
+
+/* SUMMARY GRID */
+
+
+.fee-summary-grid {
+
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(3,1fr);
+
+    gap:20px;
+
+}
+
+
+
+
+
+.fee-summary-card {
+
+
+    border-radius:22px;
+
+    padding:25px;
+
+    color:white;
+
+    min-height:150px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    box-shadow:
+    0 12px 25px rgba(0,0,0,.12);
+
+    transition:.3s ease;
+
+}
+
+
+
+.fee-summary-card:hover {
+
+    transform:
+    translateY(-5px);
+
+}
+
+
+
+
+.fee-label {
+
+    font-size:13px;
+
+    font-weight:800;
+
+    text-transform:uppercase;
+
+    opacity:.85;
+
+}
+
+
+
+.fee-value {
+
+    font-size:30px;
+
+    font-weight:900;
+
+    margin-top:10px;
+
+}
+
+
+
+
+
+.total-fee {
+
+    background:
+    linear-gradient(
+    135deg,
+    #111827,
+    #334155);
+
+}
+
+
+
+.paid-fee {
+
+    background:
+    linear-gradient(
+    135deg,
+    #059669,
+    #047857);
+
+}
+
+
+
+
+.balance-fee {
+
+
+    {% if balance > 0 %}
+
+    background:
+    linear-gradient(
+    135deg,
+    #dc2626,
+    #991b1b);
+
+    {% else %}
+
+    background:
+    linear-gradient(
+    135deg,
+    #16a34a,
+    #15803d);
+
+    {% endif %}
+
+}
+
+
+
+
+
+
+.due-date {
+
+
+    margin-top:20px;
+
+    background:#f1f5f9;
+
+    border-radius:14px;
+
+    padding:14px;
+
+    text-align:center;
+
+    font-weight:800;
+
+    color:#334155;
+
+}
+
+
+
+
+/* MOBILE */
+
+@media(max-width:900px){
+
+
+.fee-summary-grid {
+
+grid-template-columns:
+1fr;
+
+}
+
+
+.fees-header {
+
+padding:25px;
+
+}
+
+
+.fees-header h1 {
+
+font-size:25px;
+
+}
+
+
+}
+
+
+@media(max-width:600px){
+
+
+.fees-page {
+
+padding:15px 10px;
+
+}
+
+
+.term-card {
+
+padding:18px;
+
+}
+
+
+.fee-summary-card {
+
+padding:20px;
+
+}
+
+
+.fee-value {
+
+font-size:25px;
+
+}
+
+
+}
+/* ======================
+   PREMIUM FEE SECTIONS
+====================== */
+
+
+.premium-section{
+
+background:white;
+border-radius:24px;
+padding:25px;
+margin-top:25px;
+box-shadow:
+0 10px 30px rgba(0,0,0,.06);
+
+}
+
+
+
+.section-title{
+
+font-size:22px;
+font-weight:900;
+text-align:center;
+margin-bottom:20px;
+
+}
+
+
+
+
+
+.breakdown-toggle{
+
+width:100%;
+border:none;
+background:#111827;
+color:white;
+padding:16px;
+border-radius:15px;
+font-weight:800;
+font-size:16px;
+display:flex;
+justify-content:space-between;
+
+}
+
+
+
+.breakdown-content{
+
+display:none;
+margin-top:15px;
+
+}
+
+
+
+.breakdown-content.show{
+
+display:block;
+
+}
+
+
+
+.breakdown-table{
+
+width:100%;
+border-collapse:collapse;
+
+}
+
+
+
+.breakdown-table td{
+
+padding:12px;
+border-bottom:1px solid #e5e7eb;
+
+}
+
+
+
+.breakdown-total{
+
+background:#f1f5f9;
+font-weight:900;
+
+}
+
+
+
+
+.payment-card{
+
+border-radius:20px;
+padding:20px;
+margin-top:15px;
+background:#f8fafc;
+border:1px solid #e5e7eb;
+
+}
+
+
+
+.payment-header{
+
+font-size:18px;
+font-weight:900;
+margin-bottom:15px;
+
+}
+
+
+
+.cash-card{
+
+display:flex;
+gap:15px;
+align-items:center;
+
+}
+
+
+
+.payment-icon{
+
+font-size:35px;
+
+}
+
+
+
+
+.account-box{
+
+background:white;
+border-radius:18px;
+padding:20px;
+margin-top:15px;
+position:relative;
+
+}
+
+
+
+.account-title{
+
+font-weight:800;
+color:#64748b;
+text-transform:uppercase;
+
+}
+
+
+
+.account-number{
+
+font-size:24px;
+font-weight:900;
+margin:10px 0;
+
+}
+
+
+
+.reference{
+
+color:#64748b;
+
+}
+
+
+
+.student-ref{
+
+background:#2563eb;
+color:white;
+padding:5px 10px;
+border-radius:20px;
+
+}
+
+
+
+.copy-btn{
+
+position:absolute;
+right:15px;
+top:15px;
+border:none;
+padding:8px 15px;
+border-radius:10px;
+background:#e2e8f0;
+font-weight:700;
+
+}
+
+
+
+
+.upload-area{
+
+text-align:center;
+margin-top:20px;
+padding-top:20px;
+border-top:1px solid #e5e7eb;
+
+}
+
+
+
+.upload-btn{
+
+display:inline-block;
+background:#16a34a;
+color:white;
+padding:14px 25px;
+border-radius:14px;
+font-weight:800;
+text-decoration:none;
+
+}
+
+
+
+
+.online-fee{
+
+display:flex;
+align-items:center;
+gap:15px;
+background:white;
+padding:15px;
+border-radius:15px;
+margin-bottom:12px;
+
+}
+
+
+
+.online-fee label{
+
+flex:1;
+
+}
+
+
+
+.online-fee small{
+
+display:block;
+color:#64748b;
+
+}
+
+
+
+.total-pay-box{
+
+margin-top:15px;
+background:#dcfce7;
+padding:18px;
+border-radius:15px;
+font-size:18px;
+
+}
+
+
+
+.pay-btn{
+
+width:100%;
+margin-top:15px;
+padding:16px;
+border:none;
+border-radius:15px;
+background:#047857;
+color:white;
+font-weight:900;
+font-size:17px;
+
+}
+
+
+
+
+@media(max-width:600px){
+
+.premium-section{
+
+padding:18px;
+border-radius:18px;
+
+}
+
+
+.account-number{
+
+font-size:20px;
+
+}
+
+
+.copy-btn{
+
+position:static;
+margin-top:10px;
+
+}
+
+}
+</style>
+
+
+
+<div class="fees-page">
+
+
+
+{% if request.GET.paid %}
+
+<div class="payment-success">
+
+✓ Payment Successful! Your receipt has been saved.
+
+</div>
+
+{% endif %}
+
+
+
+
+
+{% if latest_fee %}
+
+
+
+
+
+<!-- HEADER -->
+
+<div class="fees-header">
+
+<h1>
+💰 School Fees
+</h1>
+
+
+<p>
+
+{{ request.user.first_name }}
+{{ request.user.last_name }}
+
+</p>
+
+
+</div>
+
+
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-3">
+    <select name="year" class="form-select">
+      <option value="">All Years</option>
+      {% for y in years %}
+      <option value="{{ y.id }}" {% if selected_year == y.id|stringformat:"s" %}selected{% endif %}>{{ y.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3">
+    <select name="term" class="form-select">
+      <option value="">All Terms</option>
+      <option value="1" {% if selected_term == "1" %}selected{% endif %}>First Term</option>
+      <option value="2" {% if selected_term == "2" %}selected{% endif %}>Second Term</option>
+      <option value="3" {% if selected_term == "3" %}selected{% endif %}>Third Term</option>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <button class="btn btn-primary w-100">Filter</button>
+  </div>
+</form>
+
+<!-- TERM INFORMATION -->
+
+<div class="term-card">
+
+
+<div class="term-title">
+
+📚 Academic Fee Information
+
+</div>
+
+
+
+<div style="font-size:17px;font-weight:700;color:#475569;">
+
+
+Academic Year:
+
+<strong>
+{{ latest_fee.academic_year }}
+</strong>
+
+
+<br><br>
+
+
+Current Term:
+
+<strong>
+
+{% if latest_fee.term.term_number == 1 %}
+First Term
+
+{% elif latest_fee.term.term_number == 2 %}
+Second Term
+
+{% elif latest_fee.term.term_number == 3 %}
+Third Term
+
+{% endif %}
+
+
+</strong>
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- SUMMARY CARDS -->
+
+
+<div class="fee-summary-grid">
+
+
+
+<div class="fee-summary-card total-fee">
+
+
+<div class="fee-label">
+
+💰 Total Amount
+
+</div>
+
+
+<div class="fee-value">
+
+GH₵{{ total_fee }}
+
+</div>
+
+
+</div>
+
+
+
+
+<div class="fee-summary-card paid-fee">
+
+
+<div class="fee-label">
+
+✅ Amount Paid
+
+</div>
+
+
+<div class="fee-value">
+
+GH₵{{ amount_paid }}
+
+</div>
+
+
+</div>
+
+
+
+
+
+<div class="fee-summary-card balance-fee">
+
+
+<div class="fee-label">
+
+⚠️ Balance Due
+
+</div>
+
+
+<div class="fee-value">
+
+GH₵{{ balance }}
+
+</div>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+<div class="due-date">
+
+📅 Due Date: {{ latest_fee.due_date }}
+
+</div>
+
+<!-- ==========================
+     FEE BREAKDOWN
+=========================== -->
+
+
+{% if latest_fee.breakdown_items %}
+
+<div class="premium-section">
+
+
+<button class="breakdown-toggle"
+        onclick="this.nextElementSibling.classList.toggle('show')">
+
+    📋 View Fee Breakdown
+
+    <span>⌄</span>
+
+</button>
+
+
+
+<div class="breakdown-content">
+
+
+<table class="breakdown-table">
+
+
+{% for item in latest_fee.breakdown_items %}
+
+
+<tr>
+
+<td>
+{{ item.label }}
+</td>
+
+
+<td>
+₵{{ item.value|floatformat:2 }}
+</td>
+
+
+</tr>
+
+
+{% endfor %}
+
+
+
+<tr class="breakdown-total">
+
+<td>
+TOTAL
+</td>
+
+
+<td>
+₵{{ total_fee|floatformat:2 }}
+</td>
+
+</tr>
+
+
+
+</table>
+
+
+</div>
+
+
+</div>
+
+
+{% endif %}
+
+
+
+
+
+
+
+<!-- ==========================
+     PAYMENT OPTIONS
+=========================== -->
+
+
+{% if school %}
+
+
+<div class="premium-section">
+
+
+<h3 class="section-title">
+
+💳 Payment Options
+
+</h3>
+
+
+
+
+
+<!-- CASH -->
+
+{% if school.accept_cash %}
+
+<div class="payment-card cash-card">
+
+
+<div class="payment-icon">
+🏫
+</div>
+
+
+<div>
+
+<h4>
+Cash Payment
+</h4>
+
+
+<p>
+Visit the school office with your student ID.
+</p>
+
+
+</div>
+
+
+</div>
+
+{% endif %}
+
+
+
+
+
+
+
+<!-- MANUAL PAYMENT -->
+{% if school.accept_manual %}
+<div class="payment-card manual-card">
+<div class="payment-header">📱 Manual Transfer</div>
+
+<div style="display:flex; gap:15px;">
+
+{% if school.accept_momo and school.momo_number %}
+<div class="account-box" style="flex:1;">
+<div class="account-title">Mobile Money</div>
+
+<!-- NUMBER + COPY SAME LINE -->
+<div style="display:flex; align-items:center; gap:10px; margin:10px 0;">
+  <div class="account-number" style="margin:0;">{{ school.momo_number }}</div>
+  <button class="copy-btn" style="position:static;" onclick="navigator.clipboard.writeText('{{ school.momo_number }}');this.innerText='Copied ✓';setTimeout(()=>this.innerText='Copy',1500)">Copy</button>
+</div>
+
+{% if school.momo_name %}<p>Account Name: <strong>{{ school.momo_name }}</strong></p>{% endif %}
+<p class="reference">Reference: <strong>{{ request.user.student_number }}</strong></p>
+</div>
+{% endif %}
+
+{% if school.accept_bank and school.bank_name %}
+<div class="account-box" style="flex:1;">
+<div class="account-title">Bank Transfer</div>
+
+<!-- NUMBER + COPY SAME LINE -->
+<div style="display:flex; align-items:center; gap:10px; margin:10px 0;">
+  <div class="account-number" style="margin:0;">{{ school.account_number }}</div>
+  <button class="copy-btn" style="position:static;" onclick="navigator.clipboard.writeText('{{ school.account_number }}');this.innerText='Copied ✓';setTimeout(()=>this.innerText='Copy',1500)">Copy</button>
+</div>
+
+<p>Bank: <strong>{{ school.bank_name }}</strong></p>
+<p>Account Name: <strong>{{ school.account_name }}</strong></p>
+<p class="reference">Use student number: <span class="student-ref">{{ request.user.student_number }}</span></p>
+</div>
+{% endif %}
+
+</div>
+
+{% if latest_fee and balance > 0 %}
+<div class="upload-area">
+<a href="{% url 'accounts:submit_manual_payment' latest_fee.id %}" class="upload-btn">I Have Paid - Upload Proof</a>
+<p>Upload payment evidence after MoMo or Bank payment.</p>
+</div>
+{% endif %}
+
+</div>
+{% endif %}
+
+
+
+
+
+
+<!-- ==========================
+     ONLINE PAYMENT
+=========================== -->
+
+
+{% if school.accept_automatic and school.payment_gateway == 'paystack' and school.paystack_public_key %}
+
+
+
+<div class="payment-card online-card">
+
+
+<div class="payment-header">
+
+💳 Pay Online
+
+</div>
+
+
+
+{% if latest_fee.payment_options %}
+
+
+{% for option in latest_fee.payment_options %}
+
+
+
+<div class="online-fee">
+
+
+<input 
+type="checkbox"
+class="fee-checkbox"
+id="fee_{{ forloop.counter }}"
+data-fee-name="{{ option.label }}"
+data-paid-field="{{ option.paid_field }}"
+data-balance="{{ option.balance }}">
+
+
+
+<label for="fee_{{ forloop.counter }}">
+
+
+<strong>
+
+{{ option.label }}
+
+</strong>
+
+
+<small>
+
+Balance:
+₵{{ option.balance|floatformat:2 }}
+
+</small>
+
+
+</label>
+
+
+
+
+<input
+
+type="number"
+
+class="fee-amount-input"
+
+data-paid-field="{{ option.paid_field }}"
+
+placeholder="Amount"
+
+max="{{ option.balance }}"
+
+step="0.01"
+
+disabled>
+
+
+
+</div>
+
+
+
+{% empty %}
+
+<p class="paid-message">
+
+✓ All fees paid for this term
+
+</p>
+
+
+{% endfor %}
+
+
+
+
+
+
+<div class="total-pay-box">
+
+Total To Pay:
+
+<strong>
+
+₵<span id="total-amount">0.00</span>
+
+</strong>
+
+</div>
+
+
+
+
+
+<button id="paystack-btn"
+class="pay-btn">
+
+Pay with Paystack
+
+</button>
+
+
+{% else %}
+
+    <p class="paid-message">
+        ✓ All fees paid for this term
+    </p>
+
+{% endif %}
+
+
+</div>
+
+
+
+{% endif %}
+
+{% endif %}
+
+{% endif %}
+
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script>
+function getCookie(name) {
+  let v = null;
+  document.cookie.split(';').forEach(c => {
+    c = c.trim();
+    if (c.startsWith(name+'=')) v = decodeURIComponent(c.slice(name.length+1));
+  });
+  return v;
+}
+
+// Enable/disable amount input when checkbox is toggled
+document.querySelectorAll('.fee-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        const amountInput = this.closest('div').querySelector('.fee-amount-input');
+        const balance = parseFloat(this.dataset.balance);
+        
+        if (this.checked) {
+            amountInput.disabled = false;
+            amountInput.value = balance.toFixed(2);
+        } else {
+            amountInput.disabled = true;
+            amountInput.value = '';
+        }
+        updateTotal();
+    });
+});
+
+// Update total when amount changes
+document.querySelectorAll('.fee-amount-input').forEach(input => {
+    input.addEventListener('input', updateTotal);
+});
+
+function updateTotal() {
+    let total = 0;
+    document.querySelectorAll('.fee-checkbox:checked').forEach(checkbox => {
+        const amountInput = checkbox.closest('div').querySelector('.fee-amount-input');
+        const amount = parseFloat(amountInput.value) || 0;
+        total += amount;
+    });
+    document.getElementById('total-amount').textContent = total.toFixed(2);
+}
+
+// Pay button
+document.getElementById('paystack-btn')?.addEventListener('click', function(e){
+    e.preventDefault();
+    
+    let selectedFees = [];
+    let totalAmount = 0;
+    let hasError = false;
+    
+    document.querySelectorAll('.fee-checkbox:checked').forEach(checkbox => {
+        const amountInput = checkbox.closest('div').querySelector('.fee-amount-input');
+        const amount = parseFloat(amountInput.value) || 0;
+        const balance = parseFloat(checkbox.dataset.balance);
+        const feeName = checkbox.dataset.feeName;
+        
+        if (amount <= 0) {
+            alert(`Please enter amount for ${feeName}`);
+            hasError = true;
+            return;
+        }
+        if (amount > balance) {
+            alert(`Amount for ${feeName} cannot exceed balance ₵${balance.toFixed(2)}`);
+            hasError = true;
+            return;
+        }
+        
+        selectedFees.push({
+            fee_name: feeName,
+            paid_field: checkbox.dataset.paidField,
+            amount: amount
+        });
+        totalAmount += amount;
+    });
+    
+    if (hasError) return;
+    
+    // CUSTOM ERROR - No checkbox selected
+    if (selectedFees.length === 0) {
+        let errorDiv = document.getElementById('payment-error');
+        if (!errorDiv) {
+            errorDiv = document.createElement('div');
+            errorDiv.id = 'payment-error';
+            errorDiv.style.cssText = 'background:#fee2e2; border:1px solid #fecaca; color:#991b1b; padding:12px; border-radius:8px; margin:12px 0; font-weight:600; text-align:center;';
+            document.getElementById('paystack-btn').parentNode.insertBefore(errorDiv, document.getElementById('paystack-btn'));
+        }
+        errorDiv.innerText = 'Please tick at least one fee item before paying.';
+        errorDiv.style.display = 'block';
+        setTimeout(() => { errorDiv.style.display = 'none'; }, 3000);
+        return;
+    }
+
+    var handler = PaystackPop.setup({
+        key: '{{ school.paystack_public_key }}',
+        email: '{{ request.user.email|default:school.email|default:"accounts@yourschool.com" }}',  // STUDENT EMAIL
+        amount: totalAmount * 100,
+        currency: 'GHS',
+        ref: 'STUDENT-{{ request.user.id }}-' + Date.now(),
+        metadata: {
+            student_id: '{{ request.user.student_number }}',
+            student_name: '{{ request.user.get_full_name|escapejs }}',
+            payer_type: 'student'
+        },
+        callback: function(response){
+            fetch("{% url 'accounts:verify_paystack_payment' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    reference: response.reference,
+                    fee_id: {{ latest_fee.id }},
+                    total_amount: totalAmount,
+                    items: selectedFees,
+                    paid_by: 'student'
+                })
+            })
+            .then(r => r.json())
+            .then(d => {
+                if(d.status){
+                    window.location.href = window.location.pathname + "?paid=1";
+                } else {
+                    alert('Verification failed: ' + (d.message || ''));
+                }
+            });
+        },
+        onClose: function(){}
+    });
+    handler.openIframe();
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Student Results by Class</h2>
+    
+    {% regroup students by class_name as class_list %}
+    
+    {% for class_group in class_list %}
+        <h4 class="mt-4 mb-3 bg-secondary text-white p-2 rounded">{{ class_group.grouper }}</h4>
+        
+        {% for student in class_group.list %}
+        <div class="mb-4 border rounded">
+            <!-- Student Header Info -->
+            <div class="bg-light p-2 border-bottom">
+                <strong>Student:</strong> {{ student.name }} | 
+                <strong>No:</strong> {{ student.student_number|default:"-" }} | 
+                <strong>Rank:</strong> {{ student.rank|default:"-" }} | 
+                <strong>Term:</strong> {{ student.term }} {{ student.academic_year }} | 
+                <strong>Total:</strong> {{ student.term_total }} | 
+                <strong>Avg:</strong> {{ student.term_average }} | 
+                <strong>Grade:</strong> {{ student.term_grade }} | 
+                <strong>Remark:</strong> {{ student.term_remark }}
+            </div>
+            
+            <!-- Student's Subject Table -->
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Subject</th>
+                            <th>Score</th>
+                            <th>Grade</th>
+                            <th>Remark</th>
+                            <th style="width: 60px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in student.results %}
+                        <tr>
+                            <td>{{ result.subject.name }}</td>
+                            <td>{{ result.score }}</td>
+                            <td>{{ result.grade }}</td>
+                            <td>{{ result.remark }}</td>
+                            <td class="text-center">
+                                <a href="{% url 'accounts:edit-result' result.id %}">✏️</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">No subjects recorded yet</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% empty %}
+            <p class="text-muted">No students found for this class.</p>
+        {% endfor %}
+        
+    {% empty %}
+        <div class="alert alert-info mt-4">
+            No student data found. Add StudentTermSummary records in admin first.
+        </div>
+    {% endfor %}
+</div>
+
+<style>
+.table td, .table th {
+    white-space: nowrap;
+    padding: 6px 8px !important;
+    font-size: 14px;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,281 @@
+{% extends "accounts/dashboard_base.html" %}
+
+{% block content %}
+
+<style>
+
+.subject-page {
+
+    min-height: calc(100vh - 120px);
+    background:#f5f7fb;
+    padding:35px 20px;
+
+}
+
+
+.subject-card {
+
+    max-width:520px;
+    margin:auto;
+
+    background:white;
+
+    border-radius:22px;
+
+    padding:35px;
+
+    box-shadow:
+    0 10px 30px rgba(0,0,0,.08);
+
+    transition:.3s;
+
+}
+
+
+.subject-card:hover {
+
+    transform:translateY(-4px);
+
+    box-shadow:
+    0 15px 40px rgba(0,0,0,.12);
+
+}
+
+
+
+/* Header */
+
+.subject-header {
+
+    text-align:center;
+
+    margin-bottom:30px;
+
+}
+
+
+.subject-header .icon {
+
+    width:70px;
+    height:70px;
+
+    background:#ede7f6;
+
+    border-radius:22px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:35px;
+
+    margin:auto;
+    margin-bottom:15px;
+
+}
+
+
+.subject-header h2 {
+
+    font-size:28px;
+    font-weight:700;
+    color:#041729;
+
+    margin-bottom:5px;
+
+}
+
+
+.subject-header p {
+
+    color:#6c757d;
+    font-size:14px;
+
+}
+
+
+
+/* Form */
+
+label {
+
+    font-weight:600;
+    color:#34495e;
+
+}
+
+
+
+input {
+
+    width:100%;
+
+    padding:12px 14px;
+
+    border-radius:12px;
+
+    border:1px solid #ddd;
+
+    margin-top:8px;
+
+    margin-bottom:20px;
+
+    font-size:15px;
+
+}
+
+
+input:focus {
+
+    border-color:#4e73df;
+
+    box-shadow:
+    0 0 0 4px rgba(78,115,223,.15);
+
+    outline:none;
+
+}
+
+
+
+/* Button */
+
+.update-btn {
+
+    width:100%;
+
+    padding:13px;
+
+    border:none;
+
+    border-radius:14px;
+
+    background:
+    linear-gradient(135deg,#041729,#0b3b66);
+
+    color:white;
+
+    font-size:16px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+}
+
+
+.update-btn:hover {
+
+    transform:translateY(-3px);
+
+}
+
+
+
+.back-link {
+
+    display:block;
+
+    text-align:center;
+
+    margin-top:18px;
+
+    color:#6c757d;
+
+    text-decoration:none;
+
+}
+
+
+</style>
+
+
+
+<div class="subject-page">
+
+
+<div class="subject-card">
+
+
+<div class="subject-header">
+
+<div class="icon">
+📘
+</div>
+
+
+<h2>
+Edit Subject
+</h2>
+
+
+<p>
+Update subject for {{ school.name }}
+</p>
+
+
+</div>
+
+
+
+
+<form method="POST">
+
+{% csrf_token %}
+
+
+
+<label>
+Subject Name
+</label>
+
+
+<input 
+type="text"
+name="name"
+value="{{ subject.name }}"
+required>
+
+
+
+<label>
+Subject Code
+</label>
+
+
+<input 
+type="text"
+name="code"
+value="{{ subject.code }}"
+required>
+
+
+
+
+<button type="submit" class="update-btn">
+
+💾 Update Subject
+
+</button>
+
+
+</form>
+
+
+
+<a href="{% url 'accounts:subject_list' %}" class="back-link">
+
+← Back to Subjects
+
+</a>
+
+
+
+</div>
+
+
+</div>
+
+
+
+{% endblock %}

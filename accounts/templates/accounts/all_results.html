@@ -1,0 +1,26 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block content %}
+<div style="max-width:1200px; margin:20px auto; padding:0 20px;">
+    <h1>All Published Results</h1>
+    <table style="width:100%; background:white; border-collapse:collapse;">
+        <tr style="background:#f1f5f9;">
+            <th style="padding:12px;">Student</th>
+            <th style="padding:12px;">Class</th>
+            <th style="padding:12px;">Subject</th>
+            <th style="padding:12px;">Score</th>
+            <th style="padding:12px;">Grade</th>
+            <th style="padding:12px;">Term</th>
+        </tr>
+        {% for r in results %}
+        <tr style="border-bottom:1px solid #e5e7eb;">
+            <td style="padding:12px;">{{ r.student.first_name }} {{ r.student.last_name }}</td>
+            <td style="padding:12px;">{{ r.student.school_class.name }}</td>
+            <td style="padding:12px;">{{ r.subject.name }}</td>
+            <td style="padding:12px;">{{ r.percentage }}%</td>
+            <td style="padding:12px;">{{ r.grade }}</td>
+            <td style="padding:12px;">Term {{ r.term }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

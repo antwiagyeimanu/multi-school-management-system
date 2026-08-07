@@ -1,0 +1,61 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block title %}My Subjects{% endblock %}
+
+{% block content %}
+<style>
+.subjects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+.subject-card {
+    background: white;
+    padding: 24px 20px;
+    border-radius: 12px;
+    border-left: 5px solid #3498db;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-align: center;
+}
+.subject-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+.subject-name {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+@media (max-width: 600px) {
+    .subjects-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    .subject-name {
+        font-size: 18px;
+    }
+    .subject-card {
+        padding: 20px 12px;
+    }
+}
+</style>
+
+<h2 style="margin-bottom:10px; text-align: center; margin-top: 10px; font-weight: bold; font-size:28px;">My Subjects</h2>
+<p style="color:#333; font-size:20px; text-align: center; margin-top:0;">{{ subjects|length }} subjects total</p>
+
+{% if subjects %}
+    <div class="subjects-grid">
+        {% for subject_link in subjects %}
+        <div class="subject-card">
+            <h3 class="subject-name">{{ subject_link.subject.name }}</h3>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div style="background:white; padding:30px; border-radius:8px; text-align:center; margin-top:20px;">
+        <p style="color:#7f8c8d;">No subjects assigned yet. Contact your teacher.</p>
+    </div>
+{% endif %}
+{% endblock %}

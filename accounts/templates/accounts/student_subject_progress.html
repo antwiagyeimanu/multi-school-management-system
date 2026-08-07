@@ -1,0 +1,631 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block title %}{{ subject.name }} Progress{% endblock %}
+
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+<style>
+
+.progress-page{
+
+    max-width:1200px;
+    margin:auto;
+    padding:25px 20px;
+    background:#f8fafc;
+    min-height:100vh;
+
+}
+
+
+
+/* HEADER */
+
+.progress-header{
+
+    background:linear-gradient(135deg,#0f172a,#2563eb);
+
+    color:white;
+
+    border-radius:24px;
+
+    padding:30px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:30px;
+
+    box-shadow:0 15px 35px rgba(15,23,42,.15);
+
+}
+
+
+.progress-header h1{
+
+    margin:0;
+
+    font-size:32px;
+
+    font-weight:800;
+
+}
+
+
+
+.back-btn{
+
+    background:white;
+
+    color:#1d4ed8;
+
+    padding:12px 20px;
+
+    border-radius:14px;
+
+    text-decoration:none;
+
+    font-weight:700;
+
+    transition:.25s;
+
+}
+
+
+.back-btn:hover{
+
+    transform:translateY(-2px);
+
+    color:#1d4ed8;
+
+}
+
+
+
+/* CARDS */
+
+.progress-card{
+
+    background:white;
+
+    border-radius:22px;
+
+    padding:25px;
+
+    margin-bottom:25px;
+
+    box-shadow:
+    0 10px 25px rgba(15,23,42,.08);
+
+}
+
+
+
+/* TABLE */
+
+.table-wrapper{
+
+    overflow-x:auto;
+
+}
+
+
+
+.progress-table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+}
+
+
+
+.progress-table th{
+
+    background:#0f172a;
+
+    color:white;
+
+    padding:14px;
+
+    text-align:center;
+
+    font-size:13px;
+
+}
+
+
+
+.progress-table td{
+
+    padding:14px;
+
+    text-align:center;
+
+    border-bottom:1px solid #e5e7eb;
+
+    font-size:14px;
+
+}
+
+
+
+.progress-table tr:hover{
+
+    background:#f8fafc;
+
+}
+
+
+
+/* GRADE BADGES */
+
+.grade{
+
+    display:inline-block;
+
+    padding:6px 14px;
+
+    border-radius:999px;
+
+    font-weight:800;
+
+    background:#dbeafe;
+
+    color:#1d4ed8;
+
+}
+
+
+
+/* CHART */
+
+.chart-box{
+
+    min-height:350px;
+
+}
+
+
+
+/* EMPTY */
+
+.empty-box{
+
+    background:#f8fafc;
+
+    padding:45px 20px;
+
+    text-align:center;
+
+    border-radius:18px;
+
+    color:#64748b;
+
+}
+
+
+
+@media(max-width:768px){
+
+
+.progress-header{
+
+    flex-direction:column;
+
+    gap:20px;
+
+    text-align:center;
+
+}
+
+
+.progress-header h1{
+
+    font-size:25px;
+
+}
+
+
+.progress-card{
+
+    padding:18px;
+
+}
+
+
+
+.progress-table th,
+.progress-table td{
+
+    font-size:12px;
+
+    padding:10px;
+
+}
+
+
+}
+
+
+@media(max-width:480px){
+
+.progress-page{
+
+    padding:15px 10px;
+
+}
+
+
+.back-btn{
+
+    width:100%;
+
+    text-align:center;
+
+}
+
+
+}
+
+</style>
+
+
+
+<div class="progress-page">
+
+
+<!-- HEADER -->
+
+<div class="progress-header">
+
+<div>
+
+<h1>
+📘 {{ subject.name }} Progress
+</h1>
+
+<p class="mb-0 mt-2 opacity-75">
+Your academic performance history
+</p>
+
+</div>
+
+
+<a href="{% url 'accounts:view-student-subjects' %}"
+   class="back-btn">
+
+← Back to Subjects
+
+</a>
+
+
+</div>
+
+
+
+
+<!-- RESULTS -->
+
+<div class="progress-card">
+
+
+<h3 class="text-center fw-bold mb-4">
+
+📊 All Results for {{ subject.name }}
+
+</h3>
+
+
+
+{% if results %}
+
+
+<div class="table-wrapper">
+
+
+<table class="progress-table">
+
+
+<thead>
+
+<tr>
+
+<th>Term</th>
+
+<th>Total Score</th>
+
+<th>Grade</th>
+
+<th>Remark</th>
+
+</tr>
+
+</thead>
+
+
+
+<tbody>
+
+
+{% for result in results %}
+
+
+<tr>
+
+
+<td>
+
+Term {{ result.term }}
+
+<br>
+
+<small class="text-muted">
+{{ result.academic_year }}
+</small>
+
+</td>
+
+
+
+<td class="fw-bold">
+
+{{ result.total_score }}/{{ result.total_score_max }}
+
+<br>
+
+<span class="text-primary">
+
+{{ result.percentage }}%
+
+</span>
+
+
+</td>
+
+
+
+<td>
+
+<span class="grade">
+
+{{ result.grade }}
+
+</span>
+
+
+</td>
+
+
+
+<td>
+
+{{ result.remark }}
+
+
+</td>
+
+
+
+</tr>
+
+
+{% endfor %}
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+
+{% else %}
+
+
+<div class="empty-box">
+
+<h5 class="fw-bold">
+
+📚 No Results Yet
+
+</h5>
+
+
+<p class="mb-0">
+
+No results uploaded for {{ subject.name }} yet.
+
+</p>
+
+
+</div>
+
+
+{% endif %}
+
+
+</div>
+
+
+
+
+
+<!-- CHART -->
+
+<div class="progress-card">
+
+
+<h3 class="fw-bold mb-4">
+
+📈 Performance Over Time
+
+</h3>
+
+
+
+{% if labels|length >= 2 %}
+
+
+
+<div class="chart-box">
+
+<canvas id="progressChart"></canvas>
+
+
+</div>
+
+
+
+<script>
+
+const ctx =
+document.getElementById('progressChart');
+
+
+new Chart(ctx, {
+
+type:'line',
+
+data:{
+
+labels: {{ labels|safe }},
+
+datasets:[{
+
+label:'Score %',
+
+data: {{ scores|safe }},
+
+borderColor:'#2563eb',
+
+backgroundColor:'rgba(37,99,235,.12)',
+
+borderWidth:3,
+
+fill:true,
+
+tension:.4,
+
+pointRadius:6,
+
+pointBackgroundColor:'#2563eb'
+
+}]
+
+},
+
+
+options:{
+
+responsive:true,
+
+maintainAspectRatio:false,
+
+
+plugins:{
+
+legend:{
+display:false
+},
+
+
+tooltip:{
+
+callbacks:{
+
+label:function(context){
+
+return context.parsed.y + '%';
+
+}
+
+}
+
+}
+
+},
+
+
+scales:{
+
+y:{
+
+beginAtZero:true,
+
+max:100,
+
+ticks:{
+
+callback:function(value){
+
+return value+'%';
+
+}
+
+}
+
+}
+
+}
+
+}
+
+});
+
+
+</script>
+
+
+
+{% else %}
+
+
+
+<div class="empty-box">
+
+
+<div style="font-size:50px">
+
+📊
+
+</div>
+
+
+<h5 class="fw-bold mt-3">
+
+Not Enough Data
+
+</h5>
+
+
+<p class="mb-0">
+
+You need results from at least two terms to see progress.
+
+</p>
+
+
+</div>
+
+
+
+{% endif %}
+
+
+</div>
+
+
+
+</div>
+
+
+{% endblock %}

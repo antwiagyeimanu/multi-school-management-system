@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+{% load custom_filters %}
+<html>
+<head>
+    <title>Student Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body { font-family: Arial, sans-serif; padding: 20px; color: #000; position:relative; }
+
+/* WATERMARK - DYNAMIC SCHOOL NAME */
+.watermark{
+    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-28deg);
+    font-size:60px; font-weight:900; color:rgba(79,70,229,0.05); 
+    z-index:0; width:85%; text-align:center; line-height:1.1;
+    letter-spacing:2px; text-transform:uppercase; pointer-events:none;
+    word-break:break-word; white-space:normal;
+}
+
+.school-header {
+    display:flex; align-items:center;
+    border-bottom:4px solid #4f46e5; padding-bottom:15px;
+    margin-bottom:15px; margin-top:-20px;
+    position:relative; z-index:1;
+}
+.logo-wrap{ width:110px; height:110px; flex-shrink:0; }
+.logo-wrap img{ width:100%; height:100%; object-fit:contain; border-radius:12px; }
+.school-info{ flex:1; text-align:center; padding:0 15px; }
+.school-info h1{ margin:0; font-size:24px; font-weight:800; text-transform:uppercase; }
+.school-info p{ margin:2px 0; font-size:12px; color:#555; }
+h3 { text-align: center; margin: 0; text-transform: uppercase; }
+
+table { width:100%; border-collapse:collapse; margin-top:15px; position:relative; z-index:1; }
+th, td { border:1px solid #000; padding:8px; text-align:center; }
+th { background:#f3f4f6 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+
+.report-card { page-break-inside:avoid; page-break-after:always; position:relative; }
+.report-card:last-child{ page-break-after:auto; }
+
+@media print {
+    body { margin:0; padding:8mm !important; }
+    .no-print, textarea, button, input, form { display:none !important; }
+    .remark-text { display:block !important; }
+    p, td, th { font-size:10pt !important; }
+    @page { margin:10mm; size:A4; }
+}
+</style>
+</head>
+<body>
+
+{% for student_data in students_data %}
+<div class="report-card">
+
+<!-- DYNAMIC WATERMARK -->
+<div class="watermark">
+    {{ student_data.student.school.name|upper }}
+</div>
+    
+<div class="school-header">
+    <div class="logo-wrap">
+        {% if student_data.student.school.logo %}
+            <img src="{{ student_data.student.school.logo.url }}">
+        {% else %}
+            <div style="width:110px; height:110px; background:linear-gradient(135deg,#4f46e5,#2563eb); color:#fff; border-radius:18px; display:flex; align-items:center; justify-content:center; font-size:38px; font-weight:800;">{{ student_data.student.school.name|slice:":2"|upper }}</div>
+        {% endif %}
+    </div>
+    <div class="school-info">
+        <h1>{{ student_data.student.school.name|upper }}</h1>
+        <p>{{ student_data.student.school.address }} {% if student_data.student.school.gps_address %} | GPS: {{ student_data.student.school.gps_address }}{% endif %}</p>
+        <p>
+            {% if student_data.student.school.phone %}Tel: {{ student_data.student.school.phone }}{% endif %}
+            {% if student_data.student.school.email %} | Email: {{ student_data.student.school.email }}{% endif %}
+            {% if student_data.student.school.postal_address %} | {{ student_data.student.school.postal_address }}{% endif %}
+        </p>
+    </div>
+    <div style="width:110px;"></div>
+</div>
+
+    <div style="text-align:center; margin:10px 0;">
+        <h3 style="background:#111827; color:#fff; display:inline-block; padding:6px 24px; border-radius:20px; font-size:14px;">STUDENT REPORT CARD</h3>
+    </div>
+
+<div style="display:flex; justify-content:space-between; background:#f8fafc; border:1px solid #ddd; padding:8px 12px; border-radius:8px; font-size:13px; position:relative; z-index:1;">
+        <div><strong>Name:</strong> {{ student_data.student.get_full_name }}<br><strong>ID:</strong> {{ student_data.student.student_number }}</div>
+        <div><strong>Class:</strong> {{ student_data.student.school_class.name }}<br><strong>Term:</strong> {{ active_term.get_term_number_display }}</div>
+        <div><strong>Year:</strong> {{ active_term.academic_year }}<br><strong>Pos:</strong> {{ student_data.position }}{{ student_data.position_suffix }} / {{ student_data.total_students_in_class }}</div>
+    </div>
+    
+<table>
+    <thead><tr style="background:#f0f0f0;"><th>Subject</th><th>CA %</th><th>Exam %</th><th>Total %</th><th>Grade</th><th>Remark</th></tr></thead>
+    <tbody>
+    {% for subject_code, sub_data in student_data.subjects.items %}
+    <tr>
+        <td style="text-align:left; padding-left:15px;">{{ subject_code }}</td>
+        <td>{{ sub_data.ca|floatformat:0}}</td>
+        <td>{{ sub_data.exam|floatformat:0 }}</td>
+        <td>{{ sub_data.total|floatformat:0 }}</td>
+        <td>{{ sub_data.grade }}</td>
+        <td>{{ sub_data.remark }}</td>
+    </tr>
+    {% endfor %}
+    <tr style="background:#e8e8e8; font-weight:bold;">
+        <td style="text-align:left;">GRAND TOTAL</td><td></td><td></td><td>{{ student_data.grand_total }}</td><td></td></td><td>
+    </tr>
+    <tr style="font-weight:bold;">
+        <td style="text-align:left;">AVERAGE<td></td><td></td><td>{{ student_data.average }}%</td><td></td></td></td></td>
+    </tr>
+    <tr style="background:#e8e8e8; font-weight:bold;">
+        <td style="text-align:left;">OVERALL GRADE</td><td></td><td></td><td></td><td>{{ student_data.grade }}</td><td>{{ student_data.overall_remark }}</td>
+    </tr>
+    </tbody>
+</table>
+
+<table style="width:100%; margin-top:0px; border-top:none;"><tr>
+<td style="border-top:none;"><strong>Opened:</strong> {{ student_data.days_opened }}</td>
+<td style="border-top:none;"><strong>Present:</strong> {{ student_data.times_present }}</td>
+<td style="border-top:none;"><strong>Absent:</strong> {{ student_data.times_absent }}</td>
+<td style="border-top:none;"><strong>Attendance:</strong> {{ student_data.attendance_percentage }}</td>
+</tr></table>
+
+<div style="margin-top:20px" class="no-print">
+<form method="POST" action="{% url 'accounts:save_student_remark' student_data.student.id %}">{% csrf_token %}
+    {% if request.user.is_class_teacher or request.user.role == 'admin' %}
+    <p><strong>Class Teacher's Remark:</strong></p><textarea name="class_teacher_remark" rows="2" style="width:100%;">{{ student_data.class_teacher_remark }}</textarea>{% endif %}
+    {% if request.user.role == 'headteacher' or request.user.role == 'admin' %}
+    <p><strong>Head Teacher's Remark:</strong></p><textarea name="headteacher_remark" rows="2" style="width:100%;">{{ student_data.headteacher_remark }}</textarea>{% endif %}
+    <button type="submit" style="margin-top:10px; padding:8px 20px; background:#2563eb; color:white; border:none; border-radius:6px;">Save Remarks</button>
+</form>
+</div>
+
+<div style="margin-top:20px" class="print-only">
+  <div style="display:flex; gap:20px; width:100%;">
+    <div style="flex:1;"><p><strong>Class Teacher's Remark:</strong></p><div style="min-height:40px; border:1px solid #000; padding:10px;">{{ student_data.class_teacher_remark|default:""|linebreaksbr }}</div></div>
+    <div style="flex:1;"><p><strong>Head Teacher's Remark:</strong></p><div style="min-height:40px; border:1px solid #000; padding:10px;">{{ student_data.headteacher_remark|default:""|linebreaksbr }}</div></div>
+  </div>
+  <div style="margin-top:20px; font-size:11pt">
+    <div style="display:flex; justify-content:space-between;"><div>Class Teacher: ____________________</div><div>Head Teacher: ____________________</div></div>
+    <div style="margin-top:15px; text-align:center;">Next Term Begins: {% if term.next_term_begins %}{{ term.next_term_begins|date:"l, jS F Y" }}{% else %}To be announced{% endif %}</div>
+  </div>
+</div>
+
+</div>
+{% endfor %}
+
+<script>window.onload=()=>{ setTimeout(()=>window.print(), 600); }</script>
+</body>
+</html>

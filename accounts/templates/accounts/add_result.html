@@ -1,0 +1,15 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block title %}Add Result{% endblock %}
+
+{% block content %}
+<h2>Add Student Result</h2>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <button type="submit">Save Result</button>
+</form>
+
+{% endblock %}

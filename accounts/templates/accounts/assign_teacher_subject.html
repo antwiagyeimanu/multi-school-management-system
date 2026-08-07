@@ -1,0 +1,123 @@
+<div style="
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    background:#f4f6f9;
+">
+
+    <div style="
+        width:420px;
+        background:white;
+        padding:25px;
+        border-radius:15px;
+        box-shadow:0 8px 25px rgba(0,0,0,0.1);
+    ">
+
+        <h2 style="
+            text-align:center;
+            margin-bottom:20px;
+            color:#333;
+            
+        ">
+            👨‍🏫 Assign Teacher
+        </h2>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <label style="font-weight:bold;">Teacher</label>
+            <select name="teacher" style="
+                width:100%;
+                padding:10px;
+                margin-bottom:15px;
+                border-radius:8px;
+                border:1px solid #ccc;
+            ">
+                {% for teacher in teachers %}
+                    <option value="{{ teacher.id }}">
+                        {{ teacher.first_name }} {{ teacher.last_name }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <label style="font-weight:bold;">Subject</label>
+            <select name="subject" style="
+                width:100%;
+                padding:10px;
+                margin-bottom:15px;
+                border-radius:8px;
+                border:1px solid #ccc;
+            ">
+                {% for subject in subjects %}
+                    <option value="{{ subject.id }}">
+                        {{ subject.code }} - {{ subject.name }}
+                    </option>
+                {% endfor %}
+            </select>
+
+           <label style="font-weight:bold;">Class</label>
+
+{% if selected_class_obj %}
+    <!-- CASE 1: We came from Class 2 page, so no dropdown -->
+    <div style="
+        width:100%;
+        padding:10px;
+        margin-bottom:20px;
+        border-radius:8px;
+        border:1px solid #ccc;
+        background:#f8f9fa;
+        color:#495057;
+    ">
+        {{ selected_class_obj.name }}
+    </div>
+    <input type="hidden" name="class" value="{{ selected_class_obj.id }}">
+
+{% else %}
+    <!-- CASE 2: We opened form directly, so show dropdown -->
+    <select name="class" style="
+        width:100%;
+        padding:10px;
+        margin-bottom:20px;
+        border-radius:8px;
+        border:1px solid #ccc;
+    " required>
+        <option value="">Select Class</option>
+        {% for c in classes %}
+            <option value="{{ c.id }}">{{ c.name }}</option>
+        {% endfor %}
+    </select>
+{% endif %}
+            <button type="submit" style="
+                width:100%;
+                padding:12px;
+                background:#007bff;
+                color:white;
+                border:none;
+                border-radius:8px;
+                font-size:16px;
+                cursor:pointer;
+            ">
+                ➕ Assign
+            </button>
+        </form>
+
+        {% if messages %}
+            <div style="margin-top:15px;">
+                {% for message in messages %}
+                    <p style="
+                        background:#d4edda;
+                        padding:8px;
+                        border-radius:6px;
+                        color:#155724;
+                        text-align:center;
+                    ">
+                        {{ message }}
+                    </p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+    </div>
+
+</div>

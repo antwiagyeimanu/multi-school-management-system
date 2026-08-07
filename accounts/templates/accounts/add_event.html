@@ -1,0 +1,345 @@
+{% extends "accounts/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Add Academic Event{% endblock %}
+
+{% block content %}
+<style>
+/* container */
+.event-container {
+    max-width: 720px;
+    margin: 20px auto;
+    padding: 20px;
+}
+
+/* card */
+.event-card {
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    padding: 25px;
+}
+
+/* title */
+.event-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #1f2937;
+    text-align: center;
+}
+
+/* rows */
+.row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* labels */
+label {
+    font-size: 16px;
+    text-align: center;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #030b19;
+}
+
+/* inputs */
+input, select {
+    height: 40px;
+    border-radius: 8px;
+    border: 3px solid #d1d5db;
+    padding: 6px 10px;
+    font-size: 16px;
+}
+
+/* focus */
+input:focus, select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.15);
+}
+
+/* checkbox row */
+.checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+    font-size: 18px;
+    color: #020813;
+}
+
+/* button */
+.save-btn{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:50px;
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:white;
+    font-weight:700;
+    font-size:16px;
+    transition:.3s ease;
+}
+
+.save-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 8px 20px rgba(37,99,235,.25);
+}
+
+/* back */
+.back {
+    display: block;
+    text-align: center;
+    margin-top: 10px;
+    color: #030b1b;
+    text-decoration: none;
+    font-size: 18px;
+}
+
+/* mobile */
+@media (max-width: 768px) {
+    .row {
+        flex-direction: column;
+    }
+}
+
+input[type="date"].form-control {
+    line-height: 1.5;
+}
+.event-header{
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:white;
+    padding:25px;
+    border-radius:16px;
+    margin-bottom:30px;
+}
+
+.event-header h2{
+    font-weight:800;
+    margin-bottom:8px;
+}
+
+.event-header p{
+    margin:0;
+    opacity:.85;
+}
+
+
+.event-card{
+    background:white;
+    border-radius:22px;
+    box-shadow:0 15px 35px rgba(0,0,0,.08);
+    padding:30px;
+}
+
+
+.group input,
+.group select{
+    width:100%;
+    background:#f8fafc;
+}
+
+
+.save-btn{
+    border-radius:50px;
+    font-size:16px;
+    padding:13px;
+}
+
+
+.back{
+    font-size:15px;
+    margin-top:18px;
+}
+.form-label-modern{
+    font-weight:700;
+    color:#374151;
+    margin-bottom:8px;
+    font-size:14px;
+}
+
+
+.group input,
+.group select{
+    width:100%;
+    height:46px;
+    border:1px solid #d1d5db;
+    border-radius:12px;
+    padding:10px 14px;
+    font-size:15px;
+    background:#f9fafb;
+    transition:.2s ease;
+}
+
+
+.group input:hover,
+.group select:hover{
+    border-color:#93c5fd;
+}
+
+
+.group input:focus,
+.group select:focus{
+    background:white;
+    border-color:#2563eb;
+    box-shadow:0 0 0 4px rgba(37,99,235,.12);
+}
+.form-error{
+    background:#fee2e2;
+    color:#991b1b;
+    border-left:4px solid #dc2626;
+    padding:10px 14px;
+    border-radius:10px;
+    margin-top:6px;
+    font-size:14px;
+}
+.success-alert{
+    background:#dcfce7;
+    color:#166534;
+    border-left:5px solid #16a34a;
+    padding:14px 18px;
+    border-radius:12px;
+    margin-bottom:20px;
+    font-weight:600;
+}
+</style>
+
+<div class="event-container">
+<div class="event-card">
+
+    <div class="event-header">
+
+        <h2>
+            📅 Add Academic Event
+        </h2>
+
+        <p>
+            Create holidays, exams, vacations and other school activities.
+        </p>
+
+    </div>
+    {% if messages %}
+
+    {% for message in messages %}
+
+        <div class="success-alert">
+            ✅ {{ message }}
+        </div>
+
+    {% endfor %}
+
+{% endif %}
+        <form method="post">
+            {% csrf_token %}
+            {% if form.errors %}
+
+<div class="form-error mb-4">
+
+    <strong>
+        Please correct the following errors:
+    </strong>
+
+    <ul class="mb-0 mt-2">
+
+        {% for field in form %}
+
+            {% for error in field.errors %}
+
+                <li>
+                    {{ field.label }}: {{ error }}
+                </li>
+
+            {% endfor %}
+
+        {% endfor %}
+
+        {% for error in form.non_field_errors %}
+
+            <li>
+                {{ error }}
+            </li>
+
+        {% endfor %}
+
+    </ul>
+
+</div>
+
+{% endif %}
+
+            <!-- Row 1 -->
+            <div class="row">
+                <div class="group">
+                    <label class="form-label-modern">
+                    Academic Year
+                </label>
+                    {{ form.academic_year }}
+                </div>
+                <div class="group">
+                    <label>Term</label>
+                    {{ form.term }}
+                </div>
+            </div>
+
+            <!-- Row 2 -->
+            <div class="row">
+                <div class="group">
+                    <label>Type of Event</label>
+                    {{ form.event_type }}
+                </div>
+                <div class="group">
+                    <label>Event Name</label>
+                    {{ form.name }}
+                </div>
+            </div>
+
+            <!-- Row 3 -->
+            <div class="row">
+                <div class="group">
+                    <label>Start Date</label>
+                    {{ form.start_date }}
+                </div>
+                <div class="group">
+                    <label>End Date</label>
+                    {{ form.end_date }}
+                </div>
+            </div>
+
+            <!-- CHECKBOX -->
+            <div class="checkbox-row">
+                {{ form.affects_timetable }}
+                <span>Cancel classes on these days?</span>
+            </div>
+
+            <button type="submit" class="save-btn">
+
+                💾 Save Event
+
+            </button>
+
+            <a href="{% url 'accounts:calendar_list' %}" class="back">
+                Back to Calendar
+            </a>
+
+        </form>
+
+    </div>
+</div>
+
+<script>
+document.querySelector('form').addEventListener('submit', function(e) {
+    const btn = this.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = 'Saving...';
+});
+</script>
+{% endblock %}

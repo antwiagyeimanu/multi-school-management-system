@@ -1,0 +1,524 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block title %}Add Student{% endblock %}
+
+{% block content %}
+
+<style>
+
+/* PAGE */
+.student-page{
+    background:#f8fafc;
+    min-height:100vh;
+    padding:25px;
+}
+
+
+/* HERO */
+.student-hero{
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:white;
+    border-radius:22px;
+    padding:35px;
+    margin-bottom:25px;
+    box-shadow:0 15px 35px rgba(37,99,235,.25);
+}
+
+.student-hero h2{
+    font-size:32px;
+    font-weight:800;
+    margin-bottom:8px;
+}
+
+.student-hero p{
+    margin:0;
+    opacity:.85;
+}
+
+
+
+/* MAIN CARD */
+.student-card{
+
+    background:white;
+    border-radius:22px;
+    padding:30px;
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+
+}
+
+
+
+/* ALERTS */
+
+.success-box{
+
+    background:#ecfdf5;
+    border-left:5px solid #10b981;
+    padding:18px;
+    border-radius:14px;
+    color:#065f46;
+    margin-bottom:20px;
+
+}
+
+
+.error-box{
+
+    background:#fee2e2;
+    border-left:5px solid #dc2626;
+    padding:18px;
+    border-radius:14px;
+    color:#991b1b;
+    margin-bottom:20px;
+
+}
+
+
+
+/* FORM GRID */
+
+.form-grid{
+
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:30px;
+
+}
+
+
+.form-section{
+
+    background:#f8fafc;
+    padding:25px;
+    border-radius:18px;
+
+}
+
+
+.form-section-title{
+
+    font-size:18px;
+    font-weight:800;
+    color:#1f2937;
+    margin-bottom:20px;
+
+}
+
+
+
+/* LABELS */
+
+label{
+
+    display:block;
+    font-weight:700;
+    color:#374151;
+    margin-bottom:7px;
+    font-size:14px;
+
+}
+
+
+
+/* INPUTS */
+
+.form-control,
+select,
+input{
+
+    width:100%;
+    height:45px;
+    border-radius:12px;
+    border:1px solid #d1d5db;
+    padding:10px 14px;
+    background:white;
+    font-size:15px;
+    margin-bottom:18px;
+
+}
+
+
+
+.form-control:focus,
+select:focus,
+input:focus{
+
+    outline:none;
+    border-color:#2563eb;
+    box-shadow:0 0 0 4px rgba(37,99,235,.12);
+
+}
+
+
+
+/* PHOTO */
+
+.photo-box{
+
+    background:white;
+    border:2px dashed #cbd5e1;
+    border-radius:15px;
+    padding:15px;
+
+}
+
+
+
+/* BUTTON */
+
+.save-student-btn{
+
+    width:100%;
+    border:none;
+    padding:14px;
+    border-radius:50px;
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:white;
+    font-size:16px;
+    font-weight:700;
+    margin-top:20px;
+    transition:.3s;
+
+}
+
+
+.save-student-btn:hover{
+
+    transform:translateY(-2px);
+    box-shadow:0 10px 20px rgba(37,99,235,.25);
+
+}
+
+
+
+/* MOBILE */
+
+@media(max-width:768px){
+
+.form-grid{
+
+    grid-template-columns:1fr;
+
+}
+
+.student-hero h2{
+
+    font-size:25px;
+
+}
+
+}
+
+</style>
+
+
+<div class="student-page">
+
+
+<!-- HERO -->
+
+<div class="student-hero">
+
+    <h2>
+        👨‍🎓 Add New Student
+    </h2>
+
+    <p>
+        Register students and assign them to your school, class and academic structure.
+    </p>
+
+</div>
+
+
+
+{% if messages %}
+
+{% for message in messages %}
+
+<div class="success-box">
+
+    ✅ {{ message }}
+
+</div>
+
+{% endfor %}
+
+{% endif %}
+
+
+
+{% if credentials %}
+
+<div class="success-box">
+
+<h4>
+    Student Created Successfully
+</h4>
+
+<p>
+<strong>Username:</strong>
+{{ credentials.username }}
+</p>
+
+<p>
+<strong>Student ID:</strong>
+{{ credentials.student_number }}
+</p>
+
+<p>
+<strong>Password:</strong>
+{{ credentials.password }}
+</p>
+
+
+<small>
+Save these details. They will not be shown again.
+</small>
+
+
+</div>
+
+{% endif %}
+
+
+
+{% if form.errors %}
+
+<div class="error-box">
+
+<strong>
+Please fix the errors below.
+</strong>
+
+{{ form.errors }}
+
+</div>
+
+{% endif %}
+
+
+
+<div class="student-card">
+
+
+<form method="POST" enctype="multipart/form-data">
+
+{% csrf_token %}
+
+
+
+<div class="form-grid">
+
+
+<!-- LEFT SIDE -->
+
+<div class="form-section">
+
+
+<div class="form-section-title">
+Personal Information
+</div>
+
+
+
+<label>
+First Name *
+</label>
+
+{{ form.first_name }}
+
+
+
+<label>
+Middle Name
+</label>
+
+{{ form.middle_name }}
+
+
+
+<label>
+Last Name *
+</label>
+
+{{ form.last_name }}
+
+
+
+<label>
+Email
+</label>
+
+{{ form.email }}
+
+
+
+<label>
+Phone
+</label>
+
+{{ form.phone }}
+
+
+
+<label>
+Gender
+</label>
+
+{{ form.gender }}
+
+
+
+<label>
+Religion
+</label>
+
+{{ form.religion }}
+
+
+
+<label>
+Student Photo
+</label>
+
+
+<div class="photo-box">
+
+{{ form.photo }}
+
+</div>
+
+
+
+</div>
+
+
+<!-- RIGHT SIDE START -->
+
+<div class="form-section">
+
+
+<div class="form-section-title">
+Admission Information
+</div>
+
+
+<label>
+Date of Birth
+</label>
+
+{{ form.date_of_birth }}
+
+
+
+<label>
+Admission Date
+</label>
+
+{{ form.admission_date }}
+
+
+
+<label>
+Nationality
+</label>
+
+{{ form.nationality }}
+
+
+
+<label>
+Guardian Name
+</label>
+
+{{ form.parent_guardian_name }}
+
+
+
+<label>
+Guardian Phone
+</label>
+
+{{ form.parent_guardian_phone }}
+
+
+
+  <label>
+Emergency Contact Name
+</label>
+
+{{ form.emergency_contact_name }}
+
+
+
+<label>
+Emergency Contact Phone
+</label>
+
+{{ form.emergency_contact_phone }}
+
+
+
+<label>
+Emergency Contact Relationship
+</label>
+
+{{ form.emergency_contact_relationship }}
+
+
+
+<label>
+Class *
+</label>
+
+{{ form.school_class }}
+
+
+
+</div>
+
+</div>
+
+
+
+<button type="submit" class="save-student-btn">
+
+    💾 Add Student
+
+</button>
+
+
+
+</form>
+
+
+</div>
+
+
+</div>
+
+
+
+<script>
+
+
+// Disable button after submitting
+
+document.querySelector("form")
+.addEventListener("submit", function(){
+
+    const btn = document.querySelector(".save-student-btn");
+
+    btn.disabled = true;
+
+    btn.innerHTML = "⏳ Saving Student...";
+
+});
+
+
+
+</script>
+
+
+{% endblock %}

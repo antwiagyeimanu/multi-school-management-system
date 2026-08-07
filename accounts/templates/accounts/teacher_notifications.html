@@ -1,0 +1,498 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block content %}
+
+<style>
+
+/* PAGE */
+.notification-page{
+    padding:20px;
+    background:#f8fafc;
+    min-height:100vh;
+}
+
+
+/* HERO */
+
+.notification-hero{
+    background:white;
+    border-radius:24px;
+    padding:25px;
+    box-shadow:0 10px 30px rgba(15,23,42,.08);
+    margin-bottom:25px;
+}
+
+
+.notification-hero h3{
+    font-weight:800;
+    color:#0f172a;
+}
+
+
+.notification-hero p{
+    color:#64748b;
+}
+
+
+
+/* FILTER BUTTONS */
+
+.filter-box{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+
+.filter-btn{
+    border-radius:50px!important;
+    padding:8px 18px!important;
+    font-weight:600;
+    transition:.3s;
+}
+
+
+.filter-btn:hover{
+    transform:translateY(-2px);
+}
+
+
+
+/* NOTIFICATION CARD */
+
+.notif-card{
+
+    background:white;
+    border-radius:22px;
+    overflow:hidden;
+    box-shadow:0 10px 28px rgba(15,23,42,.08);
+    margin-bottom:20px;
+    transition:.3s;
+
+}
+
+
+.notif-card:hover{
+
+    transform:translateY(-4px);
+    box-shadow:0 15px 35px rgba(15,23,42,.13);
+
+}
+
+
+
+.notif-top{
+
+    height:6px;
+    background:linear-gradient(
+        90deg,
+        #2563eb,
+        #16a34a
+    );
+
+}
+
+
+
+.notif-body{
+
+    padding:25px;
+
+}
+
+
+
+.title-label{
+
+    font-size:12px;
+    font-weight:700;
+    color:#64748b;
+    text-transform:uppercase;
+
+}
+
+
+
+.notification-title{
+
+    font-size:22px;
+    font-weight:800;
+    color:#0f172a;
+
+}
+
+
+
+/* MESSAGE */
+
+.message-box{
+
+    margin-top:12px;
+    background:#f8fafc;
+    border-radius:16px;
+    padding:18px;
+    line-height:1.7;
+    color:#334155;
+    border-left:4px solid #2563eb;
+
+}
+
+
+
+/* FOOTER */
+
+
+.notif-footer{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:15px;
+    flex-wrap:wrap;
+    border-top:1px solid #e5e7eb;
+    padding-top:15px;
+    margin-top:20px;
+
+}
+
+
+
+.sender-badge{
+
+    background:#dcfce7;
+    color:#15803d;
+    padding:8px 15px;
+    border-radius:50px;
+    font-size:12px;
+    font-weight:700;
+
+}
+
+
+
+/* EMPTY */
+
+.empty-card{
+
+    background:white;
+    border-radius:20px;
+    padding:60px 20px;
+    text-align:center;
+    box-shadow:0 10px 25px rgba(0,0,0,.06);
+
+}
+
+
+
+/* PAGINATION */
+
+.pagination-btn{
+
+    border-radius:50px!important;
+    padding:8px 18px!important;
+
+}
+
+
+
+/* MOBILE */
+
+@media(max-width:768px){
+
+.notification-page{
+    padding:12px;
+}
+
+
+.notification-title{
+
+    font-size:18px;
+
+}
+
+
+.notif-body{
+
+    padding:18px;
+
+}
+
+
+.notif-footer{
+
+    align-items:flex-start;
+
+}
+
+}
+
+</style>
+
+
+
+<div class="notification-page">
+
+
+<div class="container" style="max-width:900px;">
+
+
+<!-- HEADER -->
+
+<div class="notification-hero">
+
+
+<div class="d-flex align-items-center gap-3">
+
+
+<div style="
+width:65px;
+height:65px;
+border-radius:18px;
+background:linear-gradient(135deg,#2563eb,#16a34a);
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:30px;
+color:white;
+">
+
+🔔
+
+</div>
+
+
+<div>
+
+<h3 class="mb-1">
+Teacher Notifications
+</h3>
+
+<p class="mb-0">
+Stay updated with school announcements and important messages.
+</p>
+
+</div>
+
+
+</div>
+
+
+
+<div class="mt-4">
+
+<h6 class="fw-bold mb-3">
+Showing {{ announcements|length }} notifications
+</h6>
+
+
+<div class="filter-box">
+
+
+<a href="?filter=all"
+class="btn filter-btn 
+{% if filter == 'all' %}
+btn-dark
+{% else %}
+btn-outline-secondary
+{% endif %}">
+All ({{ total }})
+</a>
+
+
+
+<a href="?filter=today"
+class="btn filter-btn
+{% if filter == 'today' %}
+btn-dark
+{% else %}
+btn-outline-secondary
+{% endif %}">
+Today
+</a>
+
+
+
+
+<a href="?filter=week"
+class="btn filter-btn
+{% if filter == 'week' %}
+btn-dark
+{% else %}
+btn-outline-secondary
+{% endif %}">
+This Week
+</a>
+
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+{% for ann in announcements %}
+
+
+
+<div class="notif-card">
+
+
+<div class="notif-top"></div>
+
+
+<div class="notif-body">
+
+
+
+<div class="title-label">
+📌 Announcement Title
+</div>
+
+
+<div class="notification-title mb-3">
+
+{{ ann.title }}
+
+</div>
+
+
+
+
+<div class="title-label">
+💬 Message
+</div>
+
+
+<div class="message-box">
+
+{{ ann.message }}
+
+</div>
+
+
+
+
+<div class="notif-footer">
+
+
+<small class="text-muted">
+
+🕒 {{ ann.created_at|date:"M d, Y h:i A" }}
+
+<br>
+
+{{ ann.created_at|timesince }} ago
+
+</small>
+
+
+
+<span class="sender-badge">
+
+By {{ ann.created_by.get_full_name|default:ann.created_by.username }}
+
+({{ ann.created_by.role|title }})
+
+</span>
+
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+{% empty %}
+
+
+
+<div class="empty-card">
+
+<div style="font-size:50px;">
+🔕
+</div>
+
+
+<h5 class="fw-bold mt-3">
+No Notifications
+</h5>
+
+
+<p class="text-muted mb-0">
+You don't have any announcements yet.
+</p>
+
+
+</div>
+
+
+
+{% endfor %}
+
+
+
+
+{% if page_obj.has_other_pages %}
+
+
+<div class="d-flex justify-content-center mt-4 gap-2 flex-wrap">
+
+
+{% if page_obj.has_previous %}
+
+<a href="?filter={{ filter }}&page={{ page_obj.previous_page_number }}"
+class="btn btn-outline-secondary pagination-btn">
+
+Previous
+
+</a>
+
+{% endif %}
+
+
+
+<span class="btn btn-dark pagination-btn">
+
+{{ page_obj.number }} /
+{{ page_obj.paginator.num_pages }}
+
+</span>
+
+
+
+{% if page_obj.has_next %}
+
+<a href="?filter={{ filter }}&page={{ page_obj.next_page_number }}"
+class="btn btn-outline-secondary pagination-btn">
+
+Next
+
+</a>
+
+{% endif %}
+
+
+
+</div>
+
+
+{% endif %}
+
+
+
+</div>
+
+</div>
+
+
+{% endblock %}

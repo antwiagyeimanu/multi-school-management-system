@@ -1,0 +1,390 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block title %}My Subjects{% endblock %}
+
+{% block content %}
+
+<style>
+
+.subject-container{
+    max-width:1200px;
+    margin:auto;
+    padding:30px 20px;
+    background:#f8fafc;
+    min-height:100vh;
+}
+
+
+/* HERO */
+
+.subject-header{
+
+    background:linear-gradient(135deg,#0f172a,#1e40af);
+
+    border-radius:24px;
+
+    padding:35px;
+
+    color:white;
+
+    margin-bottom:30px;
+
+    box-shadow:0 15px 35px rgba(15,23,42,.15);
+
+}
+
+
+.subject-header h1{
+
+    font-size:34px;
+    font-weight:800;
+    margin-bottom:8px;
+
+}
+
+
+.subject-header p{
+
+    margin:0;
+    font-size:17px;
+    opacity:.85;
+
+}
+
+
+/* GRID */
+
+.subject-grid{
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(auto-fit,minmax(260px,1fr));
+
+    gap:22px;
+
+}
+
+
+
+/* CARD */
+
+.subject-card{
+
+    position:relative;
+
+    background:white;
+
+    border-radius:22px;
+
+    padding:30px;
+
+    min-height:210px;
+
+    overflow:hidden;
+
+    text-decoration:none;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:space-between;
+
+    box-shadow:
+    0 10px 25px rgba(15,23,42,.08);
+
+    transition:.35s;
+
+}
+
+
+
+.subject-card:hover{
+
+    transform:translateY(-8px);
+
+    box-shadow:
+    0 20px 45px rgba(15,23,42,.15);
+
+}
+
+
+
+.subject-card::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:0;
+    left:0;
+
+    height:6px;
+
+    width:100%;
+
+    background:
+    linear-gradient(90deg,#2563eb,#22c55e);
+
+}
+
+
+
+.subject-icon{
+
+    width:65px;
+
+    height:65px;
+
+    border-radius:20px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    background:#eff6ff;
+
+    font-size:32px;
+
+    margin-bottom:20px;
+
+}
+
+
+
+.subject-name{
+
+    font-size:25px;
+
+    font-weight:800;
+
+    color:#0f172a;
+
+    line-height:1.2;
+
+}
+
+
+
+.department{
+
+    margin-top:8px;
+
+    color:#64748b;
+
+    font-size:14px;
+
+}
+
+
+
+/* BUTTON AREA */
+
+.progress-link{
+
+    margin-top:25px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    background:#2563eb;
+
+    color:white;
+
+    padding:12px 16px;
+
+    border-radius:14px;
+
+    font-weight:700;
+
+}
+
+
+.progress-link span{
+
+    font-size:22px;
+
+}
+
+
+
+/* EMPTY */
+
+.empty-card{
+
+    grid-column:1/-1;
+
+    background:white;
+
+    padding:60px 20px;
+
+    text-align:center;
+
+    border-radius:22px;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.06);
+
+}
+
+
+
+@media(max-width:768px){
+
+    .subject-container{
+
+        padding:20px 12px;
+
+    }
+
+
+    .subject-header{
+
+        padding:25px;
+
+    }
+
+
+    .subject-header h1{
+
+        font-size:26px;
+
+    }
+
+
+    .subject-name{
+
+        font-size:21px;
+
+    }
+
+}
+
+
+
+@media(max-width:480px){
+
+    .subject-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+
+    .subject-card{
+
+        min-height:190px;
+
+        padding:25px;
+
+    }
+
+}
+
+</style>
+
+
+
+<div class="subject-container">
+
+
+<!-- HEADER -->
+
+<div class="subject-header">
+
+    <h1>
+        📚 My Subjects
+    </h1>
+
+    <p>
+        Click any subject below to view your academic progress.
+    </p>
+
+</div>
+
+
+
+<div class="subject-grid">
+
+
+{% for enrollment in subjects %}
+
+
+<a href="{% url 'accounts:student_subject_progress' enrollment.subject.id %}"
+   class="subject-card">
+
+
+<div>
+
+
+<div class="subject-icon">
+    📘
+</div>
+
+
+<div class="subject-name">
+
+{{ enrollment.subject.name }}
+
+</div>
+
+
+<div class="department">
+
+{{ enrollment.subject.department.name|default:"" }}
+
+</div>
+
+
+</div>
+
+
+
+<div class="progress-link">
+
+<span>
+View Progress
+</span>
+
+<span>
+→
+</span>
+
+</div>
+
+
+</a>
+
+
+{% empty %}
+
+
+<div class="empty-card">
+
+<h4 class="fw-bold">
+    📚 No Subjects Assigned
+</h4>
+
+<p class="text-muted mb-0">
+
+No subjects have been assigned yet.
+
+</p>
+
+</div>
+
+
+{% endfor %}
+
+
+</div>
+
+
+</div>
+
+
+{% endblock %}

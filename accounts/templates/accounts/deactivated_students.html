@@ -1,0 +1,284 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+<style>
+
+body{
+    background:#f4f7fb;
+}
+
+.page-header{
+    background:linear-gradient(135deg,#dc2626,#ef4444);
+    color:#fff;
+    padding:25px 30px;
+    border-radius:18px;
+    margin-bottom:25px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    box-shadow:0 10px 25px rgba(239,68,68,.25);
+}
+
+.page-header h2{
+    margin:0;
+    font-weight:800;
+}
+
+.page-header p{
+    margin:0;
+    opacity:.9;
+}
+
+.back-btn{
+    background:#fff;
+    color:#dc2626;
+    font-weight:700;
+    border-radius:12px;
+    padding:10px 18px;
+    text-decoration:none;
+    transition:.25s;
+}
+
+.back-btn:hover{
+    background:#f8fafc;
+    transform:translateY(-2px);
+}
+
+.summary-card{
+    border:none;
+    border-radius:18px;
+    background:#fff;
+    padding:22px;
+    box-shadow:0 6px 20px rgba(0,0,0,.06);
+    margin-bottom:25px;
+}
+
+.summary-card h3{
+    font-size:34px;
+    margin:0;
+    color:#dc2626;
+    font-weight:800;
+}
+
+.summary-card span{
+    color:#64748b;
+    font-weight:600;
+}
+
+.student-card{
+    border:none;
+    border-radius:18px;
+    overflow:hidden;
+    transition:.3s;
+    box-shadow:0 8px 25px rgba(0,0,0,.06);
+}
+
+.student-card:hover{
+    transform:translateY(-6px);
+    box-shadow:0 18px 35px rgba(0,0,0,.12);
+}
+
+.student-header{
+    background:linear-gradient(135deg,#475569,#334155);
+    color:#fff;
+    padding:25px;
+    text-align:center;
+}
+
+.student-avatar{
+    width:70px;
+    height:70px;
+    border-radius:50%;
+    background:#fff;
+    color:#334155;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    margin:auto;
+    font-size:24px;
+    font-weight:800;
+}
+
+.student-body{
+    padding:20px;
+}
+
+.info-row{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:10px;
+    font-size:14px;
+}
+
+.info-row span:first-child{
+    color:#64748b;
+    font-weight:600;
+}
+
+.inactive-badge{
+    display:block;
+    width:100%;
+    text-align:center;
+    padding:8px;
+    border-radius:10px;
+    background:#fee2e2;
+    color:#dc2626;
+    font-weight:700;
+    margin-bottom:12px;
+}
+
+.btn-reactivate{
+    width:100%;
+    border-radius:10px;
+    font-weight:700;
+}
+
+.empty-box{
+    background:#fff;
+    border-radius:18px;
+    padding:60px;
+    text-align:center;
+    box-shadow:0 8px 25px rgba(0,0,0,.05);
+}
+
+.empty-box i{
+    font-size:70px;
+    color:#cbd5e1;
+}
+
+.empty-box h4{
+    margin-top:20px;
+    color:#475569;
+}
+.student-body{
+    padding:20px;
+    color:#1e293b !important;
+}
+
+.student-body strong{
+    color:#0f172a !important;
+    font-weight:700;
+}
+
+.student-body .info-row{
+    color:#1e293b !important;
+}
+
+.student-body .info-row span{
+    color:#64748b !important;
+}
+
+.student-body .info-row strong{
+    color:#111827 !important;
+}
+
+</style>
+
+
+<div class="container-fluid">
+
+<div class="page-header">
+
+<div>
+<h2>🚫 Deactivated Students</h2>
+<p>{{ school_class.name }}</p>
+</div>
+
+<a href="{% url 'accounts:view-students-in-class' school_class.id %}"
+class="back-btn">
+← Back to Active Students
+</a>
+
+</div>
+
+
+<div class="summary-card">
+
+<h3>{{ students|length }}</h3>
+
+<span>Total Deactivated Students</span>
+
+</div>
+
+
+<div class="row g-4">
+
+{% for student in students %}
+
+<div class="col-xl-3 col-lg-4 col-md-6">
+
+<div class="card student-card">
+
+<div class="student-header">
+
+<div class="student-avatar">
+{{ student.first_name|first }}{{ student.last_name|first }}
+</div>
+
+<h5 class="mt-3 mb-0">
+{{ student.first_name }} {{ student.last_name }}
+</h5>
+
+</div>
+
+
+<div class="student-body">
+
+<div class="info-row">
+<span>Student ID</span>
+<strong>{{ student.student_number }}</strong>
+</div>
+
+<div class="info-row">
+<span>Username</span>
+<strong>{{ student.username }}</strong>
+</div>
+
+<div class="info-row">
+<span>Phone</span>
+<strong>{{ student.phone|default:"N/A" }}</strong>
+</div>
+
+<div class="info-row">
+<span>Joined</span>
+<strong>{{ student.date_joined|date:"M d, Y" }}</strong>
+</div>
+
+<div class="inactive-badge">
+🚫 Student Inactive
+</div>
+
+<a href="{% url 'accounts:reactivate-student' student.id %}"
+class="btn btn-success btn-reactivate">
+✅ Reactivate Student
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+{% empty %}
+
+<div class="col-12">
+
+<div class="empty-box">
+
+<i class="bi bi-person-x-fill"></i>
+
+<h4>No deactivated students found.</h4>
+
+<p class="text-muted">
+All students in this class are currently active.
+</p>
+
+</div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+</div>
+{% endblock %}

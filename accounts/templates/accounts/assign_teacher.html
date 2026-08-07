@@ -1,0 +1,37 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block content %}
+
+<h2>Assign Subject to {{ teacher.first_name }} {{ teacher.last_name }}</h2>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <div style="margin-bottom:10px;">
+        <label>Class:</label><br>
+        {{ form.school_class }}
+    </div>
+
+    <div style="margin-bottom:10px;">
+        <label>Subject:</label><br>
+        {{ form.subject }}
+    </div>
+
+    <button type="submit">Add Assignment</button>
+</form>
+
+<hr>
+
+<h3>Current Assignments</h3>
+
+<ul>
+    {% for item in assignments %}
+        <li>
+            {{ item.school_class.name }} → {{ item.subject.name }}
+        </li>
+    {% empty %}
+        <li>No assignments yet</li>
+    {% endfor %}
+</ul>
+
+{% endblock %}

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Student Result - {{ student.get_full_name }}</title>
+    <style>
+        @page { 
+            size: A4; 
+            margin: 1.5cm; 
+        }
+        body { 
+            font-family: Arial, Helvetica, sans-serif; 
+            font-size: 12px; 
+            color: #333;
+        }
+        .header { 
+            text-align: center; 
+            margin-bottom: 25px; 
+            border-bottom: 2px solid #2c3e50;
+            padding-bottom: 15px;
+        }
+        .header h1 { 
+            margin: 0; 
+            font-size: 26px; 
+            color: #2c3e50;
+        }
+        .header p { 
+            margin: 5px 0; 
+            font-size: 14px;
+        }
+        .info { 
+            margin-bottom: 25px; 
+        }
+        .info table { 
+            width: 100%; 
+            border-collapse: collapse;
+        }
+        .info td { 
+            padding: 6px 0; 
+            font-size: 13px;
+        }
+        .results-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 20px; 
+        }
+        .results-table th, .results-table td { 
+            border: 1px solid #333; 
+            padding: 10px; 
+            text-align: left; 
+        }
+        .results-table th { 
+            background: #2c3e50; 
+            color: white;
+            font-size: 13px;
+        }
+        .results-table tr:nth-child(even) { 
+            background: #f9f9f9; 
+        }
+        .grade-A { color: #27ae60; font-weight: bold; }
+        .grade-B { color: #2980b9; font-weight: bold; }
+        .grade-C { color: #f39c12; font-weight: bold; }
+        .grade-D { color: #e67e22; font-weight: bold; }
+        .grade-F { color: #e74c3c; font-weight: bold; }
+        .footer { 
+            margin-top: 40px; 
+            text-align: center; 
+            font-size: 10px; 
+            border-top: 1px solid #ccc;
+            padding-top: 15px;
+        }
+        .summary {
+            margin-top: 20px;
+            text-align: right;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="school-doc">
+    <div class="header">
+        <h1>{{ student.school.name|default:"Ghana Education Service" }}</h1>
+        <p><strong>STUDENT TERMINAL REPORT</strong></p>
+        <p>Term {{ term }} - Academic Year {{ year }}</p>
+    </div>
+<div class="info">
+    <table>
+        <tr>
+            <td><strong>Student Name:</strong> {{ student.get_full_name|default:student.username }}</td>
+            <td><strong>Class:</strong> {% if student.school_class %}{{ student.school_class.name }}{% else %}-{% endif %}</td>
+        </tr>
+        <tr>
+            <td><strong>Student ID:</strong> {% if student.student_number %}{{ student.student_number }}{% else %}{{ student.id }}{% endif %}</td>
+            <td><strong>Date Generated:</strong> {{ date_generated|date:"d M Y" }}</td>
+        </tr>
+    </table>
+</div>
+
+    <table class="results-table">
+        <thead>
+            <tr>
+                <th style="width:40%;">Subject</th>
+                <th style="width:15%;">Score</th>
+                <th style="width:15%;">Grade</th>
+                <th style="width:30%;">Remark</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for result in results %}
+            <tr>
+                <td>{{ result.subject.name }}</td>
+                <td>{{ result.score|floatformat:0 }}%</td>
+                <td class="grade-{{ result.grade }}">{{ result.grade }}</td>
+                <td>{{ result.remark }}</td>
+            </tr>
+                 {% empty %}
+        <tr>
+            <td colspan="7" style="text-align:center; padding:20px;">
+                No results have been published for Term {{ term }}, {{ year }}.
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    {% if results %}
+    <style>
+        .section-box {
+            border: 1px solid #333;
+            margin: 15px 0;
+            padding: 10px;
+            page-break-inside: avoid;
+        }
+        .section-box {
+    border: 1px solid #333;
+    margin: 20px 0;  ← Change from 15px to 20px
+    padding: 15px;   ← Change from 10px to 15px
+    page-break-inside: avoid;
+}
+        .section-title {
+            background: #f0f0f0;
+            font-weight: bold;
+            padding: 5px;
+            margin: -10px -10px 10px -10px;
+            text-align: center;
+            font-size: 12px;
+            border-bottom: 1px solid #333;
+        }
+        .summary-grid {
+            display: table;
+            width: 100%;
+        }
+        .summary-row {
+            display: table-row;
+        }
+       .summary-cell {
+    display: table-cell;
+    width: 50%;
+    padding: 8px 12px;  ← Change from 4px to 8px
+    vertical-align: top;
+}
+.signature-line {
+    border-top: 1px solid #333;
+    width: 200px;
+    margin: 50px auto 10px auto;  ← Change from 40px to 50px
+}
+        .remark-box {
+            border-bottom: 1px dotted #333;
+            height: 40px;
+            margin: 8px 0 20px 0;}
+            .section-box {
+    margin: 25px 0;  /* was 15px */
+    padding: 18px;   /* was 10px */
+}
+
+.summary-cell {
+    padding: 10px 15px;  /* was 4px 8px */
+}
+     
+    </style>
+
+    <!-- SUMMARY SECTION -->
+    <div class="section-box">
+        <div class="section-title">SUMMARY OF PERFORMANCE</div>
+        <div class="summary-grid">
+            <div class="summary-row">
+                <div class="summary-cell"><strong>Total Marks Obtained:</strong> {{ total_score }} / {{ max_total }}</div>
+                <div class="summary-cell"><strong>Average Score:</strong> {{ average_score }}%</div>
+            </div>
+            <div class="summary-row">
+                <div class="summary-cell"><strong>Overall Grade:</strong> {{ overall_grade }}</div>
+                <div class="summary-cell"><strong>Position in Class:</strong> {{ position_in_class }} out of {{ total_students_in_class }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ATTENDANCE SECTION -->
+    <div class="section-box">
+        <div class="section-title">ATTENDANCE RECORD</div>
+        <div class="summary-grid">
+            <div class="summary-row">
+                <div class="summary-cell"><strong>Days School Opened:</strong> {{ days_opened }}</div>
+                <div class="summary-cell"><strong>Days Present:</strong> {{ days_present }}</div>
+            </div>
+            <div class="summary-row">
+                <div class="summary-cell"><strong>Days Absent:</strong> {{ days_absent }}</div>
+                <div class="summary-cell"><strong>Percentage Present:</strong> {{ attendance_percentage|default:"0.0" }}%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMMENTS SECTION -->
+    <div class="section-box">
+        <div class="section-title">TEACHER'S COMMENTS</div>
+        <p><strong>Class Teacher's Remark:</strong></p>
+        <div class="remark-box">{{ class_teacher_remark|default:"" }}</div>
+        
+        <p><strong>Headmaster/Headmistress's Remark:</strong></p>
+        <div class="remark-box">{{ headmaster_remark|default:"" }}</div>
+    </div>
+
+    <!-- SIGNATURE SECTION -->
+    <div class="section-box" style="border: none; margin-top: 30px;">
+        <table style="width: 100%; border: none;">
+            <tr>
+                <td style="width: 50%; border: none; text-align: center;">
+                    <div class="signature-line"></div>
+                    <strong>Class Teacher</strong><br>
+                    {% if student.school_class.teacher %}
+                        {{ student.school_class.teacher.get_full_name }}
+                    {% endif %}
+                    <br><span style="font-size: 10px;">Date: _______________</span>
+                </td>
+                <td style="width: 50%; border: none; text-align: center;">
+                    <div class="signature-line"></div>
+                    <strong>Headmaster/Headmistress</strong>
+                    <br><span style="font-size: 10px;">Date: _______________</span>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- NEXT TERM INFO -->
+    <div class="section-box">
+        <div class="section-title">NEXT TERM INFORMATION</div>
+        <div class="summary-grid">
+            <div class="summary-row">
+                <div class="summary-cell"><strong>Next Term Begins:</strong> {{ next_term_date|default:"_________________" }}</div>
+                <div class="summary-cell"><strong>Fees Balance:</strong> GHS {{ fees_balance|default:"0.00" }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div style="text-align: center; font-size: 9px; margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px;">
+        This report was electronically generated on {{ date_generated|date:"d M Y" }} by {{ student.school.name|default:"School Management System" }}
+    </div>
+
+      {% endif %}
+    </div>
+    </body>
+    </html>

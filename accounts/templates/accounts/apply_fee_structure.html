@@ -1,0 +1,78 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block title %}Apply Fee Structure{% endblock %}
+
+{% block content %}
+<style>
+    select, input { color: #000 !important; background-color: #fff !important; }
+</style>
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Apply Fee Structure to Class</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            Select Fee Structure and Class
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label class="form-label">Fee Structure</label>
+                    <select name="fee_structure" class="form-select" required>
+                        <option value="">Select Structure</option>
+                        {% for fs in fee_structures %}
+                        <option value="{{ fs.id }}">{{ fs }} - Total: GHS {{ fs.total_amount }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Class</label>
+                    <select name="school_class" class="form-select" required>
+                        <option value="">Select Class</option>
+                        {% for cls in classes %}
+                        <option value="{{ cls.id }}">{{ cls.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Due Date</label>
+                    <input type="date" name="due_date" class="form-control" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Apply to Class</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Available Fee Structures</div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Term</th>
+                        <th>Year</th>
+                        <th>Total</th>
+                        <th>Breakdown</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fs in fee_structures %}
+                    <tr>
+                        <td>{{ fs.get_term_display }}</td>
+                        <td>{{ fs.academic_year }}</td>
+                        <td>GHS {{ fs.total_amount }}</td>
+                        <td>School: {{ fs.school_fees }} | PTA: {{ fs.pta_dues }} | Computer: {{ fs.computer_levy }} | Exam: {{ fs.exam_fees }} | Other: {{ fs.other_fees }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4">No active fee structures. Ask admin to create one.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

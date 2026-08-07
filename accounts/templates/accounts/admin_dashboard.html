@@ -1,0 +1,826 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block content %}
+
+<style>
+
+/* ============================
+   PREMIUM ADMIN DASHBOARD
+============================ */
+
+.admin-wrapper {
+    padding: 25px;
+}
+
+
+/* HERO HEADER */
+
+.admin-hero {
+
+    background:
+    linear-gradient(
+        135deg,
+        #041729,
+        #0b3b66
+    );
+
+    border-radius:24px;
+    padding:35px;
+
+    color:white;
+
+    margin-bottom:30px;
+
+    box-shadow:
+    0 15px 35px rgba(0,0,0,.18);
+
+    position:relative;
+    overflow:hidden;
+
+}
+
+
+.admin-hero::after {
+
+    content:"";
+
+    position:absolute;
+
+    width:250px;
+    height:250px;
+
+    background:
+    rgba(255,255,255,.08);
+
+    border-radius:50%;
+
+    right:-70px;
+    top:-70px;
+
+}
+
+
+
+.admin-hero h1 {
+
+    font-size:34px;
+    font-weight:800;
+
+    margin-bottom:10px;
+
+}
+
+
+.admin-hero p {
+
+    margin:0;
+
+    opacity:.85;
+
+    font-size:16px;
+
+}
+
+
+
+/* SCHOOL INFO */
+
+.school-info {
+
+    margin-top:20px;
+
+    display:flex;
+
+    gap:15px;
+
+    flex-wrap:wrap;
+
+}
+
+
+.info-pill {
+
+    background:
+    rgba(255,255,255,.12);
+
+    padding:8px 15px;
+
+    border-radius:20px;
+
+    font-size:14px;
+
+}
+
+
+
+/* ALERT */
+
+.expense-alert {
+
+    border-radius:15px;
+
+    box-shadow:
+    0 8px 20px rgba(0,0,0,.12);
+
+}
+
+
+
+
+
+/* QUICK ACTION */
+
+.quick-actions {
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(auto-fit,minmax(180px,1fr));
+
+    gap:18px;
+
+    margin-bottom:30px;
+
+}
+
+
+
+.action-card {
+
+    background:white;
+
+    border-radius:18px;
+
+    padding:18px;
+
+    text-decoration:none;
+
+    color:#111827;
+
+    box-shadow:
+    0 8px 20px rgba(0,0,0,.07);
+
+    transition:.3s;
+
+}
+
+
+.action-card:hover {
+
+    transform:translateY(-5px);
+
+    box-shadow:
+    0 15px 30px rgba(0,0,0,.15);
+
+}
+
+
+
+.action-card i {
+
+    font-size:28px;
+
+    margin-bottom:12px;
+
+}
+
+
+.action-card span {
+
+    display:block;
+
+    font-weight:700;
+
+}
+
+
+
+
+/* STAT GRID */
+
+.dashboard-grid {
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(auto-fit,minmax(220px,1fr));
+
+    gap:25px;
+
+}
+
+
+
+/* STAT CARD */
+
+
+.admin-card {
+
+    background:white;
+
+    border-radius:22px;
+
+    padding:25px;
+
+    text-decoration:none;
+
+    color:inherit;
+
+    min-height:170px;
+
+    position:relative;
+
+    overflow:hidden;
+
+    box-shadow:
+
+    0 10px 25px rgba(0,0,0,.08);
+
+    transition:.3s;
+
+}
+
+
+
+.admin-card:hover {
+
+    transform:translateY(-8px);
+
+    box-shadow:
+
+    0 18px 40px rgba(0,0,0,.15);
+
+}
+
+
+
+
+.admin-card .icon {
+
+    width:65px;
+
+    height:65px;
+
+    border-radius:20px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:32px;
+
+    margin-bottom:18px;
+
+}
+
+
+
+.admin-card h3 {
+
+    font-size:17px;
+
+    font-weight:700;
+
+    color:#374151;
+
+}
+
+
+
+.admin-card p {
+
+    font-size:38px;
+
+    font-weight:800;
+
+    color:#041729;
+
+    margin:5px 0 0;
+
+}
+
+
+
+/* CARD ICON COLORS */
+
+.students .icon {
+
+    background:#dbeafe;
+
+    color:#2563eb;
+
+}
+
+
+.teachers .icon {
+
+    background:#dcfce7;
+
+    color:#16a34a;
+
+}
+
+
+.parents .icon {
+
+    background:#fee2e2;
+
+    color:#dc2626;
+
+}
+
+
+.accountants .icon {
+
+    background:#fef3c7;
+
+    color:#d97706;
+
+}
+
+
+.subjects .icon {
+
+    background:#ede9fe;
+
+    color:#7c3aed;
+
+}
+
+
+.classes .icon {
+
+    background:#cffafe;
+
+    color:#0891b2;
+
+}
+
+
+.users .icon {
+
+    background:#e5e7eb;
+
+    color:#374151;
+
+}
+/* RESPONSIVE */
+
+@media(max-width:768px){
+
+    .admin-wrapper{
+        padding:15px;
+    }
+
+
+    .admin-hero h1{
+        font-size:26px;
+    }
+
+
+    .admin-card p{
+        font-size:32px;
+    }
+
+}
+
+
+</style>
+
+
+
+<div class="admin-wrapper">
+
+
+<!-- EXPENSE ALERT -->
+
+{% if pending_count > 0 %}
+
+<div class="alert alert-warning alert-dismissible fade show expense-alert"
+role="alert">
+
+
+<strong>
+
+⚠️ {{ pending_count }}
+expense{{ pending_count|pluralize }}
+pending verification
+
+</strong>
+
+
+<a href="{% url 'accounts:expense_list' %}"
+class="alert-link ms-2">
+
+Review Now
+
+</a>
+
+
+
+<button type="button"
+class="btn-close"
+data-bs-dismiss="alert">
+
+</button>
+
+
+</div>
+
+
+{% endif %}
+
+
+
+
+
+<!-- HERO HEADER -->
+
+
+<div class="admin-hero">
+
+
+<h1>
+
+Welcome,
+{{ user.first_name|default:user.username }}
+
+</h1>
+
+
+
+<p>
+
+{% if school %}
+
+{{ school.name }} Administration Dashboard
+
+{% else %}
+
+School Management Dashboard
+
+{% endif %}
+
+</p>
+
+
+
+{% if school %}
+
+
+<div class="school-info">
+
+
+<div class="info-pill">
+
+🏫 {{ school.name }}
+
+</div>
+
+
+{% if school.phone %}
+
+<div class="info-pill">
+
+📞 {{ school.phone }}
+
+</div>
+
+{% endif %}
+
+
+
+{% if school.email %}
+
+<div class="info-pill">
+
+✉️ {{ school.email }}
+
+</div>
+
+{% endif %}
+
+
+
+</div>
+
+
+{% endif %}
+
+
+
+</div>
+
+
+
+
+
+
+
+<!-- QUICK ACTIONS -->
+
+
+<div class="quick-actions">
+
+
+<a href="{% url 'accounts:add-student' %}"
+class="action-card">
+
+<i class="fas fa-user-graduate text-primary"></i>
+
+<span>
+Add Student
+</span>
+
+</a>
+
+
+
+
+<a href="{% url 'accounts:add-teacher' %}"
+class="action-card">
+
+<i class="fas fa-chalkboard-teacher text-success"></i>
+
+<span>
+Add Teacher
+</span>
+
+</a>
+
+
+
+
+
+<a href="{% url 'accounts:school_settings' %}"
+class="action-card">
+
+<i class="fas fa-cogs text-warning"></i>
+
+<span>
+School Settings
+</span>
+
+</a>
+
+
+
+
+
+<a href="{% url 'accounts:finance_fee_list' %}"
+class="action-card">
+
+<i class="fas fa-money-bill-wave text-danger"></i>
+
+<span>
+Manage Fees
+</span>
+
+</a>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- STATISTICS -->
+
+<div class="dashboard-grid">
+
+
+
+
+
+<a href="{% url 'accounts:view-students-by-class' %}"
+class="admin-card students">
+
+
+<div class="icon">
+
+🎓
+
+</div>
+
+
+<h3>
+Students
+</h3>
+
+
+<p>
+
+{{ total_students }}
+
+</p>
+
+
+</a>
+
+
+
+
+
+
+
+<a href="{% url 'accounts:manage-teachers-grid' %}"
+class="admin-card teachers">
+
+
+<div class="icon">
+
+👨‍🏫
+
+</div>
+
+
+<h3>
+Teachers
+</h3>
+
+
+<p>
+
+{{ total_teachers }}
+
+</p>
+
+
+</a>
+
+
+
+
+
+
+
+
+<a href="{% url 'accounts:manage-parents' %}"
+class="admin-card parents">
+
+
+<div class="icon">
+
+👨‍👩‍👧
+
+</div>
+
+
+<h3>
+Parents
+</h3>
+
+
+<p>
+
+{{ total_parents }}
+
+</p>
+
+
+</a>
+
+
+
+
+
+
+
+
+<a href="{% url 'accounts:manage_accountant_grid' %}"
+class="admin-card accountants">
+
+
+<div class="icon">
+
+💰
+
+</div>
+
+
+<h3>
+Accountants
+</h3>
+
+
+<p>
+
+{{ total_accountants }}
+
+</p>
+
+
+</a>
+
+
+
+
+
+
+
+
+<a href="{% url 'accounts:subject_list' %}"
+class="admin-card subjects">
+
+
+<div class="icon">
+
+📚
+
+</div>
+
+
+<h3>
+Subjects
+</h3>
+
+
+<p>
+
+{{ total_subjects }}
+
+</p>
+
+
+</a>
+
+
+
+
+
+
+
+<a href="{% url 'accounts:admin_classes' %}"
+class="admin-card classes">
+
+
+<div class="icon">
+
+🏫
+
+</div>
+
+
+<h3>
+Classes
+</h3>
+
+
+<p>
+
+{{ total_classes }}
+
+</p>
+
+
+</a>
+
+
+
+
+
+
+
+<div class="admin-card users">
+
+
+<div class="icon">
+
+👥
+
+</div>
+
+
+<h3>
+Total Users
+</h3>
+
+
+<p>
+
+{{ total_users }}
+
+</p>
+
+
+</div>
+
+
+
+
+
+</div>
+
+
+
+</div>
+
+
+{% endblock %}

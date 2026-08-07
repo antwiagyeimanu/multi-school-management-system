@@ -1,0 +1,957 @@
+{% extends "accounts/dashboard_base.html" %}
+{% load custom_filters %}
+
+{% block title %} Manager Timetable{% endblock %}
+
+{% block content %}
+<style>
+
+.break-column { min-width:32px; width:32px; max-width:32px; padding:0 !important; }
+.break-cell {
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    letter-spacing:2px;
+    font-weight:bold;
+    font-size:11px;
+    width:32px;
+    height:100%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+.lesson-card {
+    background: #2563eb;
+    color: white;
+    border-radius: 8px;
+    padding: 6px;
+    min-height: 70px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+}
+.lesson-card strong { font-size: 18px; line-height:1; margin-top:4px; }
+.lesson-card small { font-size: 11px; opacity:.95; }
+.period-badge{
+    display:inline-block;
+    background:white;
+    color:#2563eb;
+    padding:2px 7px;
+    border-radius:30px;
+    font-size:10px;
+    font-weight:bold;
+    margin-bottom:5px;
+}
+.table-timetable th, .table-timetable td { padding: 6px !important; vertical-align: middle; }
+.table-timetable td{ height:78px; padding:4px !important; }
+.table-timetable th{ font-size:12px; }
+.time-header { font-size: 12px; white-space: nowrap; padding: 6px !important; }
+
+/* Hide print header on screen */
+.print-header{ display:none; }
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0mm 8mm 8mm 8mm; /* TOP 0 = NO SPACE */
+  }
+  html, body {
+    margin:0 !important;
+    padding:0 !important;
+    background:white !important;
+  }
+  /* Hide dashboard */
+  body * { visibility: hidden; }
+  
+  #printArea, #printArea * { visibility: visible; }
+
+  #printArea {
+    position:absolute !important;
+    left:0 !important;
+    top:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+    width:100% !important;
+  }
+  /* THIS REMOVES THE BIG SPACE */
+  .print-header {
+    display:block !important;
+    margin-top:0 !important;
+    padding-top:0 !important;
+    margin-bottom:3px !important;
+  }
+  .print-header table { margin-top:0 !important; padding-top:0 !important; }
+  .print-header h2 { margin-top:0 !important; }
+  .print-header hr { margin:3px 0 !important; }
+  .print-header .text-center { margin-top:2px !important; }
+
+  #printArea .card { box-shadow:none !important; border:none !important; }
+  #printArea .card-body { padding:0 !important; }
+  .btn { display:none !important; }
+
+  /* HIDE BLUE BASIC 6 TITLE ON PRINT */
+  .no-print {
+    display:none !important;
+    visibility:hidden !important;
+    height:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+  }
+
+  .table-responsive { overflow:visible !important; }
+  .table-timetable {
+    width:100% !important;
+    font-size:9px !important;
+    border-collapse:collapse !important;
+  }
+  .table-timetable td { height:55px !important; padding:2px !important; }
+  .lesson-card { min-height:45px !important; padding:3px !important; }
+  .lesson-card strong { font-size:13px !important; }
+  .lesson-card small { font-size:9px !important; }
+  .break-cell { min-height:120px !important; font-size:9px !important; }
+  tr, td, th { page-break-inside:avoid !important; }
+}
+
+.lesson-edit-btn{
+    width:28px;
+    height:28px;
+    border:none;
+    border-radius:50%;
+    background:white;
+    color:#2563eb;
+    font-size:13px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    margin-top:8px;
+}
+
+.lesson-edit-btn:hover{
+    background:#dbeafe;
+}
+</style>
+<div class="card border-0 shadow-lg rounded-4 mb-4 overflow-hidden">
+
+    <div class="card-body p-4 p-lg-5"
+         style="
+         background:linear-gradient(135deg,#2563eb,#1d4ed8);
+         color:white;
+         ">
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-4">
+
+            <div>
+
+                <h2 class="fw-bold mb-2">
+                    📅 Weekly Timetable Manager
+                </h2>
+
+                <p class="mb-0"
+                   style="opacity:.9;">
+                    Create, organize and manage weekly lessons,
+                    teacher allocations and break schedules.
+                </p>
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+
+</div><div style="background:white; padding:20px; border-radius:10px;">
+   <div class="card shadow-sm border-0 rounded-4 mb-4">
+
+    <div class="card-body">
+
+        <h3 class="fw-bold text-primary mb-3">
+            📅 Weekly Timetable
+        </h3>
+
+        <p class="text-muted mb-4">
+            Select a stage to view its timetable.
+        </p>
+
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+
+    <div class="card-body p-4">
+
+        <div class="row g-4 align-items-end">
+
+            <!-- Stage -->
+            <div class="col-lg-4 col-md-6">
+
+                <label class="form-label fw-bold">
+                    🎓 Stage
+                </label>
+
+                <select id="stageFilter" class="form-select form-select-lg">
+
+                    <option value="">
+                        -- Select Stage --
+                    </option>
+
+                    {% for stage in stages %}
+                    <option value="{{ stage }}">
+                        {{ stage|display_stage }}
+                    </option>
+                    {% endfor %}
+
+                </select>
+
+            </div>
+            
+
+            <!-- Class -->
+            <div class="col-lg-4 col-md-6">
+
+                <label class="form-label fw-bold">
+                    🏫 Class
+                </label>
+
+                <select id="classFilter" class="form-select form-select-lg">
+
+                    <option value="">
+                        -- Select Class --
+                    </option>
+
+                </select>
+
+            </div>
+
+            <!-- Status -->
+            <div class="col-lg-4">
+
+                <div class="bg-light rounded-3 p-3 h-100">
+
+                    <small class="text-muted d-block">
+                        Selected
+                    </small>
+
+                    <h5 class="mb-0 fw-bold text-primary">
+
+                        {% if selected_class %}
+                            {{ selected_class }}
+                        {% else %}
+                            No class selected
+                        {% endif %}
+
+                    </h5>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<div id="printArea">
+
+    <!-- PRINT HEADER -->
+    <div class="print-header">
+
+        <table style="width:100%; border-collapse:collapse;">
+
+            <tr>
+
+                <!-- SCHOOL LOGO -->
+                <td style="width:150px; vertical-align:top;">
+
+                    {% if request.user.school.logo %}
+                        <img src="{{ request.user.school.logo.url }}"
+                             style="width:130px;height:130px;object-fit:contain;">
+                    {% endif %}
+
+                </td>
+
+                <!-- SCHOOL DETAILS -->
+                <td style="vertical-align:top;">
+
+                    <h2 style="margin:0;font-size:28px;font-weight:bold;">
+                        {{ request.user.school.name }}
+                    </h2>
+
+                    <div style="margin-top:8px;line-height:1.7;font-size:14px;">
+                    <strong>P.O. Box:</strong>
+                    {{ request.user.school.address }}<br>
+
+                        <strong>GPS:</strong>
+                        {{ request.user.school.gps_address }}<br>
+
+                        <strong>Phone:</strong>
+                        {{ request.user.school.phone}}<br>
+
+                        <strong>Email:</strong>
+                        {{ request.user.school.email }}
+
+                    </div>
+
+                </td>
+
+            </tr>
+
+        </table>
+
+        <hr>
+
+        <div class="text-center mt-3">
+
+            <h3 class="fw-bold mb-1">
+                WEEKLY TIMETABLE
+            </h3>
+
+            <h5 class="text-muted">
+
+                {{ selected_stage|display_stage }}
+
+                —
+
+                {{ selected_class }}
+
+            </h5>
+
+        </div>
+
+    </div>
+
+    <!-- TIMETABLE CARD -->
+    <div class="card border-0 shadow-lg rounded-4 mt-4">
+
+        <div class="card-body">
+
+            {% if selected_class %}
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+
+                <div>
+                <div class="no-print">
+
+                    <h4 class="fw-bold text-primary mb-1">
+                        📚 {{ selected_class }}
+                    </h4>
+
+                    <small class="text-muted">
+                        Weekly Class Timetable
+                    </small>
+
+                </div>
+                </div>
+
+                
+
+                <button class="btn btn-outline-primary"
+                        onclick="window.print()">
+
+                    🖨 Print
+
+                </button>
+
+            </div>
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered table-hover align-middle text-center table-timetable">
+
+                    <thead class="table-primary">
+
+                        <tr>
+
+                            <th style="width:110px;">
+                                Day
+                            </th>
+
+                            {% for slot in time_slots %}
+
+                                <th class="time-header">
+
+                                    {{ slot|short_time }}
+
+                                </th>
+
+                            {% endfor %}
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+{% for day_value, day_name in weekdays %}
+
+<tr>
+
+    <!-- DAY -->
+    <td class="fw-bold bg-light align-middle">
+        {{ day_name }}
+    </td>
+
+    {% for slot in time_slots %}
+
+        {# BREAK COLUMN #}
+        {% if slot in break_times %}
+
+            {% if forloop.parentloop.counter == 1 %}
+
+                <td rowspan="{{ weekdays|length }}"
+                    class="break-column bg-warning p-0 align-middle">
+
+                    <div class="break-cell">
+
+<div class="break-cell">
+
+{% for br in break_slots %}
+
+    {% if br.label == slot %}
+
+        {{ br.name }}
+
+        <button type="button"
+            class="btn btn-sm btn-light mt-2"
+            onclick="openBreakEditModal(
+                '{{ br.id }}',
+                '{{ br.stage }}',
+                '{{ br.name }}',
+                '{{ br.start|time:"H:i" }}',
+                '{{ br.end|time:"H:i" }}'
+            )">
+            ✏️ Edit
+        </button>
+
+    {% endif %}
+
+{% endfor %}
+
+</div>
+
+                </td>
+                
+
+            {% endif %}
+
+        {% else %}
+
+            <td class="align-middle">
+
+                {% with lesson=timetable_grid|get_item:day_value|get_item:slot %}
+
+
+{% if lesson %}
+
+<div class="lesson-card">
+
+    <div class="period-badge">
+        {{ lesson.period }}
+        Period{% if lesson.period|add:"0" > 1 %}s{% endif %}
+    </div>
+
+    <strong title="{{ lesson.subject.name }}">
+        {{ lesson.subject.code }}
+    </strong>
+
+    <small>
+        {{ lesson.teacher.title }}
+        {{ lesson.teacher.first_name }}
+    </small>
+    <button type="button"
+       class="btn btn-sm btn-light mt-2"
+        onclick="openEditModal(
+            '{{ lesson.id }}',
+            '{{ lesson.teacher.id }}',
+            '{{ lesson.subject.id }}',
+            '{{ lesson.school_class.id }}',
+            '{{ lesson.weekday }}',
+            '{{ lesson.period }}',
+            '{{ lesson.start_time|time:"H:i" }}',
+            '{{ lesson.end_time|time:"H:i" }}'
+        )">
+   Edit
+</button>
+
+</div>
+
+                    {% endif %}
+
+                {% endwith %}
+
+            </td>
+
+        {% endif %}
+
+    {% endfor %}
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+{% else %}
+
+<div class="text-center py-5 text-muted">
+
+    <h5>
+        📅 Select a stage and class to view the timetable
+    </h5>
+
+</div>
+
+{% endif %}
+
+</div>
+
+</div>
+
+</div>
+
+{% if messages %}
+  {% for message in messages %}
+    <div style="padding:12px 16px; margin:15px 0; border-radius:6px; border-left:4px solid {% if message.tags == 'error' %}#dc3545{% else %}#28a745{% endif %}; background:{% if message.tags == 'error' %}#f8d7da{% else %}#d4edda{% endif %}; color:{% if message.tags == 'error' %}#721c24{% else %}#155724{% endif %};">
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
+<!-- Edit Timetable Modal -->
+<div id="editModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+    <div style="background:white; padding:30px; border-radius:10px; width:600px; max-width:90%; box-shadow:0 4px 20px rgba(0,0,0,0.2);">
+        <h3 style="margin-top:0; color:#2c3e50;">Edit Timetable Entry</h3>
+        
+        <form method="POST" id="editTimetableForm">
+            {% csrf_token %}
+            <input type="hidden" name="timetable_id" id="edit_timetable_id">
+            
+            <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:15px;">
+                <div>
+                    <label>Teacher</label>
+                    <select name="teacher_id" id="edit_teacher_id" required style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc;">
+                        {% for t in teachers %}
+                            <option value="{{ t.id }}">{{ t.get_full_name|default:t.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label>Subject</label>
+                    <select name="subject_id" id="edit_subject_id" required style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc;">
+                        {% for s in subjects %}
+                            <option value="{{ s.id }}">{{ s.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+<div>
+    <label>Class</label>
+    <select name="school_class_id" id="edit_class_id" required 
+        onchange="updateEditStage()"
+        style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc;">
+        
+        {% for c in school_classes %}
+            <option value="{{ c.id }}" data-stage="{{ c.get_stage_display }}">
+                {{ c.name }}
+            </option>
+        {% endfor %}
+
+    </select>
+</div>
+
+
+<div>
+    <label>Stage</label>
+    <input type="text" id="edit_stage" readonly
+           style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc; background:#f2f2f2;">
+</div>
+
+
+                <div>
+                    <label>Weekday</label>
+                    <select name="weekday" id="edit_weekday" required style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc;">
+                        {% for val, day in weekdays %}
+                            <option value="{{ val }}">{{ day }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label>Period</label>
+                    <input type="text" name="period" id="edit_period" required style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc;">
+                </div>
+
+                <div>
+                    <label>Start Time</label>
+                    <input type="time" name="start_time" id="edit_start_time" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc;">
+                </div>
+
+                <div>
+                    <label>End Time</label>
+                    <input type="time" name="end_time" id="edit_end_time" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc;">
+                </div>
+            </div>
+
+            <div style="grid-column:1/-1; display:flex; gap:10px; justify-content:flex-end; margin-top:20px;">
+                <button type="button" onclick="closeEditModal()" style="background:#95a5a6; color:white; padding:10px 20px; border:none; border-radius:5px; cursor:pointer;">Cancel</button>
+                <button type="submit" style="background:#3498db; color:white; padding:10px 20px; border:none; border-radius:5px; cursor:pointer;">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div id="breakEditModal"
+style="
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(15,23,42,.55);
+justify-content:center;
+align-items:center;
+z-index:2000;
+">
+
+<div style="
+background:white;
+width:500px;
+max-width:95%;
+border-radius:20px;
+box-shadow:0 20px 50px rgba(0,0,0,.25);
+overflow:hidden;
+">
+
+<div style="
+background:linear-gradient(135deg,#f59e0b,#d97706);
+color:white;
+padding:20px;
+">
+
+<h3 style="margin:0;font-weight:800;">
+⏸️ Edit Break
+</h3>
+
+<p style="margin:5px 0 0;opacity:.9;">
+Update break time and stage settings.
+</p>
+
+</div>
+
+
+<form method="POST"
+id="editBreakForm"
+style="padding:25px;">
+
+{% csrf_token %}
+
+
+<div style="margin-bottom:15px;">
+
+<div class="row g-3">
+
+    <div class="col-md-6">
+
+        <label class="form-label fw-bold">
+            Stage
+        </label>
+
+        <select name="stage"
+                id="edit_break_stage"
+                class="form-select">
+
+            {% for stage in stages %}
+
+            <option value="{{stage}}">
+                {{stage|display_stage}}
+            </option>
+
+            {% endfor %}
+
+        </select>
+
+    </div>
+
+
+    <div class="col-md-6">
+
+        <label class="form-label fw-bold">
+            Break Name
+        </label>
+
+        <input type="text"
+               name="break_name"
+               id="edit_break_name"
+               class="form-control">
+
+    </div>
+
+</div>
+
+
+
+
+
+<div class="row">
+
+<div class="col-md-6">
+
+<label class="form-label fw-bold">
+Start Time
+</label>
+
+<input type="time"
+name="break_start_time"
+id="edit_break_start"
+class="form-control">
+
+</div>
+
+
+<div class="col-md-6">
+
+<label class="form-label fw-bold">
+End Time
+</label>
+
+<input type="time"
+name="break_end_time"
+id="edit_break_end"
+class="form-control">
+
+</div>
+
+</div>
+
+
+
+<div class="d-flex justify-content-end gap-2 mt-4">
+
+<button type="button"
+class="btn btn-secondary"
+onclick="closeBreakEditModal()">
+
+Cancel
+
+</button>
+
+
+<button type="submit"
+class="btn btn-warning text-white">
+
+Save Changes
+
+</button>
+
+
+</div>
+
+
+</form>
+
+</div>
+
+</div>
+
+<div id="deleteModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+  <div style="background:white; width:350px; margin:15% auto; padding:20px; border-radius:8px; text-align:center;">
+    <h3>Delete this entry?</h3>
+    <p>This action cannot be undone.</p>
+    <form id="deleteForm" method="POST">
+      {% csrf_token %}
+      <input type="hidden" name="delete_timetable" value="1">
+      <input type="hidden" name="timetable_id" id="deleteId">
+      <button type="submit" style="background:#dc3545; color:white; border:none; padding:8px 16px; border-radius:4px; margin-right:10px;">Delete</button>
+      <button type="button" onclick="closeDeleteModal()" style="background:#6c757d; color:white; border:none; padding:8px 16px; border-radius:4px;">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<script>
+const stageSelect = document.getElementById("stageFilter");
+const classSelect = document.getElementById("classFilter");
+
+const classesByStage = {
+{% for stage, class_list in classes_by_stage.items %}
+"{{ stage }}": [
+{% for cls in class_list %}
+"{{ cls }}",
+{% endfor %}
+],
+{% endfor %}
+};
+
+function loadClasses(stage){
+
+    classSelect.innerHTML =
+        '<option value="">-- Select Class --</option>';
+
+    if(!stage) return;
+
+    classesByStage[stage].forEach(function(cls){
+
+        let option = document.createElement("option");
+
+        option.value = cls;
+        option.textContent = cls;
+
+        if(cls === "{{ selected_class }}"){
+            option.selected = true;
+        }
+
+        classSelect.appendChild(option);
+
+    });
+
+}
+
+stageSelect.addEventListener("change", function(){
+
+    const stage = this.value;
+
+    loadClasses(stage);
+
+});
+
+classSelect.addEventListener("change", function(){
+
+    const stage = stageSelect.value;
+    const cls = this.value;
+
+    if(stage && cls){
+
+        window.location.href =
+            "?stage=" + encodeURIComponent(stage)
+            + "&class=" + encodeURIComponent(cls);
+
+    }
+
+});
+
+window.onload = function(){
+
+    if("{{ selected_stage }}"){
+
+        stageSelect.value = "{{ selected_stage }}";
+
+        loadClasses("{{ selected_stage }}");
+
+    }
+
+};
+</script>
+<script>
+function openEditModal(id, teacherId, subjectId, classId, weekday, period, startTime, endTime) {
+    // This generates: /accounts/timetable/manage/edit/0/ then replaces 0 with the real id
+document.getElementById('editTimetableForm').action = "{% url 'accounts:timetable_manager_edit' 0 %}".replace('0', id);    
+    document.getElementById('edit_timetable_id').value = id;
+    document.getElementById('edit_teacher_id').value = teacherId;
+    document.getElementById('edit_subject_id').value = subjectId;
+    document.getElementById('edit_class_id').value = classId;
+    updateEditStage();
+    document.getElementById('edit_weekday').value = weekday;
+    document.getElementById('edit_period').value = period;
+    document.getElementById('edit_start_time').value = startTime;
+    document.getElementById('edit_end_time').value = endTime;
+    document.getElementById('editModal').style.display = 'flex';
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+function openEditTimetablePage(){
+
+    document.getElementById('editModal').style.display = 'flex';
+
+}
+function updateEditStage(){
+
+    let classSelect = document.getElementById("edit_class_id");
+
+    let selectedOption = classSelect.options[classSelect.selectedIndex];
+
+    let stage = selectedOption.getAttribute("data-stage");
+
+    document.getElementById("edit_stage").value = stage || "";
+
+}
+function updateEditStage() {
+    const classSelect = document.getElementById("edit_class_id");
+    const stageInput = document.getElementById("edit_stage");
+
+    if (classSelect.selectedIndex !== -1) {
+        const selectedOption = classSelect.options[classSelect.selectedIndex];
+        stageInput.value = selectedOption.getAttribute("data-stage") || "";
+    }
+}
+
+
+// Load stage when modal opens
+
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    let modal = document.getElementById('editModal');
+    if (event.target == modal) {
+        closeEditModal();
+    }
+}
+function openBreakEditModal(id, stage, name, start, end){
+
+    document.getElementById(
+        "editBreakForm"
+    ).action =
+    "{% url 'accounts:break_edit' 0 %}".replace('0', id);
+
+
+    document.getElementById(
+        "edit_break_stage"
+    ).value = stage;
+
+
+    document.getElementById(
+        "edit_break_name"
+    ).value = name;
+
+
+    document.getElementById(
+        "edit_break_start"
+    ).value = start;
+
+
+    document.getElementById(
+        "edit_break_end"
+    ).value = end;
+
+
+    document.getElementById(
+        "breakEditModal"
+    ).style.display="flex";
+
+}
+
+
+function closeBreakEditModal(){
+
+    document.getElementById(
+        "breakEditModal"
+    ).style.display="none";
+
+}
+</script>
+<script>
+function confirmDelete(id) {
+  document.getElementById('deleteId').value = id;
+  document.getElementById('deleteForm').action = "{% url 'accounts:timetable_create' %}";
+  document.getElementById('deleteModal').style.display = 'block';
+}
+
+function closeDeleteModal() {
+  document.getElementById('deleteModal').style.display = 'none';
+}
+</script>
+
+{% endblock %}

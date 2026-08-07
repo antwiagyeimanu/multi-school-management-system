@@ -1,0 +1,533 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block title %}Edit Student{% endblock %}
+
+{% block content %}
+
+<div class="page-wrapper">
+
+{% if messages %}
+{% for message in messages %}
+<div class="success-alert">
+    {{ message }}
+</div>
+{% endfor %}
+{% endif %}
+
+
+<div class="edit-card">
+
+    <div class="edit-header">
+        <div>
+            <h1>✏️ Edit Student</h1>
+            <p>Update student information</p>
+        </div>
+    </div>
+
+
+<form method="POST" enctype="multipart/form-data">
+{% csrf_token %}
+
+
+<!-- LOCKED INFORMATION -->
+<div class="locked-box">
+
+<h3>🔒 Protected Information</h3>
+
+<div class="locked-grid">
+
+<div>
+<label>Student ID</label>
+<input disabled value="{{ student.student_number }}">
+</div>
+
+<div>
+<label>School</label>
+<input disabled value="{{ student.school.name }}">
+</div>
+
+<div>
+<label>Username</label>
+<input disabled value="{{ student.username }}">
+</div>
+
+</div>
+
+</div>
+
+
+
+<div class="form-grid">
+
+
+<!-- LEFT -->
+
+<div class="form-section">
+
+<h3>Personal Details</h3>
+
+
+<label>First Name *</label>
+<input name="first_name" value="{{ student.first_name }}" required>
+
+
+<label>Middle Name</label>
+<input name="middle_name" value="{{ student.middle_name|default:'' }}">
+
+
+<label>Last Name *</label>
+<input name="last_name" value="{{ student.last_name }}" required>
+
+
+<label>Email</label>
+<input type="email" name="email" value="{{ student.email|default:'' }}">
+
+
+<label>Phone</label>
+<input name="phone" value="{{ student.phone|default:'' }}">
+
+
+
+<label>Date of Birth</label>
+<input type="date" name="date_of_birth"
+value="{{ student.date_of_birth|date:'Y-m-d' }}">
+
+
+
+<label>Gender</label>
+<select name="gender">
+
+<option value="">Select Gender</option>
+
+<option value="M" {% if student.gender == 'M' %}selected{% endif %}>
+Male
+</option>
+
+<option value="F" {% if student.gender == 'F' %}selected{% endif %}>
+Female
+</option>
+
+<option value="O" {% if student.gender == 'O' %}selected{% endif %}>
+Other
+</option>
+
+</select>
+
+
+</div>
+
+
+
+
+
+<!-- RIGHT -->
+
+<div class="form-section">
+
+<h3>School & Guardian</h3>
+
+
+<label>Class</label>
+
+<select name="school_class">
+
+{% for class in all_classes %}
+
+<option value="{{ class.id }}"
+{% if class.id == student.school_class.id %}
+selected
+{% endif %}>
+{{ class.name }}
+</option>
+
+{% endfor %}
+
+</select>
+
+
+
+<label>Admission Date</label>
+
+<input type="date"
+name="admission_date"
+value="{{ student.admission_date|date:'Y-m-d' }}">
+
+
+
+<label>Nationality</label>
+
+<input name="nationality"
+value="{{ student.nationality|default:'' }}">
+
+
+
+<label>Religion</label>
+
+<select name="religion">
+
+<option value="">Select Religion</option>
+
+<option value="CHRISTIAN"
+{% if student.religion == 'CHRISTIAN' %}selected{% endif %}>
+Christianity
+</option>
+
+
+<option value="MUSLIM"
+{% if student.religion == 'MUSLIM' %}selected{% endif %}>
+Islam
+</option>
+
+
+<option value="OTHER"
+{% if student.religion == 'OTHER' %}selected{% endif %}>
+Other
+</option>
+
+
+</select>
+
+
+
+
+<label>Guardian Name</label>
+
+<input name="parent_guardian_name"
+value="{{ student.parent_guardian_name|default:'' }}">
+
+
+
+<label>Guardian Phone</label>
+
+<input name="parent_guardian_phone"
+value="{{ student.parent_guardian_phone|default:'' }}">
+
+
+
+</div>
+
+</div>
+
+
+
+
+
+<!-- EMERGENCY -->
+
+<div class="form-section full">
+
+<h3>Emergency Contact</h3>
+
+
+<div class="form-grid">
+
+<div>
+
+<label>Name</label>
+<input name="emergency_contact_name"
+value="{{ student.emergency_contact_name|default:'' }}">
+
+</div>
+
+
+<div>
+
+<label>Phone</label>
+
+<input name="emergency_contact_phone"
+value="{{ student.emergency_contact_phone|default:'' }}">
+
+</div>
+
+
+<div>
+
+<label>Relationship</label>
+
+<input name="emergency_contact_relationship"
+value="{{ student.emergency_contact_relationship|default:'' }}">
+
+</div>
+
+
+</div>
+
+</div>
+
+
+
+
+<!-- PHOTO -->
+
+<div class="photo-box">
+
+<h3>Student Photo</h3>
+
+
+{% if student.photo %}
+
+<img src="{{ student.photo.url }}">
+
+{% endif %}
+
+
+<input type="file" name="photo">
+
+</div>
+
+
+
+
+<div class="action-buttons">
+
+<button type="submit">
+💾 Save Changes
+</button>
+
+
+<a href="{% url 'accounts:view-student' student.id %}">
+Cancel
+</a>
+
+
+</div>
+
+
+</form>
+
+</div>
+
+</div>
+
+
+
+<style>
+
+.page-wrapper{
+background:#f8fafc;
+padding:40px;
+min-height:100vh;
+}
+
+
+.edit-card{
+
+width:100%;
+max-width:none;
+background:white;
+border-radius:24px;
+padding:35px;
+box-shadow:0 10px 30px rgba(0,0,0,.08);
+
+}
+
+
+
+.edit-header{
+
+border-bottom:1px solid #e5e7eb;
+margin-bottom:30px;
+
+}
+
+
+.edit-header h1{
+
+font-size:36px;
+font-weight:800;
+color:#1e293b;
+
+}
+
+
+.edit-header p{
+
+color:#64748b;
+
+}
+
+
+
+.locked-box{
+
+background:#fff7ed;
+border:1px solid #fdba74;
+padding:20px;
+border-radius:16px;
+margin-bottom:30px;
+
+}
+
+
+.locked-grid{
+
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:20px;
+
+}
+
+
+.form-grid{
+
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:25px;
+
+}
+
+
+
+.form-section{
+
+background:#f8fafc;
+padding:30px;
+border-radius:18px;
+min-height:100%;
+
+}
+
+
+.form-section h3{
+
+margin-bottom:20px;
+color:#1e293b;
+
+}
+
+
+
+label{
+
+display:block;
+font-weight:700;
+margin-bottom:6px;
+
+}
+
+
+input,
+select{
+
+width:100%;
+padding:12px;
+border-radius:10px;
+border:1px solid #cbd5e1;
+margin-bottom:18px;
+font-size:15px;
+
+}
+
+
+input:focus,
+select:focus{
+
+outline:none;
+border-color:#2563eb;
+
+}
+
+
+
+.full{
+
+margin-top:25px;
+
+}
+
+
+
+.photo-box{
+
+margin-top:25px;
+padding:25px;
+background:#f8fafc;
+border-radius:18px;
+
+}
+
+
+.photo-box img{
+
+width:100px;
+height:100px;
+border-radius:50%;
+object-fit:cover;
+border:4px solid white;
+
+}
+
+
+
+.action-buttons{
+
+display:flex;
+gap:15px;
+margin-top:30px;
+
+}
+
+
+.action-buttons button,
+.action-buttons a{
+
+padding:14px 30px;
+border-radius:12px;
+font-weight:700;
+text-decoration:none;
+
+}
+
+
+.action-buttons button{
+
+background:#2563eb;
+color:white;
+border:none;
+
+}
+
+
+.action-buttons a{
+
+background:#64748b;
+color:white;
+
+}
+
+
+
+.success-alert{
+
+background:#dcfce7;
+color:#166534;
+padding:15px;
+border-radius:12px;
+margin-bottom:20px;
+font-weight:700;
+
+}
+
+
+
+@media(max-width:900px){
+
+.locked-grid,
+.form-grid{
+
+grid-template-columns:1fr;
+
+}
+
+.page-wrapper{
+
+padding:15px;
+
+}
+
+}
+
+</style>
+
+
+{% endblock %}

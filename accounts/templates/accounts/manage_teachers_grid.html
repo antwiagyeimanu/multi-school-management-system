@@ -1,0 +1,1147 @@
+{% extends "accounts/base.html" %}
+{% load static %}
+
+{% block content %}
+{% if messages %}
+    {% for message in messages %}
+    <p id="msg">{{ message }}</p>
+    {% endfor %}
+{% endif %}
+{% if credentials %}
+<div style="background:#ecfdf5; border:2px solid #10b981; padding:15px; border-radius:10px; margin-bottom:20px;">
+    <h3 style="margin:0 0 10px 0; color:#065f46;">
+        {{ credentials.title }}
+    </h3>
+
+    <p><strong>Username:</strong> {{ credentials.username }}</p>
+    <p><strong>Staff ID:</strong> {{ credentials.staff_id }}</p>
+    <p><strong>Password:</strong> {{ credentials.password }}</p>
+
+    <p style="color:#065f46; font-size:13px;">
+        Save these details — they will not be shown again.
+    </p>
+</div>
+{% endif %}
+
+<style>
+.info-row-split {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.info-row-split .info-left,
+.info-row-split .info-right {
+    display: flex;
+    gap: 6px;
+    align-items: baseline;
+}
+
+.info-row-split .info-right .label {
+    color: #6b7280;
+}
+
+.info-row-split .info-right .value strong {
+    color: #1f2937;
+    font-size: 16px;
+}
+
+/* CHECKBOX ASSIGNMENT BOX */
+
+.assign-box {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8fafc;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+}
+
+
+.assign-section {
+    margin-bottom: 15px;
+}
+
+
+.assign-section h6 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 8px;
+}
+
+
+.checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    max-height: 120px;
+    overflow-y: auto;
+    padding: 8px;
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+}
+
+
+.check-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    background: #f9fafb;
+}
+
+
+.check-item:hover {
+    background: #eff6ff;
+}
+
+
+.check-item input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+
+.assign-area{
+    margin-top:20px;
+    padding:15px;
+    background:#f8fafc;
+    border-radius:14px;
+    border:1px solid #e5e7eb;
+}
+
+
+.assign-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 90px; /* Class | Subject | Button */
+  gap: 10px;
+  align-items: end;
+  margin-top: 12px;
+}
+
+.assign-field label {
+  display: block; /* THIS makes label go ON TOP not beside */
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: #374151;
+}
+
+.assign-select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 13px;
+  background: white;
+}
+
+.btn-mini-assign {
+  width: 100%;
+  background: #16a34a;
+  color: white;
+  border: none;
+  padding: 7px 0;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-mini-assign:hover {
+  background: #15803d;
+}
+
+@media(max-width:768px){
+
+.assign-row{
+    flex-direction:column;
+}
+
+
+.btn-mini-assign{
+    width:100%;
+}
+
+}
+
+
+/* MOBILE */
+@media(max-width:768px){
+
+    .checkbox-grid {
+        grid-template-columns: 1fr;
+        max-height: 150px;
+    }
+
+
+}
+
+.mini-select {
+    flex: 1;
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+}
+
+.btn-mini-assign {
+    padding: 8px 16px;
+    background: #059669;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.btn-mini-assign:hover {
+    background: #047857;
+}
+.pagination-wrapper {
+    text-align: center;
+    margin: 50px 0 30px 0;
+    padding: 20px;
+    clear: both;
+    display: block;
+}
+
+.page-info {
+    font-size: 18px;
+    margin: 0 15px;
+    color: #1f2937;
+    font-weight: 600;
+}
+
+a.page-btn {
+    display: inline-block;
+    padding: 12px 24px;
+    margin: 0 5px;
+    background: #3b82f6;
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+a.page-btn:hover {
+    background: #2563eb;
+    transform: scale(1.05);
+}
+/* SCHOOL MANAGEMENT SYSTEM (title) */
+header h1 {
+    text-transform: uppercase;
+    font-size: 50px;
+    font-weight: bold;
+}
+
+header a {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    cursor: default;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+a, button { cursor: pointer; }
+input[type="text"], textarea { cursor: text; }
+select { cursor: pointer; }
+
+/* NEW TEACHER CARDS - MATCH STUDENT STYLE */
+/* TEACHER CARD GRID */
+.teacher-grid-big {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    width: 100%;
+}
+
+@media (max-width: 900px) {
+    .teacher-grid-big {
+        grid-template-columns: 1fr;
+    }
+}
+.teacher-card-big {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 2px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
+}
+.teacher-card-big:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 32px rgba(59, 130, 246, 0.2);
+    border-color: #3b82f6;
+}
+.teacher-card-big.highlight {
+    background: #d4edda;
+    border: 2px solid green;
+}
+.card-photo-section{
+    position:relative;
+    padding:28px 24px 18px;
+    text-align:center;
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+}
+
+.teacher-photo-wrapper img{
+    width:95px;
+    height:95px;
+    border-radius:50%;
+    object-fit:cover;
+    border:5px solid white;
+    box-shadow:0 10px 25px rgba(0,0,0,.25);
+}
+
+.teacher-badge{
+    position:absolute;
+    top:16px;
+    right:16px;
+    background:#22c55e;
+    color:white;
+    padding:6px 12px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:700;
+    box-shadow:0 4px 10px rgba(0,0,0,.15);
+}
+.card-info-section {
+    padding: 18px 24px;
+    flex: 1;
+}
+.teacher-name {
+    margin: 0 0 12px 0;
+    font-size: 26px;
+    font-weight: 800;
+    color: #1f2937;
+    line-height: 1.2;
+}
+.info-row {
+    display: flex;
+    margin-bottom: 8px;
+    font-size: 17px;
+}
+.info-row .label {
+    font-weight: 700;
+    color: #4b5563;
+    min-width: 110px;
+}
+.info-row .value {
+    font-weight: 600;
+    color: #1f2937;
+    flex: 1;
+}
+.card-buttons-section {
+    padding: 0 24px 18px 24px;
+    display: flex;
+    gap: 10px;
+}
+.btn-big {
+    flex: 1;
+    padding: 10px 16px;
+    text-decoration: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 15px;
+    text-align: center;
+    transition: all 0.3s;
+    border: none;
+    cursor: pointer;
+}
+.btn-view { background: #3b82f6; color: white; }
+.btn-view:hover { background: #2563eb; transform: scale(1.03); }
+.btn-edit { background: #f97316; color: white; }
+.btn-edit:hover { background: #ea580c; transform: scale(1.03); }
+.btn-delete { background: #dc2626; color: white; }
+.btn-delete:hover { background: #b91c1c; transform: scale(1.03); }
+
+a.page-btn {
+    display: inline-block;
+    padding: 10px 18px;
+    margin: 0 5px;
+    background: #055908;
+    color: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: bold;     
+}
+/* PREMIUM HEADER */
+
+.teacher-page-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:#ffffff;
+    border-radius:22px;
+    padding:28px;
+    margin-bottom:30px;
+    box-shadow:0 8px 25px rgba(0,0,0,.06);
+    border:1px solid #edf2f7;
+}
+
+.teacher-header-left h1{
+    margin:0;
+    font-size:34px;
+    font-weight:800;
+    color:#111827;
+}
+
+.teacher-header-left p{
+    margin-top:8px;
+    color:#6b7280;
+    font-size:16px;
+}
+
+.stat-box{
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:white;
+    padding:18px 28px;
+    border-radius:18px;
+    text-align:center;
+    min-width:170px;
+}
+
+.stat-number{
+    display:block;
+    font-size:34px;
+    font-weight:800;
+}
+
+.stat-text{
+    font-size:14px;
+    opacity:.95;
+}
+
+/* MOBILE */
+
+@media(max-width:768px){
+
+.teacher-page-header{
+    flex-direction:column;
+    text-align:center;
+    gap:20px;
+}
+
+.teacher-header-left h1{
+    font-size:28px;
+}
+
+.teacher-header-left p{
+    font-size:15px;
+}
+
+.stat-box{
+    width:100%;
+}
+
+}
+/* ==========================
+   PREMIUM TOOLBAR
+========================== */
+
+.teacher-toolbar{
+    background:#fff;
+    padding:20px;
+    border-radius:18px;
+    margin-bottom:30px;
+    box-shadow:0 6px 20px rgba(0,0,0,.06);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:18px;
+    flex-wrap:wrap;
+}
+
+.teacher-search-form{
+    display:flex;
+    gap:12px;
+    flex:1;
+    flex-wrap:wrap;
+}
+
+.search-input{
+    flex:2;
+    min-width:260px;
+    padding:14px 16px;
+    border:1px solid #d1d5db;
+    border-radius:12px;
+    font-size:15px;
+}
+
+.toolbar-select{
+    min-width:170px;
+    padding:14px;
+    border-radius:12px;
+    border:1px solid #d1d5db;
+    background:#fff;
+}
+
+.toolbar-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.toolbar-btn{
+    padding:13px 18px;
+    border-radius:12px;
+    text-decoration:none;
+    font-weight:700;
+    border:none;
+    cursor:pointer;
+    transition:.25s;
+}
+
+.search-btn{
+    background:#2563eb;
+    color:white;
+}
+
+.reset-btn{
+    background:#f3f4f6;
+    color:#111827;
+}
+
+.export-btn{
+    background:#16a34a;
+    color:white;
+}
+
+.inactive-btn{
+    background:#dc2626;
+    color:white;
+}
+
+.toolbar-btn:hover{
+    transform:translateY(-2px);
+}
+
+@media(max-width:768px){
+
+.teacher-toolbar{
+    padding:16px;
+}
+
+.teacher-search-form{
+    flex-direction:column;
+}
+
+.search-input,
+.toolbar-select,
+.toolbar-btn{
+    width:100%;
+}
+
+.toolbar-actions{
+    width:100%;
+    flex-direction:column;
+}
+
+}
+.teacher-meta{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    margin:20px 0;
+}
+
+.meta-item{
+    background:#f8fafc;
+    border:1px solid #e5e7eb;
+    border-radius:14px;
+    padding:14px;
+    transition:.25s;
+}
+
+.meta-item:hover{
+    background:#eff6ff;
+    border-color:#3b82f6;
+}
+
+.meta-label{
+    display:block;
+    color:#6b7280;
+    font-size:13px;
+    margin-bottom:6px;
+}
+
+.meta-value{
+    font-weight:700;
+    color:#111827;
+    font-size:16px;
+}
+
+.meta-count{
+    font-size:28px;
+    font-weight:800;
+    color:#2563eb;
+}
+
+@media(max-width:768px){
+
+.teacher-meta{
+    grid-template-columns:1fr;
+}
+
+}
+.btn-assign {
+    width: 100%;
+    margin-top: 12px;
+    padding: 10px;
+    background: #7c3aed;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: .3s;
+}
+
+.btn-assign:hover {
+    background:#6d28d9;
+}
+.assign-modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.5);
+    z-index:9999;
+    justify-content:center;
+    align-items:center;
+}
+
+.assign-modal-content{
+    background:white;
+    width:500px;
+    max-width:95%;
+    border-radius:20px;
+    padding:25px;
+    box-shadow:0 20px 50px rgba(0,0,0,.2);
+}
+
+.assign-modal-content h3{
+    margin-bottom:20px;
+    font-size:22px;
+    font-weight:800;
+}
+
+.modal-checkbox-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+    max-height:180px;
+    overflow-y:auto;
+    padding:10px;
+    background:#f8fafc;
+    border-radius:12px;
+}
+
+.modal-checkbox-grid label{
+    background:white;
+    padding:10px;
+    border-radius:10px;
+    border:1px solid #e5e7eb;
+    cursor:pointer;
+}
+
+.modal-buttons{
+    margin-top:20px;
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+}
+
+.assign-save-btn{
+    background:#059669;
+    color:white;
+    border:none;
+    padding:12px 20px;
+    border-radius:10px;
+    font-weight:700;
+}
+
+.cancel-btn{
+    background:#6b7280;
+    color:white;
+    border:none;
+    padding:12px 20px;
+    border-radius:10px;
+}
+.assign-inline-form{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    margin-top:20px;
+    padding:15px;
+    background:#f8fafc;
+    border-radius:14px;
+}
+
+
+.assign-select{
+    flex:1;
+    padding:10px;
+    border:1px solid #d1d5db;
+    border-radius:10px;
+    background:white;
+    font-size:14px;
+}
+
+
+.assign-small-btn{
+    padding:10px 18px;
+    background:#059669;
+    color:white;
+    border:none;
+    border-radius:10px;
+    font-weight:700;
+    cursor:pointer;
+}
+
+
+@media(max-width:768px){
+
+.assign-inline-form{
+    flex-direction:column;
+}
+
+.assign-select,
+.assign-small-btn{
+    width:100%;
+}
+
+}
+</style>
+
+<!-- PREMIUM PAGE HEADER -->
+<div class="teacher-page-header">
+
+    <div class="teacher-header-left">
+        <h1>👨‍🏫 Manage Teachers</h1>
+        <p>
+            Manage teacher profiles, assignments and subjects from one place.
+        </p>
+    </div>
+
+    <div class="teacher-header-right">
+
+        <div class="stat-box">
+            <span class="stat-number">{{ teachers.paginator.count }}</span>
+            <span class="stat-text">Active Teachers</span>
+        </div>
+
+    </div>
+
+</div>
+
+<div class="teacher-toolbar">
+
+    <form method="GET" class="teacher-search-form">
+
+        <input 
+        type="text"
+        name="q"
+        value="{{ search_query }}"
+        placeholder="Search by name or Staff ID..."
+        class="search-input">
+
+        <button type="submit" class="toolbar-btn search-btn">
+            🔍 Search
+        </button>
+
+        <a href="{% url 'accounts:manage-teachers-grid' %}" 
+           class="toolbar-btn reset-btn">
+            Reset
+        </a>
+
+    </form>
+
+
+    <div class="toolbar-actions">
+
+        <a href="{% url 'accounts:export-teachers-excel' %}"
+           class="toolbar-btn export-btn">
+            📊 Export Excel
+        </a>
+
+
+        <a href="{% url 'accounts:deactivated_teachers' %}"
+           class="toolbar-btn inactive-btn">
+            🚫 Deactivated
+        </a>
+
+    </div>
+
+</div>
+        </div>
+
+<div class="teacher-grid-big">
+    {% for teacher in teachers %}
+    <div class="teacher-card-big {% if highlight_staff_id and teacher.id|stringformat:'s' == highlight_staff_id %}highlight{% endif %}">
+        
+<div class="card-photo-section">
+
+    <div class="teacher-photo-wrapper">
+        {% if teacher.photo %}
+            <img src="{{ teacher.photo.url }}" alt="{{ teacher.get_full_name }}">
+        {% else %}
+            <img src="https://ui-avatars.com/api/?name={{ teacher.first_name }}+{{ teacher.last_name }}&background=3b82f6&color=fff&size=200&bold=true" alt="Default">
+        {% endif %}
+    </div>
+
+    <span class="teacher-badge">
+        Active
+    </span>
+
+</div>
+<div class="card-info-section">
+
+    <h2 class="teacher-name">
+        {{ teacher.title|default:"" }}
+        {{ teacher.first_name|default:"" }}
+        {% if teacher.middle_name %}{{ teacher.middle_name }}{% endif %}
+        {{ teacher.last_name|default:"" }}
+    </h2>
+
+    <div class="teacher-meta">
+
+        <div class="meta-item">
+            <span class="meta-label">Staff ID</span>
+            <span class="meta-value">{{ teacher.staff_id|default:"N/A" }}</span>
+        </div>
+
+        <div class="meta-item">
+            <span class="meta-label">Department</span>
+            <span class="meta-value">{{ teacher.department|default:"N/A" }}</span>
+        </div>
+
+        <div class="meta-item">
+            <span class="meta-label">Classes</span>
+            <span class="meta-count">{{ teacher.class_count|default:"0" }}</span>
+        </div>
+
+        <div class="meta-item">
+            <span class="meta-label">Subjects</span>
+            <span class="meta-count">{{ teacher.subject_count|default:"0" }}</span>
+        </div>
+
+    </div>
+        <div class="assign-area">
+
+<form method="POST">
+  {% csrf_token %}
+  <input type="hidden" name="teacher_id" value="{{ teacher.id }}">
+
+  <div class="assign-row">
+    <!-- CLASS DROPDOWN WITH CHECKBOXES -->
+    <div class="assign-field">
+      <label>Class</label>
+      <div class="custom-dropdown" data-name="school_class">
+        <div class="dropdown-btn" onclick="toggleDropdown(this)">
+          <span>Select Classes</span> <i>▼</i>
+        </div>
+        <div class="dropdown-list">
+          {% for class in classes %}
+          <label class="dropdown-item">
+            <input type="checkbox" name="school_class" value="{{ class.id }}">
+            {{ class.name }}
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBJECT DROPDOWN WITH CHECKBOXES -->
+    <div class="assign-field">
+      <label>Subject</label>
+      <div class="custom-dropdown" data-name="subject">
+        <div class="dropdown-btn" onclick="toggleDropdown(this)">
+          <span>Select Subjects</span> <i>▼</i>
+        </div>
+        <div class="dropdown-list">
+          {% for subject in subjects %}
+          <label class="dropdown-item">
+            <input type="checkbox" name="subject" value="{{ subject.id }}">
+            {{ subject.name }}
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Assign Button -->
+    <div class="assign-field">
+      <label>&nbsp;</label>
+      <button type="submit" class="btn-mini-assign">Assign</button>
+    </div>
+  </div>
+</form>
+</div>
+</div>
+
+<style>
+.custom-dropdown { position: relative; }
+.dropdown-btn {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  background: white;
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+}
+.dropdown-list {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  max-height: 160px;
+  overflow-y: auto;
+  z-index: 999;
+  margin-bottom: 6px;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+}
+.dropdown-list.show { display: block; }
+.dropdown-item {
+  display: flex;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.dropdown-item:hover { background: #f3f4f6; }
+.dropdown-item input { accent-color: #16a34a; }
+</style>
+
+<script>
+function toggleDropdown(btn) {
+  document.querySelectorAll('.dropdown-list').forEach(l => {
+    if(l !== btn.nextElementSibling) l.classList.remove('show');
+  });
+  btn.nextElementSibling.classList.toggle('show');
+}
+// update button text with count
+document.addEventListener('change', function(e){
+  if(e.target.type === 'checkbox'){
+    const dropdown = e.target.closest('.custom-dropdown');
+    const checked = dropdown.querySelectorAll('input:checked').length;
+    const label = dropdown.querySelector('.dropdown-btn span');
+    const name = dropdown.dataset.name;
+    label.textContent = checked ? `${checked} selected` : `Select ${name === 'school_class' ? 'Classes' : 'Subjects'}`;
+  }
+});
+window.addEventListener('click', function(e){
+  if(!e.target.closest('.custom-dropdown')){
+    document.querySelectorAll('.dropdown-list').forEach(l => l.classList.remove('show'));
+  }
+});
+</script>
+        
+        <div class="card-buttons-section">
+            <a href="{% url 'accounts:view-teacher' teacher.id %}" class="btn-big btn-view">
+                View Profile
+            </a>
+            {% if request.user.role == 'admin' or request.user.school.can_teachers_manage_teachers %}
+           <a href="{% url 'accounts:edit-teacher' teacher.id %}" class="btn-big btn-edit">
+                Edit Teacher
+            </a>
+          <button type="button" 
+        onclick="openDeleteModal('{% url 'accounts:delete-teacher' teacher.id %}', '{{ teacher.get_full_name }}', 'Teacher')"
+        style="padding:8px 16px; background:#dc3545; color:white; border:none; border-radius:6px; cursor:pointer;">
+   Deactivate
+</button>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div style="grid-column:1/-1; text-align:center; padding:80px 20px; background:white; border-radius:20px;">
+        <p style="font-size:28px; color:#6b7280; margin:0 0 20px 0; font-weight:600;">No teachers found</p>
+        <a href="{% url 'accounts:add-teacher' %}" 
+           style="display:inline-block; padding:18px 36px; background:#3b82f6; color:white; text-decoration:none; border-radius:12px; font-weight:700; font-size:20px;">
+            + Add First Teacher
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- PAGINATION FINAL -->
+<div class="pagination-wrapper">
+   {% if teachers.has_previous %}
+    <a class="page-btn" href="?page={{ teachers.previous_page_number }}&q={{ search_query }}&class={{ class_filter }}&subject={{ subject_filter }}">← Previous</a>
+   {% endif %}
+   
+   <span class="page-info">
+       Page {{ teachers.number }} of {{ teachers.paginator.num_pages }}
+   </span>
+   
+   {% if teachers.has_next %}
+    <a class="page-btn" href="?page={{ teachers.next_page_number }}&q={{ search_query }}&class={{ class_filter }}&subject={{ subject_filter }}">Next →</a>
+   {% endif %}
+</div>
+
+<script>
+    setTimeout(function() {
+        var msg = document.getElementById("msg");
+        if (msg) {
+            msg.style.display = "none";
+        }
+    }, 10000);
+</script>
+<!-- Custom Delete Modal -->
+<div id="deleteModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:white; padding:30px; border-radius:12px; width:400px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+        <h3 style="margin-bottom:15px; font-size:22px; color:#dc3545;">Deactivate Teacher</h3>
+        <p style="margin-bottom:25px; color:#555; font-size:16px;" id="deleteModalText">
+            Are you sure?
+        </p>
+        <form id="deleteForm" method="POST">
+    {% csrf_token %}
+    <button type="submit" style="background:#dc3545; color:white; padding:10px 20px; border:none; border-radius:6px;">Yes, Deactivate</button>
+    <button type="button" onclick="closeDeleteModal()" style="background:#6c757d; color:white; padding:10px 20px; border:none; border-radius:6px;">Cancel</button>
+</form>
+    </div>
+</div>
+
+<script>
+function openDeleteModal(url, name, type) {
+    document.getElementById('deleteForm').action = url;
+        let displayType = type.toLowerCase() === 'class' ? 'classes' : type;
+    
+    document.getElementById('deleteModalText').innerHTML = 
+        `Deactivate <strong>${name}</strong>? They will be removed from all ${displayType} and cannot log in. Past records will be kept.`;
+    document.getElementById('deleteModal').style.display = 'flex';
+}
+function closeDeleteModal() {
+    document.getElementById('deleteModal').style.display = 'none';
+}
+</script>
+<script>
+
+function openAssignModal(id, name){
+
+    document.getElementById("modalTeacherId").value = id;
+
+    document.getElementById("assignTeacherName").innerHTML =
+    "Assign Classes & Subjects - " + name;
+
+
+    document.getElementById("assignModal").style.display="flex";
+
+}
+
+
+
+function closeAssignModal(){
+
+    document.getElementById("assignModal").style.display="none";
+
+}
+
+</script>
+<div id="assignModal" class="assign-modal">
+
+<div class="assign-modal-content">
+
+<h3 id="assignTeacherName">
+Assign Classes & Subjects
+</h3>
+
+<form method="POST">
+
+{% csrf_token %}
+
+<input type="hidden" name="teacher_id" id="modalTeacherId">
+
+
+<div class="modal-section">
+
+<h5>Classes</h5>
+
+<div class="modal-checkbox-grid">
+
+{% for class in classes %}
+
+<label>
+<input type="checkbox"
+       name="classes"
+       value="{{ class.id }}">
+{{ class.name }}
+</label>
+
+{% endfor %}
+
+</div>
+
+</div>
+
+
+<div class="modal-section">
+
+<h5>Subjects</h5>
+
+<div class="modal-checkbox-grid">
+
+{% for subject in subjects %}
+
+<label>
+<input type="checkbox"
+       name="subjects"
+       value="{{ subject.id }}">
+{{ subject.name }}
+</label>
+
+{% endfor %}
+
+</div>
+
+</div>
+
+
+<div class="modal-buttons">
+
+<button type="button"
+        onclick="closeAssignModal()"
+        class="cancel-btn">
+Cancel
+</button>
+
+<button type="submit"
+        class="assign-save-btn">
+Assign Selected
+</button>
+
+</div>
+
+
+</form>
+
+</div>
+
+</div>
+
+{% endblock %}

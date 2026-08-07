@@ -1,0 +1,1214 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block title %}My Child Progress{% endblock %}
+
+{% block content %}
+<style>
+/* ===========================
+PREMIUM HERO
+=========================== */
+
+.parent-progress-hero{
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+padding:32px;
+
+border-radius:28px;
+
+background:linear-gradient(135deg,#4338ca,#0f172a);
+
+color:white;
+
+margin-bottom:28px;
+
+position:relative;
+
+overflow:hidden;
+
+box-shadow:0 20px 50px rgba(0,0,0,.18);
+
+}
+
+.parent-progress-hero::before{
+
+content:"";
+
+position:absolute;
+
+width:220px;
+
+height:220px;
+
+right:-70px;
+
+top:-70px;
+
+border-radius:50%;
+
+background:rgba(255,255,255,.08);
+
+}
+
+.parent-progress-hero::after{
+
+content:"";
+
+position:absolute;
+
+width:120px;
+
+height:120px;
+
+left:-40px;
+
+bottom:-40px;
+
+border-radius:50%;
+
+background:rgba(255,255,255,.06);
+
+}
+
+.hero-left{
+
+display:flex;
+
+align-items:center;
+
+gap:22px;
+
+z-index:2;
+
+}
+
+.hero-avatar{
+
+width:95px;
+
+height:95px;
+
+border-radius:50%;
+
+overflow:hidden;
+
+background:rgba(255,255,255,.15);
+
+border:4px solid rgba(255,255,255,.25);
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+font-size:34px;
+
+font-weight:800;
+
+}
+
+.hero-avatar img{
+
+width:100%;
+
+height:100%;
+
+object-fit:cover;
+
+}
+
+.hero-label{
+
+display:inline-block;
+
+padding:6px 14px;
+
+border-radius:999px;
+
+background:rgba(255,255,255,.12);
+
+font-size:12px;
+
+font-weight:700;
+
+letter-spacing:.5px;
+
+text-transform:uppercase;
+
+margin-bottom:10px;
+
+}
+
+.hero-info h2{
+
+margin:0;
+
+font-size:30px;
+
+font-weight:800;
+
+}
+
+.hero-meta{
+
+display:flex;
+
+gap:18px;
+
+margin-top:12px;
+
+flex-wrap:wrap;
+
+}
+
+.hero-meta span{
+
+background:rgba(255,255,255,.10);
+
+padding:8px 14px;
+
+border-radius:999px;
+
+font-size:14px;
+
+}
+
+.hero-meta i{
+
+margin-right:6px;
+
+}
+
+.hero-right{
+
+z-index:2;
+
+}
+
+.hero-icon{
+
+width:95px;
+
+height:95px;
+
+border-radius:24px;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+font-size:42px;
+
+background:rgba(255,255,255,.12);
+
+backdrop-filter:blur(12px);
+
+}
+
+@media(max-width:768px){
+
+.parent-progress-hero{
+
+flex-direction:column;
+
+text-align:center;
+
+gap:24px;
+
+padding:26px;
+
+}
+
+.hero-left{
+
+flex-direction:column;
+
+}
+
+.hero-meta{
+
+justify-content:center;
+
+}
+
+}
+/* ===========================
+PREMIUM PROGRESS CARDS
+=========================== */
+
+.progress-stats{
+
+display:grid;
+
+grid-template-columns:repeat(3,1fr);
+
+gap:22px;
+
+margin-bottom:30px;
+
+}
+
+.progress-card{
+
+position:relative;
+
+overflow:hidden;
+
+padding:28px;
+
+border-radius:24px;
+
+color:#fff;
+
+text-align:center;
+
+box-shadow:0 18px 40px rgba(0,0,0,.10);
+
+transition:.35s;
+
+}
+
+.progress-card:hover{
+
+transform:translateY(-8px);
+
+}
+
+.progress-card::before{
+
+content:"";
+
+position:absolute;
+
+width:130px;
+
+height:130px;
+
+right:-35px;
+
+top:-35px;
+
+border-radius:50%;
+
+background:rgba(255,255,255,.10);
+
+}
+
+.progress-icon{
+
+width:72px;
+
+height:72px;
+
+margin:0 auto 18px;
+
+border-radius:50%;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+background:rgba(255,255,255,.15);
+
+font-size:30px;
+
+backdrop-filter:blur(10px);
+
+}
+
+.progress-title{
+
+font-size:13px;
+
+font-weight:700;
+
+letter-spacing:1px;
+
+text-transform:uppercase;
+
+opacity:.95;
+
+}
+
+.progress-value{
+
+margin-top:10px;
+
+font-size:30px;
+
+font-weight:900;
+
+}
+
+.progress-sub{
+
+margin-top:8px;
+
+font-size:14px;
+
+opacity:.95;
+
+}
+
+/* COLORS */
+
+.success-card{
+
+background:linear-gradient(135deg,#16a34a,#15803d);
+
+}
+
+.primary-card{
+
+background:linear-gradient(135deg,#2563eb,#1d4ed8);
+
+}
+
+.purple-card{
+
+background:linear-gradient(135deg,#7c3aed,#5b21b6);
+
+}
+
+.warning-card{
+
+background:linear-gradient(135deg,#f59e0b,#d97706);
+
+}
+
+.dark-card{
+
+background:linear-gradient(135deg,#334155,#0f172a);
+
+}
+
+/* RESPONSIVE */
+
+@media(max-width:992px){
+
+.progress-stats{
+
+grid-template-columns:repeat(2,1fr);
+
+}
+
+}
+
+@media(max-width:640px){
+
+.progress-stats{
+
+grid-template-columns:1fr;
+
+}
+
+}
+/* ===========================
+PREMIUM RESULT TABLE
+=========================== */
+
+.premium-table-wrapper{
+
+overflow-x:auto;
+
+background:#fff;
+
+border-radius:24px;
+
+padding:20px;
+
+box-shadow:0 15px 40px rgba(0,0,0,.08);
+
+}
+
+.premium-result-table{
+
+width:100%;
+
+border-collapse:separate;
+
+border-spacing:0;
+
+}
+
+.premium-result-table thead th{
+
+background:linear-gradient(135deg,#111827,#374151);
+
+color:#fff;
+
+padding:16px;
+
+font-size:14px;
+
+font-weight:800;
+
+white-space:nowrap;
+
+}
+
+.premium-result-table thead th:first-child{
+
+border-top-left-radius:16px;
+
+}
+
+.premium-result-table thead th:last-child{
+
+border-top-right-radius:16px;
+
+}
+
+.premium-result-table tbody td{
+
+padding:15px;
+
+font-weight:600;
+
+border-bottom:1px solid #edf2f7;
+
+}
+
+.premium-result-table tbody tr{
+
+transition:.25s;
+
+}
+
+.premium-result-table tbody tr{
+
+    transition:.3s;
+
+}
+
+.premium-result-table tbody tr:hover{
+
+    transform:scale(1.01);
+
+    background:#eef4ff;
+
+    box-shadow:0 6px 16px rgba(37,99,235,.08);
+
+}
+
+.grade-pill{
+
+display:inline-block;
+
+min-width:42px;
+
+padding:6px 12px;
+
+border-radius:999px;
+
+font-weight:800;
+
+color:#fff;
+
+}
+
+.grade-a{
+
+background:#16a34a;
+
+}
+
+.grade-b{
+
+background:#2563eb;
+
+}
+
+.grade-c{
+
+background:#ca8a04;
+
+}
+
+.grade-d{
+
+background:#ea580c;
+
+}
+
+.grade-e,
+
+.grade-f{
+
+background:#dc2626;
+
+}
+
+.remark-pill{
+
+display:inline-block;
+
+padding:6px 14px;
+
+border-radius:999px;
+
+background:#eef2ff;
+
+color:#4338ca;
+
+font-weight:700;
+
+font-size:13px;
+
+}
+.subject-name{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    font-weight:800;
+
+}
+
+.subject-icon{
+
+    width:36px;
+
+    height:36px;
+
+    border-radius:12px;
+
+    background:#eef2ff;
+
+    color:#4f46e5;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:15px;
+
+}
+
+.table-total{
+
+background:#0f172a;
+
+color:#fff;
+
+font-weight:800;
+
+}
+
+.table-total td{
+
+padding:18px;
+
+border:none;
+
+}
+
+@media(max-width:768px){
+
+.premium-result-table th,
+
+.premium-result-table td{
+
+font-size:13px;
+
+padding:12px;
+
+}
+
+}
+.child-card{
+    background:white;
+    border-radius:20px;
+    padding:16px;
+    display:flex;
+    align-items:center;
+    gap:15px;
+    position:relative;
+    border:2px solid #eef2f7;
+    transition:.3s;
+    box-shadow:0 6px 18px rgba(0,0,0,.05);
+}
+
+.child-card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 15px 30px rgba(0,0,0,.10);
+}
+
+.child-active{
+    border-color:#4f46e5;
+    background:#eef2ff;
+}
+
+.child-photo,
+.child-avatar{
+    width:65px;
+    height:65px;
+    border-radius:50%;
+    object-fit:cover;
+}
+
+.child-avatar{
+    background:linear-gradient(135deg,#4f46e5,#2563eb);
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:22px;
+    font-weight:800;
+}
+
+.child-info h6{
+    margin:0;
+    font-weight:800;
+    color:#111827;
+}
+
+.child-info p{
+    margin:4px 0;
+    color:#6b7280;
+    font-size:14px;
+}
+
+.child-info span{
+    font-size:12px;
+    color:#9ca3af;
+    font-weight:600;
+}
+
+.selected-badge{
+    position:absolute;
+    top:10px;
+    right:12px;
+    background:#4f46e5;
+    color:white;
+    padding:4px 10px;
+    border-radius:20px;
+    font-size:11px;
+    font-weight:700;
+}
+
+</style>
+<div style="max-width:1100px; margin:0 auto; padding:20px; font-family:system-ui,-apple-system,sans-serif; background:#f5f7fa; min-height:100vh;">
+{# --- CHILD SWITCHER --- #}
+{% if children_count > 1 %}
+<div id="child-switcher" class="mb-4">
+
+    <h6 class="fw-bold text-secondary mb-3">
+        <i class="fas fa-users me-2"></i>Select Child
+    </h6>
+
+    <div class="row g-3">
+
+    {% for child in children %}
+
+        <div class="col-md-6 col-lg-4">
+
+            <a href="?child_id={{ child.id }}#child-switcher"
+               style="text-decoration:none;">
+
+                <div class="child-card {% if selected_child.id == child.id %}child-active{% endif %}">
+
+                    {% if child.photo %}
+                        <img src="{{ child.photo.url }}" class="child-photo">
+                    {% else %}
+                        <div class="child-avatar">
+                            {{ child.first_name|first }}{{ child.last_name|first }}
+                        </div>
+                    {% endif %}
+
+                    <div class="child-info">
+
+                        <h6>
+                            {{ child.first_name }} {{ child.last_name }}
+                        </h6>
+
+                        <p>
+                            {{ child.school_class.name|default:"No Class" }}
+                        </p>
+
+                        <span>
+                            ID: {{ child.student_number|default:"-" }}
+                        </span>
+
+                    </div>
+
+                    {% if selected_child.id == child.id %}
+                    <div class="selected-badge">
+                        Selected
+                    </div>
+                    {% endif %}
+
+                </div>
+
+            </a>
+
+        </div>
+
+    {% endfor %}
+
+    </div>
+
+</div>
+{% endif %}
+
+{% if selected_child %}
+<div style="background:#ffffff; margin-bottom:35px; padding:20px; border-radius:16px; box-shadow:0 6px 20px rgba(0,0,0,0.06);">
+<!-- ==========================
+PREMIUM CHILD HERO
+========================== -->
+{% if selected_child %}
+<div class="parent-progress-hero">
+
+    <div class="hero-left">
+
+        <div class="hero-avatar">
+
+            {% if selected_child.photo %}
+                <img src="{{ selected_child.photo.url }}" alt="{{ selected_child.get_full_name }}">
+            {% else %}
+                {{ selected_child.first_name.0 }}{{ selected_child.last_name.0 }}
+            {% endif %}
+
+        </div>
+
+        <div class="hero-info">
+
+            <span class="hero-label">
+                Academic Progress
+            </span>
+
+            <h2>
+                {{ selected_child.get_full_name }}
+            </h2>
+
+            <div class="hero-meta">
+
+                <span>
+                    <i class="fas fa-id-card"></i>
+                    {{ selected_child.student_number|default:"No ID" }}
+                </span>
+
+                <span>
+                    <i class="fas fa-school"></i>
+                    {{ selected_child.school_class.name|default:"No Class" }}
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="hero-right">
+
+        <div class="hero-icon">
+
+            <i class="fas fa-chart-line"></i>
+
+        </div>
+
+    </div>
+
+</div>
+{% endif %}
+
+
+
+
+
+<div style="background:#ffffff; border-radius:20px; padding:18px; box-shadow:0 8px 24px rgba(0,0,0,.06); margin:20px 0;">
+
+<form method="get" style="display:flex; flex-wrap:wrap; gap:14px; align-items:center;">
+
+    <input type="hidden" name="child_id" value="{{ selected_child.id }}">
+
+    <div style="flex:1; min-width:220px;">
+        <label style="display:block; font-size:12px; font-weight:700; color:#6b7280; margin-bottom:6px;">
+            Academic Year
+        </label>
+
+        <select name="year"
+                onchange="this.form.submit()"
+                style="width:100%; height:48px; border:2px solid #e5e7eb; border-radius:14px; padding:0 15px; font-weight:700; background:white;">
+
+            <option value="">All Years</option>
+
+            {% for y in years %}
+            <option value="{{ y.id }}"
+            {% if selected_year == y.id|stringformat:"s" %}selected{% endif %}>
+                {{ y.name }}
+            </option>
+            {% endfor %}
+
+        </select>
+    </div>
+
+    <div style="flex:1; min-width:220px;">
+        <label style="display:block; font-size:12px; font-weight:700; color:#6b7280; margin-bottom:6px;">
+            School Term
+        </label>
+
+        <select name="term"
+                onchange="this.form.submit()"
+                style="width:100%; height:48px; border:2px solid #e5e7eb; border-radius:14px; padding:0 15px; font-weight:700; background:white;">
+
+            <option value="">All Terms</option>
+
+            {% for t in terms_list %}
+            <option value="{{ t.id }}"
+            {% if selected_term == t.id|stringformat:"s" %}selected{% endif %}>
+                {{ t.get_term_number_display }}
+            </option>
+            {% endfor %}
+
+        </select>
+    </div>
+
+    <div style="padding-top:24px;">
+        <a href="?child_id={{ selected_child.id }}"
+           style="display:inline-flex; align-items:center; justify-content:center; height:48px; padding:0 22px; background:#eef2ff; color:#4f46e5; font-weight:700; border-radius:14px; text-decoration:none;">
+            <i class="fas fa-rotate-left me-2"></i>
+            Reset
+        </a>
+    </div>
+
+</form>
+
+</div>
+
+{% for t in terms %}
+<div style="margin-top:28px; padding:15px; background:#f9fafb; border-radius:12px; border:1px solid #e5e7eb;">
+
+
+<div style="
+margin-top:28px;
+background:#fff;
+border-radius:22px;
+padding:22px;
+box-shadow:0 10px 28px rgba(0,0,0,.06);
+border:1px solid #eef2f7;
+">
+
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;">
+
+<div>
+
+<div style="
+display:inline-block;
+padding:6px 14px;
+border-radius:999px;
+background:#eef2ff;
+color:#4f46e5;
+font-size:12px;
+font-weight:700;
+text-transform:uppercase;
+margin-bottom:10px;
+">
+Academic Progress
+</div>
+
+<h3 style="
+margin:0;
+font-size:24px;
+font-weight:800;
+color:#111827;
+">
+📘 {{ t.term }}
+</h3>
+
+<div style="
+margin-top:6px;
+font-size:15px;
+font-weight:600;
+color:#6b7280;
+">
+{{ t.term.academic_year }}
+</div>
+
+</div>
+
+<div style="
+background:linear-gradient(135deg,#4f46e5,#2563eb);
+color:white;
+padding:14px 22px;
+border-radius:18px;
+font-weight:800;
+font-size:15px;
+">
+Results
+</div>
+
+</div>
+<!-- ===========================
+PREMIUM STATISTICS
+=========================== -->
+
+<div class="progress-stats">
+
+{% with t.grand_percentage as p %}
+
+<!-- CARD 1 -->
+<div class="progress-card success-card">
+
+    <div class="progress-icon">
+        <i class="fas fa-award"></i>
+    </div>
+
+    <div class="progress-title">
+        Term Average Grade
+    </div>
+
+    <div class="progress-value">
+        {{ t.overall_grade }}
+    </div>
+
+    <div class="progress-sub">
+        {{ t.overall_remark }}
+    </div>
+
+</div>
+
+<!-- CARD 2 -->
+<div class="progress-card primary-card">
+
+    <div class="progress-icon">
+        <i class="fas fa-chart-line"></i>
+    </div>
+
+    <div class="progress-title">
+        Average Score
+    </div>
+
+    <div class="progress-value">
+        {{ p }}%
+    </div>
+
+    <div class="progress-sub">
+        Overall Performance
+    </div>
+
+</div>
+
+{% endwith %}
+
+<!-- CARD 3 -->
+<div class="progress-card purple-card">
+
+    <div class="progress-icon">
+        <i class="fas fa-trophy"></i>
+    </div>
+
+    <div class="progress-title">
+        Class Position
+    </div>
+
+    <div class="progress-value">
+        {{ t.class_position }}
+    </div>
+
+    <div class="progress-sub">
+        Out of {{ t.class_size }} Students
+    </div>
+
+</div>
+
+<!-- CARD 4 -->
+<div class="progress-card warning-card">
+
+    <div class="progress-icon">
+        <i class="fas fa-clipboard-check"></i>
+    </div>
+
+    <div class="progress-title">
+        Term Status
+    </div>
+
+    <div class="progress-value" style="font-size:22px;">
+        {{ t.term_status }}
+    </div>
+
+    <div class="progress-sub">
+        Current Academic Status
+    </div>
+
+</div>
+
+<!-- CARD 5 -->
+<div class="progress-card dark-card">
+
+    <div class="progress-icon">
+        <i class="fas fa-book-open"></i>
+    </div>
+
+    <div class="progress-title">
+        Subjects
+    </div>
+
+    <div class="progress-value">
+        {{ t.results|length }}
+    </div>
+
+    <div class="progress-sub">
+        Subjects Published
+    </div>
+
+</div>
+
+</div>
+
+    <!-- Results table with grand total in footer -->
+   <div class="premium-table-wrapper">
+    <table class="premium-result-table">
+<thead>
+
+<tr>
+
+<th><i class="fas fa-book me-2"></i>Subject</th>
+
+<th class="text-center">
+<i class="fas fa-pencil-alt me-1"></i>
+Class Score
+</th>
+
+<th class="text-center">
+<i class="fas fa-file-alt me-1"></i>
+Exam Score
+</th>
+
+<th class="text-center">
+<i class="fas fa-chart-bar me-1"></i>
+Total
+</th>
+
+<th class="text-center">
+<i class="fas fa-star me-1"></i>
+Grade
+</th>
+
+<th class="text-center">
+<i class="fas fa-check-circle me-1"></i>
+Remark
+</th>
+
+</tr>
+
+</thead>
+        <tbody>
+        {% for r in t.results %}
+        {% with r.grade as g %}
+        <tr style="border-bottom:3px solid #b3b9c5;">
+           <td style="padding:12px;">
+
+    <div class="subject-name">
+
+        <div class="subject-icon">
+            <i class="fas fa-book"></i>
+        </div>
+
+        {{ r.subject.name }}
+
+    </div>
+
+</td>
+            <td style="padding:12px; text-align:center; font-weight:800;">{{ r.class_score|floatformat:0 }} / {{ r.term.ca_total }}</td>
+            <td style="padding:12px; text-align:center; font-weight:800;">{{ r.exam_score|floatformat:0 }} / {{ r.term.exam_total }}</td>
+            <td style="padding:12px; text-align:center; font-weight:800;">
+                {{ r.total_score|floatformat:0 }} / {{ r.term.ca_total|add:r.term.exam_total }}
+            </td>
+   <td class="text-center">
+
+<span class="grade-pill grade-{{ g|lower }}">
+
+{{ g }}
+
+</span>
+
+</td>
+            <td class="text-center">
+
+<span class="remark-pill">
+
+{{ r.remark }}
+
+</span>
+
+</td>
+        </tr>
+        {% endwith %}
+        {% empty %}
+        <tr><td colspan="6" style="padding:15px; text-align:center; color:#9ca3af;">No results yet</td></tr>
+        {% endfor %}
+        </tbody>
+<tfoot>
+
+{% if t.results %}
+
+<tr class="table-total">
+
+<td>Total</td>
+
+<td class="text-center">
+{{ t.grand_class_score|floatformat:0 }}
+/
+{{ t.grand_class_max|floatformat:0 }}
+</td>
+
+<td class="text-center">
+{{ t.grand_exam_score|floatformat:0 }}
+/
+{{ t.grand_exam_max|floatformat:0 }}
+</td>
+
+<td class="text-center">
+{{ t.grand_total_score|floatformat:0 }}
+/
+{{ t.grand_total_max|floatformat:0 }}
+</td>
+
+<td colspan="2" class="text-center">
+
+Overall Performance
+
+</td>
+
+</tr>
+
+{% endif %}
+
+</tfoot>
+    </table>
+    </div>
+
+</div>
+{% empty %}
+    <div class="report-card" style="text-align:center; padding:60px 30px;">
+        <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:30px;">
+            <h3 style="color:#991b1b; margin:0 0 15px 0; font-size:18px;">
+                No published results yet for <strong>{{ selected_child.get_full_name|default:selected_child.username }}</strong><br>
+                Student ID: {{ selected_child.student_number|default:"-" }} | Class: {{ selected_child.school_class.name|default:"-" }}
+           </h3>
+        </div>
+    </div>
+{% endfor %}
+
+</div>
+{% else %}
+<p style="text-align:center; color:#6b7280;">No children linked to this account.</p>
+{% endif %}
+
+</div>
+{% endblock %}

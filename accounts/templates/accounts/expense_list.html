@@ -1,0 +1,378 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block title %}Expenses{% endblock %}
+
+{% block content %}
+<style>
+/* Cursor Fix */
+.card-body,label,p,div{
+    cursor:default;
+}
+
+.btn,a{
+    cursor:pointer !important;
+}
+
+/* HERO */
+
+.expense-hero{
+
+    background:linear-gradient(135deg,#0f172a,#2563eb);
+
+    color:#fff;
+
+    border-radius:24px;
+
+    padding:25px 30px;
+
+    margin-bottom:25px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    flex-wrap:wrap;
+
+    gap:15px;
+
+    box-shadow:0 12px 28px rgba(0,0,0,.12);
+
+}
+
+.expense-hero h2{
+
+    margin:0;
+
+    font-weight:800;
+
+}
+
+.expense-hero p{
+
+    margin-top:6px;
+
+    opacity:.85;
+
+}
+
+.total-box{
+
+    background:rgba(255,255,255,.15);
+
+    padding:14px 22px;
+
+    border-radius:18px;
+
+    text-align:center;
+
+}
+
+.total-box small{
+
+    display:block;
+
+    opacity:.8;
+
+}
+
+.total-box h3{
+
+    margin:0;
+
+    font-weight:800;
+
+}
+
+/* CARD */
+
+.expense-card{
+
+    border:none;
+
+    border-radius:22px;
+
+    overflow:hidden;
+
+    box-shadow:0 8px 25px rgba(0,0,0,.08);
+
+}
+
+.expense-card .card-header{
+
+    background:linear-gradient(135deg,#2563eb,#3b82f6);
+
+    color:white;
+
+    border:none;
+
+    padding:18px 24px;
+
+    font-weight:700;
+
+}
+
+/* TABLE */
+
+.table{
+
+    margin-bottom:0;
+
+}
+
+.table thead th{
+
+    background:#0f172a;
+
+    color:white;
+
+    border:none;
+
+    padding:15px;
+
+    font-size:13px;
+
+    text-transform:uppercase;
+
+}
+
+.table tbody td{
+
+    padding:15px;
+
+    vertical-align:middle;
+
+}
+
+.table tbody tr:hover{
+
+    background:#f8fafc;
+
+}
+
+.badge{
+
+    border-radius:30px;
+
+    padding:7px 14px;
+
+}
+
+.btn{
+
+    border-radius:30px;
+
+}
+
+@media(max-width:768px){
+
+.expense-hero{
+
+    padding:20px;
+
+}
+
+}
+/* ===========================
+   PREMIUM HERO
+=========================== */
+
+.expense-hero{
+    background:linear-gradient(135deg,#0f172a,#2563eb);
+    color:#fff;
+    border-radius:22px;
+    padding:26px 30px;
+    display:flex;
+    margin-top:25px;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:15px;
+}
+
+.expense-hero h2{
+    font-weight:800;
+    margin:0;
+}
+
+.expense-hero p{
+    opacity:.85;
+    margin:0;
+}
+
+.expense-pill{
+    background:rgba(255,255,255,.15);
+    padding:12px 20px;
+    border-radius:40px;
+    font-weight:700;
+    white-space:nowrap;
+}
+
+@media(max-width:768px){
+
+    .expense-hero{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .expense-pill{
+        width:100%;
+        text-align:center;
+    }
+
+}
+</style>
+<div class="container-fluid px-4">
+    <!-- Premium Hero -->
+<!-- Premium Hero -->
+<div class="expense-hero mb-4">
+
+    <div>
+        <h2 class="mb-1">
+            <i class="fas fa-receipt me-2"></i>
+            School Expenses
+        </h2>
+
+        <p class="mb-0">
+            View, manage and verify all school expenses for the active academic term.
+        </p>
+    </div>
+
+    {% if active_term %}
+    <div class="text-end">
+
+        <div class="expense-pill mb-2">
+            <i class="fas fa-calendar-alt me-2"></i>
+            {{ active_term.get_term_number_display }} • {{ active_term.academic_year }}
+        </div>
+
+        <h3 class="fw-bold mb-0">
+            GH₵ {{ total_expense|floatformat:2 }}
+        </h3>
+
+        <small class="text-white-50">
+            Total Expenses
+        </small>
+
+    </div>
+    {% endif %}
+
+</div>
+</div>
+{% if not active_term %}
+<div class="alert alert-warning">
+    {{ message|default:"No active term set. Ask admin to set an active term." }}
+</div>
+{% endif %}
+
+  <div class="card expense-card mb-4">
+    <div class="card-header bg-primary text-white">
+       <i class="fas fa-wallet me-2"></i>
+
+All Expenses
+        {% if request.user.role == 'accountant' and active_term %}
+            <a href="{% url 'accounts:add_expense' %}" class="btn btn-light rounded-pill px-4 py-2 float-end fw-bold"> Add Expense</a>
+        {% endif %}
+    </div>
+    
+    <div class="card-body">
+      <div class="table-responsive" style="overflow-x: auto;">
+        <table class="table table-bordered table-striped align-middle" style="width: 100%; white-space: nowrap;">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Category</th>
+              <th style="white-space: normal; min-width: 200px;">Description</th>
+              <th>Amount (GH₵ )</th>
+              <th>Receipt No.</th>
+              <th>Receipt</th>
+              <th>Verified</th>
+              {% if request.user.role == 'accountant' %}
+              <th>Action</th>
+              {% endif %}
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for exp in expenses %}
+            <tr>
+              <td>{{ exp.expense_date }}</td>
+              <td>{{ exp.get_category_display }}</td>
+              <td style="white-space: normal; max-width: 250px; word-wrap: break-word;">
+                {{ exp.description }}
+              </td>
+              <td>{{ exp.amount }}</td>
+              <td>{{ exp.receipt_number }}</td>
+              
+              <td>
+                {% if exp.receipt_file %}
+                  {% if request.user.role in "admin,bursar,head" or not exp.verified %}
+                    <a href="{{ exp.receipt_file.url }}" target="_blank"><i class="fas fa-file-alt me-1"></i>View Receipt</a>
+                  {% else %}
+                    <span class="text-muted">Verified</span>
+                  {% endif %}
+                {% else %}
+                  <span class="text-muted">No file</span>
+                {% endif %}
+              </td>
+
+              <td class="text-nowrap">
+                {% if exp.verified %}
+                  <span class="badge bg-success">Verified</span>
+                  {% if request.user.role == 'accountant' %}
+                    <br>
+                    <small class="text-muted">
+                      by {{ exp.verified_by.username|default:"Unknown" }}<br>
+                      {{ exp.verified_at|date:"M d, Y H:i" }}
+                    </small>
+                  {% endif %}
+                {% else %}
+                  {% if request.user.role in 'admin,bursar,head' %}
+                    <form method="post" action="{% url 'accounts:verify_expense' exp.id %}" class="d-inline">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-sm btn-success"><i class="fas fa-check-circle me-1"></i>Verify</button>
+                    </form>
+                  {% else %}
+                    <span class="text-muted">Pending</span>
+                  {% endif %}
+                {% endif %}
+              </td>
+
+              {% if request.user.role == 'accountant' %}
+              <td>
+                {% if not exp.verified and exp.recorded_by == request.user %}
+                  <a href="{% url 'accounts:edit_expense' exp.id %}" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit me-1"></i>Edit</a>
+                {% else %}
+                  <button class="btn btn-sm btn-secondary" disabled title="Locked">
+                    <i class="bi bi-lock-fill"></i> <i class="fas fa-lock me-1"></i>Locked
+                  </button>
+                {% endif %}
+              </td>
+              {% endif %}
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="{% if request.user.role == 'accountant' %}8{% else %}7{% endif %}" class="text-center">
+                <div class="py-4">
+
+<i class="fas fa-wallet fa-3x text-muted mb-3"></i>
+
+<h5>No expenses recorded</h5>
+
+<p class="text-muted mb-0">
+
+There are no expenses for this academic term.
+
+</p>
+
+</div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

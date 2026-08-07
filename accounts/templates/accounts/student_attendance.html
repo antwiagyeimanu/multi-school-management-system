@@ -1,0 +1,777 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block content %}
+
+<style>
+/* ATTENDANCE STAT CARDS */
+
+.stat-card{
+
+    border:none;
+
+    border-radius:24px;
+
+    overflow:hidden;
+
+    position:relative;
+
+    background:white;
+
+    min-height:150px;
+
+    transition:.3s ease;
+
+}
+
+
+.stat-card:hover{
+
+    transform:translateY(-5px);
+
+    box-shadow:
+    0 15px 35px rgba(0,0,0,.12)!important;
+
+}
+
+
+
+.stat-card::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:0;
+
+    left:0;
+
+    right:0;
+
+    height:5px;
+
+}
+
+
+.stat-card.present::before{
+
+    background:linear-gradient(
+    90deg,#2563eb,#60a5fa
+    );
+
+}
+
+
+.stat-card.absent::before{
+
+    background:linear-gradient(
+    90deg,#dc2626,#f87171
+    );
+
+}
+
+
+.stat-card.total::before{
+
+    background:linear-gradient(
+    90deg,#475569,#94a3b8
+    );
+
+}
+
+
+.stat-card.rate::before{
+
+    background:linear-gradient(
+    90deg,#059669,#34d399
+    );
+
+}
+
+
+
+.stat-icon{
+
+    width:55px;
+
+    height:55px;
+
+    border-radius:18px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    margin:auto;
+
+    font-size:22px;
+
+}
+
+
+
+.stat-icon.present{
+
+    background:#dbeafe;
+
+    color:#2563eb;
+
+}
+
+
+.stat-icon.absent{
+
+    background:#fee2e2;
+
+    color:#dc2626;
+
+}
+
+
+.stat-icon.total{
+
+    background:#e2e8f0;
+
+    color:#475569;
+
+}
+
+
+.stat-icon.rate{
+
+    background:#d1fae5;
+
+    color:#059669;
+
+}
+
+
+
+.stat-number{
+
+    font-size:34px;
+
+    font-weight:900;
+
+    margin-top:15px;
+
+    color:#0f172a;
+
+}
+
+
+.stat-title{
+
+    font-size:13px;
+
+    font-weight:700;
+
+    color:#64748b;
+
+    text-transform:uppercase;
+
+    letter-spacing:.5px;
+
+}
+/* HERO HEADER */
+
+.attendance-hero{
+
+    background:linear-gradient(
+        135deg,
+        #0f172a,
+        #2563eb
+    );
+
+    color:white;
+
+    padding:35px;
+
+    border-radius:26px;
+
+    box-shadow:
+    0 15px 35px rgba(0,0,0,.15);
+
+}
+
+
+.attendance-hero h2{
+
+    margin:0;
+
+    font-size:32px;
+
+    font-weight:900;
+
+}
+
+
+.attendance-hero p{
+
+    margin:10px 0 0;
+
+    opacity:.85;
+
+}
+
+
+
+/* WEEK CARD */
+
+.week-card{
+
+    background:white;
+
+    border-radius:22px;
+
+    padding:20px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    gap:20px;
+
+    box-shadow:
+    0 8px 25px rgba(0,0,0,.07);
+
+}
+
+
+.week-info{
+
+    text-align:center;
+
+}
+
+
+.week-info h4{
+
+    margin:0;
+
+    font-weight:900;
+
+    color:#0f172a;
+
+}
+
+
+.week-info span{
+
+    color:#64748b;
+
+    font-size:14px;
+
+}
+
+
+
+.week-btn{
+
+    text-decoration:none;
+
+    padding:12px 22px;
+
+    border-radius:50px;
+
+    font-weight:700;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    transition:.3s;
+
+}
+
+
+
+.week-btn.previous{
+
+    background:#f1f5f9;
+
+    color:#334155;
+
+}
+
+
+.week-btn.next{
+
+    background:#16a34a;
+
+    color:white;
+
+}
+
+
+
+.week-btn:hover{
+
+    transform:translateY(-2px);
+
+}
+
+
+
+/* MOBILE */
+
+@media(max-width:768px){
+
+    .attendance-hero{
+
+        padding:25px;
+
+    }
+
+
+    .attendance-hero h2{
+
+        font-size:24px;
+
+    }
+
+
+    .week-card{
+
+        flex-direction:column;
+
+    }
+
+
+    .week-btn{
+
+        width:100%;
+
+        justify-content:center;
+
+    }
+
+}
+/* TABLE CARDS */
+
+.attendance-section-card{
+
+    border:none;
+
+    border-radius:24px;
+
+    overflow:hidden;
+
+    background:white;
+
+    box-shadow:
+    0 10px 30px rgba(0,0,0,.07);
+
+}
+
+
+
+/* SECTION HEADER */
+
+.attendance-section-header{
+
+    background:
+    linear-gradient(
+        135deg,
+        #2563eb,
+        #1d4ed8
+    );
+
+    color:white;
+
+    padding:22px 25px;
+
+}
+
+
+
+.attendance-section-header h5{
+
+    margin:0;
+
+    font-weight:800;
+
+    font-size:18px;
+
+}
+
+
+
+/* TABLE */
+
+.attendance-table{
+
+    margin:0;
+
+}
+
+
+.attendance-table thead th{
+
+    background:#f8fafc;
+
+    color:#475569;
+
+    font-size:13px;
+
+    text-transform:uppercase;
+
+    letter-spacing:.4px;
+
+    padding:16px;
+
+    border:none;
+
+}
+
+
+
+.attendance-table tbody td{
+
+    padding:16px;
+
+    color:#334155;
+
+    vertical-align:middle;
+
+}
+
+
+
+.attendance-table tbody tr{
+
+    transition:.2s;
+
+}
+
+
+
+.attendance-table tbody tr:hover{
+
+    background:#f8fafc;
+
+}
+
+
+
+/* BADGES */
+
+.attendance-badge{
+
+    padding:8px 16px;
+
+    border-radius:50px;
+
+    font-size:13px;
+
+    font-weight:800;
+
+}
+
+
+
+/* MOBILE TABLE */
+
+.table-responsive{
+
+    border-radius:0 0 24px 24px;
+
+}
+
+
+
+@media(max-width:768px){
+
+    .attendance-section-header{
+
+        padding:18px;
+
+    }
+
+
+    .attendance-table{
+
+        min-width:650px;
+
+    }
+
+}
+/* EMPTY STATE */
+
+.empty-attendance-card{
+
+    border:none;
+
+    border-radius:24px;
+
+    background:white;
+
+    padding:50px 30px;
+
+    text-align:center;
+
+    box-shadow:
+    0 10px 30px rgba(0,0,0,.07);
+
+}
+
+
+.empty-attendance-card i{
+
+    width:90px;
+
+    height:90px;
+
+    border-radius:50%;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    margin:0 auto 20px;
+
+    background:#dbeafe;
+
+    color:#2563eb;
+
+    font-size:40px;
+
+}
+
+
+/* MOBILE SPACING */
+
+@media(max-width:768px){
+
+    .container-fluid.py-3{
+
+        padding-left:12px!important;
+
+        padding-right:12px!important;
+
+    }
+
+
+    .attendance-hero{
+
+        margin-bottom:20px;
+
+    }
+
+
+    .stat-card{
+
+        min-height:130px;
+
+    }
+
+}
+</style>
+
+<div class="container-fluid py-3">
+
+<!-- HERO HEADER -->
+<div class="attendance-hero mb-4">
+
+    <div>
+        <h2>
+            <i class="fas fa-calendar-check me-2"></i>
+            My Attendance
+        </h2>
+
+        <p>
+            Weekly attendance overview and class participation record
+        </p>
+    </div>
+
+</div>
+
+<form method="get" style="display:flex; gap:10px; margin-bottom:15px;">
+  <select name="year" onchange="this.form.submit()" style="padding:8px; border-radius:8px; border:1px solid #d1d5db;">
+    <option value="">All Years</option>
+    {% for y in years %}
+      <option value="{{ y.id }}" {% if selected_year == y.id|stringformat:"s" %}selected{% endif %}>{{ y.name }}</option>
+    {% endfor %}
+  </select>
+  <select name="term" onchange="this.form.submit()" style="padding:8px; border-radius:8px; border:1px solid #d1d5db;">
+    <option value="">All Terms</option>
+    {% for t in terms %}
+      <option value="{{ t.id }}" {% if selected_term == t.id|stringformat:"s" %}selected{% endif %}>{{ t.get_term_number_display }}</option>
+    {% endfor %}
+  </select>
+  <a href="?" style="padding:8px 12px; background:#f3f4f6; border-radius:8px; text-decoration:none; color:#374151;">Reset</a>
+</form>
+<!-- WEEK NAVIGATION -->
+<div class="week-card mb-4">
+
+    <a href="?s_week={{ s_prev_week }}" 
+       class="week-btn previous">
+        <i class="fas fa-chevron-left"></i>
+        Previous Week
+    </a>
+
+
+    <div class="week-info">
+
+        <h4>
+            Week {{ s_active_week }}
+        </h4>
+
+        <span>
+            {{ s_week_start|date:"d M" }}
+            -
+            {{ s_week_end|date:"d M " }}
+        </span>
+
+    </div>
+
+
+    <a href="?s_week={{ s_next_week }}" 
+       class="week-btn next">
+        Next Week
+        <i class="fas fa-chevron-right"></i>
+    </a>
+
+
+
+    </div>
+
+    {% if not records %}
+<div class="empty-attendance-card">
+
+    <i class="fas fa-calendar-times"></i>
+
+    <h4 class="fw-bold mb-2">
+        No Attendance Records
+    </h4>
+
+    <p class="text-muted mb-0">
+        No attendance has been recorded for 
+        <strong>Week {{ s_active_week }}</strong>.
+    </p>
+
+</div>
+    </div>
+    {% else %}
+
+    <div class="row g-4 mb-4">
+        <!-- Present -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card present shadow-sm border-0 h-100">
+                <div class="card-body text-center py-4">
+                    <div class="stat-icon present"><i class="fas fa-user-check"></i></div>
+                    <h3 class="stat-number">{{ present }}</h3>
+                    <small class="stat-tittle">Present Days</small>
+                </div>
+            </div>
+        </div>
+        <!-- Absent -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card absent shadow-sm border-0 h-100">
+                <div class="card-body text-center py-4">
+                    <div class="stat-icon absent"><i class="fas fa-user-times"></i></div>
+                    <h3 class="stat-number">{{ absent }}</h3>
+                    <small class="stat-tittle">Absent Days</small>
+                </div>
+            </div>
+        </div>
+        <!-- Total -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card total shadow-sm border-0 h-100">
+                <div class="card-body text-center py-4">
+                    <div class="stat-icon total"><i class="fas fa-calendar-check"></i></div>
+                    <h3 class="stat-number">{{ total }}</h3>
+                    <small class="stat-tittle">Total Days</small>
+                </div>
+            </div>
+        </div>
+        <!-- Rate -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card stat-card rate shadow-sm border-0 h-100">
+                <div class="card-body text-center py-4">
+                    <div class="stat-icon rate"><i class="fas fa-chart-line"></i></div>
+                    <h3 class="stat-number">
+                        {% if total %}{% widthratio present total 100 %}%{% else %}0%{% endif %}
+                    </h3>
+                    <small class="stat-tittle">Attendance Rate</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BY SUBJECT - ONLY P and A -->
+    {% if attendance_mode == 'subject' and by_subject %}
+    <div class="attendance-section-card mb-4">
+        <div class="attendance-section-header">
+            <h5 class="mb-0"><i class="fas fa-book-open me-2"></i>Attendance by Subject</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr><th>Subject</th><th>Present</th><th>Absent</th><th>Total Classes</th><th>Performance</th></tr>
+                </thead>
+                <tbody>
+                    {% for sub in by_subject %}
+                    <tr>
+                        <td class="fw-semibold">{{ sub.name }}</td>
+                        <td>{{ sub.present }}</td>
+                        <td>{{ sub.absent }}</td>
+                        <td>{{ sub.total }}</td>
+                        <td>
+                            <span class="badge rounded-pill px-3 py-2 {% if sub.percentage >= 90 %}bg-success{% elif sub.percentage >= 75 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                {{ sub.percentage }}%
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- DETAILED TABLE -->
+    <div class="attendance-section-card">
+        <div class="attendance-section-header">
+            <h5 class="mb-0"><i class="fas fa-list-check me-2"></i>Detailed Records For Week {{ s_active_week }}</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table attendance-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        {% if attendance_mode == 'subject' %}<th>Subject</th><th>Teacher</th>{% else %}<th>Marked By</th>{% endif %}
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for record in records %}
+                    <tr>
+                        <td>
+                            {% if attendance_mode == 'class_teacher' %}{{ record.session__date|date:"D, d M Y" }}{% else %}{{ record.session.date|date:"D, d M Y" }}{% endif %}
+                        </td>
+                        {% if attendance_mode == 'subject' %}
+                            <td>{{ record.session.subject.name }}</td>
+                            <td>{{ record.session.teacher.get_full_name }}</td>
+                        {% else %}
+                            <td>{{ record.session.teacher.get_full_name|default:"Class Teacher" }}</td>
+                        {% endif %}
+                        <td>
+                            {% if record.status == 'P' %}<span class="attendance-badge bg-success text-white"><i class="fas fa-check me-1"></i>Present</span>
+                            {% else %}<span class="attendance-badge bg-danger text-white"><i class="fas fa-times me-1"></i>Absent</span>{% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'accounts/css/dashboard.css' %}">
+<h1>Welcome, {{ user.username }}!</h1>
+<div class="dashboard-cards">
+
+    <a href="{% url 'accounts:manage-teachers' %}" class="card card-teachers">
+        <div class="icon">&#128187;</div>
+        <h3>Teachers</h3>
+        <p>{{ total_teachers }}</p>
+    </a>
+
+    <a href="{% url 'accounts:manage_accountant_grid' %}" class="card card-accountants">
+        <div class="icon">&#128179;</div>
+        <h3>Accountants</h3>
+        <p>{{ total_accountants }}</p>
+    </a>
+
+    <a href="{% url 'accounts:manage-students' %}" class="card card-students">
+        <div class="icon">&#127891;</div>
+        <h3>Students</h3>
+        <p>{{ total_students }}</p>
+    </a>
+
+    <a href="{% url 'accounts:manage-parents' %}" class="card card-parents">
+        <div class="icon">&#128101;</div>
+        <h3>Parents</h3>
+        <p>{{ total_parents }}</p>
+    </a>
+
+    <a href="{% url 'accounts:manage-users' %}" class="card card-users">
+        <div class="icon">&#128100;</div>
+        <h3>All Users</h3>
+        <p>{{ total_users }}</p>
+    </a>
+
+    <!-- New: Subjects -->
+    <a href="{% url 'academics:subject_list' %}" class="card card-subjects">
+        <div class="icon">&#128218;</div>
+        <h3>Subjects</h3>
+        <p>{{ total_subjects }}</p>
+    </a>
+
+    <!-- New: Classes -->
+    <a href="{% url 'academics:class_list' %}" class="card card-classes">
+        <div class="icon">&#127979;</div>
+        <h3>Classes</h3>
+        <p>{{ total_classes }}</p>
+    </a>
+
+    <a href="{% url 'accounts:add_result' %}" class="card card-results">
+        <div class="icon">&#128202;</div>
+        <h3>Add Result</h3>
+        <p>Enter Scores</p>
+    </a>
+
+</div>
+{% endblock %}

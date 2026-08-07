@@ -1,0 +1,818 @@
+{% extends "accounts/dashboard_base.html" %}
+
+{% block content %}
+
+<style>
+
+/* PAGE SPACE BELOW TOP BAR */
+.attendance-page{
+    padding-top:25px;
+}
+
+
+/* HERO HEADER */
+
+.attendance-hero{
+
+    background:linear-gradient(
+        135deg,
+        #2563eb,
+        #1e40af
+    );
+
+    color:white;
+    border-radius:22px;
+    padding:30px;
+
+    margin-bottom:25px;
+
+    box-shadow:
+    0 15px 35px rgba(37,99,235,.25);
+
+}
+
+
+.attendance-hero h3{
+
+    margin:0;
+    font-weight:800;
+
+}
+
+
+.attendance-hero p{
+
+    margin-top:8px;
+    opacity:.9;
+
+}
+
+
+/* WEEK NAVIGATION */
+
+.week-navigation{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    margin-bottom:25px;
+
+}
+
+
+.week-btn{
+
+    border:none;
+    background:white;
+
+    padding:10px 18px;
+
+    border-radius:30px;
+
+    font-weight:700;
+
+    color:#2563eb;
+
+    text-decoration:none;
+
+    box-shadow:
+    0 5px 15px rgba(0,0,0,.08);
+
+}
+
+
+.week-btn:hover{
+
+    background:#eff6ff;
+
+}
+
+
+.week-label{
+
+    background:#f8fafc;
+
+    padding:10px 20px;
+
+    border-radius:30px;
+
+    font-weight:700;
+
+    color:#334155;
+
+}
+
+
+
+/* SUMMARY CARDS */
+
+
+.summary-grid{
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(6,1fr);
+
+    gap:18px;
+
+    margin-bottom:30px;
+
+}
+
+
+
+.summary-card{
+
+    padding:20px;
+
+    border-radius:18px;
+
+    color:white;
+
+    min-height:120px;
+
+    box-shadow:
+    0 8px 20px rgba(0,0,0,.12);
+
+    transition:.25s;
+
+}
+
+
+
+.summary-card:hover{
+
+    transform:translateY(-5px);
+
+}
+
+
+.summary-card i{
+
+    font-size:25px;
+
+    margin-bottom:12px;
+
+}
+
+
+
+.summary-card small{
+
+    display:block;
+
+    opacity:.9;
+
+    font-weight:600;
+
+}
+
+
+.summary-card h2{
+
+    margin:5px 0 0;
+
+    font-weight:800;
+
+}
+
+
+
+.present-card{
+
+    background:linear-gradient(
+    135deg,#16a34a,#15803d);
+
+}
+
+
+.late-card{
+
+    background:linear-gradient(
+    135deg,#f59e0b,#d97706);
+
+}
+
+
+.absent-card{
+
+    background:linear-gradient(
+    135deg,#dc2626,#991b1b);
+
+}
+
+
+.leave-card{
+
+    background:linear-gradient(
+    135deg,#2563eb,#1d4ed8);
+
+}
+
+
+.sick-card{
+
+    background:linear-gradient(
+    135deg,#0891b2,#155e75);
+
+}
+
+
+.excused-card{
+
+    background:linear-gradient(
+    135deg,#7c3aed,#5b21b6);
+
+}
+
+
+/* TABLE */
+
+.report-card{
+
+    background:white;
+
+    border-radius:22px;
+
+    padding:25px;
+
+    box-shadow:
+    0 10px 30px rgba(0,0,0,.08);
+
+}
+
+
+.table{
+
+    margin-bottom:0;
+
+}
+
+
+.table thead th{
+
+    background:#0f172a;
+
+    color:white;
+
+    border:none;
+
+    padding:15px;
+
+}
+
+
+
+.table tbody td{
+
+    padding:15px;
+
+    vertical-align:middle;
+
+}
+
+
+.table tbody tr:hover{
+
+    background:#f8fafc;
+
+}
+
+
+
+/* STATUS BADGES */
+
+
+.status-badge{
+
+    padding:7px 16px;
+
+    border-radius:30px;
+
+    font-weight:700;
+
+    font-size:.85rem;
+
+}
+
+
+
+.status-present{
+
+    background:#dcfce7;
+    color:#15803d;
+
+}
+
+
+.status-late{
+
+    background:#fef3c7;
+    color:#b45309;
+
+}
+
+
+.status-absent{
+
+    background:#fee2e2;
+    color:#b91c1c;
+
+}
+
+
+.status-leave{
+
+    background:#dbeafe;
+    color:#1d4ed8;
+
+}
+
+
+.status-sick{
+
+    background:#cffafe;
+    color:#155e75;
+
+}
+
+
+.status-excused{
+
+    background:#ede9fe;
+    color:#6d28d9;
+
+}
+
+
+/* RESPONSIVE */
+
+
+@media(max-width:1100px){
+
+.summary-grid{
+
+grid-template-columns:
+repeat(3,1fr);
+
+}
+
+}
+
+
+@media(max-width:600px){
+
+.summary-grid{
+
+grid-template-columns:1fr;
+
+}
+
+
+.week-navigation{
+
+flex-direction:column;
+
+gap:15px;
+
+}
+
+}
+
+
+</style>
+
+
+
+<div class="attendance-page">
+
+
+<div class="attendance-hero">
+
+<h3>
+📅 My Attendance
+</h3>
+
+
+</div>
+
+
+<!-- WEEK NAVIGATION -->
+<div class="week-navigation">
+
+<a href="?attendance_week={{ attendance_previous_week|date:'Y-m-d' }}&top_week={{ request.GET.top_week|default:'' }}"
+   class="week-btn">
+    <i class="fas fa-chevron-left"></i>
+    Previous Week
+</a>
+
+
+<div class="week-label">
+    <strong>Week {{ attendance_week_number }}</strong><br>
+    {{ attendance_week_start|date:"d M" }} -
+    {{ attendance_week_end|date:"d M" }}
+</div>
+
+
+<a href="?attendance_week={{ attendance_next_week|date:'Y-m-d' }}&top_week={{ request.GET.top_week|default:'' }}"
+   class="week-btn">
+    Next Week
+    <i class="fas fa-chevron-right"></i>
+</a>
+
+
+</div>
+
+
+<!-- SUMMARY CARDS -->
+
+<div class="summary-grid">
+
+
+<div class="summary-card present-card">
+
+<i class="fas fa-check-circle"></i>
+
+<small>Present</small>
+
+<h2>{{ total_present }}</h2>
+
+</div>
+
+
+
+<div class="summary-card late-card">
+
+<i class="fas fa-clock"></i>
+
+<small>Late</small>
+
+<h2>{{ total_late }}</h2>
+
+</div>
+
+
+
+<div class="summary-card absent-card">
+
+<i class="fas fa-times-circle"></i>
+
+<small>Absent</small>
+
+<h2>{{ total_absent }}</h2>
+
+</div>
+
+
+
+<div class="summary-card leave-card">
+
+<i class="fas fa-calendar-alt"></i>
+
+<small>Leave</small>
+
+<h2>{{ total_leave }}</h2>
+
+</div>
+
+
+
+<div class="summary-card sick-card">
+
+<i class="fas fa-notes-medical"></i>
+
+<small>Sick</small>
+
+<h2>{{ total_sick }}</h2>
+
+</div>
+
+
+
+<div class="summary-card excused-card">
+
+<i class="fas fa-user-shield"></i>
+
+<small>Excused</small>
+
+<h2>{{ total_excused }}</h2>
+
+</div>
+
+
+</div>
+
+
+
+<!-- ATTENDANCE TABLE -->
+
+<div class="report-card">
+
+
+<div class="table-responsive">
+
+
+<table class="table table-hover align-middle">
+
+
+<thead>
+
+<tr>
+
+<th>Day</th>
+
+<th>Status</th>
+
+<th>Time</th>
+
+<th>Note</th>
+
+<th>Recorded By</th>
+
+</tr>
+
+</thead>
+
+
+
+<tbody>
+
+
+{% for day in attendance_days %}
+
+
+<tr>
+
+
+<td>
+
+<strong>
+{{ day.date|date:"l" }}
+</strong>
+
+<br>
+
+<small class="text-muted">
+
+{{ day.date|date:"d M Y" }}
+
+</small>
+
+</td>
+
+
+
+
+<td>
+
+
+{% if day.status == "P" %}
+
+<span class="status-badge status-present">
+
+Present
+
+</span>
+
+
+{% elif day.status == "L" %}
+
+<span class="status-badge status-late">
+
+Late
+
+</span>
+
+
+{% elif day.status == "A" %}
+
+<span class="status-badge status-absent">
+
+Absent
+
+</span>
+
+
+{% elif day.status == "LV" %}
+
+<span class="status-badge status-leave">
+
+Leave
+
+</span>
+
+
+{% elif day.status == "S" %}
+
+<span class="status-badge status-sick">
+
+Sick
+
+</span>
+
+
+{% elif day.status == "E" %}
+
+<span class="status-badge status-excused">
+
+Excused
+
+</span>
+
+
+{% else %}
+
+<span class="text-muted">
+-
+</span>
+
+{% endif %}
+
+
+</td>
+
+
+
+
+
+<td>
+
+
+{% if day.attendance %}
+
+
+{% if day.attendance.time_in %}
+
+<div>
+
+
+In: {{ day.attendance.time_in|time:"H:i" }}
+
+</div>
+
+{% endif %}
+
+
+
+{% if day.attendance.time_out %}
+
+<div>
+
+
+Out: {{ day.attendance.time_out|time:"H:i" }}
+
+</div>
+
+{% endif %}
+
+
+
+{% else %}
+
+-
+
+{% endif %}
+
+
+</td>
+
+
+
+
+
+<td>
+
+
+{% if day.attendance.note %}
+
+{{ day.attendance.note }}
+
+{% else %}
+
+<span class="text-muted">
+-
+</span>
+
+{% endif %}
+
+
+</td>
+
+
+
+
+
+<td>
+
+
+{% if day.attendance %}
+
+
+{% if day.attendance.marked_by %}
+
+
+<strong>
+
+{% if day.attendance.marked_by.get_full_name %}
+
+{{ day.attendance.marked_by.get_full_name }}
+
+{% else %}
+
+{{ day.attendance.marked_by.username }}
+
+{% endif %}
+
+
+</strong>
+
+
+<br>
+
+
+<small class="text-muted">
+
+Staff Marked
+
+</small>
+
+
+
+{% else %}
+
+
+<span class="text-muted">
+
+Self Check-in
+
+</span>
+
+
+{% endif %}
+
+
+
+{% else %}
+
+
+<span class="text-muted">
+
+-
+
+</span>
+
+
+{% endif %}
+
+
+</td>
+
+
+
+</tr>
+
+
+
+{% empty %}
+
+
+<tr>
+
+<td colspan="5"
+class="text-center py-5">
+
+
+<i class="fas fa-calendar-times fa-2x text-muted"></i>
+
+<br><br>
+
+No attendance records found.
+
+
+</td>
+
+</tr>
+
+
+
+{% endfor %}
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+{% endblock %}

@@ -1,0 +1,349 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block content %}
+<style>
+/* cursor fix */
+ .card-body {
+    cursor: default;
+}
+select, input {
+    cursor: pointer !important;
+}
+/* ===========================
+   PREMIUM PENDING PAYMENTS
+===========================*/
+
+.pending-hero{
+    background:linear-gradient(135deg,#0f172a,#2563eb);
+    color:#fff;
+    border-radius:22px;
+    padding:28px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:15px;
+    box-shadow:0 12px 30px rgba(0,0,0,.12);
+}
+
+.pending-hero h2{
+    font-weight:800;
+    margin-bottom:6px;
+}
+
+.pending-hero p{
+    opacity:.9;
+}
+
+.pending-counter{
+    background:rgba(255,255,255,.18);
+    padding:12px 20px;
+    border-radius:30px;
+    font-weight:700;
+}
+
+.premium-card{
+    border-radius:22px;
+    overflow:hidden;
+}
+
+.premium-header{
+    background:#fff;
+    padding:20px 25px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:1px solid #edf2f7;
+    font-weight:700;
+}
+
+.premium-table thead{
+    background:#0f172a;
+    color:#fff;
+}
+
+.premium-table thead th{
+    border:none;
+    padding:16px;
+}
+
+.premium-table tbody td{
+    padding:18px 16px;
+    vertical-align:middle;
+}
+
+.premium-table tbody tr{
+    transition:.25s;
+}
+
+.premium-table tbody tr:hover{
+    background:#f8fafc;
+}
+
+.student-avatar{
+    width:46px;
+    height:46px;
+    border-radius:50%;
+    background:#2563eb;
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:700;
+}
+
+.amount-pill{
+    background:#dcfce7;
+    color:#15803d;
+    padding:8px 14px;
+    border-radius:30px;
+    font-weight:700;
+    white-space:nowrap;
+}
+
+.method-pill{
+    background:#eff6ff;
+    color:#2563eb;
+    padding:8px 14px;
+    border-radius:30px;
+    font-weight:700;
+}
+
+.status-pill{
+    background:#fef3c7;
+    color:#b45309;
+    padding:8px 14px;
+    border-radius:30px;
+    font-weight:700;
+}
+
+.empty-state{
+    text-align:center;
+    padding:70px 20px;
+}
+
+.empty-state i{
+    font-size:70px;
+    color:#22c55e;
+    margin-bottom:20px;
+}
+
+@media(max-width:768px){
+
+.pending-hero{
+    flex-direction:column;
+    align-items:flex-start;
+}
+
+.premium-header{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:12px;
+}
+
+.premium-table{
+    font-size:14px;
+}
+
+.student-avatar{
+    width:40px;
+    height:40px;
+}
+
+}
+</style>
+<div class="container-fluid mt-4">
+
+    <!-- =========================
+     PREMIUM HEADER
+========================== -->
+
+<div class="pending-hero mb-4">
+
+    <div>
+        <h2>
+            <i class="fas fa-user-check me-2"></i>
+            Pending Payment Verification
+        </h2>
+
+        <p class="mb-0">
+            Review and approve manual payments submitted by students and parents.
+        </p>
+    </div>
+
+    {% if pending_payments %}
+        <span class="pending-counter">
+            {{ pending_payments|length }} Pending
+        </span>
+    {% endif %}
+
+</div>
+
+
+<div class="card premium-card border-0 shadow-sm">
+
+    <div class="premium-header">
+
+        <div>
+            <i class="fas fa-clock me-2"></i>
+            Pending Manual Payments
+        </div>
+
+        {% if pending_payments %}
+        <span class="badge bg-light text-primary px-3 py-2 rounded-pill">
+            {{ pending_payments|length }} Awaiting Review
+        </span>
+        {% endif %}
+
+    </div>
+
+    <div class="card-body p-0">
+
+        {% if pending_payments %}
+
+        <div class="table-responsive">
+
+            <table class="table premium-table align-middle mb-0">
+
+                <thead>
+
+                <tr>
+                    <th>Student</th>
+                    <th>ID</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Submitted By</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th class="text-center">Action</th>
+                </tr>
+
+                </thead>
+
+                <tbody>
+
+                {% for payment in pending_payments %}
+
+                <tr>
+
+                    <td>
+
+                        <div class="d-flex align-items-center">
+
+                            <div class="student-avatar">
+
+                                {{ payment.student.first_name|slice:":1" }}{{ payment.student.last_name|slice:":1" }}
+
+                            </div>
+
+                            <div class="ms-3">
+
+                                <div class="fw-bold">
+                                    {{ payment.student.get_full_name }}
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </td>
+
+                    <td class="fw-semibold">
+                        {{ payment.student.student_number }}
+                    </td>
+
+                    <td>
+
+                        <span class="amount-pill">
+
+                            GH₵ {{ payment.amount|floatformat:2 }}
+
+                        </span>
+
+                    </td>
+
+                    <td>
+
+                        <span class="method-pill">
+
+                            {{ payment.get_payment_method_display }}
+
+                        </span>
+
+                    </td>
+
+                        <td>
+                            <div class="d-flex align-items-center gap-2 text-nowrap">
+                                <span>{{ payment.submitted_by.get_full_name }}</span>
+                            </div>
+                        </td>
+
+                        <td class="text-nowrap">
+                            <div class="d-flex flex-column">
+                                <span class="fw-bold text-dark">
+                                    {{ payment.submitted_at|date:"d M Y" }}
+                                </span>
+                                <span class="small text-muted">
+                                    {{ payment.submitted_at|date:"h:i A" }}
+                                </span>
+                            </div>
+                        </td>
+                                            <td>
+
+                        <span class="status-pill">
+
+
+                            Pending
+
+                        </span>
+
+                    </td>
+
+                    <td class="text-center">
+
+                        <a href="{% url 'accounts:pending_payment_detail' payment.id %}"
+
+                           class="btn btn-primary ">
+
+
+                            View
+
+                        </a>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+        <div class="empty-state">
+
+            <i class="fas fa-check-circle"></i>
+
+            <h4>No Pending Payments</h4>
+
+            <p>
+                All submitted payments have been reviewed.
+            </p>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+    </div>
+
+</div>
+
+
+{% endblock %}

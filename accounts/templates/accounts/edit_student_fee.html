@@ -1,0 +1,114 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block title %}Edit Fee - {{ fee.student.get_full_name }}{% endblock %}
+
+{% block content %}
+<style>
+.form-label {
+    color: #000 !important;
+}
+
+small {
+    color: #555 !important;
+}
+.card-header {
+    background: #f8f9fa;
+}
+
+.card-header h4 {
+    color: #000;
+}
+
+.card-header small {
+    color: #555;
+}
+</style>
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h4>Edit Fees for {{ fee.student.get_full_name }}</h4>
+<small class="text-muted">
+    {{ fee.student.student_number }} |
+    {{ fee.term }} |
+    {{ fee.academic_year }}
+</small>        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {% if form.errors %}
+<div class="alert alert-danger">
+  <strong>Please fix the errors below:</strong>
+  {{ form.errors }}
+</div>
+{% endif %}
+              <div class="row g-3">
+    <div class="col-md-6">
+        <label class="form-label">School Fees</label>
+        {{ form.school_fees }}
+    </div>
+    
+        <div class="col-md-6">
+        <label class="form-label">Boarding Fees</label>
+        {{ form.boarding_fee }}
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Hostel Fees</label>
+        {{ form.hostel_fee }}
+    </div>
+
+
+    
+    <div class="col-md-6">
+        <label class="form-label">Exam Fees</label>
+        {{ form.exam_fees }}
+    </div>
+    
+    <div class="col-md-6">
+        <label class="form-label">Feeding Type</label>
+        {{ form.canteen_type }}
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Feeding Fee</label>
+        {{ form.canteen_amount }}
+    </div>
+    
+        <div class="col-md-6">
+        <label class="form-label">PTA Dues</label>
+        {{ form.pta_dues }}
+    </div>
+        <div class="col-md-6">
+        <label class="form-label">Development Fees</label>
+        {{ form.development_fee }}
+    </div>
+    
+    <div class="col-md-6">
+        <label class="form-label">Computer Fees</label>
+        {{ form.computer_levy }}
+    </div>
+
+   
+
+    <div class="col-md-6">
+        <label class="form-label">Other Fees</label>
+        {{ form.other_fees }}
+    </div>
+
+</div>
+                
+                
+                <div class="alert alert-info mt-3">
+                    <strong>Amount Paid:</strong> GHS {{ fee.amount_paid|floatformat:2 }} <br>
+                    <small>Amount paid cannot be edited here. Use the "Pay" button for payments.</small>
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a href="{% url 'accounts:student_fees_list' %}?term={{ fee.term.id }}" 
+                       class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

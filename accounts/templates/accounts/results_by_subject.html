@@ -1,0 +1,106 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block content %}
+<div style="max-width:1200px; margin:20px auto; padding:0 20px;">
+<h1 style="text-align:center; margin-bottom:10px;">{{ school_class.name }} - Select Subject</h1>
+
+
+<!-- Term/Year Filter -->
+<form method="get" style="display:flex; gap:15px; align-items:center; background:#f8fafc; padding:15px; border-radius:12px; margin-bottom:30px; flex-wrap:wrap;">
+    
+    <label style="font-weight:600; color:#334155; white-space:nowrap;">Term:</label>
+    <select name="term" style="flex:1; min-width:50px; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-weight:600;">
+        <option value="">All Terms</option>
+        {% for t in terms %}
+        <option value="{{ t.term_number }}" {% if term|stringformat:"s" == t.term_number|stringformat:"s" %}selected{% endif %}>
+            {{ t.get_term_number_display }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <label style="font-weight:600; color:#334155; white-space:nowrap;">Academic Year:</label>
+    <select name="year" style="flex:1; min-width:40px; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-weight:600;">
+        {% for y in years %}
+        <option value="{{ y.id }}" {% if year_id|stringformat:"s" == y.id|stringformat:"s" %}selected{% endif %}>
+            {{ y.name }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <button type="submit" style="padding:10px 20px; background:#2563eb; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Filter</button>
+</form>
+<div style="text-align:center; margin:40px 0;" class="no-print">
+    <button type="button" onclick="printAllReports()" 
+       style="padding:14px 32px; background:#16a34a; color:white; border:none; border-radius:10px; font-weight:700; font-size:16px; cursor:pointer;">
+       🖨 Print All Student Reports
+    </button>
+</div>
+    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:20px;">
+        {% for subject in subjects %}
+        <a href="{% url 'accounts:results_detail' school_class.id subject.id %}?term={{ term }}&year={{ year }}" 
+           style="background:white; padding:30px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1); text-decoration:none; text-align:center; transition:transform 0.2s;"
+           onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.15)'" 
+           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'">
+            <div style="font-size:22px; font-weight:700; color:#1e40af;">{{ subject.name }}</div>
+            <div style="color:#64748b; margin-top:8px;">{{ subject.student_count }} Students</div>
+        </a>
+        {% endfor %}
+    </div>
+
+
+
+    <div style="text-align:center; margin-top:40px;">
+        <a href="{% url 'accounts:results_by_class' %}?term={{ term }}&year={{ year }}" 
+           style="padding:12px 28px; background:#475569; color:white; text-decoration:none; border-radius:10px; font-weight:700;">
+           ← Back to Classes
+        </a>
+    </div>
+</div>
+<style>
+@media print {
+
+    /* Hide sidebar/navbar/buttons */
+    .sidebar,
+    .navbar,
+    .topbar,
+    .btn,
+    a,
+    button {
+        display: none !important;
+    }
+
+    /* Remove margins/padding */
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    /* Print only results area */
+    #print-area {
+        width: 100%;
+        display: block;
+    }
+}
+</style>
+<script>
+function printAllReports() {
+    // Create one hidden iframe that loads your existing print view
+    // Your URL is: /print_student_report/0/?class_id=X&term=Y&year=Z
+    const url = "{% url 'accounts:print_student_report' 0 %}?class_id={{ school_class.id }}&term={{ term }}&year={{ year_id }}";
+    
+    let iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+    iframe.src = url;
+    
+    iframe.onload = function() {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print(); // Opens browser print preview popup
+        // Remove iframe after printing
+        setTimeout(() => document.body.removeChild(iframe), 1000);
+    };
+    document.body.appendChild(iframe);
+}
+</script>
+{% endblock %}

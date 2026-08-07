@@ -1,0 +1,431 @@
+.dashboard-cards {
+    display: flex;
+    gap: 1rem;
+}
+.card {
+    flex: 1;
+    padding: 1.5rem;
+    border-radius: 10px;
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.card h3 { margin: 0.5rem 0; text-decoration: underline; }
+.card p { font-size: 1.5rem; margin: 0; }
+.card-students { background-color: #4caf50; }
+.card-teachers { background-color: #2196f3; }
+.card-parents { background-color: #ff9800; }
+.card-users { background-color: #f44336; }
+.card-results { background-color: rgb(54, 6, 3); }
+.icon { font-size: 22.5rem; }
+
+/* Sidebar main items */
+.sidebar-item {
+    list-style: none;
+}
+
+.sidebar-link {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.sidebar-link:hover {
+    background-color: #1ab394;
+    border-radius: 5px;
+}
+
+/* Chevron icon */
+.chevron-icon {
+    font-size: 12px;
+}
+
+/* Submenu */
+.submenu {
+    list-style: none;
+    padding-left: 15px;
+    margin-top: 5px;
+}
+
+/* Submenu links */
+.submenu-link {
+    display: block;
+    padding: 8px 12px;
+    color: #cfd8dc;
+    text-decoration: none;
+    font-size: 14px;
+    border-radius: 4px;
+}
+
+.submenu-link:hover {
+    background-color: #1ab394;
+    color: #fff;
+}
+/* Basic arrow style */
+.arrow {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 0.8em;
+    color: #888888;
+    transition: transform 0.3s ease;
+}
+
+/* Rotate arrow when submenu is shown */
+.collapse.show+a .arrow,
+a[aria-expanded="true"] .arrow {
+    transform: rotate(180deg);
+    /* upside down */
+    color: #1abc9c;
+    /* same green color as your text */
+}
+.chevron-icon {
+    font-size: 24px;
+    /* bigger arrow */
+    color: #888888;
+    /* gray by default */
+    margin-left: 8px;
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+
+a[aria-expanded="true"] .chevron-icon {
+    transform: rotate(180deg);
+    /* flips down arrow */
+    color: #1abc9c;
+    /* green when active */
+}
+.arrow-icon {
+    display: inline-block;
+    transition: transform 0.3s ease;
+    margin-left: 5px;
+    font-size: 12px;
+}
+
+/* Rotate arrow when submenu is expanded */
+.sidebar-link[aria-expanded="true"] .arrow-icon {
+    transform: rotate(180deg);
+    /* points upward */
+}
+
+/* People heading */
+.sidebar-heading {
+    display: block;
+    color: #1abc9c;
+    font-weight: bold;
+    padding: 10px 20px;
+    text-transform: uppercase;
+}
+
+/* Main menu items (Students, Teachers, Parents) */
+.sidebar-link {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 25px;  /* aligned under People heading */
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.sidebar-link:hover {
+    background-color: #1ab394;
+    border-radius: 5px;
+}
+
+/* Submenu items */
+.submenu {
+    list-style: none;
+    padding-left: 40px; /* indented under parent menu */
+    margin-top: 5px;
+}
+
+.submenu-link {
+    display: block;
+    padding: 8px 12px;
+    color: #cfd8dc;
+    text-decoration: none;
+    font-size: 14px;
+    border-radius: 4px;
+}
+
+.submenu-link:hover {
+    background-color: #1ab394;
+    color: #fff;
+}
+
+/* Arrow icon */
+.arrow-icon {
+    display: inline-block;
+    transition: transform 0.3s ease;
+    font-size: 12px;
+}
+
+/* Rotate arrow when submenu is expanded */
+.sidebar-link[aria-expanded="true"] .arrow-icon {
+    transform: rotate(180deg);
+    color: #1abc9c;
+}
+nav {
+    background-color: #010810;
+    color: white;
+    padding: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 25px;
+    flex-wrap: wrap;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+nav a:hover {
+    color: #00bfff;
+    border-bottom: 2px solid #00bfff;
+}
+
+nav a.active {
+    color: #00bfff;
+    border-bottom: 2px solid #00bfff;
+}
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: #050a47;
+    color: white;
+    padding: 15px;
+    text-align: center;
+}
+
+nav {
+    background-color: #010810;
+    color: white;
+    padding: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 25px;
+    flex-wrap: wrap;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    font-size: 24px;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+nav a:hover {
+    color: #00bfff;
+    border-bottom: 2px solid #00bfff;
+}
+
+nav a.active {
+    color: #00bfff;
+    border-bottom: 2px solid #00bfff;
+    background: rgba(0, 191, 255, 0.1);
+    border-radius: 6px;
+}
+
+main {
+    padding: 20px;
+}
+
+footer {
+    background-color: #004080;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+}
+header h1 {
+    text-transform: uppercase;
+}nav a {
+    transition: all 0.3s ease;
+}
+/* Dashboard card icon colors */
+.fa-users {
+    color: white;
+}
+
+.fa-book {
+    color: white;
+}
+
+.fa-user-graduate {
+    color: white;
+}
+
+.fa-file-upload {
+    color: white;
+}
+
+/* Sidebar icon colors */
+.sidebar .fa-tachometer-alt {
+    color: #f39c12;
+}
+
+/* Dashboard - orange */
+.sidebar .fa-user-plus {
+    color: #2ecc71;
+}
+
+/* Add Student - green */
+.sidebar .fa-users {
+    color: #3498db;
+}
+
+/* Manage Students - blue */
+.sidebar .fa-tasks {
+    color: #9b59b6;
+}
+
+/* Assignments - purple */
+.sidebar .fa-file-upload {
+    color: #e74c3c;
+}
+
+/* Upload Results - red */
+.sidebar .fa-clipboard-check {
+    color: #e67e22;
+}
+
+/* Student Results - dark orange */
+.sidebar .fa-chalkboard {
+    color: #1abc9c;
+}
+
+/* Mark Attendance - teal */
+.sidebar .fa-book {
+    color: #95a5a6;
+}
+
+/* Attendance Report - grey */
+.sidebar .fa-bell {
+    color: #f1c40f;
+}
+.sidebar .fa-home {
+    color: #f39c12;
+}
+
+.sidebar .fa-book {
+    color: #9b59b6;
+}
+
+.sidebar .fa-chart-line {
+    color: #e74c3c;
+}
+
+.sidebar .fa-calendar-check {
+    color: #e67e22;
+}
+
+.sidebar .fa-file-alt {
+    color: #1abc9c;
+}
+
+/* Mark Attendance - teal */
+.dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+}
+
+.card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+}
+.card {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+@media (max-width: 900px) {
+    .dashboard-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 500px) {
+    .dashboard-cards {
+        grid-template-columns: 1fr;
+    }
+}
+.card {
+    flex: 1;
+    padding: 1.5rem;
+    border-radius: 10px;
+    color: #400080;
+    text-align: center;
+    text-decoration: none;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.card h3 {
+    margin: 0.5rem 0;
+    text-decoration: underline;
+}
+.card p {
+    font-size: 1.5rem;
+    margin: 0;
+}
+.card-students {
+    background-color: #4caf50;
+    color: white;
+}
+.card-teachers {
+    background-color: #2196f3;
+    color: white;
+}
+.card-parents {
+    background-color: #ff9800;
+    color: white;
+}
+.card-users {
+    background-color: #c61508;
+        color: white;
+}
+.card-subjects {
+    background-color: #121010;
+        color: white;
+}
+.card-classes {
+    background-color: #08256f;
+        color: white;
+}
+.card-accountants {
+    background-color: hwb(348 1% 75%);
+    color: white;
+}
+.icon {
+    font-size: 2.5rem;
+}

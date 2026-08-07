@@ -1,0 +1,38 @@
+django{% extends 'accounts/base.html' %}
+{% block content %}
+
+<style>
+main { 
+    padding-bottom: 80px !important; /* Footer is ~45px, so 80px clears it */
+    min-height: calc(100vh - 200px);
+}
+</style>
+<a href="{% url 'accounts:view-students-by-class' %}">← Back to All Classes</a>
+<h2>{{ school_class.name }} - Students</h2>
+
+<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin: 20px 0;">
+    {% for student in students %}
+    <div style="border: 1px solid #ddd; padding: 15px; border-radius: 8px;">
+        <h4 style="margin: 0 0 5px 0;">{{ student.first_name }} {{ student.last_name }}</h4>
+        <p style="margin: 0 0 5px 0;">ID: {{ student.student_id }}</p>
+        <a href="{% url 'accounts:edit-student' student.id %}">Edit</a>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination buttons -->
+<div style="margin-top: 30px;">
+    {% if students.has_previous %}
+        <a href="?page=1">First</a>
+        <a href="?page={{ students.previous_page_number }}">Previous</a>
+    {% endif %}
+
+<p style="margin-top: 20px; font-weight: bold;">
+    Page {{ students.number }} of {{ students.paginator.num_pages }}
+</p>
+    {% if students.has_next %}
+        <a href="?page={{ students.next_page_number }}">Next</a>
+        <a href="?page={{ students.paginator.num_pages }}">Last</a>
+    {% endif %}
+</div>
+{% endblock %}

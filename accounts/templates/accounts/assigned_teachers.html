@@ -1,0 +1,23 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block content %}
+<h2> Assigned Teachers</h2>
+
+{% for teacher in teachers %}
+<div style="border:1px solid #ddd; padding:15px; margin-bottom:15px; border-radius:5px;">
+    <h3>{{ teacher.get_full_name|default:teacher.username }}</h3>
+    <ul>
+        {% for assignment in teacher.teachersubjectclass_set.all %}
+        <li>
+            {{ assignment.class_assigned.name }} → {{ assignment.subject.name }}
+            <a href="{% url 'accounts:manage_assignments' %}">✏ Manage</a>
+        </li>
+        {% empty %}
+        <li>No assignments yet</li>
+        {% endfor %}
+    </ul>
+</div>
+{% empty %}
+<p>No teachers have been assigned yet.</p>
+{% endfor %}
+
+{% endblock %}

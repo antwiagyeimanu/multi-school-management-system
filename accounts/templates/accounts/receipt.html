@@ -1,0 +1,230 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% load static %}
+{% block content %}
+<style>
+#receipt-content{ max-width:95%; width:100%; margin:10px auto; background:#fff; border-radius:0; box-shadow:none; border:none; position:relative; font-family:system-ui; overflow:hidden; }
+.watermark-text{ position:absolute; top:40%; left:40%; transform:translate(-50%,-50%) rotate(-32deg); font-size:75px; font-weight:900; color:rgba(0,0,0,0.05); text-transform:uppercase; letter-spacing:5px; pointer-events:none; z-index:0; width:95%; text-align:center; line-height:0.9; }
+.receipt-header{ display:flex; align-items:center; gap:14px; padding:16px 22px 10px; border-bottom:2px solid #f1f5f9; position:relative; z-index:2; }
+.logo-box img{ width:180px; height:160px; object-fit:contain; }
+.school-info{ flex:1; text-align:center; }
+.school-info h2{ margin:0; font-size:15px; font-weight:900; text-transform:uppercase; }
+.school-info p{ margin:1px 0; font-size:12px; color:#64748b; }
+.receipt-badge{ display:inline-block; margin-top:5px; background:#0f172a; color:#fff; padding:4px 14px; border-radius:20px; font-size:16px; font-weight:800; }
+.info-grid{ display:grid; grid-template-columns:1fr 1fr; gap:7px; padding:12px 22px; background:#f8fafc; position:relative; z-index:2; }
+.info-card{ background:#fff; border-radius:8px; padding:7px 10px; border:1px solid #e2e8f0; }
+.info-card label{ font-size:8px; text-transform:uppercase; color:#94a3b8; font-weight:700; display:block; }
+.info-card b{ font-size:11px; color:#0f172a; }
+.table-wrap{ padding:0 22px; position:relative; z-index:2; }
+.receipt-table{ width:100%; border-collapse:collapse; }
+.receipt-table th{ background:#f8fafc; font-size:9px; text-transform:uppercase; padding:8px; border-bottom:2px solid #0f172a; }
+.receipt-table td{ padding:8px; border-bottom:1px solid #f1f5f9; font-size:12px; font-weight:600; }
+.total-row td{ background:#0f172a; color:#fff; font-weight:900; font-size:13px; padding:10px 8px !important; }
+.status-box{ text-align:center; padding:8px; position:relative; z-index:2; }
+.paid-stamp{
+
+    display:inline-block;
+
+    background:#dcfce7;
+
+    color:#15803d;
+
+    border:3px solid #16a34a;
+
+    padding:8px 28px;
+
+    border-radius:8px;
+
+    font-size:16px;
+
+    font-weight:900;
+
+    letter-spacing:1px;
+
+    box-shadow:0 6px 16px rgba(22,163,74,.18);
+
+}.footer-grid{ display:flex; justify-content:space-between; padding:12px 22px 8px; border-top:1px dashed #e2e8f0; position:relative; z-index:2; }
+.sig{ font-size:12px; color:#64748b; text-align:center; }
+.sig-line{ width:110px; height:1px; background:#0f172a; margin:14px auto 4px; }
+
+@media print{
+  @page{ size:A4 portrait; margin:6mm 8mm; }
+  body, html{ margin:0 !important; padding:0 !important; background:#fff !important; }
+  nav, aside, .sidebar, .navbar, header, .no-print{ display:none !important; }
+  .content-wrapper, .main-content, .container-fluid{ margin:0 !important; padding:0 !important; width:100% !important; }
+  #receipt-content{ width:98% !important; max-width:98% !important; margin:4mm auto 0 !important; border:none !important; box-shadow:none !important; border-radius:0 !important; }
+  .receipt-header{ padding:8px 12px 8px !important; border-bottom:2px solid #000 !important; }
+  .logo-box img{ width:140px !important; height:120px !important; }
+  .school-info h2{ font-size:16px !important; }
+  .school-info p{ font-size:12px !important; }
+  .receipt-badge{ background:#000 !important; color:#fff !important; font-size:10px !important; }
+  .info-grid{ padding:10px 12px !important; gap:6px !important; background:#f3f4f6 !important; }
+  .info-card label{ font-size:12px !important; }
+  .info-card b{ font-size:12px !important; }
+  .table-wrap{ padding:8px 12px 0 !important; }
+  .receipt-table th{ font-size:12px !important; padding:9px 8px !important; background:#000 !important; color:#fff !important; }
+  .receipt-table td{ font-size:14px !important; padding:9px 8px !important; }
+  .total-row td{ background:#000 !important; color:#fff !important; font-size:16px !important; }
+  .footer-grid{ padding:10px 12px !important; border-top:2px dashed #000 !important; }
+.watermark-text{
+
+    display:block !important;
+
+    top:35% !important;
+
+    left:40% !important;
+
+    transform:translate(-45%,-45%) rotate(-32deg) !important;
+
+    font-size:60px !important;
+
+    width:90% !important;
+
+    line-height:.9 !important;
+
+    color:rgba(0,0,0,.05) !important;
+
+    z-index:0 !important;
+
+}  *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+}
+</style>
+
+<div id="receipt-content">
+<div class="watermark-text">{{ school.name }}</div>  
+  <div class="receipt-header">
+    <div class="logo-box">{% if school.logo %}<img src="{{ school.logo.url }}">{% endif %}</div>
+    <div class="school-info">
+      <h2>{{ school.name|upper }}</h2>
+        <p>{{ school.address }} {% if school.gps_address %} | {{ school.gps_address }}{% endif %}</p>
+
+      <p>Tel: {{ school.phone }} | {{ school.email }}</p>
+      <div class="receipt-badge">OFFICIAL PAYMENT RECEIPT</div>
+    </div>
+    <div class="receipt-no-box">
+      <div style="text-align: center; font-size:10px; color:#000; font-weight:700;">RECEIPT NO:</div>
+      <div style="font-size:11px; font-weight:900;">{{ payment.receipt_number }}</div>
+      <div style="text-align: left; font-size:12px; font-weight:600; margin-top:3px;">Date: {{ payment.created_at|date:"d M Y" }}</div>
+    </div>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-card"><label>Student Name</label><b>{{ payment.student.get_full_name|upper }}</b></div>
+    <div class="info-card"><label>Class</label><b>{{ payment.student.school_class.name }}</b></div>
+    <div class="info-card"><label>Student ID</label><b>{{ payment.student.student_number }}</b></div>
+    <div class="info-card"><label>Method</label><b>{{ payment.get_payment_method_display|default:"Paystack" }}</b></div>
+    <div class="info-card"><label>Term</label><b>{{ payment.term }}</b></div>
+    <div class="info-card"><label>Academic Year</label><b>{{ payment.academic_year }}</b></div>
+  </div>
+<div class="row px-3 mt-2 mb-3">
+
+    <div class="col-md-3 col-6 mb-2">
+        <div class="info-card text-center">
+            <label>Total Paid</label>
+            <h5 class="text-success fw-bold mb-0">
+                GH₵ {{ payment.amount_paid|floatformat:2 }}
+            </h5>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-6 mb-2">
+        <div class="info-card text-center">
+            <label>Items Paid</label>
+            <h5 class="fw-bold mb-0">
+                {{ payment.items.count }}
+            </h5>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-6 mb-2">
+        <div class="info-card text-center">
+            <label>Status</label>
+            <span class="badge bg-success px-3 py-2 rounded-pill">
+                VERIFIED
+            </span>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-6 mb-2">
+        <div class="info-card text-center">
+            <label>Payment Method</label>
+            <h6 class="fw-bold mb-0">
+                {{ payment.get_payment_method_display|default:"Manual Payment" }}
+            </h6>
+        </div>
+    </div>
+
+</div>
+  <div class="table-wrap">
+    <table class="receipt-table">
+      <thead><tr><th style="width:60px;">#</th>
+<th>Description</th>
+<th style="text-align:right;">Amount (GH₵)</th></tr></thead>
+      <tbody>
+{% for item in payment.items.all %}
+<tr>
+
+    <td>{{ forloop.counter }}</td>
+
+    <td>
+        {% if "canteen" in item.fee_name|lower %}
+            Feeding Fee
+        {% else %}
+            {{ item.fee_name }}
+        {% endif %}
+    </td>
+
+    <td style="text-align:right;">
+        GH₵ {{ item.amount|floatformat:2 }}
+    </td>
+
+</tr>
+{% endfor %}
+        <tr class="total-row"><td>TOTAL PAID</td><td style="text-align:right;">GH₵ {{ payment.amount_paid }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="status-box"><div class="paid-stamp">PAID ✓</div></div>
+  <div class="mx-4 mt-3 mb-2">
+
+    <div class="alert alert-success text-center mb-0">
+
+        <i class="fas fa-shield-alt me-2"></i>
+
+        This payment has been successfully verified and recorded by the School Accounts Office.
+
+    </div>
+
+</div>
+
+  <div class="footer-grid">
+    <div class="sig"><div class="sig-line"></div>Authorized Signature</div>
+    <div class="sig">
+
+    <div style="
+        width:80px;
+        height:80px;
+        border:2px dashed #999;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        margin:auto;
+        font-size:10px;
+        text-align:center;">
+
+        QR<br>VERIFY
+
+    </div>
+
+    <small>Scan to verify</small>
+
+</div>
+    <div class="sig"><b>School Accounts Office</b><div style="font-size:12px;">{{ payment.created_at|date:"d M Y h:i A" }}</div></div>
+    <div class="sig"><div class="sig-line"></div>Parent / Guardian</div>
+  </div>
+  <div style="text-align:center; padding:6px; background:#f8fafc; font-size:12px; color:#000; position:relative; z-index:2;">Computer-generated receipt • Valid without signature • Thank you!</div>
+
+  <div class="no-print" style="text-align:center; padding:12px;"><button onclick="window.print()" style="background:#0f172a; color:#fff; border:none; padding:11px 30px; border-radius:24px; font-weight:800; cursor:pointer;"><i class="fas fa-print me-2"></i>
+Print Official Receipt</button></div>
+</div>
+{% endblock %}

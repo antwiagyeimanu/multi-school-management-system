@@ -1,0 +1,563 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}View Parent{% endblock %}
+
+{% block content %}
+
+<style>
+
+/* PAGE */
+
+.parent-profile-page{
+    background:#f8fafc;
+    min-height:100vh;
+    padding:30px 15px;
+}
+
+
+
+/* MAIN CARD */
+
+.parent-profile-card{
+
+    max-width:1100px;
+    margin:auto;
+    background:white;
+    border-radius:28px;
+    overflow:hidden;
+    box-shadow:0 15px 40px rgba(0,0,0,.08);
+
+}
+
+
+
+/* HEADER */
+
+.parent-profile-header{
+
+    background:linear-gradient(
+        135deg,
+        #2563eb,
+        #1e40af
+    );
+
+    padding:40px;
+    text-align:center;
+    color:white;
+
+}
+
+
+
+.parent-profile-header img{
+
+    width:130px;
+    height:130px;
+    border-radius:50%;
+    object-fit:cover;
+    border:5px solid white;
+    box-shadow:0 8px 20px rgba(0,0,0,.2);
+
+}
+
+
+
+.parent-profile-header h1{
+
+    margin-top:20px;
+    margin-bottom:5px;
+    font-size:36px;
+    font-weight:900;
+
+}
+
+
+
+.parent-profile-header p{
+
+    margin:0;
+    opacity:.85;
+    font-size:16px;
+
+}
+
+
+
+/* BODY */
+
+.parent-profile-body{
+
+    padding:35px;
+
+}
+
+
+
+/* SECTIONS */
+
+.profile-section{
+
+    background:#f8fafc;
+    border-radius:20px;
+    padding:25px;
+    margin-bottom:25px;
+    border:1px solid #e5e7eb;
+
+}
+
+
+
+.profile-section-title{
+
+    font-size:22px;
+    font-weight:900;
+    color:#111827;
+    margin-bottom:20px;
+    border-bottom:3px solid #2563eb;
+    padding-bottom:10px;
+
+}
+
+
+
+/* INFO GRID */
+
+.info-grid{
+
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:20px;
+
+}
+
+
+
+@media(max-width:768px){
+
+    .info-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+
+    .parent-profile-body{
+
+        padding:20px;
+
+    }
+
+
+    .parent-profile-header h1{
+
+        font-size:28px;
+
+    }
+
+}
+
+
+
+/* INFO ITEM */
+
+.info-card{
+
+    background:white;
+    padding:18px;
+    border-radius:15px;
+    border:1px solid #e5e7eb;
+
+}
+
+
+
+.info-label{
+
+    display:block;
+    font-size:13px;
+    font-weight:800;
+    color:#6b7280;
+    margin-bottom:6px;
+
+}
+
+
+
+.info-value{
+
+    font-size:16px;
+    font-weight:700;
+    color:#111827;
+    word-break:break-word;
+
+}
+
+
+
+/* STUDENTS */
+
+.student-list{
+
+    display:grid;
+    gap:15px;
+
+}
+
+
+
+.student-card{
+
+    background:white;
+    padding:18px;
+    border-radius:15px;
+    border:1px solid #e5e7eb;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+}
+
+
+
+.student-name{
+
+    font-weight:800;
+    color:#111827;
+
+}
+
+
+
+.student-number{
+
+    color:#6b7280;
+    font-size:14px;
+
+}
+
+
+
+@media(max-width:600px){
+
+.student-card{
+
+    flex-direction:column;
+    align-items:flex-start;
+    gap:8px;
+
+}
+
+}
+
+
+
+/* BUTTON */
+
+.back-btn{
+
+    display:inline-block;
+    margin-top:15px;
+    padding:14px 30px;
+    background:#111827;
+    color:white;
+    text-decoration:none;
+    border-radius:14px;
+    font-weight:800;
+
+}
+
+
+.back-btn:hover{
+
+    background:#000;
+
+}
+
+
+</style>
+
+
+
+<div class="parent-profile-page">
+
+
+<div class="parent-profile-card">
+
+
+
+<!-- HEADER -->
+
+<div class="parent-profile-header">
+
+
+{% if parent.photo %}
+
+<img src="{{ parent.photo.url }}">
+
+
+{% else %}
+
+<img src="https://ui-avatars.com/api/?name={{ parent.first_name }}+{{ parent.last_name }}&background=ffffff&color=2563eb">
+
+
+{% endif %}
+
+
+
+<h1>
+{{ parent.first_name }} {{ parent.last_name }}
+</h1>
+
+
+<p>
+Parent Profile
+</p>
+
+
+</div>
+
+
+
+
+
+<div class="parent-profile-body">
+
+
+
+
+
+<!-- INFORMATION -->
+
+<div class="profile-section">
+
+
+<div class="profile-section-title">
+
+Parent Information
+
+</div>
+
+
+
+<div class="info-grid">
+
+
+<div class="info-card">
+
+<span class="info-label">
+Username
+</span>
+
+<span class="info-value">
+{{ parent.username }}
+</span>
+
+</div>
+
+
+
+<div class="info-card">
+
+<span class="info-label">
+Phone
+</span>
+
+<span class="info-value">
+{{ parent.phone|default:"N/A" }}
+</span>
+
+</div>
+
+
+
+
+<div class="info-card">
+
+<span class="info-label">
+Email
+</span>
+
+<span class="info-value">
+{{ parent.email|default:"N/A" }}
+</span>
+
+</div>
+
+
+
+
+<div class="info-card">
+
+<span class="info-label">
+Status
+</span>
+
+<span class="info-value"
+style="color:{% if parent.is_active %}#16a34a{% else %}#dc2626{% endif %};">
+
+{% if parent.is_active %}
+Active
+{% else %}
+Inactive
+{% endif %}
+
+</span>
+
+</div>
+
+
+
+
+<div class="info-card">
+
+<span class="info-label">
+Date Joined
+</span>
+
+<span class="info-value">
+{{ parent.date_joined|date:"M d, Y" }}
+</span>
+
+</div>
+
+
+
+
+<div class="info-card">
+
+<span class="info-label">
+Linked Students
+</span>
+
+<span class="info-value">
+{{ children.count }}
+</span>
+
+</div>
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+<!-- STUDENTS -->
+
+
+<div class="profile-section">
+
+
+<div class="profile-section-title">
+
+Linked Students
+
+</div>
+
+
+
+{% if children %}
+
+
+<div class="student-list">
+
+
+{% for link in children %}
+
+
+<div class="student-card">
+
+
+<div>
+
+<div class="student-name">
+
+{{ link.student.first_name }} {{ link.student.middle_name }} {{ link.student.last_name }}
+
+</div>
+
+
+<div class="student-number">
+
+{{ link.student.student_number }}
+
+</div>
+
+
+</div>
+
+
+
+{% if link.relationship %}
+
+<div>
+
+{{ link.relationship }}
+
+</div>
+
+{% endif %}
+
+
+
+</div>
+
+
+{% endfor %}
+
+
+</div>
+
+
+{% else %}
+
+
+<p>
+No students linked yet.
+</p>
+
+
+{% endif %}
+
+
+
+</div>
+
+
+
+
+
+
+<div style="text-align:center;">
+
+
+<a href="{% url 'accounts:manage-parents' %}" class="back-btn">
+
+← Back to Parents
+
+</a>
+
+
+</div>
+
+
+
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+{% endblock %}

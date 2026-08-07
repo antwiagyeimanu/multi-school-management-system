@@ -1,0 +1,236 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block content %}
+
+<style>
+
+.subject-page {
+    min-height: calc(100vh - 120px);
+    background:#f5f7fb;
+    padding:35px 20px;
+}
+
+
+/* Header */
+
+.subject-header {
+    text-align:center;
+    margin-bottom:30px;
+}
+
+
+.subject-header .icon {
+
+    width:70px;
+    height:70px;
+    background:#ede7f6;
+    border-radius:22px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:35px;
+
+    margin:auto;
+    margin-bottom:15px;
+}
+
+
+.subject-header h2 {
+
+    font-size:30px;
+    font-weight:700;
+    color:#041729;
+
+}
+
+
+.subject-header p {
+
+    color:#6c757d;
+    margin-top:5px;
+
+}
+
+
+
+/* Grid */
+
+.subject-grid {
+
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:25px;
+
+}
+
+
+
+/* Cards */
+
+.subject-card {
+
+    background:white;
+    border-radius:20px;
+    padding:25px;
+
+    text-align:center;
+
+    box-shadow:
+    0 10px 25px rgba(0,0,0,.08);
+
+    transition:.3s;
+
+}
+
+
+.subject-card:hover {
+
+    transform:translateY(-6px);
+
+    box-shadow:
+    0 15px 35px rgba(0,0,0,.15);
+
+}
+
+
+
+.subject-name {
+
+    font-size:20px;
+    font-weight:700;
+    color:#041729;
+
+    margin-bottom:15px;
+
+}
+
+
+
+.subject-code {
+
+    color:#6c757d;
+    font-size:14px;
+
+    margin-bottom:20px;
+
+}
+
+
+
+/* Button */
+
+.edit-btn {
+
+    display:inline-block;
+
+    padding:8px 18px;
+
+    border-radius:12px;
+
+    background:
+    linear-gradient(135deg,#041729,#0b3b66);
+
+    color:white;
+
+    text-decoration:none;
+
+    font-size:14px;
+
+    font-weight:600;
+
+}
+
+
+.edit-btn:hover {
+
+    color:white;
+
+    transform:translateY(-2px);
+
+}
+
+
+</style>
+
+
+<div class="subject-page">
+
+
+<div class="subject-header">
+
+<div class="icon">
+📘
+</div>
+
+
+<h2>
+School Subjects
+</h2>
+
+
+<p>
+Manage subjects for {{ school.name }}
+</p>
+
+
+</div>
+
+
+
+<div class="subject-grid">
+
+
+{% for subject in subjects %}
+
+
+<div class="subject-card">
+
+
+<div class="subject-name">
+
+📘 {{ subject.name }}
+
+</div>
+
+
+<div class="subject-code">
+
+Code: {{ subject.code }}
+
+</div>
+
+
+
+<a href="{% url 'accounts:edit_subject' subject.id %}"
+class="edit-btn">
+
+✏️ Edit Subject
+
+</a>
+
+
+</div>
+
+
+{% empty %}
+
+
+<div class="subject-card">
+
+No subjects added yet.
+
+</div>
+
+
+{% endfor %}
+
+
+
+</div>
+
+
+</div>
+
+
+{% endblock %}

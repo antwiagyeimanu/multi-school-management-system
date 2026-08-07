@@ -1,0 +1,33 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block title %}Manage Users{% endblock %}
+
+{% block content %}
+<h2>Manage Users</h2>
+
+<table>
+  <thead class="manage-users-header">
+    <tr>
+      <th>Username</th>
+      <th>Email</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for user in users %}
+    <tr>
+      <td>{{ user.username }}</td>
+      <td>{{ user.email }}</td>
+      <td>
+        <a href="{% url 'accounts:edit-user' user.id %}" class="btn btn-edit">Edit</a>
+        <a href="{% url 'accounts:delete-user' user.id %}" class="btn btn-delete">Delete</a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="3">No users found.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

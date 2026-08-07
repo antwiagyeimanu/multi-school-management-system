@@ -1,0 +1,109 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block title %}Student Fees{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+   <h1 class="mt-4">
+    Student Fees -
+    {{ selected_year|default:"Current Year" }}
+    -
+    {{ term_label }}
+</h1>
+    
+    <!-- Filters -->
+<form method="get" class="row g-2 mb-3 align-items-end">
+
+    <div class="col-md-2">
+        <label class="form-label">Academic Year</label>
+        <select name="year" class="form-control">
+            {% for y in year_choices %}
+                <option value="{{ y.id }}"
+                {% if selected_year and selected_year.id == y.id %}selected{% endif %}>
+                    {{ y }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-md-2">
+        <label class="form-label">Term</label>
+        <select name="term" class="form-control">
+            <option value="">All Terms</option>
+            {% for t in terms %}
+                <option value="{{ t.id }}"
+                {% if selected_term == t.id|stringformat:"s" %}selected{% endif %}>
+                    {{ t }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-md-3">
+        <label class="form-label">Search Student</label>
+        <input type="text" name="search" class="form-control"
+               placeholder="ID or Name" value="{{ search }}">
+    </div>
+
+    <div class="col-md-3 d-flex align-items-center">
+        <div class="form-check mt-4">
+            <input type="checkbox" name="new_only" id="new_only"
+                   class="form-check-input"
+                   {% if new_only %}checked{% endif %}
+                   onchange="this.form.submit()">
+
+            <label for="new_only" class="form-check-label">
+                Joined This Term Only
+            </label>
+        </div>
+    </div>
+
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">
+            Filter
+        </button>
+    </div>
+
+</form>
+
+    {% if fees %}
+    <div class="card">
+        <div class="card-body p-0">
+            <table class="table table-striped table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Student Name</th>
+                        <th>Student ID</th>
+                        <th>Total Fee</th>
+                        <th>Amount Paid</th>
+                        <th>Balance</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fee in fees %}
+<tr>
+ <td>{{ fee.student.get_full_name }}</td>
+<td>{{ fee.student.student_number }}</td>
+<td>GH₵  {{ fee.total_amount|floatformat:2 }}</td>
+<td class="text-success">GH₵  {{ fee.amount_paid|floatformat:2 }}</td>
+<td class="text-danger fw-bold">GH₵  {{ fee.balance|floatformat:2 }}</td>
+<td>{% if fee.balance > 0 %}Unpaid{% else %}Paid{% endif %}</td>
+<td>
+  <a href="{% url 'accounts:edit_student_fee' fee.id %}" class="btn btn-sm btn-outline-primary">
+    <i class="fas fa-edit"></i> Edit
+  </a>
+</td>
+</tr>
+{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center">
+        No student fees found for this term.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

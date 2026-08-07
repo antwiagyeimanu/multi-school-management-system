@@ -1,0 +1,537 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block title %}My Children{% endblock %}
+
+{% block content %}
+
+<style>
+
+/* =========================
+   PAGE WRAPPER
+========================= */
+
+.children-page{
+    max-width:1200px;
+    margin:auto;
+    padding:30px 20px;
+}
+
+
+/* =========================
+   HERO
+========================= */
+
+.children-hero{
+
+    background:linear-gradient(135deg,#4f46e5,#0f172a);
+
+    color:white;
+
+    border-radius:24px;
+
+    padding:30px;
+
+    margin-bottom:30px;
+
+    box-shadow:0 20px 45px rgba(0,0,0,.15);
+
+}
+
+
+.children-hero h2{
+
+    margin:0;
+
+    font-size:28px;
+
+    font-weight:900;
+
+}
+
+
+.children-hero p{
+
+    margin-top:8px;
+
+    color:#cbd5e1;
+
+}
+
+
+
+/* =========================
+   CHILDREN COUNT
+========================= */
+
+.children-count{
+
+    display:inline-block;
+
+    margin-top:15px;
+
+    background:rgba(255,255,255,.15);
+
+    padding:8px 18px;
+
+    border-radius:30px;
+
+    font-weight:700;
+
+}
+
+
+
+/* =========================
+   GRID
+========================= */
+
+
+.children-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(2, minmax(300px, 420px));
+
+    justify-content:center;
+
+    gap:24px;
+
+}
+
+
+/* Center the last card when there is an odd number */
+.child-card:last-child:nth-child(odd){
+
+    grid-column:1 / -1;
+
+    justify-self:center;
+
+    width:calc(50% - 12px);
+
+}
+
+
+
+/* Tablet */
+@media(max-width:900px){
+
+    .children-grid{
+
+        grid-template-columns:repeat(2,1fr);
+
+    }
+
+
+    .child-card:last-child:nth-child(odd){
+
+        grid-column:auto;
+
+        width:auto;
+
+    }
+
+}
+
+
+
+/* Mobile */
+@media(max-width:650px){
+
+    .children-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+
+    .child-card:last-child:nth-child(odd){
+
+        width:auto;
+
+    }
+
+}
+
+
+/* =========================
+   CARD
+========================= */
+
+
+.child-card{
+
+    background:white;
+
+    border-radius:22px;
+
+    padding:25px;
+
+    box-shadow:0 12px 30px rgba(0,0,0,.07);
+
+    border:1px solid #e5e7eb;
+
+    transition:.3s;
+
+    text-align:center;
+
+}
+
+
+.child-card:hover{
+
+    transform:translateY(-7px);
+
+    box-shadow:0 20px 40px rgba(0,0,0,.12);
+
+}
+
+
+
+/* =========================
+   IMAGE
+========================= */
+
+
+.child-avatar{
+
+    width:100px;
+
+    height:100px;
+
+    border-radius:50%;
+
+    margin:0 auto 15px;
+
+    overflow:hidden;
+
+    background:#e0e7ff;
+
+    color:#3730a3;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:28px;
+
+    font-weight:900;
+
+    border:4px solid #eef2ff;
+
+}
+
+
+.child-avatar img{
+
+    width:100%;
+
+    height:100%;
+
+    object-fit:cover;
+
+}
+
+
+
+/* =========================
+   TEXT
+========================= */
+
+
+.child-name{
+
+    font-size:20px;
+
+    font-weight:900;
+
+    color:#111827;
+
+}
+
+
+.child-class{
+
+    margin-top:5px;
+
+    color:#64748b;
+
+    font-size:14px;
+
+}
+
+
+
+/* =========================
+   INFO
+========================= */
+
+
+.child-info-row{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:12px 0;
+
+    border-top:1px solid #f1f5f9;
+
+    margin-top:8px;
+
+    font-size:14px;
+
+}
+
+
+.child-info-row .label{
+
+    font-weight:700;
+
+    color:#111827;
+
+}
+
+
+
+.badge-custom{
+
+    background:#dbeafe;
+
+    color:#1d4ed8;
+
+    padding:6px 14px;
+
+    border-radius:30px;
+
+    font-size:12px;
+
+    font-weight:700;
+
+}
+
+
+
+/* =========================
+   BUTTON
+========================= */
+
+
+.btn-view{
+
+    display:block;
+
+    margin-top:18px;
+
+    padding:12px;
+
+    border-radius:14px;
+
+    background:#4f46e5;
+
+    color:white;
+
+    text-decoration:none;
+
+    font-weight:700;
+
+    transition:.25s;
+
+}
+
+
+.btn-view:hover{
+
+    background:#4338ca;
+
+}
+
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+
+@media(max-width:1000px){
+
+.children-grid{
+
+grid-template-columns:repeat(2,1fr);
+
+}
+
+}
+
+
+
+@media(max-width:650px){
+
+.children-page{
+
+padding:20px 12px;
+
+}
+
+
+.children-grid{
+
+grid-template-columns:1fr;
+
+}
+
+
+.children-hero h2{
+
+font-size:22px;
+
+}
+
+}
+
+
+</style>
+
+
+
+<div class="children-page">
+
+
+<div class="children-hero">
+
+<h2>
+<i class="fas fa-users me-2"></i>
+My Children
+</h2>
+
+<p>
+Manage and view your children's academic information, profiles and school details.
+</p>
+
+
+{% if children|length == 1 %}
+
+<div class="children-count">
+1 Child Linked
+</div>
+
+{% else %}
+
+<div class="children-count">
+{{ children|length }} Children Linked
+</div>
+
+{% endif %}
+
+
+</div>
+
+
+
+{% if children %}
+
+<div class="children-grid">
+
+
+{% for link in children %}
+
+<div class="child-card">
+
+
+<div class="child-avatar">
+
+{% if link.student.photo %}
+
+<img src="{{ link.student.photo.url }}">
+
+{% else %}
+
+{{ link.student.first_name.0 }}{{ link.student.last_name.0 }}
+
+{% endif %}
+
+</div>
+
+
+
+<div class="child-name">
+
+{{ link.student.get_full_name }}
+
+</div>
+
+
+<div class="child-class">
+
+{{ link.student.school_class.name|default:"No class assigned" }}
+
+</div>
+
+
+
+<div class="child-info-row">
+
+<span class="label">
+Student ID
+</span>
+
+<span>
+{{ link.student.student_number|default:"-" }}
+</span>
+
+</div>
+
+
+
+<div class="child-info-row">
+
+<span class="label">
+Relationship
+</span>
+
+<span class="badge-custom">
+
+{{ link.relationship|default:"Not set" }}
+
+</span>
+
+</div>
+
+
+
+<a href="{% url 'accounts:student_profile_detail' link.student.id %}" class="btn-view">
+
+<i class="fas fa-user me-2"></i>
+View Profile
+
+</a>
+
+
+</div>
+
+
+{% endfor %}
+
+
+</div>
+
+
+{% else %}
+
+
+<div class="alert alert-info text-center">
+
+No children linked to your account.
+
+</div>
+
+
+{% endif %}
+
+
+</div>
+
+
+{% endblock %}

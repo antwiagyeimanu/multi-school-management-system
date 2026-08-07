@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <div class="alert alert-success">
+    <h4>Student Created Successfully!</h4>
+    <p><strong>Username:</strong> {{ username }}</p>
+    <p><strong>Password:</strong> {{ password }}</p>
+    <p class="text-danger">Copy this password now. It will not be shown again.</p>
+    <a href="{% url 'accounts:add_student' %}" class="btn btn-primary">Add Another Student</a>
+    <a href="{% url 'accounts:view_students_by_class' %}" class="btn btn-secondary">View All Students</a>
+  </div>
+</div>
+{% endblock %}

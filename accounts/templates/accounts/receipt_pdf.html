@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+{% load humanize %}
+<head>
+    <meta charset="utf-8">
+    <title>Receipt</title>
+</head>
+<body style="font-family: Arial, sans-serif; font-size: 12px; color: #000;">
+
+    <!-- Header -->
+    <div style="text-align: center; border-bottom: 2px solid #4e73df; padding-bottom: 10px; margin-bottom: 15px;">
+        <h1 style="margin: 0; font-size: 22px; color: #4e73df; letter-spacing: 1px;">{{ school.name|upper }}</h1>
+        <p style="margin: 4px 0 0 0; font-size: 11px;">{{ school.address }}</p>
+        <p style="margin: 2px 0 0 0; font-size: 11px;">Tel: {{ school.phone }} | Official Payment Receipt</p>
+    </div>
+
+    <!-- Student Info -->
+    <table width="100%" style="margin-bottom: 12px; border-collapse: collapse;">
+        <tr>
+            <td width="50%" valign="top" style="padding: 0;">
+                <table width="100%" style="border-collapse: collapse;">
+                    <tr><td style="padding: 2px 0;"><strong>Student Name:</strong> {{ payment.student.get_full_name }}</td></tr>
+                    <tr><td style="padding: 2px 0;"><strong>Student ID:</strong> {{ payment.student_number }}</td></tr>
+                    <tr><td style="padding: 2px 0;"><strong>Receipt No:</strong> {{ payment.receipt_number }}</td></tr>
+                </table>
+            </td>
+            <td width="50%" valign="top" align="right" style="padding: 0;">
+                <table width="100%" style="border-collapse: collapse;">
+                    <tr><td style="padding: 2px 0; text-align: right;"><strong>Class:</strong> {{ payment.student.school_class.name }}</td></tr>
+                    <tr><td style="padding: 2px 0; text-align: right;"><strong>Date:</strong> {{ payment.created_at|date:"d M Y" }}</td></tr>
+                    <tr><td style="padding: 2px 0; text-align: right;"><strong>Payment Method:</strong> {{ payment.payment_method|default:"Cash" }}</td></tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Fees Table -->
+    <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; border: 1px solid #000;">
+        <tr style="background:#4e73df; color:#fff;">
+            <th width="70%" style="text-align: left; padding: 8px;">Description</th>
+            <th width="30%" style="text-align: right; padding: 8px;">Amount (GHS)</th>
+        </tr>
+
+{% for fee_name, amount in fee_items %}
+<tr>
+    <td style="padding: 6px;">{{ fee_name|title|cut:"_" }}</td>
+    <td style="padding: 6px; text-align: right;">{{ amount|floatformat:2 }}</td>
+</tr>
+{% endfor %}
+
+        <tr>
+            <td style="padding: 6px; font-weight: bold;">Total</td>
+            <td style="padding: 6px; text-align: right; font-weight: bold;">{{ total_paid|floatformat:2 }}</td>
+        </tr>
+    </table>
+
+    <!-- Amount in Words -->
+    <p style="margin-top: 10px; font-size: 11px;">
+        <strong>Amount in Words:</strong> {{ total_paid|intword|title }} Ghana Cedis Only
+    </p>
+
+    <!-- Signature Block -->
+    <table width="100%" style="margin-top: 40px; border-collapse: collapse;">
+        <tr>
+            <td width="50%" style="text-align: center;">
+                <div style="border-top: 1px solid #000; width: 80%; margin: 0 auto;"></div>
+                <p style="margin-top: 5px;">Accountant's Signature</p>
+                <p style="font-size: 11px;">{{ payment.recorded_by.get_full_name }}</p>
+            </td>
+            <td width="50%" style="text-align: center;">
+                <div style="border-top: 1px solid #000; width: 80%; margin: 0 auto;"></div>
+                <p style="margin-top: 5px;">Parent/Student Signature</p>
+                <p style="font-size: 11px;">Date: ___________</p>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Stamp Area -->
+    <div style="margin-top: 20px; text-align: center; font-size: 10px; color: #555;">
+        <p>This is a computer-generated receipt. No signature required if stamped.</p>
+    </div>
+
+</body>
+</html>

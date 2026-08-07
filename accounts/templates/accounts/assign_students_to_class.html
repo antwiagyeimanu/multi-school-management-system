@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Assign Students to Class</h2>
+    
+    <!-- Step 4A: Dropdown to select which class+subject -->
+    <form method="get" class="mb-4">
+        <label for="tsc">Select your Class & Subject:</label>
+        <select name="tsc" id="tsc" class="form-select" onchange="this.form.submit()">
+            <option value="">--- Choose ---</option>
+            {% for tsc in tsc_list %}
+                <option value="{{ tsc.id }}" {% if selected_tsc.id == tsc.id %}selected{% endif %}>
+                    {{ tsc.school_class.name }} - {{ tsc.subject.name }}
+                </option>
+            {% endfor %}
+        </select>
+    </form>
+
+    <!-- Step 4B: Show student checkboxes only if a class is selected -->
+    {% if selected_tsc %}
+        <h4>Students for {{ selected_tsc.school_class.name }} - {{ selected_tsc.subject.name }}</h4>
+        <form method="post">
+            {% csrf_token %}
+            <div class="card">
+                <div class="card-body">
+                    {% for student in students %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" 
+                                   name="student_ids" value="{{ student.id }}" id="s{{ student.id }}"
+                                   {% if student.id in assigned_ids %}checked{% endif %}>
+                            <label class="form-check-label" for="s{{ student.id }}">
+                                {{ student.first_name }} {{ student.last_name }}
+                            </label>
+                        </div>
+                    {% empty %}
+                        <p>No students found in your school.</p>
+                    {% endfor %}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">Save Student List</button>
+        </form>
+    {% endif %}
+</div>
+{% endblock %}

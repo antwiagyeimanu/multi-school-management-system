@@ -1,0 +1,638 @@
+{% extends "accounts/dashboard_base.html" %}
+
+{% block content %}
+
+<style>
+
+.teacher-report-wrapper{
+    padding:20px;
+}
+
+
+/* HEADER */
+
+.report-header{
+    background:linear-gradient(135deg,#1e3a8a,#2563eb);
+    color:white;
+    padding:25px;
+    border-radius:20px;
+    margin-bottom:25px;
+    box-shadow:0 10px 25px rgba(0,0,0,.12);
+}
+
+
+.report-header h3{
+    margin:0;
+    font-weight:800;
+}
+
+
+.report-header p{
+    margin-top:8px;
+    opacity:.85;
+}
+
+
+
+/* WEEK NAVIGATION */
+
+.week-navigation{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:white;
+    padding:15px 20px;
+    border-radius:18px;
+    margin-bottom:25px;
+    box-shadow:0 5px 20px rgba(0,0,0,.08);
+}
+
+
+.week-navigation a{
+    text-decoration:none;
+    font-weight:700;
+}
+
+
+.week-title{
+    font-weight:800;
+    color:#1e293b;
+}
+
+
+
+/* SUMMARY CARDS */
+
+.stat-card{
+    border-radius:18px;
+    padding:20px;
+    color:white;
+    box-shadow:0 8px 20px rgba(0,0,0,.1);
+}
+
+
+.stat-title{
+    font-size:14px;
+    opacity:.9;
+}
+
+
+.stat-value{
+    font-size:30px;
+    font-weight:900;
+}
+
+
+.card-blue{
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+}
+
+
+.card-green{
+    background:linear-gradient(135deg,#16a34a,#15803d);
+}
+
+
+.card-red{
+    background:linear-gradient(135deg,#dc2626,#991b1b);
+}
+
+
+.card-orange{
+    background:linear-gradient(135deg,#f59e0b,#d97706);
+}
+
+
+
+/* TABLE */
+
+.report-card{
+    background:white;
+    border-radius:20px;
+    padding:20px;
+    box-shadow:0 8px 25px rgba(0,0,0,.08);
+}
+
+
+.table thead th{
+    background:#111827;
+    color:white;
+    text-align:center;
+    font-size:13px;
+    white-space:nowrap;
+}
+
+
+.table td{
+  padding:6px;
+    text-align:center;
+    vertical-align:middle;
+}
+
+
+.teacher-name{
+    text-align:left;
+    font-weight:700;
+}
+
+
+.staff-id{
+    text-align:left;
+    font-size:12px;
+    color:#64748b;
+}
+
+
+
+/* STATUS */
+
+.status-badge{
+    padding:7px 12px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:800;
+    cursor:pointer;
+}
+
+
+.present{
+    background:#dcfce7;
+    color:#166534;
+}
+
+
+.absent{
+    background:#fee2e2;
+    color:#991b1b;
+}
+
+
+.late{
+    background:#fef3c7;
+    color:#92400e;
+}
+
+
+.no-record{
+    background:#f1f5f9;
+    color:#64748b;
+}
+
+
+
+.print-btn{
+    border-radius:30px;
+    padding:10px 25px;
+    font-weight:700;
+}
+
+
+
+@media print{
+
+.no-print{
+    display:none!important;
+}
+
+.report-card{
+    box-shadow:none;
+}
+
+}
+.report-card a, .status-badge {
+    cursor: pointer !important;
+}
+.attendance-box{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    width:90px;
+    min-height:58px;
+    padding:6px;
+    border-radius:10px;
+    margin:auto;
+}
+
+
+.attendance-box:hover {
+    transform:translateY(-2px);
+    box-shadow:0 4px 12px rgba(0,0,0,.15);
+}
+
+
+.status-badge{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    width:78px;
+    height:26px;
+    border-radius:14px;
+    font-size:14px;
+    font-weight:700;
+    padding:0;
+}
+
+.present {
+    background:#dcfce7;
+    color:#15803d;
+}
+
+
+.absent {
+    background:#fee2e2;
+    color:#b91c1c;
+}
+
+
+.late {
+    background:#ffedd5;
+    color:#c2410c;
+}
+
+
+.leave {
+    background:#dbeafe;
+    color:#1d4ed8;
+}
+
+
+.sick {
+    background:#f3e8ff;
+    color:#7e22ce;
+}
+
+
+.excused {
+    background:#e5e7eb;
+    color:#374151;
+}
+
+
+.attendance-time{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    font-size:10px;
+    color:#6b7280;
+    line-height:1.15;
+    margin-top:3px;
+}
+
+
+.no-record {
+    background:#f3f4f6;
+    color:#9ca3af;
+}
+.attendance-cell{
+    text-align:left !important;
+    padding:4px 6px;
+}
+
+
+</style>
+
+
+
+<div class="teacher-report-wrapper">
+
+
+<div class="report-header">
+
+<h3>
+<i class="bi bi-person-check"></i>
+Teacher Weekly Attendance Report
+</h3>
+
+<p>
+{{ school.name }}
+<br>
+
+{{ report_week_start|date:"d M Y" }} - {{ report_week_end|date:"d M Y" }}
+
+</p>
+
+</div>
+
+
+
+
+<!-- WEEK NAVIGATION -->
+
+<div class="week-navigation no-print">
+
+<a href="?attendance_week={{ report_previous_week|date:'Y-m-d' }}&top_week={{ request.GET.top_week }}&att_week={{ request.GET.att_week }}&s_week={{ request.GET.s_week }}{% if request.GET.child %}&child={{ request.GET.child }}{% endif %}" 
+   class="btn {% if is_first_week %}btn-secondary disabled{% else %}btn-outline-dark{% endif %}">
+<i class="bi bi-arrow-left"></i>
+Previous Week
+</a>
+
+<div class="week-title">
+<h5>
+Week {{ attendance_week }} ({{ report_week_start|date:"d M Y" }} - {{ report_week_end|date:"d M Y" }})
+</h5>
+</div>
+
+<a href="?attendance_week={{ report_next_week|date:'Y-m-d' }}&top_week={{ request.GET.top_week }}&att_week={{ request.GET.att_week }}&s_week={{ request.GET.s_week }}{% if request.GET.child %}&child={{ request.GET.child }}{% endif %}"
+   class="btn {% if is_last_week %}btn-secondary disabled{% else %}btn-outline-dark{% endif %}">
+Next Week
+<i class="bi bi-arrow-right"></i>
+</a>
+
+</div>
+
+
+
+
+
+<!-- SUMMARY -->
+
+<div class="row g-4 mb-4">
+
+    <div class="col-lg-3 col-md-4">
+        <div class="stat-card card-blue">
+            <div class="stat-title">Total Teachers</div>
+            <div class="stat-value">{{ total_teachers }}</div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-4">
+        <div class="stat-card card-green">
+            <div class="stat-title">Present</div>
+            <div class="stat-value">{{ total_present }}</div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-4">
+        <div class="stat-card card-red">
+            <div class="stat-title">Absent</div>
+            <div class="stat-value">{{ total_absent }}</div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-4">
+        <div class="stat-card card-orange">
+            <div class="stat-title">Late</div>
+            <div class="stat-value">{{ total_late }}</div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-4">
+        <div class="stat-card bg-primary text-white">
+            <div class="stat-title">Leave</div>
+            <div class="stat-value">{{ total_leave }}</div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-4">
+        <div class="stat-card bg-info text-white">
+            <div class="stat-title">Sick</div>
+            <div class="stat-value">{{ total_sick }}</div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-4">
+        <div class="stat-card bg-secondary text-white">
+            <div class="stat-title">Excused</div>
+            <div class="stat-value">{{ total_excused }}</div>
+        </div>
+    </div>
+
+</div>
+
+
+
+
+
+
+<!-- REPORT TABLE -->
+
+<div class="report-card">
+
+
+<div class="table-responsive">
+
+
+<table class="table table-bordered">
+
+
+<thead>
+
+<tr>
+
+<th>
+Teacher
+</th>
+
+
+{% for day in working_days %}
+
+<th>
+{{ day|date:"D" }}
+<br>
+{{ day|date:"d M" }}
+</th>
+
+{% endfor %}
+
+
+
+
+<th>
+  Rate%
+</th>
+
+
+
+</tr>
+
+</thead>
+
+
+
+<tbody>
+
+
+
+{% for item in report %}
+
+
+<tr>
+
+
+<td>
+
+<div class="teacher-name">
+
+{{ item.teacher.get_full_name }}
+
+</div>
+
+
+<div class="staff-id">
+
+{{ item.teacher.staff_id }}
+
+</div>
+
+
+</td>
+
+
+
+
+
+{% for day in item.days %}
+
+<td class="attendance-cell">
+
+{% if day.attendance %}
+
+<a href="{% url 'accounts:edit-teacher-attendance' day.attendance.id %}"
+   class="attendance-box text-decoration-none">
+
+
+    {% if day.status == "P" %}
+
+        <span class="status-badge present">
+            <i class="fas fa-check-circle"></i> Present
+        </span>
+
+    {% elif day.status == "A" %}
+
+        <span class="status-badge absent">
+            <i class="fas fa-times-circle"></i> Absent
+        </span>
+
+    {% elif day.status == "L" %}
+
+        <span class="status-badge late">
+            <i class="fas fa-clock"></i> Late
+        </span>
+
+    {% elif day.status == "LV" %}
+
+        <span class="status-badge leave">
+            <i class="fas fa-calendar-minus"></i> Leave
+        </span>
+
+    {% elif day.status == "S" %}
+
+        <span class="status-badge sick">
+            <i class="fas fa-notes-medical"></i> Sick
+        </span>
+
+    {% elif day.status == "E" %}
+
+        <span class="status-badge excused">
+            <i class="fas fa-user-check"></i> Excused
+        </span>
+
+    {% endif %}
+
+
+{% if day.attendance.time_in %}
+<div>In: {{ day.attendance.time_in|time:"H:i" }}</div>
+{% endif %}
+
+{% if day.attendance.time_out %}
+<div>Out: {{ day.attendance.time_out|time:"H:i" }}</div>
+{% endif %}
+
+</a>
+
+
+{% else %}
+
+<span class="status-badge no-record">
+-
+</span>
+
+{% endif %}
+
+
+</td>
+
+{% endfor %}
+
+
+
+
+
+
+
+<td>
+
+<strong>
+{{ item.attendance_rate }}%
+</strong>
+
+</td>
+
+
+</tr>
+
+
+{% empty %}
+
+
+<tr>
+
+
+<td colspan="10" class="text-center">
+
+No teacher attendance records found.
+
+</td>
+
+</tr>
+
+
+{% endfor %}
+
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<div class="mt-4 no-print">
+
+<a href="{% url 'accounts:mark_teacher_attendance' %}"
+class="btn btn-dark">
+
+<i class="bi bi-plus-circle"></i>
+Mark Teacher Attendance
+
+</a>
+
+
+<button onclick="window.print()"
+class="btn btn-primary print-btn">
+
+<i class="bi bi-printer"></i>
+Print Report
+
+</button>
+
+
+</div>
+
+
+
+</div>
+
+
+{% endblock %}

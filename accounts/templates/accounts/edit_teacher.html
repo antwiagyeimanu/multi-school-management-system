@@ -1,0 +1,693 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block title %}Edit Teacher{% endblock %}
+
+{% block content %}
+
+<style>
+
+/* PAGE */
+.edit-teacher-wrapper{
+    background:#f4f6f9;
+    min-height:100vh;
+    padding:30px 15px 60px;
+}
+
+
+/* MAIN CARD */
+.edit-teacher-card{
+    max-width:1100px;
+    margin:auto;
+    background:white;
+    border-radius:22px;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+}
+
+
+/* HEADER */
+.teacher-edit-header{
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:white;
+    text-align:center;
+    padding:35px 20px;
+}
+
+
+.teacher-edit-header img{
+    width:120px;
+    height:120px;
+    border-radius:50%;
+    object-fit:cover;
+    border:5px solid white;
+    box-shadow:0 8px 20px rgba(0,0,0,.25);
+}
+
+
+.teacher-edit-header h2{
+    margin-top:15px;
+    font-size:32px;
+    font-weight:800;
+}
+
+
+/* BODY */
+
+.edit-body{
+    padding:35px;
+}
+
+
+/* READ ONLY CARD */
+
+.readonly-card{
+
+    background:#fffbeb;
+    border:1px solid #fbbf24;
+    border-radius:16px;
+    padding:20px;
+    margin-bottom:30px;
+
+}
+
+
+.readonly-card h4{
+
+    color:#92400e;
+    font-weight:800;
+    margin-bottom:20px;
+
+}
+
+
+.readonly-grid{
+
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:20px;
+
+}
+
+
+.readonly-item label{
+
+    display:block;
+    font-size:12px;
+    font-weight:700;
+    color:#92400e;
+    margin-bottom:5px;
+
+}
+
+
+.readonly-item input{
+
+    width:100%;
+    padding:10px;
+    border-radius:8px;
+    border:1px solid #fbbf24;
+    background:#fff7d6;
+    font-weight:700;
+    color:#78350f;
+
+}
+
+
+
+/* FORM CARD */
+
+.form-section{
+
+    background:#f9fafb;
+    border:1px solid #e5e7eb;
+    border-radius:18px;
+    padding:25px;
+
+}
+
+
+.form-section h3{
+
+    font-size:22px;
+    font-weight:800;
+    color:#1f2937;
+    border-bottom:3px solid #2563eb;
+    padding-bottom:10px;
+    margin-bottom:25px;
+
+}
+
+
+/* MOBILE */
+
+@media(max-width:768px){
+
+.readonly-grid{
+    grid-template-columns:1fr;
+}
+
+.edit-body{
+    padding:15px;
+}
+
+.teacher-edit-header h2{
+    font-size:25px;
+}
+
+}
+
+</style>
+
+
+<div class="edit-teacher-wrapper">
+
+
+<div class="edit-teacher-card">
+
+
+<!-- HEADER -->
+
+<div class="teacher-edit-header">
+
+{% if teacher.photo %}
+
+<img src="{{ teacher.photo.url }}">
+
+{% else %}
+
+<img src="https://ui-avatars.com/api/?name={{ teacher.first_name }}+{{ teacher.last_name }}&background=ffffff&color=2563eb&size=200">
+
+{% endif %}
+
+
+<h2>
+Edit Teacher Profile
+</h2>
+
+<p>
+{{ teacher.get_full_name }}
+</p>
+
+
+</div>
+
+
+
+<div class="edit-body">
+
+
+
+<!-- MESSAGES -->
+
+{% if messages %}
+
+{% for message in messages %}
+
+<div style="
+background:#dcfce7;
+color:#166534;
+padding:12px;
+border-radius:10px;
+margin-bottom:20px;
+font-weight:600;
+">
+
+{{ message }}
+
+</div>
+
+{% endfor %}
+
+{% endif %}
+
+
+
+
+
+<!-- READ ONLY INFORMATION -->
+
+<div class="readonly-card">
+
+<h4>
+🔒 Read Only Information
+</h4>
+
+
+<div class="readonly-grid">
+
+
+<div class="readonly-item">
+
+<label>
+Staff ID
+</label>
+
+<input type="text"
+value="{{ teacher.staff_id|default:'Not set' }}"
+disabled>
+
+</div>
+
+
+
+<div class="readonly-item">
+
+<label>
+Ghana Card
+</label>
+
+<input type="text"
+value="{{ teacher.national_id_card|default:'Not set' }}"
+disabled>
+
+</div>
+
+
+
+
+<div class="readonly-item">
+
+<label>
+School
+</label>
+
+<input type="text"
+value="{{ teacher.school.name|default:'Not assigned' }}"
+disabled>
+
+</div>
+
+
+</div>
+
+
+</div>
+    
+    <small style="color: #78350f;">These fields cannot be changed here. Contact system admin if correction needed.</small>
+</div>
+
+<!-- FORM START -->
+
+<div class="form-section">
+
+<h3>
+👤 Personal Information
+</h3>
+
+
+<form method="POST" enctype="multipart/form-data">
+
+{% csrf_token %}
+
+
+
+<div class="row g-3">
+
+
+<div class="col-md-6">
+
+<label class="form-label">
+Title
+</label>
+
+{{ form.title }}
+
+</div>
+
+
+
+<div class="col-md-6">
+
+<label class="form-label">
+First Name *
+</label>
+
+{{ form.first_name }}
+
+</div>
+
+
+
+
+<div class="col-md-6">
+
+<label class="form-label">
+Middle Name
+</label>
+
+{{ form.middle_name }}
+
+</div>
+
+
+
+
+<div class="col-md-6">
+
+<label class="form-label">
+Last Name *
+</label>
+
+{{ form.last_name }}
+
+</div>
+
+
+
+
+
+<div class="col-md-6">
+
+<label class="form-label">
+Gender
+</label>
+
+{{ form.gender }}
+
+</div>
+
+
+
+
+<div class="col-md-6">
+
+<label class="form-label">
+Date of Birth
+</label>
+
+{{ form.date_of_birth }}
+
+</div>
+
+
+
+
+<div class="col-md-6">
+
+<label class="form-label">
+Phone Number
+</label>
+
+{{ form.phone }}
+
+</div>
+
+
+
+
+
+<div class="col-md-6">
+
+<label class="form-label">
+Email
+</label>
+
+{{ form.email }}
+
+</div>
+
+
+
+</div>
+
+
+
+<hr style="margin:35px 0;">
+
+
+
+<h3>
+💼 Professional Information
+</h3>
+
+
+
+
+<div class="row g-3">
+
+
+<div class="col-md-6">
+
+<label class="form-label">
+Nationality
+</label>
+
+{{ form.nationality }}
+
+</div>
+
+
+
+<div class="col-md-6">
+
+<label class="form-label">
+Religion
+</label>
+
+{{ form.religion }}
+
+</div>
+
+
+
+
+<div class="col-md-6">
+
+<label class="form-label">
+Qualification
+</label>
+
+{{ form.qualification }}
+
+</div>
+
+
+
+
+<div class="col-md-6">
+
+<label class="form-label">
+Department
+</label>
+
+{{ form.department }}
+
+</div>
+
+
+</div>
+
+
+
+<hr style="margin:35px 0;">
+
+
+
+<h3>
+📷 Profile Photo
+</h3>
+
+
+<div style="margin-bottom:20px;">
+
+
+{% if teacher.photo %}
+
+<img src="{{ teacher.photo.url }}"
+style="
+width:90px;
+height:90px;
+border-radius:50%;
+object-fit:cover;
+border:3px solid #2563eb;
+">
+
+
+<p style="color:#6b7280;font-size:14px;">
+Current photo
+</p>
+
+
+{% endif %}
+
+
+</div>
+
+
+{{ form.photo }}
+
+
+
+<hr style="margin:35px 0;">
+
+
+
+<h3>
+⚙ Account Status
+</h3>
+
+
+
+<div style="
+display:flex;
+align-items:center;
+gap:10px;
+margin-top:15px;
+">
+
+{{ form.is_active }}
+
+<label style="font-weight:700;">
+Active Teacher
+</label>
+
+</div>
+<!-- FORM ERRORS -->
+
+{% if form.errors %}
+
+<div style="
+background:#fee2e2;
+color:#991b1b;
+padding:15px;
+border-radius:12px;
+margin-top:25px;
+">
+
+<strong>
+Please fix the following errors:
+</strong>
+
+<div style="margin-top:10px;">
+{{ form.errors }}
+</div>
+
+</div>
+
+{% endif %}
+
+
+
+<!-- BUTTONS -->
+
+<div style="
+margin-top:35px;
+display:flex;
+gap:15px;
+flex-wrap:wrap;
+">
+
+
+<button type="submit"
+style="
+background:#2563eb;
+color:white;
+border:none;
+padding:13px 30px;
+border-radius:10px;
+font-weight:700;
+font-size:16px;
+cursor:pointer;
+">
+
+💾 Save Changes
+
+</button>
+
+
+
+
+<a href="{% url 'accounts:manage-teachers-grid' %}"
+style="
+background:#6b7280;
+color:white;
+padding:13px 30px;
+border-radius:10px;
+font-weight:700;
+text-decoration:none;
+font-size:16px;
+">
+
+Cancel
+
+</a>
+
+
+</div>
+
+
+
+</form>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<style>
+
+/* INPUT DESIGN */
+
+.form-control,
+input,
+select,
+textarea{
+
+width:100%;
+padding:11px 12px;
+border:1px solid #d1d5db;
+border-radius:10px;
+font-size:15px;
+box-sizing:border-box;
+
+}
+
+
+input:focus,
+select:focus,
+textarea:focus{
+
+outline:none;
+border-color:#2563eb;
+box-shadow:0 0 0 3px rgba(37,99,235,.15);
+
+}
+
+
+/* CHECKBOX */
+
+input[type="checkbox"]{
+
+width:18px;
+height:18px;
+
+}
+
+
+/* BUTTON HOVER */
+
+button:hover{
+
+transform:translateY(-2px);
+box-shadow:0 8px 15px rgba(37,99,235,.25);
+
+}
+
+
+a:hover{
+
+opacity:.9;
+
+}
+
+
+</style>
+
+
+{% endblock %}

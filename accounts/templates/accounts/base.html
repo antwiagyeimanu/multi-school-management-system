@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}My School Management System{% endblock %}</title>
+    {% load static %}
+    <!-- CSS files - ORDER MATTERS -->
+    <link rel="stylesheet" href="{% static 'fontawesome/css/bootstrap.min.css' %}">
+    <link href="{% static 'fontawesome/css/dashboard.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'fontawesome/css/all.min.css' %}">
+</head>
+<body>
+
+<header>
+    <h1>School Management System</h1>
+</header>
+
+<nav>
+<a href="{% url 'accounts:admin_dashboard' %}" 
+   class="{% if 'admin-dashboard' in request.path %}active{% endif %}">
+    <i class="fas fa-chart-line"></i> Dashboard
+</a>
+
+    <a href="/teachers/" class="{% if 'teachers' in request.path %}active{% endif %}">
+        <i class="fas fa-chalkboard-teacher"></i> Teachers</a>
+
+<a href="{% url 'accounts:manage_accountant_grid' %}" 
+   class="{% if 'manage-accountants' in request.path %}active{% endif %}">
+    <i class="fas fa-calculator"></i> Accountants
+</a>
+
+    <a href="/students/" class="{% if 'students' in request.path %}active{% endif %}">
+        <i class="fas fa-user-graduate"></i> Students</a>
+
+    <a href="/parents/" class="{% if 'parents' in request.path %}active{% endif %}">
+        <i class="fas fa-users"></i> Guardians</a>
+        
+
+    <!-- ADD THIS BACK -->
+    <a href="/logout/">
+        <i class="fas fa-sign-out-alt"></i> Logout</a>
+</nav>
+
+<main>
+    {% block content %}
+    <!-- Page content will go here -->
+    {% endblock %}
+</main>
+
+<footer>
+    &copy; 2026 My School
+</footer>
+
+</body>
+</html>

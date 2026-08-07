@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial; font-size: 12px; }
+        h1 { text-align: center; font-size: 18px; margin-bottom: 5px; }
+       .header { text-align: center; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #333; padding: 6px; text-align: center; }
+        th { background: #1e40af; color: white; font-size: 11px; }
+       .student { text-align: left; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ school_class.name }} - CLASS REPORT</h1>
+        <p>Term {{ term }} | {{ year }}</p>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>POSITION</th>
+                <th>STUDENT</th>
+                {% for subject in subjects %}
+                <th>{{ subject|upper }}</th>
+                {% endfor %}
+                <th>TOTAL</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for name, data in students %}
+            <tr>
+                <td>{{ data.position }}</td>
+                <td class="student">{{ name }}</td>
+                {% for subject in subjects %}
+                <td>
+                    {% for sub, score in data.items %}
+                        {% if sub == subject %}{{ score.percentage }}% {{ score.grade }}{% endif %}
+                    {% endfor %}
+                </td>
+                {% endfor %}
+                <td><strong>{{ data.total }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

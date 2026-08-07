@@ -1,0 +1,226 @@
+{% extends "accounts/dashboard_base.html" %}
+
+{% block content %}
+<div style="max-width:950px; margin:40px auto; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+
+    <!-- Page Header -->
+    <div style="margin-bottom:30px;">
+        <h2 style="margin:0; font-size:30px; font-weight:700; color:#1e293b;">
+            Fee Payment History
+        </h2>
+
+        <p style="margin-top:10px; color:#64748b; font-size:15px;">
+            <strong>{{ student.first_name }} {{ student.last_name }}</strong>
+            &nbsp;•&nbsp;
+            Student ID: {{ student.student_number }}
+        </p>
+    </div>
+
+    <!-- Summary Card -->
+    <div style="
+        background:#fff;
+        border-radius:18px;
+        padding:28px;
+        box-shadow:0 8px 24px rgba(15,23,42,.08);
+        border:1px solid #eef2f7;
+        margin-bottom:30px;
+    ">
+
+        <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            flex-wrap:wrap;
+            gap:15px;
+            margin-bottom:25px;
+        ">
+
+            <div>
+                <div style="font-size:20px; font-weight:700; color:#0f172a;">
+                    {{ fee.academic_year }} - {{ fee.term }}
+                </div>
+
+                <div style="margin-top:6px; color:#64748b; font-size:14px;">
+                    Fee Summary
+                </div>
+            </div>
+
+            {% if fee.balance > 0 %}
+                <div style="
+                    background:#fee2e2;
+                    color:#dc2626;
+                    padding:10px 18px;
+                    border-radius:30px;
+                    font-weight:700;
+                    font-size:14px;
+                ">
+                    Outstanding: GH¢ {{ fee.balance }}
+                </div>
+            {% else %}
+                <div style="
+                    background:#dcfce7;
+                    color:#16a34a;
+                    padding:10px 18px;
+                    border-radius:30px;
+                    font-weight:700;
+                    font-size:14px;
+                ">
+                    ✓ Fully Paid
+                </div>
+            {% endif %}
+
+        </div>
+
+        <div style="
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+            gap:18px;
+        ">
+
+            <div style="background:#f8fafc; padding:18px; border-radius:12px;">
+                <div style="font-size:13px; color:#64748b;">Total Fees</div>
+                <div style="margin-top:8px; font-size:24px; font-weight:700; color:#0f172a;">
+                    GH¢ {{ fee.total_amount }}
+                </div>
+            </div>
+
+            <div style="background:#f8fafc; padding:18px; border-radius:12px;">
+                <div style="font-size:13px; color:#64748b;">Amount Paid</div>
+                <div style="margin-top:8px; font-size:24px; font-weight:700; color:#16a34a;">
+                    GH¢ {{ fee.amount_paid }}
+                </div>
+            </div>
+
+            <div style="background:#f8fafc; padding:18px; border-radius:12px;">
+                <div style="font-size:13px; color:#64748b;">Balance</div>
+                <div style="margin-top:8px; font-size:24px; font-weight:700; color:#dc2626;">
+                    GH¢ {{ fee.balance }}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Payment History -->
+    <div style="
+        background:#fff;
+        border-radius:18px;
+        overflow:hidden;
+        border:1px solid #eef2f7;
+        box-shadow:0 8px 24px rgba(15,23,42,.08);
+    ">
+
+        <div style="
+            padding:22px 25px;
+            border-bottom:1px solid #edf2f7;
+            background:#f8fafc;
+        ">
+            <h3 style="
+                margin:0;
+                color:#0f172a;
+                font-size:18px;
+                font-weight:700;
+            ">
+                Payment Records
+            </h3>
+        </div>
+
+        <div style="overflow-x:auto;">
+
+<!-- Replace your entire <table> to </table> section with this: -->
+
+<table style="width:100%; border-collapse:collapse; table-layout:fixed;">
+    <thead style="background:#f8fafc;">
+        <tr>
+            <th style="width:18%; padding:12px 10px; text-align:left; white-space:nowrap; color:#64748b; font-size:13px; text-transform:uppercase;">
+                Date & Time
+            </th>
+
+            <th style="width:12%; padding:12px 10px; text-align:left; white-space:nowrap; color:#64748b; font-size:13px; text-transform:uppercase;">
+                Amount Paid
+            </th>
+
+            <th style="width:18%; padding:12px 10px; text-align:left; white-space:nowrap; color:#64748b; font-size:13px; text-transform:uppercase;">
+                Receipt Number
+            </th>
+
+            <th style="width:22%; padding:12px 10px; text-align:left; color:#64748b; font-size:13px; text-transform:uppercase;">
+                Fee Items
+            </th>
+
+            <th style="width:15%; padding:12px 10px; text-align:left; white-space:nowrap; color:#64748b; font-size:13px; text-transform:uppercase;">
+                 Method
+            </th>
+
+            <th style="width:15%; padding:12px 10px; text-align:center; white-space:nowrap; color:#64748b; font-size:13px; text-transform:uppercase;">
+                Receipt
+            </th>
+        </tr>
+    </thead>
+
+    <tbody>
+    {% for txn in transactions %}
+        <tr style="border-top:1px solid #edf2f7;">
+
+            <td style="padding:12px 10px; color:#334155; white-space:nowrap; font-size:13px;">
+                {{ txn.created_at|date:"d M Y, h:i A" }}
+            </td>
+
+            <td style="padding:12px 10px; font-size:15px; font-weight:700; color:#16a34a; white-space:nowrap;">
+                GH¢ {{ txn.total_amount|floatformat:2 }}
+            </td>
+
+            <td style="padding:12px 10px; color:#040bde; font-weight:600; font-family:monospace; font-size:13px; white-space:nowrap;">
+                {{ txn.receipt_number }}
+            </td>
+
+            <td style="padding:12px 10px; color:#475569; font-size:13px;">
+                {% for item in txn.items.all %}
+                    <div style="margin-bottom:3px; white-space:nowrap;">
+                        <span style="color:#64748b;">{{ item.fee_name }}:</span>
+                        <strong style="color:#0f172a;">₵{{ item.amount|floatformat:2 }}</strong>
+                    </div>
+                {% empty %}
+                    <span style="color:#94a3b8;">—</span>
+                {% endfor %}
+            </td>
+
+            <td style="padding:12px 10px; color:#475569; white-space:nowrap; font-size:13px;">
+                {{ txn.get_payment_method_display }}
+            </td>
+
+            <td style="padding:12px 10px; text-align:center; white-space:nowrap;">
+                <a href="{% url 'accounts:view_receipt' txn.id %}"
+                   style="
+                    display:inline-block;
+                    background:#2563eb;
+                    color:#fff;
+                    padding:7px 12px;
+                    border-radius:8px;
+                    text-decoration:none;
+                    font-size:12px;
+                    font-weight:600;
+                   ">
+                    View Receipt
+                </a>
+            </td>
+
+        </tr>
+
+    {% empty %}
+        <tr>
+            <td colspan="6" style="padding:60px; text-align:center; color:#94a3b8; font-size:15px;">
+                No payment history available.
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

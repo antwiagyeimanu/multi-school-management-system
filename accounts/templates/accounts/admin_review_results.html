@@ -1,0 +1,183 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h3>Review Submitted Results</h3>
+    <p class="text-muted">{{ total_pending }} result{{ total_pending|pluralize }} waiting for approval</p>
+
+    <form method="get" class="row g-2 mb-3">
+        <div class="col-md-2">
+            <select name="class" class="form-select">
+                <option value="">All Classes</option>
+                {% for c in classes %}
+                <option value="{{ c.id }}" {% if request.GET.class == c.id|stringformat:"s" %}selected{% endif %}>
+                    {{ c.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="subject" class="form-select">
+                <option value="">All Subjects</option>
+                {% for s in subjects %}
+                <option value="{{ s.id }}" {% if request.GET.subject == s.id|stringformat:"s" %}selected{% endif %}>
+                    {{ s.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="term" class="form-select">
+                <option value="">All Terms</option>
+                {% for val, name in term_choices %}
+                <option value="{{ val }}" {% if request.GET.term == val|stringformat:"s" %}selected{% endif %}>
+                    {{ name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+<select name="year" class="form-select">
+    <option value="">All Years</option>
+
+    {% for y in years %}
+    <option value="{{ y.id }}"
+        {% if request.GET.year == y.id|stringformat:"s" %}selected{% endif %}>
+        {{ y.name }}
+    </option>
+    {% endfor %}
+</select>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-primary w-100">Filter</button>
+        </div>
+    </form>
+<div class="accordion" id="resultsAccordion">
+{% regroup results by student.school_class.name as class_list %}
+
+{% for class in class_list %}
+  <div class="accordion-item mb-3 shadow-sm">
+    <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+  <button class="accordion-button {% if not forloop.first %}collapsed{% endif %} bg-dark text-white" 
+        type="button" 
+        data-bs-toggle="collapse" 
+        data-bs-target="#collapse{{ forloop.counter }}" 
+        aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" 
+        aria-controls="collapse{{ forloop.counter }}">
+  <i class="bi bi-people-fill me-2"></i>
+<strong>
+  {{ class.grouper }}
+  —
+ Term: {{ class.list.0.term.get_term_number_display }}
+  —
+  Academic Year: {{ class.list.0.academic_year }}
+</strong>  
+  <span class="badge bg-danger ms-2">{{ class.list|length }} pending</span>
+</button>
+    </h2>
+    
+    <div id="collapse{{ forloop.counter }}" 
+         class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" 
+         aria-labelledby="heading{{ forloop.counter }}" 
+         data-bs-parent="#resultsAccordion">
+      <div class="accordion-body">
+
+        {% regroup class.list by subject.name as subject_list %}
+
+        {% for subject in subject_list %}
+          <div class="d-flex justify-content-between align-items-center mt-3 mb-2 border-bottom pb-2">
+            <h5 class="text-primary mb-0">
+              <i class="bi bi-book me-1"></i>{{ subject.grouper }} - {{ subject.list.0.teacher }}
+
+            </h5>
+            <span class="badge bg-secondary">{{ subject.list|length }} students</span>
+          </div>
+          
+          <div class="table-responsive mb-4">
+            <table class="table table-bordered table-hover table-sm align-middle">
+              <thead class="table-light">
+                <tr>
+                
+
+                  <th>Student Name</th>
+                  <th>Student ID</th>
+                  <th class="text-center">Score</th>
+                  <th class="text-center">Grade</th>
+                  <th>Submitted On</th>
+                  <th class="text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for r in subject.list %}
+                <tr>
+                  <td>{{ r.student.get_full_name|default:r.student.username }}</td>
+                   <td>{{ r.student.student_number}}</td>
+                  <td class="text-center">
+<div>
+  <strong>Total: {{ r.total_score }}%</strong>
+</div>
+
+<small class="text-muted">
+  CA: {{ r.class_score }} |
+  Exam: {{ r.exam_score }}
+</small>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge 
+                      {% if r.grade == 'A' %}bg-success
+                      {% elif r.grade == 'B' %}bg-primary
+                      {% elif r.grade == 'C' %}bg-warning text-dark
+                      {% else %}bg-danger{% endif %}">
+                      {{ r.grade }}
+                    </span>
+                  </td>
+                  <td><small>{{ r.submitted_at|date:"M d, H:i" }}</small></td>
+                  <td class="text-center">
+  <a href="{% url 'accounts:approve_result' r.id %}" class="btn btn-sm btn-success">
+    <i class="bi bi-check-lg"></i> Approve
+  </a>
+  <button class="btn btn-sm btn-warning ms-1" data-bs-toggle="modal" data-bs-target="#returnModal{{ r.id }}">
+    <i class="bi bi-arrow-return-left"></i> Return
+  </button>
+</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Modals stay same -->
+          {% for r in subject.list %}
+          <div class="modal fade" id="returnModal{{ r.id }}">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <form method="post" action="{% url 'accounts:return_result' r.id %}">
+                  {% csrf_token %}
+                  <div class="modal-header">
+                    <h5 class="modal-title">Return Result</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <p>Return {{ r.student.get_full_name }}'s {{ r.subject.name }} result?</p>
+                    <textarea name="reason" class="form-control" placeholder="Reason for return..." required></textarea>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="submit" class="btn btn-warning">Return to Teacher</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+
+        {% endfor %}
+
+      </div>
+    </div>
+  </div>
+{% empty %}
+  <div class="alert alert-success text-center py-4">
+    <i class="bi bi-check-circle-fill"></i> All results approved! Nothing pending.
+  </div>
+{% endfor %}
+</div>
+{% endblock %}

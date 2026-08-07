@@ -1,0 +1,686 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block title %}Add accountant {% endblock %}
+
+{% block content %}
+
+<style>
+
+/* ==========================
+   ADD STAFF PAGE HEADER
+========================== */
+
+.page-hero {
+    background: linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:white;
+    padding:35px;
+    border-radius:24px;
+    margin-bottom:30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    box-shadow:0 12px 30px rgba(37,99,235,.25);
+}
+
+.page-hero h1 {
+    margin:0;
+    font-size:34px;
+    font-weight:800;
+}
+
+.page-hero p {
+    margin:8px 0 0;
+    opacity:.9;
+    font-size:16px;
+}
+
+.hero-icon {
+    font-size:65px;
+}
+
+
+/* ==========================
+   ALERT CARDS
+========================== */
+
+.alert-success {
+    background:#ecfdf5;
+    border:1px solid #10b981;
+    color:#065f46;
+    padding:20px;
+    border-radius:18px;
+    margin-bottom:25px;
+}
+
+
+.alert-error {
+    background:#fef2f2;
+    border:1px solid #ef4444;
+    color:#991b1b;
+    padding:20px;
+    border-radius:18px;
+    margin-bottom:25px;
+}
+
+
+/* ==========================
+   FORM CONTAINER
+========================== */
+
+.staff-form-container {
+    background:white;
+    border-radius:24px;
+    padding:30px;
+    box-shadow:0 8px 25px rgba(0,0,0,.06);
+}
+
+
+.form-grid {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:30px;
+}
+
+
+.form-card {
+    background:#f8fafc;
+    border:1px solid #e5e7eb;
+    border-radius:20px;
+    padding:25px;
+}
+
+
+.form-card h3 {
+    margin-bottom:20px;
+    color:#111827;
+    font-size:20px;
+    font-weight:800;
+}
+
+
+.form-group {
+    margin-bottom:18px;
+}
+
+
+.form-group label {
+    display:block;
+    font-weight:700;
+    margin-bottom:7px;
+    color:#374151;
+}
+
+
+.form-group input,
+.form-group select {
+    width:100%;
+    padding:12px 14px;
+    border-radius:12px;
+    border:1px solid #d1d5db;
+    font-size:15px;
+    background:white;
+}
+
+
+.form-group input:focus,
+.form-group select:focus {
+    outline:none;
+    border-color:#2563eb;
+    box-shadow:0 0 0 3px rgba(37,99,235,.15);
+}
+
+
+@media(max-width:768px){
+
+.form-grid {
+    grid-template-columns:1fr;
+}
+
+.page-hero {
+    flex-direction:column;
+    text-align:center;
+    gap:20px;
+}
+
+.page-hero h1 {
+    font-size:28px;
+}
+
+}
+
+</style>
+
+
+<div class="page-hero">
+
+    <div>
+        <h1>👨‍💼 Add Accountant</h1>
+        <p>Create accountant profile and manage finance access.</p>
+    </div>
+
+    <div class="hero-icon">
+        💼
+    </div>
+
+</div>
+
+
+{% if messages %}
+<div class="alert-success">
+    {% for message in messages %}
+        {{ message }}
+    {% endfor %}
+</div>
+{% endif %}
+
+
+
+{% if credentials %}
+
+<div class="alert-success">
+
+<h3>Accountant Created Successfully</h3>
+
+<p><strong>Username:</strong> {{ credentials.username }}</p>
+
+<p><strong>Staff ID:</strong> {{ credentials.staff_id }}</p>
+
+<p><strong>Password:</strong> {{ credentials.password }}</p>
+
+<small>
+Save these details. They will not be shown again.
+</small>
+
+</div>
+
+{% endif %}
+
+
+
+{% if form.errors %}
+
+<div class="alert-error">
+
+<h4>Please correct the following errors:</h4>
+
+<ul>
+
+{% for field, errors in form.errors.items %}
+
+<li>
+<strong>{{ field }}</strong>:
+{{ errors|join:", " }}
+</li>
+
+{% endfor %}
+
+</ul>
+
+</div>
+
+{% endif %}
+
+
+
+<div class="staff-form-container">
+
+<form method="post" enctype="multipart/form-data">
+
+{% csrf_token %}
+
+
+<div class="form-grid">
+
+
+<div class="form-card">
+
+<h3>Personal Information</h3>
+
+
+<div class="form-group">
+<label>Title</label>
+{{ form.title }}
+</div>
+
+
+<div class="form-group">
+<label>First Name *</label>
+{{ form.first_name }}
+</div>
+
+
+<div class="form-group">
+<label>Middle Name</label>
+{{ form.middle_name }}
+</div>
+
+
+<div class="form-group">
+<label>Last Name *</label>
+{{ form.last_name }}
+</div>
+
+
+<div class="form-group">
+<label>Gender</label>
+{{ form.gender }}
+</div>
+
+
+<div class="form-group">
+<label>Date of Birth</label>
+{{ form.date_of_birth }}
+</div>
+
+
+
+
+ <div class="form-group">
+
+<label>National ID Card Number *</label>
+
+{{ form.national_id_card }}
+
+{% if form.national_id_card.errors %}
+<div class="text-danger">
+    {{ form.national_id_card.errors }}
+</div>
+{% endif %}
+
+</div>
+
+
+</div>
+
+
+<!-- RIGHT SIDE -->
+
+<div class="form-card">
+
+<h3>Contact & Employment Information</h3>
+
+
+<div class="form-group">
+<label>Religion</label>
+{{ form.religion }}
+</div>
+
+
+<div class="form-group">
+<label>Phone Number *</label>
+{{ form.phone }}
+</div>
+
+
+<div class="form-group">
+<label>Email</label>
+{{ form.email }}
+</div>
+
+
+<div class="form-group">
+<label>Nationality</label>
+{{ form.nationality }}
+</div>
+
+
+<div class="form-group">
+<label>Qualification</label>
+{{ form.qualification }}
+</div>
+
+
+<div class="form-group">
+<label>Department</label>
+{{ form.department }}
+</div>
+
+
+<div class="form-group">
+<label>Photo</label>
+{{ form.photo }}
+</div>
+
+
+</div>
+
+
+</div>
+
+
+<div class="form-actions">
+
+<button type="submit" class="save-btn">
+    ➕ Add Accountant
+</button>
+
+
+<a href="{% url 'accounts:manage_accountant_grid' %}" class="cancel-btn">
+    Cancel
+</a>
+
+
+</div>
+
+
+</form>
+
+</div>
+    
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Django adds "id_" prefix to all form field IDs
+    const firstNameInput = document.getElementById('id_first_name');
+    const lastNameInput = document.getElementById('id_last_name');
+    const usernameInput = document.getElementById('id_username');
+    const passwordInput = document.getElementById('id_password');
+
+    // Auto-generate username: firstname.lastname
+    function generateUsername() {
+        const firstName = firstNameInput.value.trim();
+        const lastName = lastNameInput.value.trim();
+        if (firstName && lastName && usernameInput) {
+            usernameInput.value = (firstName + '.' + lastName).toLowerCase();
+        }
+    }
+
+    // Auto-generate random password
+    function generatePassword() {
+        const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()";
+        let password = "";
+        for (let i = 0; i < 10; i++) {
+            password += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        if (passwordInput) {
+            passwordInput.value = password;
+        }
+    }
+
+    // Run username generator when typing
+    if (firstNameInput && lastNameInput) {
+        firstNameInput.addEventListener('input', generateUsername);
+        lastNameInput.addEventListener('input', generateUsername);
+    }
+    
+    // Generate password when page loads
+    generatePassword();
+});
+</script>
+
+<style>
+
+form input {
+    font-size: 16px;
+    padding: 1px;
+    width: 100%;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    border: 2px solid hsl(0, 3%, 35%);
+}
+
+form button {
+    font-size: 16px;
+    padding: 10px 20px;
+    border-radius: 5px;
+    background-color: hsl(120, 5%, 4%);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+form button:hover {
+    background-color: hsl(254, 60%, 35%);
+    color: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    transform: translateY(-2px);
+}
+
+
+select {
+    width: 100%;
+    padding: 5px;
+    font-size: 16px;
+    border-radius: 5px;
+    border: 2px solid hsl(0, 3%, 35%);
+    margin-bottom: 10px;
+}
+form label {
+    display: block;
+    margin-bottom: 3px;  /* smaller space */
+    font-weight: bold;
+}
+
+form input,
+select {
+    margin-bottom: 30px;  /* reduce space between fields */
+    padding: 6px;        /* make input comfortable */
+}
+body {
+    padding-bottom: 20px; /* You can reduce this now */
+}
+
+.pagination {
+    text-align: center;
+    margin: 40px 0 20px 0;
+}
+
+.pagination a {
+    display: inline-block;
+    padding: 10px 20px;
+    margin: 0 5px;
+    background: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.pagination .current, .pagination span {
+    background: #6c757d;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+}
+
+footer {
+    position: relative;
+    margin-top: 60px;
+    width: 100%;
+    background: #0d1b2a;
+    color: white;
+    text-align: center;
+    padding: 15px 0;
+}
+.page-header{
+    display:flex;
+    align-items:center;
+    gap:20px;
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:#fff;
+    padding:28px;
+    border-radius:22px;
+    margin-bottom:30px;
+     margin-top:30px;
+    box-shadow:0 10px 30px rgba(37,99,235,.25);
+}
+
+.page-header-icon{
+    width:72px;
+    height:72px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:18px;
+    background:rgba(255,255,255,.15);
+    font-size:34px;
+}
+
+.page-title{
+    margin:0;
+    font-size:32px;
+    font-weight:800;
+}
+
+.page-subtitle{
+    margin-top:8px;
+    margin-bottom:0;
+    color:rgba(255,255,255,.9);
+    font-size:15px;
+}
+
+@media(max-width:768px){
+
+.page-header{
+    flex-direction:column;
+    text-align:center;
+    padding:22px;
+}
+
+.page-title{
+    font-size:26px;
+}
+
+.page-header-icon{
+    width:64px;
+    height:64px;
+    font-size:30px;
+}
+
+}
+.page-header{
+    justify-content:space-between;
+}
+
+.page-header-left{
+    display:flex;
+    align-items:center;
+    gap:20px;
+}
+
+.hero-stat{
+    background:rgba(255,255,255,.15);
+    padding:18px 28px;
+    border-radius:18px;
+    text-align:center;
+    min-width:160px;
+}
+
+.hero-stat-number{
+    display:block;
+    font-size:32px;
+    font-weight:800;
+}
+
+.hero-stat-text{
+    font-size:14px;
+    opacity:.95;
+}
+
+@media(max-width:768px){
+
+.page-header{
+    flex-direction:column;
+}
+
+.page-header-left{
+    flex-direction:column;
+    text-align:center;
+}
+
+.hero-stat{
+    width:100%;
+}
+
+}
+.success-card{
+    display:flex;
+    align-items:flex-start;
+    gap:18px;
+    background:#ecfdf5;
+    border-left:6px solid #10b981;
+    padding:20px;
+    border-radius:18px;
+    margin-bottom:25px;
+}
+
+.success-icon{
+    font-size:34px;
+}
+
+.success-content h3{
+    margin:0 0 10px;
+    color:#065f46;
+}
+
+.success-content p{
+    margin:6px 0;
+}
+
+.success-content small{
+    color:#047857;
+    display:block;
+    margin-top:10px;
+}
+.form-actions{
+    margin-top:30px;
+    display:flex;
+    gap:15px;
+}
+
+
+.save-btn{
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:14px 28px;
+    border-radius:12px;
+    font-weight:700;
+    font-size:16px;
+    cursor:pointer;
+}
+
+
+.save-btn:hover{
+    background:#1d4ed8;
+}
+
+
+.cancel-btn{
+    background:#6b7280;
+    color:white;
+    padding:14px 28px;
+    border-radius:12px;
+    text-decoration:none;
+    font-weight:700;
+}
+
+
+.cancel-btn:hover{
+    background:#4b5563;
+}
+
+
+.text-danger{
+    color:#dc2626;
+    font-size:13px;
+    margin-top:5px;
+}
+
+
+@media(max-width:768px){
+
+.form-actions{
+    flex-direction:column;
+}
+
+
+.save-btn,
+.cancel-btn{
+    width:100%;
+    text-align:center;
+}
+
+}
+</style>
+{% endblock %}

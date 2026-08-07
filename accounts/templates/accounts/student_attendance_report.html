@@ -1,0 +1,100 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block content %}
+<style>
+:root{ --primary:#4f46e5; --success:#10b981; --danger:#ef4444; --bg:#f8fafc; }
+body{ background:var(--bg); }
+.page-header{ background:linear-gradient(135deg,#4f46e5,#2563eb); border-radius:22px; padding:30px; color:#fff; margin-bottom:28px; }
+.filter-card{ background:#fff; border-radius:18px; padding:22px; margin-bottom:30px; box-shadow:0 10px 30px rgba(210, 212, 216, 0.95); }
+.form-select{ border-radius:12px; min-height:48px; }
+.btn-filter{ border:none; border-radius:12px; min-height:48px; font-weight:600; background:linear-gradient(135deg,#4f46e5,#2563eb); color:#fff; }
+.stats-card{ border:none; border-radius:20px; color:#fff; box-shadow:0 12px 30px rgba(0,0,0,.10); }
+.stats-card.card-body{ padding:24px; }
+.bg-present{ background:linear-gradient(135deg,#10b981,#059669); }
+.bg-absent{ background:linear-gradient(135deg,#ef4444,#dc2626); }
+.bg-rate{ background:linear-gradient(135deg,#3b82f6,#2563eb); }
+.class-card{ border:none; border-radius:18px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.08); margin-bottom:20px; }
+.class-header{ background:#fff; padding:18px 24px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; border:none; width:100%; text-align:left; }
+</style>
+
+<div class="container-fluid">
+    <div class="page-header d-flex justify-content-between align-items-center flex-wrap">
+        <div><h3>📅 Student Attendance Report</h3></div>
+        <button type="button" onclick="printDirect()" class="btn btn-sm btn-light" style="font-weight:700; border-radius:20px;">🖨 Print Report</button>
+    </div>
+    <iframe id="printFrame" style="display:none;"></iframe>
+
+    <div class="filter-card">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-lg-4">
+                <label class="form-label fw-semibold">Select Class</label>
+                <select name="class" class="form-select">
+                    <option value="">All Classes</option>
+                    {% for c in classes %}<option value="{{ c.id }}" {% if c.id|stringformat:"s" == selected_class %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-lg-2"><button class="btn btn-filter w-100">Filter</button></div>
+        </form>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-xl-4 col-md-6"><div class="card stats-card bg-present"><div class="card-body"><small>Total Present (Term)</small><h2>{{ total_present }}</h2></div></div></div>
+        <div class="col-xl-4 col-md-6"><div class="card stats-card bg-absent"><div class="card-body"><small>Total Absent (Term)</small><h2>{{ total_absent }}</h2></div></div></div>
+        <div class="col-xl-4 col-md-6"><div class="card stats-card bg-rate"><div class="card-body"><small>Term AttendanceRate</small><h2>{{ attendance_rate }}%</h2></div></div></div>
+    </div>
+
+<div class="accordion" id="classAccordion">
+{% for group in grouped_by_class %}
+  <div class="class-card">
+    <button class="class-header" type="button" data-bs-toggle="collapse" data-bs-target="#class{{ group.klass.id }}">
+      <div><h5 class="mb-0">📚 {{ group.klass.name }}</h5><small class="text-muted">{{ group.total_days }} days recorded</small></div>
+      <div class="d-flex gap-2"><span class="badge bg-success rounded-pill px-3">{{ group.total_days }} Days</span><span class="badge bg-light text-dark rounded-pill">▼</span></div>
+    </button>
+    <div id="class{{ group.klass.id }}" class="collapse {% if forloop.first %}show{% endif %}" data-bs-parent="#classAccordion">
+<div class="table-responsive">
+  <table class="table table-hover mb-0">
+    <thead class="table-light"><tr><th style="padding-left:24px;">Date</th><th class="text-center">Present</th><th class="text-center">Absent</th><th class="text-center">Total</th></tr></thead>
+<tbody>
+  {% for day in group.days %}
+  <tr class="day-row {% if forloop.counter > 10 %}extra-day d-none{% endif %}">
+    <td style="padding-left:24px;"><strong>{{ day.date|date:"D, d M Y" }}</strong></td>
+    <td class="text-center"><span class="badge bg-success rounded-pill px-3">{{ day.present_count }}</span></td>
+    <td class="text-center"><span class="badge bg-danger rounded-pill px-3">{{ day.absent_count }}</span></td>
+    <td class="text-center"><span class="badge bg-primary rounded-pill px-3">{{ day.total }}</span></td>
+  </tr>
+  {% endfor %}
+</tbody>
+</table>
+{% if group.total_days > 10 %}
+<div class="p-3 text-center bg-light border-top"><button type="button" class="btn btn-sm btn-outline-primary rounded-pill" onclick="toggleDays(this)">Show All {{ group.total_days }} Days ↓</button></div>
+{% endif %}
+</div>
+      </div>
+    </div>
+{% empty %}
+  <div class="text-center py-5" style="background:#fff; border-radius:18px;"><div style="font-size:60px;">📅</div><h5 class="fw-bold mt-3">No Attendance Records</h5></div>
+{% endfor %}
+</div>
+</div>
+
+<script>
+function printDirect(){
+    var classId = "{{ selected_class }}";
+    var url = "?print=1";
+    if(classId && classId!= "None" && classId!= "" && classId!= "null"){
+        url = "?class=" + classId + "&print=1";
+    }
+    var frame = document.getElementById('printFrame');
+    frame.src = url;
+    frame.onload = function(){
+        setTimeout(function(){ frame.contentWindow.focus(); frame.contentWindow.print(); }, 1000);
+    }
+}
+function toggleDays(btn) {
+  const card = btn.closest('.class-card');
+  const extraDays = card.querySelectorAll('.extra-day');
+  const isHidden = extraDays[0].classList.contains('d-none');
+  extraDays.forEach(row => { row.classList.toggle('d-none'); });
+  btn.innerHTML = isHidden? 'Show Less ↑' : 'Show All ' + card.querySelector('.badge.bg-success').innerText + ' ↓';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,347 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block content %}
+
+<style>
+
+.notification-page{
+    max-width:950px;
+    margin:auto;
+    padding:30px 15px;
+}
+
+
+/* HEADER */
+
+.notification-header{
+
+    background:linear-gradient(135deg,#2563eb,#4f46e5);
+    color:white;
+    padding:30px;
+    border-radius:24px;
+    margin-bottom:25px;
+    box-shadow:0 12px 30px rgba(0,0,0,.12);
+
+}
+
+.notification-header h4{
+    margin:0;
+    font-weight:900;
+    font-size:28px;
+}
+
+
+/* FILTER */
+
+.filter-box{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:25px;
+}
+
+
+.filter-btn{
+
+    border-radius:30px;
+    padding:8px 18px;
+    font-weight:700;
+    border:none;
+
+}
+
+
+
+/* CARD */
+
+.notif-card{
+
+    background:white;
+    border-radius:22px;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.07);
+    margin-bottom:22px;
+    transition:.3s ease;
+
+}
+
+
+.notif-card:hover{
+
+    transform:translateY(-3px);
+    box-shadow:0 15px 35px rgba(0,0,0,.12);
+
+}
+
+
+.notif-top{
+
+    height:6px;
+    background:linear-gradient(90deg,#2563eb,#4f46e5);
+
+}
+
+
+
+.notif-body{
+
+    padding:25px;
+
+}
+
+
+.title-label{
+
+    font-size:13px;
+    font-weight:800;
+    color:#64748b;
+
+}
+
+
+.notification-title{
+
+    font-size:20px;
+    font-weight:900;
+    color:#0f172a;
+
+}
+
+
+
+.message-box{
+
+    background:#f8fafc;
+    border-radius:16px;
+    padding:16px;
+    margin-top:10px;
+    line-height:1.7;
+    color:#334155;
+
+}
+
+
+
+.created-badge{
+
+    background:#eef2ff;
+    color:#4338ca;
+    padding:8px 15px;
+    border-radius:30px;
+    font-size:12px;
+    font-weight:700;
+
+}
+
+
+
+.time-text{
+
+    color:#64748b;
+    font-size:13px;
+
+}
+
+
+
+</style>
+
+
+
+<div class="notification-page">
+
+
+<div class="notification-header">
+
+<h4>
+🔔 Student Notifications
+</h4>
+
+<p class="mb-0 mt-2 opacity-75">
+You have {{ announcements|length }} notification(s)
+</p>
+
+</div>
+
+
+
+<div class="filter-box">
+
+<a href="?filter=all"
+class="btn filter-btn {% if filter == 'all' %}btn-dark{% else %}btn-light{% endif %}">
+All ({{ total }})
+</a>
+
+
+<a href="?filter=today"
+class="btn filter-btn {% if filter == 'today' %}btn-dark{% else %}btn-light{% endif %}">
+Today
+</a>
+
+
+<a href="?filter=week"
+class="btn filter-btn {% if filter == 'week' %}btn-dark{% else %}btn-light{% endif %}">
+This Week
+</a>
+
+
+</div>
+
+
+
+
+
+{% for ann in announcements %}
+
+
+<div class="notif-card">
+
+
+<div class="notif-top"></div>
+
+
+<div class="notif-body">
+
+
+<div class="mb-3">
+
+<span class="title-label">
+📌 TITLE
+</span>
+
+<div class="notification-title mt-1">
+{{ ann.title }}
+</div>
+
+</div>
+
+
+
+
+<div>
+
+<span class="title-label">
+💬 MESSAGE
+</span>
+
+
+<div class="message-box">
+
+{{ ann.message }}
+
+</div>
+
+
+</div>
+
+
+
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mt-4 pt-3 border-top">
+
+
+<div class="time-text">
+
+🕒 {{ ann.created_at|date:"M d, Y h:i A" }}
+
+<br>
+
+<small>
+{{ ann.created_at|timesince }} ago
+</small>
+
+</div>
+
+
+
+
+<div class="created-badge">
+
+👤 {{ ann.created_by.get_full_name|default:ann.created_by.username }}
+
+({{ ann.created_by.role|title }})
+
+</div>
+
+
+
+</div>
+
+
+
+</div>
+
+
+</div>
+
+
+{% empty %}
+
+
+<div class="notif-card p-5 text-center">
+
+<h5 class="fw-bold">
+No notifications
+</h5>
+
+<p class="text-muted mb-0">
+You have no announcements at the moment.
+</p>
+
+</div>
+
+
+{% endfor %}
+
+
+
+
+
+{% if page_obj.has_other_pages %}
+
+<div class="d-flex justify-content-center mt-4 gap-2">
+
+
+{% if page_obj.has_previous %}
+
+<a href="?filter={{ filter }}&page={{ page_obj.previous_page_number }}"
+class="btn btn-light rounded-pill px-4">
+
+Previous
+
+</a>
+
+{% endif %}
+
+
+
+<span class="btn btn-dark rounded-pill px-4">
+
+{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+
+</span>
+
+
+
+{% if page_obj.has_next %}
+
+<a href="?filter={{ filter }}&page={{ page_obj.next_page_number }}"
+class="btn btn-light rounded-pill px-4">
+
+Next
+
+</a>
+
+{% endif %}
+
+
+
+</div>
+
+{% endif %}
+
+
+
+</div>
+
+
+{% endblock %}

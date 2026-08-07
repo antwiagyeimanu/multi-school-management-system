@@ -1,0 +1,25 @@
+{% extends "accounts/dashboard_base.html" %}
+
+{% block title %}Student List{% endblock %}
+
+{% block content %}
+<h2>Student List</h2>
+
+{% if students %}
+<table>
+    <tr>
+        <th>Username</th>
+        <th>Email</th>
+    </tr>
+    {% for student in students %}
+    <tr>
+        <td>{{ student.username }}</td>
+        <td>{{ student.email }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>No students found.</p>
+{% endif %}
+
+{% endblock %}

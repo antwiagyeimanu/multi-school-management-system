@@ -1,0 +1,345 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block title %}View Fee Structure{% endblock %}
+
+{% block content %}
+<style>
+    input[type="number"], input[type="text"], input[type="date"], select {
+        color: #000 !important;
+        background-color: #fff !important;
+    }
+    input::placeholder {
+        color: #6c757d !important;
+    }
+    /* cursor fix */
+.settings-card, .card-body, label, p, div {
+    cursor: default;
+}
+/* ===========================
+   PREMIUM FEE STRUCTURE
+=========================== */
+
+.fee-hero{
+
+    background:linear-gradient(135deg,#0f172a,#2563eb);
+
+    color:white;
+
+    border-radius:22px;
+
+    padding:24px 30px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    flex-wrap:wrap;
+
+    gap:15px;
+
+    margin-bottom:25px;
+    margin-top:25px;
+
+}
+
+.fee-hero h2{
+
+    font-weight:800;
+
+}
+
+.fee-hero p{
+
+    opacity:.85;
+
+}
+
+.fee-pill{
+
+    background:rgba(255,255,255,.15);
+
+    padding:10px 18px;
+
+    border-radius:30px;
+
+    font-weight:600;
+
+}
+
+.fee-card{
+
+    border-radius:20px;
+
+    overflow:hidden;
+
+}
+
+.fee-card-header{
+
+    background:linear-gradient(135deg,#2563eb,#3b82f6);
+
+    color:white;
+
+    padding:18px 24px;
+
+    border:none;
+
+}
+
+.fee-table{
+
+    margin:0;
+
+}
+
+.fee-table thead{
+
+    background:#0f172a;
+
+    color:white;
+
+}
+
+.fee-table thead th{
+
+    border:none;
+
+    padding:16px;
+
+    font-weight:700;
+
+}
+
+.fee-table tbody td{
+
+    padding:18px 16px;
+
+    border-color:#edf2f7;
+
+}
+
+.fee-table tbody tr{
+
+    transition:.25s;
+
+}
+
+.fee-table tbody tr:hover{
+
+    background:#f8fafc;
+
+}
+
+.stage-badge{
+
+    display:inline-block;
+
+    background:#eff6ff;
+
+    color:#2563eb;
+
+    padding:8px 16px;
+
+    border-radius:30px;
+
+    font-weight:700;
+
+}
+
+.total-pill{
+
+    display:inline-block;
+
+    background:#dcfce7;
+
+    color:#15803d;
+
+    padding:8px 18px;
+
+    border-radius:30px;
+
+    font-weight:800;
+
+    white-space:nowrap;
+
+}
+
+@media(max-width:768px){
+
+    .fee-hero{
+
+        flex-direction:column;
+
+        align-items:flex-start;
+
+    }
+
+    .fee-table{
+
+        font-size:14px;
+
+    }
+
+}
+/* Prevent text from wrapping and falling under each other */
+.table th {
+    white-space: nowrap;
+}
+
+.table td {
+    white-space: normal;
+}
+</style>
+
+<div class="container-fluid px-4">
+   
+<div class="fee-hero">
+
+    <div>
+        <h2>
+            <i class="fas fa-file-invoice-dollar me-2"></i>
+            Fee Structure
+        </h2>
+
+        <p class="mb-0">
+            View the complete fee structure for every stage.
+        </p>
+    </div>
+
+    <div class="fee-pill">
+        <i class="fas fa-calendar-alt me-2"></i>
+        {{ term }} • {{ academic_year }}
+    </div>
+
+</div>
+
+    <!-- Fee Structure Table -->
+<div class="row">
+  <div class="col-12">
+  <div class="card fee-card shadow-sm border-0">
+      <div class="fee-card-header">
+
+        <i class="fas fa-list-alt me-1"></i>
+        Fee Structure - Term: {{ term }} | Academic Year: {{ academic_year }}
+
+      </div>
+      
+      <div class="card-body">
+        {% if fee_structure_by_stage %}
+        <div class="table-responsive">
+<table class="table fee-table align-middle mb-0">
+<thead>
+<tr>
+    <th>Stage</th>
+    <th>Fees Breakdown</th>
+    <th class="text-end">Total</th>
+</tr>
+</thead>
+            
+<tbody>
+{% for stage, fees in fee_structure_by_stage.items %}
+<tr>
+
+<td>
+
+    <span class="stage-badge">
+
+        {% if stage == "lower_primary" %}
+            Lower Primary
+        {% elif stage == "upper_primary" %}
+            Upper Primary
+        {% elif stage == "jhs" %}
+            JHS
+        {% elif stage == "shs" %}
+            SHS
+        {% elif stage == "creche" %}
+            Creche
+        {% elif stage == "nursery" %}
+            Nursery
+        {% elif stage == "kg" %}
+            KG
+        {% else %}
+            {{ stage|title }}
+        {% endif %}
+
+    </span>
+
+</td>
+
+<td>
+
+{% if fees.school_fees or fees.canteen or fees.boarding_fee %}
+    {% if fees.school_fees %}
+        School Fees: GH₵ {{ fees.school_fees|floatformat:2 }}
+    {% endif %}
+
+    {% if fees.canteen %}
+        , Feeding: GH₵ {{ fees.canteen|floatformat:2 }}
+    {% endif %}
+
+    {% if fees.boarding_fee %}
+        , Boarding: GH₵ {{ fees.boarding_fee|floatformat:2 }}
+    {% endif %}
+    <br>
+{% endif %}
+
+{% if fees.exam_fees or fees.pta_dues or fees.computer_levy %}
+    {% if fees.exam_fees %}
+        Exam: GH₵ {{ fees.exam_fees|floatformat:2 }}
+    {% endif %}
+
+    {% if fees.pta_dues %}
+        , PTA: GH₵ {{ fees.pta_dues|floatformat:2 }}
+    {% endif %}
+
+    {% if fees.computer_levy %}
+        , Computer: GH₵ {{ fees.computer_levy|floatformat:2 }}
+    {% endif %}
+    <br>
+{% endif %}
+
+{% if fees.hostel_fee or fees.development_fee or fees.other_fees %}
+    {% if fees.hostel_fee %}
+        Hostel: GH₵ {{ fees.hostel_fee|floatformat:2 }}
+    {% endif %}
+
+    {% if fees.development_fee %}
+        , Development: GH₵ {{ fees.development_fee|floatformat:2 }}
+    {% endif %}
+
+    {% if fees.other_fees %}
+        , Other: GH₵ {{ fees.other_fees|floatformat:2 }}
+    {% endif %}
+{% endif %}
+</td>
+
+<td class="text-end">
+
+    <span class="total-pill">
+
+        GH₵ {{ fees.total|floatformat:2 }}
+
+    </span>
+
+</td>
+
+</tr>
+{% endfor %}
+</tbody>
+          </table>
+        </div>
+        
+        {% else %}
+        <div class="alert alert-info mb-0">
+          No fee structure set for {{ current_term_str|title }} {{ academic_year }} yet.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+{% endblock %}

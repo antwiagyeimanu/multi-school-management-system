@@ -1,0 +1,342 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block title %}My Child Fees{% endblock %}
+{% block content %}
+<style>
+    .report-card { background:#ffffff; padding:30px; border-radius:16px; box-shadow:0 6px 20px rgba(0,0,0,0.06); width:100%; position:relative; }
+    .fee-paid { color:#16a34a; font-weight:600; } .fee-unpaid { color:#dc2626; font-weight:600; }
+    .fee-table { width:100%; border-collapse:collapse; font-size:13px; }
+    
+    /* HEADER + WATERMARK - HIDE ON SCREEN, SHOW ONLY ON PRINT */
+    .watermark{ display:none; }
+    .print-header{ display:none; }
+
+    /* CLEAN TABLE */
+    .fee-table th { background:#f8fafc !important; color:#111827 !important; font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; padding:12px 8px !important; border:1px solid #e5e7eb !important; }
+    .fee-table td { padding:10px 8px !important; border:1px solid #e5e7eb !important; }
+    .fee-table tbody tr:hover { background:#f9fafb; }
+
+    @media print {
+        .watermark{ display:block !important; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-28deg); font-size:60px; font-weight:900; color:rgba(79,70,229,0.06); z-index:0; width:85%; text-align:center; line-height:1.1; letter-spacing:2px; text-transform:uppercase; pointer-events:none; }
+        .print-header{ display:flex !important; align-items:center; border-bottom:4px solid #4f46e5; padding-bottom:15px; margin-bottom:20px; position:relative; z-index:1; }
+.logo-wrap{ width:110px; height:110px; }
+.logo-wrap img{ width:110px; height:110px; object-fit:contain; margin-top:-10px; }
+.school-info h1{ font-size:26px; font-weight:800; }
+@media print {
+  .logo-wrap{ width:130px !important; height:130px !important; }
+  .logo-wrap img{ width:130px !important; height:130px !important; }
+}
+        .school-info{ flex:1; text-align:center; padding:0 15px; }
+        .school-info h1{ margin:0; font-size:28px; font-weight:800; text-transform:uppercase; }
+        .school-info p{ margin:3px 0; font-size:11pt; }
+        .no-print{ display:none !important; }
+        .report-card{ box-shadow:none !important; padding:0 !important; border-radius:0 !important; }
+        .fee-table th{ background:#374151 !important; color:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    }
+    /* PRINT ONLY - HIDE ON SCREEN */
+    .watermark{ display:none; }
+    .print-header{ display:none; }
+    @media print {
+        .watermark{ display:block !important; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-28deg); font-size:65px; font-weight:900; color:rgba(79,70,229,0.05); width:85%; text-align:center; text-transform:uppercase; z-index:0; }
+        .print-header{ display:flex !important; align-items:center; border-bottom:4px solid #4f46e5; padding-bottom:15px; margin-bottom:20px; }
+        .logo-wrap{ width:120px; height:120px; } .logo-wrap img{ width:100%; height:100%; object-fit:contain; }
+        .school-info{ flex:1; text-align:center; } .school-info h1{ font-size:28px; font-weight:800; text-transform:uppercase; margin:0; }
+    }
+    .child-card{
+    background:#fff;
+    border-radius:20px;
+    padding:16px;
+    display:flex;
+    align-items:center;
+    gap:15px;
+    position:relative;
+    border:2px solid #eef2f7;
+    transition:.3s ease;
+    box-shadow:0 6px 18px rgba(0,0,0,.05);
+    height:100%;
+}
+
+.child-card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 15px 30px rgba(0,0,0,.10);
+}
+
+.child-active{
+    border-color:#4f46e5;
+    background:#eef2ff;
+}
+
+.child-photo,
+.child-avatar{
+    width:65px;
+    height:65px;
+    border-radius:50%;
+    object-fit:cover;
+    flex-shrink:0;
+}
+
+.child-avatar{
+    background:linear-gradient(135deg,#4f46e5,#2563eb);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:22px;
+    font-weight:800;
+}
+
+.child-info{
+    flex:1;
+}
+
+.child-info h6{
+    margin:0;
+    font-weight:800;
+    color:#111827;
+    font-size:15px;
+}
+
+.child-info p{
+    margin:4px 0;
+    color:#6b7280;
+    font-size:13px;
+}
+
+.child-info span{
+    font-size:12px;
+    color:#9ca3af;
+    font-weight:600;
+}
+
+.selected-badge{
+    position:absolute;
+    top:10px;
+    right:12px;
+    background:#4f46e5;
+    color:#fff;
+    padding:4px 10px;
+    border-radius:20px;
+    font-size:11px;
+    font-weight:700;
+}
+
+@media(max-width:768px){
+
+.child-card{
+    padding:14px;
+}
+
+.child-photo,
+.child-avatar{
+    width:55px;
+    height:55px;
+}
+
+.child-info h6{
+    font-size:14px;
+}
+
+}
+</style>
+
+<div class="page-wrapper" style="max-width:1200px; margin:0 auto; padding:20px; font-family:system-ui,-apple-system,sans-serif;">
+{% if request.GET.paid %}<div style="background:#dcfce7; border:2px solid #16a34a; color:#166534; padding:16px; border-radius:8px; margin-bottom:20px; font-weight:700; text-align:center;">✓ Payment Successful! Your receipt has been saved.</div>{% endif %}
+
+{% if show_switcher %}
+<div id="child-switcher" class="mb-4">
+
+    <h6 class="fw-bold text-secondary mb-3">
+        <i class="fas fa-users me-2"></i>Select Child
+    </h6>
+
+    <div class="row g-3">
+
+    {% for child in children %}
+
+        <div class="col-md-6 col-lg-4">
+
+            <a href="?child={{ child.id }}#child-switcher"
+               style="text-decoration:none;">
+
+                <div class="child-card {% if selected_child.id == child.id %}child-active{% endif %}">
+
+                    {% if child.photo %}
+                        <img src="{{ child.photo.url }}" class="child-photo">
+                    {% else %}
+                        <div class="child-avatar">
+                            {{ child.first_name|first }}{{ child.last_name|first }}
+                        </div>
+                    {% endif %}
+
+                    <div class="child-info">
+
+                        <h6>
+                            {{ child.first_name }} {{ child.last_name }}
+                        </h6>
+
+                        <p>
+                            {{ child.school_class.name|default:"No Class" }}
+                        </p>
+
+                        <span>
+                            ID: {{ child.student_number|default:"-" }}
+                        </span>
+
+                    </div>
+
+                    {% if selected_child.id == child.id %}
+                    <div class="selected-badge">
+                        Selected
+                    </div>
+                    {% endif %}
+
+                </div>
+
+            </a>
+
+        </div>
+
+    {% endfor %}
+
+    </div>
+
+</div>
+{% endif %}
+
+{% if selected_child %}
+{% if student_fees %}
+<div class="report-card">
+    <div class="watermark">{{ school.name|upper }}</div>
+    <!-- ONLY SHOWS WHEN YOU PRINT -->
+    <div class="print-header">
+        <div class="logo-wrap">{% if school.logo %}<img src="{{ school.logo.url }}">{% else %}<div style="width:120px; height:120px; background:linear-gradient(135deg,#4f46e5,#2563eb); color:#fff; border-radius:18px; display:flex; align-items:center; justify-content:center; font-size:40px; font-weight:800;">{{ school.name|slice:":2"|upper }}</div>{% endif %}</div>
+        <div class="school-info">
+            <h1>{{ school.name|upper }}</h1>
+            <p style="font-size:14px; font-weight:600;">{{ school.address }} {% if school.gps_address %} | GPS: {{ school.gps_address }}{% endif %}</p>
+            <p style="font-size:11px;">{% if school.phone %}Tel: {{ school.phone }}{% endif %}{% if school.email %} | Email: {{ school.email }}{% endif %}{% if school.postal_address %} | {{ school.postal_address }}{% endif %}</p>
+        </div>
+        <div style="width:120px;"></div>
+    </div>
+
+    <div class="no-print" style="text-align:center; margin-bottom:15px;"><button onclick="printStatement()" style="padding:10px 22px; background:#2563eb; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:700;">🖨 Print Statement</button></div>
+
+    <div style="text-align:center; margin-bottom:20px;"><h3 style="margin:0; font-size:18px; font-weight:700; background:#111827; color:#fff; display:inline-block; padding:6px 24px; border-radius:20px;">FEES STATEMENT</h3></div>
+
+    <div style="margin-bottom:25px; font-size:14px; color:#000;">
+        <table style="width:100%; border:none; border-collapse:separate; border-spacing:0 10px;"><tr><td style="padding:0; width:50%;"><strong>Student Name:</strong> {{ selected_child.get_full_name }}</td><td style="padding:0; width:50%;"><strong>Student ID:</strong> {{ selected_child.student_number }}</td></tr><tr><td style="padding:0;"><strong>Class:</strong> {{ selected_child.school_class.name }}</td><td style="padding:0;"><strong>Date:</strong> {% now "d M, Y" %}</td></tr></table>
+    </div>
+
+    <table class="fee-table">
+        <thead><tr style="background-color:#374151!important; color:#ffffff!important;"><th style="padding:8px; border:1px solid #374151;">Term</th><th style="padding:8px; border:1px solid #374151;">Year</th><th style="padding:8px; border:1px solid #374151;">Total Fee</th><th style="padding:8px; border:1px solid #374151;">Paid</th><th style="padding:8px; border:1px solid #374151;">Balance</th><th style="padding:8px; border:1px solid #374151;">Due Date</th><th style="padding:8px; border:1px solid #374151;">Status</th><th class="no-print" style="padding:8px; border:1px solid #374151;">Details</th></tr></thead>
+        <tbody>
+            {% for fee in student_fees %}
+            <tr><td style="padding:8px; border:1px solid #d1d5db; font-weight:600;">{{ fee.term }}</td><td style="padding:8px; border:1px solid #d1d5db;">{{ fee.academic_year }}</td><td style="padding:8px; border:1px solid #d1d5db; text-align:center;">GH₵{{ fee.total_amount|floatformat:2 }}</td><td style="padding:8px; border:1px solid #d1d5db; text-align:center;">GH₵{{ fee.amount_paid_val|floatformat:2 }}</td><td style="padding:8px; border:1px solid #d1d5db; text-align:center; font-weight:700;">₵{{ fee.balance_val|floatformat:2 }}</td><td style="padding:8px; border:1px solid #d1d5db; text-align:center;">{{ fee.due_date|date:"d M, Y"|default:"-" }}</td><td style="padding:8px; border:1px solid #d1d5db; text-align:center;">{% if fee.balance_val == 0 %}<span class="fee-paid">PAID</span>{% else %}<span class="fee-unpaid">UNPAID</span>{% endif %}</td><td class="no-print" style="padding:8px; border:1px solid #d1d5db; text-align:center;">{% if fee.breakdown_items %}<button onclick="toggleBreakdown('breakdown-{{ fee.id }}', this)" style="background:#2563eb; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px;">View Details</button>{% endif %}</td></tr>
+            {% if fee.breakdown_items %}<tr id="breakdown-{{ fee.id }}" class="breakdown-row" style="display:none; background:#f9fafb;"><td colspan="8" style="padding:15px; border:1px solid #d1d5db;"><strong>FEE BREAKDOWN - {{ fee.term }} - {{ fee.academic_year }}</strong><table style="width:100%; margin-top:8px; font-size:11px;">{% for item in fee.breakdown_items %}<tr><td style="padding:4px; border:1px solid #d1d5db;">{{ item.label }}</td><td style="padding:4px; border:1px solid #d1d5db; text-align:center;">GH₵{{ item.value|floatformat:2 }}</td></tr>{% endfor %}<tr style="font-weight:700; background:#f3f4f6;"><td style="padding:4px; border:1px solid #d1d5db;">TOTAL</td><td style="padding:4px; border:1px solid #d1d5db; text-align:center;">GH₵{{ fee.total_amount|floatformat:2 }}</td></tr></table></td></tr>{% endif %}
+            {% endfor %}
+            <tr style="background-color:#e5e7eb!important; font-weight:700;"><td style="padding:8px; border:1px solid #374151; text-align:center;">TOTAL:</td><td style="padding:8px; border:1px solid #374151;"></td><td style="padding:8px; border:1px solid #374151; text-align:center;">GH₵{{ totals.total_amount|floatformat:2 }}</td><td style="padding:8px; border:1px solid #374151; text-align:center;">GH₵{{ totals.total_paid|floatformat:2 }}</td><td style="padding:8px; border:1px solid #374151; text-align:center;">GH₵{{ totals.total_balance|floatformat:2 }}</td><td style="padding:8px; border:1px solid #374151;"></td><td style="padding:8px; border:1px solid #374151;"></td><td class="no-print" style="padding:8px; border:1px solid #374151;"></td></tr>
+        </tbody>
+    </table>
+
+    <!-- PAYMENT SECTION - KEEP ALL -->
+    {% if totals.total_balance > 0 and school %}
+    <div class="no-print" style="margin-top:30px; padding-top:24px; border-top:1px solid #e2e8f0;">
+        <h4 style="margin:0 0 16px 0; font-size:18px; text-align:center; font-weight:700; color:#0f172a;">How to Pay</h4>
+
+        {% if school.accept_cash %}
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin-bottom: 12px; display: flex; gap: 14px; align-items: start;"><div style="font-size: 22px;">🏫</div><div><div style="font-weight: 700; color: #0f172a;">Cash at School</div><div style="color: #64748b; font-size: 14px; margin-top: 4px;">Visit the school office with your student ID.</div></div></div>
+        {% endif %}
+
+        {% if school.accept_manual %}
+        <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 18px; padding: 25px; margin-bottom: 12px;">
+            <div style="font-weight: 700; color: #0f172a; margin-bottom: 12px;">📱 Manual Transfer</div>
+            {% if school.accept_momo and school.momo_number %}
+            <div style="background: white; border-radius: 10px; padding: 20px; margin-bottom: 10px;"><div style="font-size: 16px; color: #64748b; text-transform: uppercase; font-weight: 600; margin-bottom: 8px;">MoMo</div><div style="display: flex; justify-content: space-between;"><div><div style="font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 10px;">MOMO NUMBER: {{ school.momo_number }}</div>{% if school.momo_name %}<div style="font-size: 16px; font-weight: 800; color: #0623e5;">ACCOUNT NAME: {{ school.momo_name }}</div>{% endif %}<div style="font-size: 14px; color: #64748b; margin-top: 8px;">Reference: Use student number: <span style="background:#2563eb; color:#fff; padding:2px 6px; border-radius:4px;">{{ selected_child.student_number }}</span></div></div><button onclick="navigator.clipboard.writeText('{{ school.momo_number }}'); this.innerText='Copied!'; setTimeout(()=>this.innerText='Copy',1500)" style="background: #f1f5f9; border: none; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">Copy</button></div></div>
+            {% endif %}
+            {% if school.accept_bank and school.bank_name %}
+            <div style="background: white; border-radius: 10px; padding: 25px; margin-bottom: 10px;"><div style="font-size: 16px; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 8px;">Bank Transfer</div><div style="display: flex; justify-content: space-between;"><div><div style="font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 10px;">ACCOUNT NUMBER: {{ school.account_number }}</div>{% if school.bank_name %}<div style="font-size: 16px; font-weight: 800; color: #0623e5; margin-bottom: 10px;">BANK NAME: {{ school.bank_name }}</div>{% endif %}<div style="font-size: 16px; color: #020f21; font-weight: 700;">ACCOUNT NAME: {{ school.account_name }}</div><div style="font-size: 14px; color: #64748b; margin-top: 8px;">Reference: Use student number <span style="background:#2563eb; color:#fff; padding:2px 6px; border-radius:4px;">{{ selected_child.student_number }}</span></div></div><button onclick="navigator.clipboard.writeText('{{ school.account_number }}'); this.innerText='Copied!'; setTimeout(()=>this.innerText='Copy',1500)" style="background: #f1f5f9; border: none; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">Copy</button></div></div>
+            {% endif %}
+            {% if latest_fee and latest_fee.balance_val > 0 %}
+            <div style="text-align:center; margin-top:20px; padding-top:20px; border-top:1px solid #fde68a;"><a href="{% url 'accounts:submit_manual_payment' latest_fee.id %}" style="background:#16a34a; color:white; text-decoration:none; padding:14px 28px; border-radius:10px; font-size:16px; font-weight:700; display:inline-block;">I Have Paid - Upload Proof</a><p style="font-size:12px; color:#92400e; margin-top:8px;">Click after you pay via Bank or MoMo</p></div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if school.accept_automatic and school.payment_gateway == 'paystack' and school.paystack_public_key %}
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 18px;">
+            <div style="font-weight: 700; color: #0f172a; margin-bottom: 16px; text-align: center;">💳 Pay Online for {{ selected_child.first_name }}</div>
+            {% if all_payment_options %}
+                {% for option in all_payment_options %}
+                <div style="display: flex; align-items: center; gap: 12px; padding: 14px; border: 2px solid #e2e8f0; background: white; border-radius: 8px; margin-bottom: 10px;">
+                    <input type="checkbox" class="fee-checkbox" id="fee_{{ forloop.counter }}" data-fee-name="{{ option.label }}" data-paid-field="{{ option.paid_field }}" data-balance="{{ option.balance }}" style="width: 20px; height: 20px; cursor: pointer;">
+                    <label for="fee_{{ forloop.counter }}" style="flex: 1; margin: 0; cursor: pointer; font-weight: 600;">{{ option.label }}<div style="color: #64748b; font-size: 13px; font-weight: 400;">Balance: ₵{{ option.balance|floatformat:2 }}</div></label>
+                    <div style="display: flex; flex-direction: column; align-items: end;"><label style="font-size: 12px; color: #64748b; margin-bottom: 4px;">Amount to Pay</label><input type="number" class="fee-amount-input" data-paid-field="{{ option.paid_field }}" placeholder="0.00" max="{{ option.balance }}" min="0" step="0.01" style="width: 130px; padding: 8px; border: 2px solid #cbd5e1; border-radius: 6px; text-align: right; font-size: 16px; font-weight: 600;" disabled></div>
+                </div>
+                {% empty %}<p style="color: #10b981; font-weight: 700; text-align: center; padding: 20px;">✓ All fees paid</p>{% endfor %}
+                <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 8px; border: 2px solid #0aa83f;"><strong style="font-size: 18px;">Total to Pay: ₵<span id="total-amount">0.00</span></strong></div>
+                <button id="paystack-btn" type="button" style="width: 100%; margin-top: 12px; padding: 14px; background: #02422c; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 800; cursor: pointer;">Pay with Paystack</button>
+            {% else %}<p style="color: #10b981; font-weight: 700; text-align: center; padding: 20px;">✓ All fees paid for this term</p>{% endif %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+</div>
+{% else %}
+    <div class="report-card" style="text-align:center; padding:60px 30px;">
+        <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:30px;">
+            <h3 style="color:#991b1b; margin:0 0 15px 0; font-size:18px;">
+                No fee records found for <strong>{{ selected_child.get_full_name|default:selected_child.username }}</strong><br>
+                Student ID: {{ selected_child.student_number|default:"-" }} | Class: {{ selected_child.school_class.name|default:"-" }}
+            </h3>
+        </div>
+    </div>{% endif %}
+{% else %}
+<div class="report-card" style="text-align:center; padding:60px 30px;"><p>Please select a child to view fees statement.</p></div>
+{% endif %}
+</div>
+
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script>
+function getCookie(name){let v=null; document.cookie.split(';').forEach(c=>{c=c.trim(); if(c.startsWith(name+'=')) v=decodeURIComponent(c.slice(name.length+1));}); return v;}
+document.querySelectorAll('.fee-checkbox').forEach(cb=>{cb.addEventListener('change',function(){const amt=this.closest('div').querySelector('.fee-amount-input'); const bal=parseFloat(this.dataset.balance); if(this.checked){amt.disabled=false; amt.value=bal.toFixed(2);} else {amt.disabled=true; amt.value='';} updateTotal();});});
+document.querySelectorAll('.fee-amount-input').forEach(i=>i.addEventListener('input',updateTotal));
+function updateTotal(){let t=0; document.querySelectorAll('.fee-checkbox:checked').forEach(cb=>{const inp=cb.closest('div').querySelector('.fee-amount-input'); t+=parseFloat(inp.value)||0;}); document.getElementById('total-amount').textContent=t.toFixed(2);}
+document.getElementById('paystack-btn')?.addEventListener('click',function(e){e.preventDefault(); let selected=[], total=0, err=false; function showError(m){let d=document.getElementById('payment-error'); if(!d){d=document.createElement('div'); d.id='payment-error'; d.style.cssText='background:#fee2e2; border:1px solid #fecaca; color:#991b1b; padding:12px; border-radius:8px; margin:12px 0; font-weight:600; text-align:center;'; document.getElementById('paystack-btn').parentNode.insertBefore(d,document.getElementById('paystack-btn'));} d.innerText=m; d.style.display='block'; setTimeout(()=>d.style.display='none',3000);} document.querySelectorAll('.fee-checkbox:checked').forEach(cb=>{const inp=cb.closest('div').querySelector('.fee-amount-input'); const amt=parseFloat(inp.value)||0; const bal=parseFloat(cb.dataset.balance); if(amt<=0){showError('Enter amount for '+cb.dataset.feeName); err=true; return;} if(amt>bal){showError('Amount exceeds balance'); err=true; return;} selected.push({fee_name:cb.dataset.feeName, paid_field:cb.dataset.paidField, amount:amt}); total+=amt;}); if(err) return; if(selected.length==0){showError('Tick at least one fee'); return;} var handler=PaystackPop.setup({key:'{{ school.paystack_public_key }}', email:'{{ request.user.email|default:school.email }}', amount:Math.round(total*100), currency:'GHS', ref:'PARENT-{{ selected_child.id }}-'+Date.now(), metadata:{student_id:'{{ selected_child.student_number }}', student_name:'{{ selected_child.get_full_name|escapejs }}'}, callback:function(r){fetch("{% url 'accounts:verify_paystack_payment' %}",{method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')}, body:JSON.stringify({reference:r.reference, fee_id:{{ latest_fee.id }}, total_amount:total, items:selected, paid_by:'parent', student_id:'{{ selected_child.id }}'})}).then(res=>res.json()).then(d=>{if(d.status){window.location.href=window.location.pathname+"?paid=1";} else {showError('Verification failed');}});}, onClose:function(){}}); handler.openIframe();});
+function toggleBreakdown(id,btn){var r=document.getElementById(id); if(r.style.display==="none"||r.style.display===""){r.style.display="table-row"; btn.textContent="Hide Details"; btn.style.background="#6b7280";} else {r.style.display="none"; btn.textContent="View Details"; btn.style.background="#2563eb";}}
+function printStatement() {
+    var printContent = document.querySelector('.report-card').cloneNode(true);
+    printContent.querySelectorAll('.no-print, button, input').forEach(el => el.remove());
+    printContent.querySelectorAll('.breakdown-row').forEach(row => row.style.display = 'table-row');
+    
+    // Show watermark + header only in print
+    var wm = printContent.querySelector('.watermark');
+    if(wm) wm.style.display = 'block';
+    var ph = printContent.querySelector('.print-header');
+    if(ph) { ph.style.display = 'flex'; ph.style.alignItems='center'; ph.style.borderBottom='4px solid #4f46e5'; ph.style.paddingBottom='15px'; ph.style.marginBottom='20px'; }
+    
+    var iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute'; iframe.style.width = '0'; iframe.style.height = '0'; iframe.style.border = '0'; iframe.style.visibility = 'hidden';
+    document.body.appendChild(iframe);
+    var doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write('<html><head><title>Fees Statement</title><style>');
+    doc.write('@page{size:A4; margin:10mm;} body{font-family:Arial, sans-serif; margin:0; color:#000; padding:15px;} ');
+    doc.write('.print-header{display:flex; align-items:center; border-bottom:4px solid #4f46e5; padding-bottom:12px; margin-bottom:18px;} ');
+    doc.write('.logo-wrap{width:130px; height:130px;} .logo-wrap img{width:130px; height:130px; object-fit:contain;} ');
+    doc.write('.school-info{flex:1; text-align:center;} .school-info h1{font-size:28px; font-weight:900; margin:0; text-transform:uppercase;} .school-info p{font-size:12pt; margin:3px 0;} ');
+    doc.write('.watermark{position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-28deg); font-size:70px; font-weight:900; color:rgba(0,0,0,0.06); width:85%; text-align:center; text-transform:uppercase; z-index:0;} ');
+    // BIG CLEAR TABLE
+    doc.write('.fee-table{width:100%; border-collapse:collapse; font-size:14pt; margin-top:10px;} ');
+    doc.write('.fee-table th{background:#1f2937 !important; color:#fff !important; padding:12px 8px !important; font-size:13pt !important; border:1px solid #000 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;} ');
+    doc.write('.fee-table td{padding:12px 8px !important; font-size:13pt !important; border:1.5px solid #000 !important; color:#000 !important; background:#fff !important;} ');
+    doc.write('.breakdown-table{width:100%; font-size:13pt; border-collapse:collapse; margin-top:5px;} ');
+    doc.write('.breakdown-table td{padding:10px 12px !important; font-size:12pt !important; border:1px solid #000 !important; color:#000 !important; background:#fff !important;} ');
+    doc.write('.total-row td{background:#e5e7eb !important; font-weight:900 !important; font-size:13pt !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;} ');
+    doc.write('*{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }');
+    doc.write('</style></head><body>');
+    doc.write(printContent.innerHTML);
+    doc.write('</body></html>');
+    doc.close();
+    iframe.contentWindow.focus();
+    setTimeout(() => { iframe.contentWindow.print(); setTimeout(() => document.body.removeChild(iframe), 1000); }, 250);
+}</script>
+{% endblock %}

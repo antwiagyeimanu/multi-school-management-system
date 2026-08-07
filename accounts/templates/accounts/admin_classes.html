@@ -1,0 +1,401 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block content %}
+
+<style>
+
+.classes-page {
+    padding:30px;
+    background:#f5f7fb;
+}
+
+
+/* Header */
+
+.classes-header {
+
+    background:linear-gradient(135deg,#041729,#0b3b66);
+    color:white;
+
+    padding:30px;
+
+    border-radius:22px;
+
+    margin-bottom:30px;
+
+    box-shadow:
+    0 10px 30px rgba(0,0,0,.15);
+
+}
+
+
+.classes-header h2 {
+
+    margin:0;
+
+    font-size:30px;
+
+    font-weight:700;
+
+}
+
+
+.classes-header p {
+
+    margin-top:8px;
+
+    opacity:.8;
+
+}
+
+
+
+
+
+/* Messages */
+
+.success-message {
+
+    background:#e8f7ee;
+
+    color:#198754;
+
+    padding:12px;
+
+    border-radius:12px;
+
+    text-align:center;
+
+    margin-bottom:20px;
+
+}
+
+
+
+
+
+/* Accordion */
+
+.accordion-item {
+
+    border:none;
+
+    margin-bottom:15px;
+
+    border-radius:18px!important;
+
+    overflow:hidden;
+
+    box-shadow:
+    0 6px 20px rgba(0,0,0,.08);
+
+}
+
+
+
+.accordion-button {
+
+    font-size:18px;
+
+    font-weight:700;
+
+    color:#041729;
+
+    padding:20px;
+
+}
+
+
+
+.accordion-button:not(.collapsed){
+
+    background:#eaf2ff;
+
+    color:#041729;
+
+}
+
+
+
+
+
+/* Class Cards */
+
+
+.class-card {
+
+    background:white;
+
+    border-radius:20px;
+
+    padding:25px;
+
+    text-align:center;
+
+    min-height:180px;
+
+    box-shadow:
+    0 8px 25px rgba(0,0,0,.08);
+
+    border-top:5px solid #4e73df;
+
+    transition:.3s;
+
+}
+
+
+
+.class-card:hover {
+
+    transform:translateY(-6px);
+
+    box-shadow:
+    0 15px 35px rgba(0,0,0,.15);
+
+}
+
+
+
+
+
+.class-title {
+
+    font-size:22px;
+
+    font-weight:700;
+
+    color:#041729;
+
+    margin-bottom:10px;
+
+}
+
+
+
+
+
+.section-badge {
+
+    display:inline-block;
+
+    background:#4e73df;
+
+    color:white;
+
+    padding:7px 14px;
+
+    border-radius:20px;
+
+    font-size:13px;
+
+    text-decoration:none;
+
+    margin:4px;
+
+}
+
+
+
+
+
+.action-btn {
+
+    display:inline-block;
+
+    padding:10px 16px;
+
+    border-radius:12px;
+
+    color:white;
+
+    text-decoration:none;
+
+    font-weight:600;
+
+    font-size:14px;
+
+    margin:8px 4px;
+
+}
+
+
+.edit-btn {
+
+    background:#4e73df;
+
+}
+
+
+.delete-btn {
+
+    background:#dc3545;
+
+}
+
+
+
+</style>
+
+
+
+<div class="classes-page">
+
+
+<div class="classes-header">
+
+<h2>
+🏫 School Classes
+</h2>
+
+<p>
+Manage classes for {{ school.name }}
+</p>
+
+
+</div>
+{% if messages %}
+    {% for message in messages %}
+        <div style="
+            background:#d4edda;
+            color:#155724;
+            padding:10px;
+            border-radius:8px;
+            margin-bottom:15px;
+            text-align:center;
+        ">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="container">
+    <div class="row">
+
+{% if grouped %}
+
+<div class="accordion" id="stageAccordion">
+
+    {% for stage, class_list in grouped.items %}
+
+    <div class="accordion-item">
+
+        <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+
+            <button class="accordion-button collapsed"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapse{{ forloop.counter }}">
+
+                {{ stage }}
+
+            </button>
+
+        </h2>
+
+        <div id="collapse{{ forloop.counter }}"
+             class="accordion-collapse collapse"
+             data-bs-parent="#stageAccordion">
+
+            <div class="accordion-body">
+
+                <div class="row">
+
+                    {% for base_class, data in class_list.items %}
+                    
+<div class="col-md-4 mb-4">
+
+<div class="class-card card-hover">
+
+ <div class="class-title">{{ base_class }}</div>
+
+{% with real_sections=data.classes|dictsort:"section" %}
+{% if real_sections|length > 1 or data.classes.0.section %}
+    <div>👥 {{ data.classes|length }} Section{{ data.classes|length|pluralize }}</div>
+    <div style="display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;">
+        {% for c in real_sections %}
+            {% if c.section %}
+            <a href="{% url 'accounts:edit_class' c.id %}" 
+               style="background:#007bff; color:white; padding:6px 10px; border-radius:20px; font-size:13px; text-decoration:none;">
+                {{ c.section }}
+            </a>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endif %}
+{% endwith %}
+    <div style="margin-top:15px;">
+        {% with first_class=data.classes.0 %}
+            <a href="{% url 'accounts:edit_class' first_class.id %}" class="edit-btn action-btn">
+                ✏️ Edit
+            </a>
+<!--<a href="#" class="delete-btn action-btn delete-class-btn" 
+   data-url="{% url 'accounts:delete_class' first_class.id %}"
+   data-name="{{ base_class }}">
+    🗑️ Delete
+</a>-->
+        {% endwith %}
+    </div>
+
+</div>
+</div>
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    {% endfor %}
+
+</div>
+
+{% else %}
+
+<p style="text-align:center;">No classes added yet</p>
+
+{% endif %}
+
+    </div>
+</div>
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" style="border-bottom: 2px solid #dc3545;">
+        <h5 class="modal-title">⚠️ Delete Class</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to delete <strong id="deleteClassName"></strong>? 
+        <br><small class="text-muted">This action cannot be undone.</small>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <a href="#" id="confirmDeleteBtn" class="btn btn-danger">Yes, Delete</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    const deleteClassName = document.getElementById('deleteClassName');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+    document.querySelectorAll('.delete-class-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const url = this.getAttribute('data-url');
+            const name = this.getAttribute('data-name');
+            
+            deleteClassName.textContent = name;
+            confirmDeleteBtn.setAttribute('href', url);
+            deleteModal.show();
+        });
+    });
+});
+</script>
+{% endblock %}

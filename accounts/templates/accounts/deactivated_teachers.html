@@ -1,0 +1,267 @@
+{% extends "accounts/base.html" %}
+
+{% block title %}Deactivated Teachers{% endblock %}
+
+{% block content %}
+
+<style>
+
+.teacher-card {
+    border-radius:12px;
+    transition:.2s ease;
+    overflow:hidden;
+}
+
+.teacher-card:hover {
+    transform:translateY(-3px);
+    box-shadow:0 8px 20px rgba(0,0,0,.12);
+}
+
+
+.teacher-card .card-body {
+    color:#212529 !important;
+}
+
+
+.teacher-card .card-body span,
+.teacher-card .card-body div {
+    color:#212529 !important;
+}
+
+
+.avatar-box {
+
+    width:50px;
+    height:50px;
+    border-radius:50%;
+    background:#f8f9fa;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin:auto;
+
+}
+
+
+.avatar-box span {
+
+    font-weight:700;
+    color:#6c757d;
+
+}
+
+
+</style>
+
+
+
+<div class="container-fluid">
+
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+
+<h2>
+Deactivated Teachers
+</h2>
+
+
+<a href="{% url 'accounts:manage-teachers-grid' %}"
+class="btn btn-primary">
+
+← Back to Active Teachers
+
+</a>
+
+
+</div>
+
+
+
+
+<div class="row g-3">
+
+
+{% for teacher in teachers %}
+
+
+<div class="col-xl-3 col-lg-4 col-md-6">
+
+
+<div class="card shadow-sm border-0 h-100 teacher-card">
+
+
+<!-- HEADER -->
+
+<div class="card-header bg-secondary text-white text-center py-3">
+
+
+<div class="avatar-box">
+
+<span>
+
+{{ teacher.first_name|first }}{{ teacher.last_name|first }}
+
+</span>
+
+</div>
+
+
+
+<div class="mt-2 fw-semibold">
+
+{{ teacher.get_full_name }}
+
+</div>
+
+
+</div>
+
+
+
+
+<!-- BODY -->
+
+<div class="card-body py-3 small">
+
+
+
+<div class="d-flex justify-content-between mb-2">
+
+<span class="text-muted">
+Staff ID:
+</span>
+
+
+<span class="fw-semibold">
+
+{{ teacher.staff_id|default:"N/A" }}
+
+</span>
+
+</div>
+
+
+
+
+<div class="d-flex justify-content-between mb-2">
+
+<span class="text-muted">
+Username:
+</span>
+
+
+<span class="fw-semibold">
+
+{{ teacher.username }}
+
+</span>
+
+</div>
+
+
+
+
+
+<div class="d-flex justify-content-between mb-2">
+
+<span class="text-muted">
+Phone:
+</span>
+
+
+<span class="fw-semibold">
+
+{{ teacher.phone|default:"N/A" }}
+
+</span>
+
+</div>
+
+
+
+
+
+<div class="d-flex justify-content-between">
+
+<span class="text-muted">
+Joined:
+</span>
+
+
+<span class="fw-semibold">
+
+{{ teacher.date_joined|date:"M d, Y" }}
+
+</span>
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+<!-- FOOTER -->
+
+<div class="card-footer bg-light p-2">
+
+
+<span class="badge bg-danger d-block mb-2">
+
+Inactive
+
+</span>
+
+
+
+<form method="POST" action="{% url 'accounts:reactivate_teacher' teacher.id %}">
+    {% csrf_token %}
+
+    <button type="submit" class="btn btn-success btn-sm w-100">
+        Reactivate
+    </button>
+
+</form>
+
+
+</div>
+
+
+
+
+</div>
+
+
+</div>
+
+
+
+{% empty %}
+
+
+<div class="col-12">
+
+<div class="alert alert-info text-center">
+
+No deactivated teachers found.
+
+</div>
+
+</div>
+
+
+{% endfor %}
+
+
+
+</div>
+
+
+</div>
+
+
+{% endblock %}

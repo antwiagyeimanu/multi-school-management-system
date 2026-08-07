@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+{% load custom_filters %}
+<html>
+<head>
+<title>Class Report</title>
+<style>
+body { font-family: Arial, sans-serif; padding: 20px; color: #000; position:relative; }
+
+/* WATERMARK - DYNAMIC */
+.watermark{
+    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-28deg);
+    font-size:60px; font-weight:900; color:rgba(79,70,229,0.05); 
+    z-index:0; width:85%; text-align:center; line-height:1.1;
+    letter-spacing:2px; text-transform:uppercase; pointer-events:none;
+    word-break:break-word; white-space:normal;
+}
+.school-header {
+    display:flex; align-items:center;
+    border-bottom:4px solid #4f46e5; padding-bottom:15px;
+    margin-bottom:15px; margin-top:-10px;
+    position:relative; z-index:1;
+}
+.logo-wrap{ width:120px; height:120px; flex-shrink:0; }
+.logo-wrap img{ width:100%; height:100%; object-fit:contain; margin-bottom:-5px; margin-top:-3px; border-radius:12px; }
+.school-info{ flex:1; text-align:center; padding:0 15px; }
+.school-info h1{ margin:0; font-size:28px; font-weight:800; text-transform:uppercase; }
+.school-info h3{ margin:5px 0; font-size:16px; }
+.school-info p{ margin:3px 0; font-size:12pt; color:#555; }
+
+/* PRINT - BIGGER LIKE STUDENT REPORT */
+@media print {
+    .logo-wrap{ width:140px !important; height:140px !important; }
+    .logo-wrap img{ width:140px !important; height:140px !important; margin-top:-2px; margin-bottom:-15px; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+}
+h2, h3 { text-align: center; margin: 0; text-transform: uppercase; }
+
+table { width:100%; border-collapse:collapse; margin-top:15px; position:relative; z-index:1; }
+th, td { border:1px solid #000; padding:8px; text-align:center; font-size:13px; }
+th { background:#f3f4f6 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+
+@media print {
+    .no-print, button { display:none !important; }
+    body { margin:0; padding:10mm; }
+    @page { margin:10mm; size:A4 landscape; }
+}
+</style>
+</head>
+<body>
+
+<!-- DYNAMIC WATERMARK -->
+<div class="watermark">{{ request.user.school.name|upper }}</div>
+
+<div class="school-header" style="margin-top:-35px;">
+    <div class="logo-wrap">
+        {% if request.user.school.logo %}
+            <img src="{{ request.user.school.logo.url }}" style="width:120px; height:120px; object-fit:contain;">
+        {% else %}
+            <div style="width:120px; height:120px; background:linear-gradient(135deg,#4f46e5,#2563eb); color:#fff; border-radius:18px; display:flex; align-items:center; justify-content:center; font-size:40px; font-weight:800;">{{ request.user.school.name|slice:":2"|upper }}</div>
+        {% endif %}
+    </div>
+    <div class="school-info">
+        <h1 style="margin-top:0px; font-size:28px;">{{ request.user.school.name|upper }}</h1>
+        <h3 style="margin:5px 0; font-size:16px;">{{ request.user.school.address }} {% if request.user.school.gps_address %} | GPS: {{ request.user.school.gps_address }}{% endif %}</h3>
+        <p style="margin:3px 0; font-size:12pt;">
+            {% if request.user.school.phone %}Tel: {{ request.user.school.phone }}{% endif %}
+            {% if request.user.school.email %} | Email: {{ request.user.school.email }}{% endif %}
+            {% if request.user.school.postal_address %} | {{ request.user.school.postal_address }}{% endif %}
+        </p>
+        <h3 style="margin-top:15px; font-size:18px;">{{ school_class.name }} - Class Report | {{ active_term.get_term_number_display }} | {{ active_term.academic_year }}</h3>
+    </div>
+    <div style="width:120px;"></div>
+</div>
+
+<div class="no-print" style="text-align:center; margin-bottom:20px;">
+    <button onclick="window.print()" style="padding:12px 20px; background:#059669; color:white; border:none; border-radius:8px; font-weight:700; cursor:pointer;">🖨 Print Report</button>
+</div>
+
+<div id="print-area">
+<table>
+    <thead>
+        <tr>
+            <th>#</th><th>Student Name</th><th>Student ID</th>
+            {% for subject in subjects %}<th>{{ subject }}</th>{% endfor %}
+            <th>Total</th><th>Position</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for name, data in students %}
+        <tr>
+            <td>{{ forloop.counter }}</td><td style="text-align:left;">{{ name }}</td><td>{{ data.student_number }}</td>
+            {% for subject in subjects %}
+            <td>{% with data.subjects|get_item:subject as s %}{% if s %}<strong>{{ s.total|floatformat:0 }}</strong>{% else %}-{% endif %}{% endwith %}</td>
+            {% endfor %}
+            <td><strong>{{ data.total|floatformat:0 }}</strong></td><td>{{ data.position|ordinal }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div style="margin-top:30px; display:flex; justify-content:space-between; font-size:11pt; border-top:2px solid #111; padding-top:15px;">
+    <div>Class Teacher: ____________________<br><span style="font-size:10px">Signature</span></div>
+    <div>Head Teacher: ____________________<br><span style="font-size:10px">Signature & Stamp</span></div>
+</div>
+</div>
+
+<script>window.onload = function () { setTimeout(()=>window.print(), 600); };</script>
+</body>
+</html>

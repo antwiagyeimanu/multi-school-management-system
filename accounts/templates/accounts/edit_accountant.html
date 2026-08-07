@@ -1,0 +1,628 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block title %}Edit Accountant{% endblock %}
+
+{% block content %}
+
+<style>
+
+.edit-accountant-wrapper{
+    background:#f8fafc;
+    min-height:100vh;
+    padding:35px 15px;
+}
+
+
+.edit-accountant-card{
+    max-width:1100px;
+    margin:auto;
+    background:white;
+    border-radius:24px;
+    overflow:hidden;
+    box-shadow:0 15px 40px rgba(0,0,0,.08);
+    border:1px solid #e5e7eb;
+}
+
+
+
+/* HEADER */
+
+.edit-header{
+
+    background:linear-gradient(135deg,#2563eb,#1e40af);
+    padding:35px;
+    color:white;
+    text-align:center;
+
+}
+
+
+.edit-header h1{
+
+    margin:0;
+    font-size:32px;
+    font-weight:800;
+
+}
+
+
+.edit-header p{
+
+    margin-top:8px;
+    opacity:.9;
+    font-size:16px;
+
+}
+
+
+
+/* BODY */
+
+.edit-body{
+
+    padding:35px;
+
+}
+
+
+
+/* ALERT */
+
+.alert{
+
+    padding:14px;
+    border-radius:12px;
+    margin-bottom:20px;
+    font-weight:600;
+
+}
+
+
+.alert-success{
+
+    background:#dcfce7;
+    color:#166534;
+
+}
+
+
+.alert-error{
+
+    background:#fee2e2;
+    color:#991b1b;
+
+}
+
+
+
+/* READ ONLY CARD */
+
+.readonly-card{
+
+    background:#fffbeb;
+    border:1px solid #fbbf24;
+    border-radius:16px;
+    padding:20px;
+    margin-bottom:30px;
+
+}
+
+
+.readonly-card h3{
+
+    margin:0 0 15px;
+    color:#92400e;
+    font-size:18px;
+    font-weight:800;
+
+}
+
+
+.readonly-grid{
+
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:15px;
+
+}
+
+
+.readonly-item label{
+
+    display:block;
+    font-size:12px;
+    color:#92400e;
+    font-weight:700;
+    margin-bottom:5px;
+
+}
+
+
+.readonly-item input{
+
+    width:100%;
+    padding:10px;
+    border-radius:8px;
+    border:1px solid #fbbf24;
+    background:#fffbeb;
+    font-weight:700;
+    color:#92400e;
+
+}
+
+
+
+/* FORM */
+
+.form-grid{
+
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:20px;
+
+}
+
+
+.form-group{
+
+    margin-bottom:5px;
+
+}
+
+
+.form-group label{
+
+    display:block;
+    font-weight:700;
+    color:#374151;
+    font-size:14px;
+    margin-bottom:7px;
+
+}
+
+
+.form-control,
+input,
+select{
+
+    width:100%;
+    padding:11px 13px;
+    border-radius:10px;
+    border:1px solid #d1d5db;
+    font-size:15px;
+    box-sizing:border-box;
+
+}
+
+
+input:focus,
+select:focus{
+
+    outline:none;
+    border-color:#2563eb;
+    box-shadow:0 0 0 3px rgba(37,99,235,.15);
+
+}
+
+
+
+/* PHOTO */
+
+.photo-box{
+
+    margin-top:25px;
+    padding:20px;
+    background:#f8fafc;
+    border-radius:16px;
+    border:1px solid #e5e7eb;
+
+}
+
+
+.photo-box img{
+
+    width:90px;
+    height:90px;
+    object-fit:cover;
+    border-radius:50%;
+    border:4px solid white;
+    box-shadow:0 5px 15px rgba(0,0,0,.15);
+
+}
+
+
+.photo-text{
+
+    color:#6b7280;
+    font-size:13px;
+
+}
+
+
+
+/* BUTTONS */
+
+.action-buttons{
+
+    display:flex;
+    gap:12px;
+    margin-top:30px;
+
+}
+
+
+.save-btn{
+
+    background:#2563eb;
+    color:white;
+    padding:13px 30px;
+    border:none;
+    border-radius:12px;
+    font-weight:700;
+    cursor:pointer;
+
+}
+
+
+.save-btn:hover{
+
+    background:#1d4ed8;
+
+}
+
+
+.cancel-btn{
+
+    background:#e5e7eb;
+    color:#374151;
+    padding:13px 30px;
+    border-radius:12px;
+    text-decoration:none;
+    font-weight:700;
+
+}
+
+
+
+@media(max-width:768px){
+
+.edit-body{
+
+    padding:20px;
+
+}
+
+
+.form-grid{
+
+    grid-template-columns:1fr;
+
+}
+
+
+.readonly-grid{
+
+    grid-template-columns:1fr;
+
+}
+
+
+.action-buttons{
+
+    flex-direction:column;
+
+}
+
+
+.save-btn,
+.cancel-btn{
+
+    text-align:center;
+    width:100%;
+
+}
+
+}
+
+
+</style>
+
+
+<div class="edit-accountant-wrapper">
+
+
+<div class="edit-accountant-card">
+
+
+<div class="edit-header">
+
+<h1>
+✏️ Edit Accountant
+</h1>
+
+<p>
+Update accountant profile information
+</p>
+
+</div>
+
+
+<div class="edit-body">
+
+
+{% if messages %}
+{% for message in messages %}
+<div class="alert alert-success">
+{{ message }}
+</div>
+{% endfor %}
+{% endif %}
+
+
+
+<div class="readonly-card">
+
+<h3>
+🔒 Read-Only Information
+</h3>
+
+
+<div class="readonly-grid">
+
+
+<div class="readonly-item">
+
+<label>Staff ID</label>
+
+<input type="text"
+value="{{ accountant.staff_id|default:'Not set' }}"
+disabled>
+
+</div>
+
+
+
+<div class="readonly-item">
+
+<label>Ghana Card</label>
+
+<input type="text"
+value="{{ accountant.national_id_card|default:'Not set' }}"
+disabled>
+
+</div>
+
+
+
+<div class="readonly-item">
+
+<label>School</label>
+
+<input type="text"
+value="{{ accountant.school.name|default:'Not set' }}"
+disabled>
+
+</div>
+
+
+</div>
+
+</div>
+    
+
+  <form method="POST" enctype="multipart/form-data">
+
+{% csrf_token %}
+
+
+<div class="form-grid">
+
+
+<div class="form-group">
+<label>Title</label>
+{{ form.title }}
+</div>
+
+
+
+<div class="form-group">
+<label>First Name *</label>
+{{ form.first_name }}
+</div>
+
+
+
+<div class="form-group">
+<label>Middle Name</label>
+{{ form.middle_name }}
+</div>
+
+
+
+<div class="form-group">
+<label>Last Name *</label>
+{{ form.last_name }}
+</div>
+
+
+
+<div class="form-group">
+<label>Email</label>
+{{ form.email }}
+</div>
+
+
+
+<div class="form-group">
+<label>Phone Number</label>
+{{ form.phone }}
+</div>
+
+
+
+<div class="form-group">
+<label>Gender</label>
+{{ form.gender }}
+</div>
+
+
+
+<div class="form-group">
+<label>Date of Birth</label>
+{{ form.date_of_birth }}
+</div>
+
+
+
+<div class="form-group">
+<label>Nationality</label>
+{{ form.nationality }}
+</div>
+
+
+
+<div class="form-group">
+<label>Religion</label>
+{{ form.religion }}
+</div>
+
+
+
+<div class="form-group">
+<label>Qualification</label>
+{{ form.qualification }}
+</div>
+
+
+
+<div class="form-group">
+<label>Department</label>
+{{ form.department }}
+</div>
+
+
+
+</div>
+
+
+
+
+<!-- PHOTO SECTION -->
+
+<div class="photo-box">
+
+<label style="font-weight:700; display:block; margin-bottom:12px;">
+Update Account Photo
+</label>
+
+
+{% if accountant.photo %}
+
+<img src="{{ accountant.photo.url }}" alt="Accountant Photo">
+
+
+<p class="photo-text">
+Current profile photo
+</p>
+
+{% endif %}
+
+
+
+<div class="form-group" style="margin-top:15px;">
+
+{{ form.photo }}
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- STATUS -->
+
+<div style="
+margin-top:20px;
+background:#f8fafc;
+padding:15px;
+border-radius:12px;
+border:1px solid #e5e7eb;
+">
+
+
+<label style="
+display:flex;
+align-items:center;
+gap:10px;
+font-weight:700;
+cursor:pointer;
+">
+
+{{ form.is_active }}
+
+<span>
+Active Accountant
+</span>
+
+
+</label>
+
+
+</div>
+
+
+
+
+
+{% if form.errors %}
+
+<div class="alert alert-error" style="margin-top:20px;">
+
+<strong>Please fix these errors:</strong>
+
+{{ form.errors }}
+
+</div>
+
+{% endif %}
+
+
+
+
+
+<div class="action-buttons">
+
+
+<button type="submit" class="save-btn">
+
+💾 Save Changes
+
+</button>
+
+
+<a href="{% url 'accounts:manage_accountant_grid' %}" class="cancel-btn">
+
+Cancel
+
+</a>
+
+
+</div>
+
+
+
+</form>
+
+
+
+</div>
+
+</div>
+
+</div>
+
+
+{% endblock %}

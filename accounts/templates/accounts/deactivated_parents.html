@@ -1,0 +1,441 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
+
+<style>
+
+/* PAGE */
+
+.deactivated-page{
+    background:#f8fafc;
+    min-height:100vh;
+    padding:30px 15px;
+}
+
+
+/* HEADER */
+
+.page-header{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:30px;
+
+}
+
+
+.page-header h2{
+
+    font-size:32px;
+    font-weight:900;
+    color:#111827;
+    margin:0;
+
+}
+
+
+.back-btn{
+
+    background:#2563eb;
+    color:white;
+    padding:12px 22px;
+    border-radius:12px;
+    text-decoration:none;
+    font-weight:700;
+
+}
+
+
+.back-btn:hover{
+
+    background:#1d4ed8;
+    color:white;
+
+}
+
+
+
+/* GRID */
+
+.parent-grid{
+
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:25px;
+
+}
+
+
+@media(max-width:1000px){
+
+    .parent-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+}
+
+
+@media(max-width:650px){
+
+    .parent-grid{
+        grid-template-columns:1fr;
+    }
+
+
+    .page-header{
+
+        flex-direction:column;
+        gap:15px;
+        align-items:flex-start;
+
+    }
+
+}
+
+
+
+/* CARD */
+
+.parent-card{
+
+    background:white;
+    border-radius:24px;
+    overflow:hidden;
+    border:1px solid #e5e7eb;
+    box-shadow:0 10px 25px rgba(0,0,0,.06);
+    transition:.3s;
+
+}
+
+
+.parent-card:hover{
+
+    transform:translateY(-5px);
+    box-shadow:0 18px 35px rgba(0,0,0,.12);
+
+}
+
+
+
+/* HEADER */
+
+.card-header{
+
+    background:linear-gradient(
+        135deg,
+        #6b7280,
+        #374151
+    );
+
+    padding:25px;
+    text-align:center;
+    color:white;
+
+}
+
+
+
+.avatar{
+
+    width:80px;
+    height:80px;
+    border-radius:50%;
+    background:white;
+    color:#374151;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    margin:auto;
+    font-size:28px;
+    font-weight:900;
+
+}
+
+
+
+.parent-name{
+
+    margin-top:15px;
+    font-size:20px;
+    font-weight:800;
+
+}
+
+
+
+/* BODY */
+
+.card-body{
+
+    padding:22px;
+
+}
+
+
+.info-row{
+
+    display:flex;
+    justify-content:space-between;
+    padding:10px 0;
+    border-bottom:1px solid #f1f5f9;
+    font-size:15px;
+
+}
+
+
+.info-label{
+
+    color:#6b7280;
+    font-weight:700;
+
+}
+
+
+.info-value{
+
+    color:#111827;
+    font-weight:700;
+    text-align:right;
+
+}
+
+
+
+/* FOOTER */
+
+.card-footer{
+
+    padding:18px;
+    background:#f9fafb;
+
+}
+
+
+.status-badge{
+
+    display:block;
+    text-align:center;
+    background:#fee2e2;
+    color:#991b1b;
+    padding:8px;
+    border-radius:10px;
+    font-weight:800;
+    margin-bottom:12px;
+
+}
+
+
+
+.reactivate-btn{
+
+    display:block;
+    text-align:center;
+    background:#16a34a;
+    color:white;
+    padding:12px;
+    border-radius:12px;
+    text-decoration:none;
+    font-weight:800;
+
+}
+
+
+.reactivate-btn:hover{
+
+    background:#15803d;
+    color:white;
+
+}
+
+
+
+/* EMPTY */
+
+.empty-box{
+
+    background:white;
+    padding:40px;
+    border-radius:20px;
+    text-align:center;
+    box-shadow:0 10px 25px rgba(0,0,0,.06);
+    color:#6b7280;
+    font-weight:700;
+
+}
+
+
+</style>
+
+
+
+
+<div class="deactivated-page">
+
+
+
+<div class="page-header">
+
+<h2>
+🚫 Deactivated Parents
+</h2>
+
+
+<a href="{% url 'accounts:manage-parents' %}" class="back-btn">
+
+← Back to Active Parents
+
+</a>
+
+
+</div>
+
+
+
+
+
+
+<div class="parent-grid">
+
+
+{% for parent in parents %}
+
+
+<div class="parent-card">
+
+
+
+<!-- HEADER -->
+
+<div class="card-header">
+
+
+<div class="avatar">
+
+{{ parent.first_name|first }}{{ parent.last_name|first }}
+
+</div>
+
+
+
+<div class="parent-name">
+
+{{ parent.first_name }} {{ parent.last_name }}
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- BODY -->
+
+<div class="card-body">
+
+
+
+<div class="info-row">
+
+<span class="info-label">
+Username
+</span>
+
+<span class="info-value">
+{{ parent.username }}
+</span>
+
+</div>
+
+
+
+
+<div class="info-row">
+
+<span class="info-label">
+Phone
+</span>
+
+<span class="info-value">
+{{ parent.phone|default:"N/A" }}
+</span>
+
+</div>
+
+
+
+
+<div class="info-row">
+
+<span class="info-label">
+Joined
+</span>
+
+<span class="info-value">
+{{ parent.date_joined|date:"M d, Y" }}
+</span>
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+<!-- FOOTER -->
+
+<div class="card-footer">
+
+
+<div class="status-badge">
+
+Inactive
+
+</div>
+
+
+
+<a href="{% url 'accounts:reactivate_parent' parent.id %}"
+class="reactivate-btn">
+
+✅ Reactivate Parent
+
+</a>
+
+
+</div>
+
+
+
+</div>
+
+
+
+{% empty %}
+
+
+<div class="empty-box">
+
+No deactivated parents found.
+
+</div>
+
+
+{% endfor %}
+
+
+
+</div>
+
+
+</div>
+
+
+
+{% endblock %}

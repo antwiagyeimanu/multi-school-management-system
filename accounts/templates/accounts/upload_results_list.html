@@ -1,0 +1,303 @@
+{% extends "accounts/dashboard_base.html" %}
+
+{% block content %}
+
+<style>
+
+/* PAGE SPACE */
+.upload-page{
+    margin-top:25px;
+}
+
+
+/* HERO */
+
+.upload-header{
+
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+
+    color:white;
+
+    padding:28px;
+
+    border-radius:22px;
+
+    margin-bottom:30px;
+
+    box-shadow:0 12px 30px rgba(37,99,235,.18);
+
+}
+
+
+.upload-header h3{
+
+    margin:0;
+
+    font-weight:800;
+
+}
+
+
+.upload-header p{
+
+    margin:8px 0 0;
+
+    opacity:.9;
+
+}
+
+
+
+/* GRID */
+
+.assignment-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+
+    gap:25px;
+
+}
+
+
+
+/* CARD */
+
+.result-card{
+
+    background:white;
+
+    border-radius:22px;
+
+    padding:25px;
+
+    border:1px solid #e5e7eb;
+
+    box-shadow:
+    0 8px 25px rgba(15,23,42,.08);
+
+    transition:.3s;
+
+    position:relative;
+
+    overflow:hidden;
+
+}
+
+
+
+.result-card:before{
+
+    content:"";
+
+    position:absolute;
+
+    left:0;
+
+    top:0;
+
+    height:100%;
+
+    width:6px;
+
+    background:#2563eb;
+
+}
+
+
+
+.result-card:hover{
+
+    transform:translateY(-6px);
+
+    box-shadow:
+    0 15px 35px rgba(15,23,42,.15);
+
+}
+
+
+
+/* ICON */
+
+.result-icon{
+
+    width:55px;
+
+    height:55px;
+
+    border-radius:16px;
+
+    background:#dbeafe;
+
+    color:#2563eb;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:25px;
+
+    margin-bottom:18px;
+
+}
+
+
+
+/* CLASS */
+
+.class-name{
+
+    font-size:20px;
+
+    font-weight:800;
+
+    color:#1e293b;
+
+    margin-bottom:12px;
+
+}
+
+
+
+/* SUBJECT */
+
+.subject-name{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    padding:8px 15px;
+
+    border-radius:30px;
+
+    background:#f1f5f9;
+
+    color:#475569;
+
+    font-weight:700;
+
+    font-size:.9rem;
+
+}
+
+
+
+.subject-name i{
+
+    color:#2563eb;
+
+}
+
+
+/* LINK */
+
+a{
+
+    text-decoration:none;
+
+}
+
+
+
+</style>
+
+
+
+<div class="upload-page">
+
+
+
+<div class="upload-header">
+
+<h3>
+
+<i class="fas fa-upload"></i>
+
+Upload Results
+
+</h3>
+
+
+<p>
+
+Select a class and subject to upload student results
+
+</p>
+
+
+</div>
+
+
+
+
+
+<div class="assignment-grid">
+
+
+
+{% for assignment in assignments %}
+
+
+
+<a href="{% url 'accounts:teacher-upload-results' assignment.school_class.id assignment.subject.id %}">
+
+
+<div class="result-card">
+
+
+
+<div class="result-icon">
+
+<i class="fas fa-file-upload"></i>
+
+</div>
+
+
+
+
+<div class="class-name">
+
+<i class="fas fa-school text-primary"></i>
+
+{{ assignment.school_class.name }}
+
+</div>
+
+
+
+<div class="subject-name">
+
+<i class="fas fa-book"></i>
+
+{{ assignment.subject.name }}
+
+</div>
+
+
+
+</div>
+
+
+</a>
+
+
+
+{% endfor %}
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+{% endblock %}

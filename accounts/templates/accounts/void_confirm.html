@@ -1,0 +1,12 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h4>Void Receipt {{ txn.receipt_number }} - {{ txn.student }}</h4>
+  <p>Amount: GHS {{ txn.total_amount }}</p>
+  <form method="POST">{% csrf_token %}
+    <label>Reason for voiding:</label>
+    <textarea name="void_reason" class="form-control" required></textarea>
+    <button class="btn btn-danger mt-3">Confirm Void</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,518 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block title %}Add Teacher{% endblock %}
+
+{% block content %}
+
+<style>
+
+/* PAGE */
+.teacher-page{
+    background:#f8fafc;
+    min-height:100vh;
+    padding:25px;
+}
+
+
+/* HERO */
+.teacher-hero{
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:white;
+    border-radius:22px;
+    padding:35px;
+    margin-bottom:25px;
+    box-shadow:0 15px 35px rgba(37,99,235,.25);
+}
+
+.teacher-hero h2{
+    margin:0;
+    font-size:32px;
+    font-weight:800;
+}
+
+.teacher-hero p{
+    margin-top:8px;
+    opacity:.85;
+}
+
+
+/* CARD */
+.teacher-card{
+    background:white;
+    border-radius:22px;
+    padding:30px;
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+}
+
+
+/* ALERTS */
+.success-box{
+    background:#ecfdf5;
+    border-left:5px solid #10b981;
+    padding:18px;
+    border-radius:14px;
+    color:#065f46;
+    margin-bottom:20px;
+}
+
+.error-box{
+    background:#fee2e2;
+    border-left:5px solid #dc2626;
+    padding:18px;
+    border-radius:14px;
+    color:#991b1b;
+    margin-bottom:20px;
+}
+
+
+/* FORM */
+.teacher-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:30px;
+}
+
+.teacher-section{
+    background:#f8fafc;
+    padding:25px;
+    border-radius:18px;
+}
+
+.section-title{
+    font-size:18px;
+    font-weight:800;
+    color:#1f2937;
+    margin-bottom:20px;
+}
+
+
+/* INPUTS */
+label{
+    display:block;
+    font-weight:700;
+    color:#374151;
+    margin-bottom:7px;
+    font-size:14px;
+}
+
+
+input,
+select{
+    width:100%;
+    height:45px;
+    border-radius:12px;
+    border:1px solid #d1d5db;
+    padding:10px 14px;
+    font-size:15px;
+    margin-bottom:18px;
+    background:white;
+}
+
+
+input:focus,
+select:focus{
+    outline:none;
+    border-color:#2563eb;
+    box-shadow:0 0 0 4px rgba(37,99,235,.12);
+}
+
+
+/* CHECKBOX */
+input[type="checkbox"]{
+    width:18px;
+    height:18px;
+    accent-color:#2563eb;
+}
+
+
+/* PHOTO */
+.photo-box{
+    background:white;
+    border:2px dashed #cbd5e1;
+    padding:15px;
+    border-radius:15px;
+}
+
+
+/* BUTTON */
+.teacher-btn{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:50px;
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:white;
+    font-size:16px;
+    font-weight:700;
+}
+
+
+.teacher-btn:hover{
+    transform:translateY(-2px);
+}
+
+
+/* MOBILE */
+@media(max-width:768px){
+
+.teacher-page{
+    padding:15px;
+}
+
+.teacher-grid{
+    grid-template-columns:1fr;
+}
+
+.teacher-hero h2{
+    font-size:25px;
+}
+
+}
+
+</style>
+
+
+<div class="teacher-page">
+
+
+<div class="teacher-hero">
+
+<h2>
+👨‍🏫 Add New Teacher
+</h2>
+
+<p>
+Register teacher details and assign them to your school.
+</p>
+
+</div>
+
+
+
+{% if messages %}
+{% for message in messages %}
+
+<div class="success-box">
+{{ message }}
+</div>
+
+{% endfor %}
+{% endif %}
+
+
+
+{% if credentials %}
+
+<div class="success-box">
+
+<h4>
+Teacher Created Successfully
+</h4>
+
+<p>
+<strong>Username:</strong>
+{{ credentials.username }}
+</p>
+
+<p>
+<strong>Staff ID:</strong>
+{{ credentials.staff_id }}
+</p>
+
+<p>
+<strong>Password:</strong>
+{{ credentials.password }}
+</p>
+
+<small>
+Save these details. They will not be shown again.
+</small>
+
+</div>
+
+{% endif %}
+
+
+
+{% if form.non_field_errors %}
+
+<div class="error-box">
+{{ form.non_field_errors }}
+</div>
+
+{% endif %}
+
+
+
+{% if form.errors %}
+
+<div class="error-box">
+
+<strong>
+Please fix the errors below.
+</strong>
+
+{{ form.errors }}
+
+</div>
+
+{% endif %}
+
+
+
+<div class="teacher-card">
+
+
+<form method="POST" enctype="multipart/form-data">
+
+{% csrf_token %}
+
+
+
+<div class="teacher-grid">
+
+
+<!-- LEFT SIDE -->
+
+<div class="teacher-section">
+
+
+<div class="section-title">
+Personal Information
+</div>
+
+
+<label>
+Title
+</label>
+
+{{ form.title }}
+
+
+<label>
+First Name *
+</label>
+
+{{ form.first_name }}
+
+
+<label>
+Middle Name
+</label>
+
+{{ form.middle_name }}
+
+
+<label>
+Last Name *
+</label>
+
+{{ form.last_name }}
+
+
+<label>
+Gender
+</label>
+
+{{ form.gender }}
+
+
+<label>
+Date of Birth
+</label>
+
+{{ form.date_of_birth }}
+
+
+<label>
+National ID Card Number *
+</label>
+
+{{ form.national_id_card }}
+
+
+<div style="margin-top:10px;">
+
+<label style="display:flex;align-items:center;gap:10px;">
+
+{{ form.is_class_teacher }}
+
+<span>
+{{ form.is_class_teacher.label }}
+</span>
+
+</label>
+
+</div>
+
+
+</div>
+
+<!-- RIGHT SIDE -->
+
+<div class="teacher-section">
+
+
+<div class="section-title">
+Contact & Work Information
+</div>
+
+
+<label>
+Religion
+</label>
+
+{{ form.religion }}
+
+
+<label>
+Phone Number *
+</label>
+
+{{ form.phone }}
+
+
+<label>
+Email
+</label>
+
+{{ form.email }}
+
+
+<label>
+Nationality
+</label>
+
+{{ form.nationality }}
+
+
+<label>
+Qualification
+</label>
+
+{{ form.qualification }}
+
+
+<label>
+Department
+</label>
+
+{{ form.department }}
+
+
+<label>
+Photo
+</label>
+
+<div class="photo-box">
+
+{{ form.photo }}
+
+</div>
+
+
+
+<div id="class_teacher_div" style="margin-top:20px;">
+
+<label>
+Class Teacher Of
+</label>
+
+{{ form.class_teacher_of }}
+
+</div>
+
+
+
+</div>
+
+</div>
+
+
+
+<div style="margin-top:30px; display:flex; gap:15px;">
+
+<button type="submit" class="teacher-btn">
+💾 Add Teacher
+</button>
+
+
+<a href="{% url 'accounts:manage-teachers-grid' %}"
+style="
+padding:14px 25px;
+background:#6b7280;
+color:white;
+border-radius:50px;
+text-decoration:none;
+font-weight:700;
+text-align:center;
+">
+Cancel
+</a>
+
+
+</div>
+
+
+
+</form>
+
+
+</div>
+
+
+</div>
+
+
+
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function(){
+
+
+const classTeacherCheckbox =
+document.getElementById('id_is_class_teacher');
+
+
+const classDiv =
+document.getElementById('class_teacher_div');
+
+
+
+function toggleClassField(){
+
+if(classTeacherCheckbox.checked){
+
+classDiv.style.display='block';
+
+}else{
+
+classDiv.style.display='none';
+
+document.getElementById('id_class_teacher_of').value='';
+
+}
+
+}
+
+
+
+if(classTeacherCheckbox){
+
+toggleClassField();
+
+classTeacherCheckbox.addEventListener(
+'change',
+toggleClassField
+);
+
+}
+
+
+});
+
+</script>
+
+
+{% endblock %}

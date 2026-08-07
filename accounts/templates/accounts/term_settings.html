@@ -1,0 +1,288 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block content %}
+
+<style>
+.page-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #2c3e50;
+}
+.settings-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    padding: 25px;
+    background: #ffffff;
+    margin-bottom: 20px;
+}
+.section-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #34495e;
+}
+.form-control, .form-select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 15px;
+    transition: all 0.3s;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+.btn-primary {
+    background: #3498db;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    color: white;
+    font-size: 15px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+.btn-primary:hover {
+    background: #2980b9;
+    transform: translateY(-1px);
+}
+.btn-sm {
+    padding: 5px 12px;
+    font-size: 13px;
+}
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+.table th, .table td {
+    padding: 12px 15px;
+    border: 1px solid #e9ecef;
+    text-align: left;
+    vertical-align: middle;
+}
+.table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+.table tr:hover {
+    background: #f8f9fa;
+}
+.alert {
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.alert-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+.alert-error {
+    background: #ffe5e5;
+    border: 1px solid #ffb3b3;
+    color: #b00020;
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.alert-error::before {
+    content: "❌";
+    font-size: 16px;
+}
+.badge {
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.badge-success {
+    background: #28a745;
+    color: white;
+}
+.badge-secondary {
+    background: #6c757d;
+    color: white;
+}
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.form-check-input {
+    width: 18px;
+    height: 18px;
+    margin-top: 0;
+}
+.label{text-align: center;}
+</style>
+
+<div class="container mt-4">
+    <h2 class="page-title">📅 Term Settings</h2>
+
+    {% if active_term %}
+    <div class="alert alert-success">
+        <i>✅</i>
+        <div>
+<strong>Active Term:</strong> {{ active_term.get_term_number_display }} - Academic Year: {{ active_term.academic_year }} |
+            <strong>Max CA:</strong> {{ active_term.ca_total }} | 
+            <strong>Max Exam:</strong> {{ active_term.exam_total }}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="settings-card">
+        <h5 class="section-title">Create New Term</h5>
+        {% if form.non_field_errors %}
+        <div class="alert-error" id="error-box">
+            {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+        
+        <form method="POST">
+            {% csrf_token %}
+            <div class="row">
+                
+
+
+<div class="col-md-6 mb-3">
+    <label class="fw-semibold mb-1">Academic Year</label>
+    {{ form.new_academic_year }}
+</div>
+                <div class="col-md-6 mb-3">
+                    <label class="fw-semibold mb-1">Term</label>
+                    {{ form.term_number }}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="fw-semibold mb-1">CA Total</label>
+                    {{ form.ca_total }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="fw-semibold mb-1">Exam Total</label>
+                    {{ form.exam_total }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="fw-semibold mb-1">Start Date</label>
+                    {{ form.start_date }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="fw-semibold mb-1">End Date</label>
+                    {{ form.end_date }}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="fw-semibold mb-1">Next Term Begins</label>
+                    {{ form.next_term_begins }}
+                </div>
+                <div class="col-md-12 mb-3">
+                    <div class="form-check">
+                        {{ form.is_active }}
+                        <label class="form-check-label fw-semibold">Set as Active Term</label>
+                    </div>
+                    <small class="text-muted">Only one term can be active at a time</small>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">💾 Save Term</button>
+        </form>
+    </div>
+
+    <div class="settings-card">
+        <h5 class="section-title">All Terms</h5>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Academic Year</th>
+                        <th>Term</th>
+                        <th>CA</th>
+                        <th>Exam</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>Active</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for term in terms %}
+                    <tr>
+                        <td><strong>{{ term.academic_year }}</strong></td>
+                        <td>{{ term.get_term_number_display }}</td>
+                        <td>{{ term.ca_total }}</td>
+                        <td>{{ term.exam_total }}</td>
+                        <td>{{ term.start_date|date:"d M Y" }}</td>
+                        <td>{{ term.end_date|date:"d M Y" }}</td>
+                        <td>
+                            {% if term.is_active %}
+                            <span class="badge badge-success">Active</span>
+                            {% else %}
+                            <span class="badge badge-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'accounts:edit_term' term.id %}" class="btn btn-primary btn-sm">Edit</a>
+                            <button type="button" class="btn btn-danger btn-sm"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deleteModal{{ term.id }}">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                    
+                    <!-- Modal -->
+                    <div class="modal fade" id="deleteModal{{ term.id }}" tabindex="-1">
+                      <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                          <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title">Confirm Delete</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                          </div>
+                          <div class="modal-body">
+                            <p>Are you sure you want to delete this term?</p>
+                            <!-- CHANGED THIS LINE TOO -->
+                            <p><strong>{{ term.academic_year }} - {{ term.name }}</strong></p>
+                            <p class="text-muted">CA Total: {{ term.ca_total }} | Exam Total: {{ term.exam_total }}</p>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <a href="{% url 'accounts:delete_term' term.id %}" class="btn btn-danger">Delete</a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">No terms created yet</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap CSS & JS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    setTimeout(function () {
+        const box = document.getElementById("error-box");
+        if (box) {
+            box.style.transition = "opacity 0.5s ease";
+            box.style.opacity = "0";
+            setTimeout(() => box.remove(), 500);
+        }
+    }, 5000);
+</script>
+
+{% endblock %}

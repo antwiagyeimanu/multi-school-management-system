@@ -1,0 +1,100 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block content %}
+<div style="max-width:1000px; margin:30px auto; font-family:system-ui;">
+
+  <div style="background:white; padding:20px; border-radius:16px; margin-bottom:20px; box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+    <h2 style="margin:0;">Link Students to {{ parent.get_full_name }}</h2>
+    <p style="color:#64748b; margin:5px 0 0;">Already linked: <strong>{{ total_linked }}</strong> student(s)</p>
+  </div>
+
+  <!-- CLASS CARDS -->
+  <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:12px; margin-bottom:20px;">
+    {% for cls in classes %}
+    <a href="?class_id={{ cls.id }}" style="text-decoration:none; background:{% if selected_class_id == cls.id|stringformat:'s' %}#2563eb{% else %}white{% endif %}; color:{% if selected_class_id == cls.id|stringformat:'s' %}white{% else %}#111827{% endif %}; padding:18px; border-radius:12px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.05); border:2px solid {% if selected_class_id == cls.id|stringformat:'s' %}#2563eb{% else %}#e5e7eb{% endif %}; font-weight:600;">
+      {{ cls.name }} <br><small style="opacity:0.8;">{{ cls.student_count }}</small>
+    </a>
+    {% endfor %}
+  </div>
+
+  {% if not selected_class_id %}
+    <div style="background:#f8fafc; padding:40px; border-radius:16px; text-align:center; color:#64748b; border:2px dashed #e2e8f0;">
+      👆 Select a class above to see students in that class
+    </div>
+  {% else %}
+  <!-- SEARCH -->
+  <form method="GET" style="margin-bottom:15px; display:flex; gap:10px;">
+    <input type="hidden" name="class_id" value="{{ selected_class_id }}">
+    <input type="text" name="q" value="{{ search_q }}" placeholder="Search student name..." style="flex:1; padding:10px 14px; border:1px solid #d1d5db; border-radius:10px;">
+    <button type="submit" style="padding:10px 20px; background:#111827; color:white; border-radius:10px; border:none; cursor:pointer;">Search</button>
+  </form>
+
+  <form method="POST">
+    {% csrf_token %}
+    <input type="hidden" name="selected_class_id" value="{{ selected_class_id }}">
+    <div style="background:white; padding:20px; border-radius:16px; box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+      <h4 style="margin:0 0 15px;">Students in selected class ({{ students|length }})</h4>
+      
+<!-- BEFORE: style="max-height:500px; overflow-y:auto;" -->
+<!-- AFTER: GRID 2 per row -->
+
+<div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px;">
+
+  {% for student in students %}
+  <div style="display:flex; align-items:center; gap:10px; padding:12px; border:1px solid #e5e7eb; border-radius:10px; background:#fafafa;">
+    
+    <input type="checkbox" name="students" value="{{ student.id }}" id="s{{ student.id }}" {% if student.link_relationship %}checked{% endif %} style="width:18px; height:18px; flex-shrink:0;">
+
+    <label for="s{{ student.id }}" style="flex:1; cursor:pointer; min-width:0;">
+      <div style="font-weight:600; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ student.get_full_name }}</div>
+      <div style="font-size:11px; color:#6b7280;">{{ student.student_number }}</div>
+    </label>
+
+    <!-- Relationship now CLOSE to name, not far -->
+    <select name="relationship_{{ student.id }}" style="padding:6px 8px; border:1px solid #d1d5db; border-radius:8px; background:white; font-size:13px; width:110px; flex-shrink:0;">
+      <option value="">Relationship</option>
+      <option value="Father" {% if student.link_relationship == 'Father' %}selected{% endif %}>Father</option>
+      <option value="Mother" {% if student.link_relationship == 'Mother' %}selected{% endif %}>Mother</option>
+      <option value="Brother" {% if student.link_relationship == 'Brother' %}selected{% endif %}>Brother</option>
+      <option value="Sister" {% if student.link_relationship == 'Sister' %}selected{% endif %}>Sister</option>
+      <option value="Uncle" {% if student.link_relationship == 'Uncle' %}selected{% endif %}>Uncle</option>
+      <option value="Aunt" {% if student.link_relationship == 'Aunt' %}selected{% endif %}>Aunt</option>
+      <option value="Guardian" {% if student.link_relationship == 'Guardian' %}selected{% endif %}>Guardian</option>
+    </select>
+  </div>
+  {% endfor %}
+
+</div>
+
+      <div style="margin-top:20px; border-top:1px solid #e5e7eb; padding-top:15px;">
+        <button type="submit" style="padding:11px 22px; background:#2563eb; color:white; border:none; border-radius:10px; font-weight:600; cursor:pointer;">Save Links for This Class</button>
+        <a href="{% url 'accounts:manage-parents' %}" style="margin-left:10px; color:#6b7280; text-decoration:none;">Back to Parents</a>
+      </div>
+    </div>
+  </form>
+  {% endif %}
+</div>
+<!-- PAGINATION -->
+<div style="display:flex; justify-content:center; gap:6px; margin-top:20px;">
+  {% if students.has_previous %}
+    <a href="?class_id={{ selected_class_id }}&q={{ search_q }}&page={{ students.previous_page_number }}" style="padding:8px 14px; background:white; border:1px solid #e5e7eb; border-radius:8px; text-decoration:none;">Prev</a>
+  {% endif %}
+
+  {% for num in students.paginator.page_range %}
+    <a href="?class_id={{ selected_class_id }}&q={{ search_q }}&page={{ num }}" 
+       style="padding:8px 14px; border-radius:8px; text-decoration:none; 
+       background:{% if students.number == num %}#2563eb{% else %}white{% endif %};
+       color:{% if students.number == num %}white{% else %}#111827{% endif %};
+       border:1px solid {% if students.number == num %}#2563eb{% else %}#e5e7eb{% endif %};">
+       {{ num }}
+    </a>
+  {% endfor %}
+
+  {% if students.has_next %}
+    <a href="?class_id={{ selected_class_id }}&q={{ search_q }}&page={{ students.next_page_number }}" style="padding:8px 14px; background:white; border:1px solid #e5e7eb; border-radius:8px; text-decoration:none;">Next</a>
+  {% endif %}
+</div>
+
+<div style="text-align:center; color:#64748b; font-size:13px; margin-top:8px;">
+  Showing {{ students.start_index }}-{{ students.end_index }} of {{ students.paginator.count }} students
+</div>
+{% endblock %}

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            font-size: 11px; 
+            color: #333;
+        }
+        h1 { 
+            text-align: center; 
+            color: #c00; 
+            margin-bottom: 5px;
+            font-size: 20px;
+        }
+        h2 { 
+            text-align: center; 
+            margin: 5px 0;
+            font-size: 16px;
+        }
+        .header { 
+            text-align: center; 
+            margin-bottom: 20px;
+            border-bottom: 2px solid #c00;
+            padding-bottom: 10px;
+        }
+        .summary { 
+            margin: 15px 0; 
+            padding: 10px;
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 10px;
+        }
+        th, td { 
+            border: 1px solid #333; 
+            padding: 6px; 
+            text-align: left; 
+        }
+        th { 
+            background-color: #e8e8e8; 
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ school.name }}</h1>
+        <h2>Fee Defaulters Report - {{ class_name }}</h2>
+        <p><strong>{{ current_term }} - {{ current_year }}</strong></p>
+        <p>Generated: {{ date_generated|date:"d M, Y" }}</p>
+    </div>
+    
+    <div class="summary">
+        <strong>Class Total Outstanding: GHS {{ class_total_owing|floatformat:2 }}</strong><br>
+        <strong>Total Defaulters: {{ count }} Students</strong>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Student Name</th>
+                <th>Student Number</th>
+                <th>Total Fee</th>
+                <th>Amount Paid</th>
+                <th>Balance Owed</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student_data in students %}
+            <tr>
+                <td>{{ student_data.student.get_full_name }}</td>
+                <td>{{ student_data.student_number }}</td>
+                <td>GHS {{ student_data.total|floatformat:2 }}</td>
+                <td>GHS {{ student_data.paid|floatformat:2 }}</td>
+                <td>GHS {{ student_data.balance|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

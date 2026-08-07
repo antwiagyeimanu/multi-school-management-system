@@ -1,0 +1,104 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block content %}
+<style>
+
+/* Page card */
+.card {
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    border: none;
+}
+
+/* Header */
+.card-header h3 {
+    font-size: 25px;
+    font-weight: 700;
+    text-align: center;
+    margin: 0;
+}
+
+/* Labels */
+label {
+    font-size: 20px;
+    font-weight: 700;
+    color: #010a13;
+    margin-bottom: 6px;
+}
+
+/* Inputs + selects */
+.form-control {
+    font-size: 16px;
+    font-weight: 600;
+    padding: 10px;
+    border-radius: 8px;
+     color: #010a13;
+
+}
+
+/* Focus effect */
+.form-control:focus {
+    border-color: #1abc9c;
+    box-shadow: 0 0 6px rgba(26,188,156,0.3);
+}
+
+/* Buttons */
+.btn-primary {
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 8px;
+}
+
+.btn-secondary {
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 8px;
+}
+
+/* Form spacing */
+.mb-3 {
+    margin-bottom: 18px !important;
+}
+
+</style>
+<div class="container mt-4">
+    <div class="card col-md-6 mx-auto">
+       <div class="card-header bg-light text-dark">
+    <h3 class="text-dark">Start New Attendance Session</h3>
+</div>
+        <div class="card-body">
+            <form method="POST">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label>Date</label>
+                    <input type="date" name="date" class="form-control" value="{{ today }}" required>
+                </div>
+
+                <div class="mb-3">
+                    <label>Class</label>
+                    <select name="school_class" class="form-control" required>
+                        <option value="">-- Select Class --</option>
+                        {% for class in classes %}
+                        <option value="{{ class.id }}">{{ class.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label>Subject</label>
+                    <select name="subject" class="form-control" required>
+                        <option value="">-- Select Subject --</option>
+                        {% for subject in subjects %}
+                        <option value="{{ subject.id }}">{{ subject.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Start Marking Attendance</button>
+                <a href="{% url 'accounts:attendance_report' %}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,946 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block content %}
+
+<style>
+body{
+    background:#f4f7fb;
+}
+
+/* HERO */
+.hero-card{
+    border:none;
+    border-radius:22px;
+    overflow:hidden;
+    background:linear-gradient(135deg,#0d6efd,#198754);
+    color:#fff;
+    box-shadow:0 18px 40px rgba(13,110,253,.18);
+}
+
+.hero-icon{
+    width:78px;
+    height:78px;
+    border-radius:20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,.15);
+    font-size:34px;
+}
+
+.hero-title{
+    font-size:2rem;
+    font-weight:800;
+}
+
+.hero-subtitle{
+    opacity:.92;
+}
+
+/* FILTERS */
+
+.filter-card{
+    border:none;
+    border-radius:18px;
+    box-shadow:0 10px 25px rgba(0,0,0,.06);
+}
+
+.filter-label{
+    font-weight:700;
+    color:#495057;
+    margin-bottom:6px;
+}
+
+.form-select{
+    border-radius:12px;
+    min-height:48px;
+}
+
+/* TERM INFO */
+
+.term-banner{
+    background:#fff;
+    border:none;
+    border-radius:18px;
+    box-shadow:0 8px 25px rgba(0,0,0,.06);
+}
+
+.term-stat{
+    text-align:center;
+    padding:15px;
+}
+
+.term-value{
+    font-size:1.2rem;
+    font-weight:700;
+}
+
+.term-title{
+    color:#6c757d;
+    font-size:.9rem;
+}
+
+/* SECTION */
+
+.section-title{
+    font-size:1.15rem;
+    font-weight:700;
+}
+
+.alert{
+    border-radius:14px;
+}
+
+/* Existing cards */
+
+.student-card{
+    background:#fff;
+    border:none;
+    border-radius:18px;
+    padding:24px;
+    box-shadow:0 10px 28px rgba(0,0,0,.08);
+    transition:.3s;
+    height:100%;
+}
+
+.student-card:hover{
+    transform:translateY(-4px);
+    box-shadow:0 18px 35px rgba(0,0,0,.12);
+}
+
+.student-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:15px;
+}
+
+.student-name{
+    font-size:1.4rem;
+    font-weight:800;
+    color:#1f2937;
+    margin:0;
+}
+
+.rank-badge{
+    background:#0d6efd;
+    color:#fff;
+    padding:8px 15px;
+    border-radius:999px;
+    font-weight:700;
+}
+
+.card-stats{
+    display:flex;
+    gap:25px;
+    font-weight:600;
+    margin-bottom:10px;
+}
+
+.card-grade{
+    display:flex;
+    gap:25px;
+    font-weight:600;
+}
+
+.grade-badge{
+    padding:6px 12px;
+    border-radius:999px;
+    font-weight:700;
+}
+
+.grade-A{background:#198754;color:#fff;}
+.grade-B{background:#0dcaf0;color:#fff;}
+.grade-C{background:#6f42c1;color:#fff;}
+.grade-D{background:#ffc107;color:#212529;}
+.grade-E{background:#fd7e14;color:#fff;}
+.grade-F{background:#dc3545;color:#fff;}
+
+.collapse{
+    display:none;
+}
+
+.cards-row{
+    row-gap:24px;
+}
+/* PREMIUM PAGE EFFECTS */
+
+body{
+    background:#f4f7fb;
+}
+
+.class-section{
+    transition:.3s;
+}
+
+.card{
+    border-radius:20px!important;
+}
+
+.card-header{
+    border-radius:20px 20px 0 0!important;
+}
+
+.student-card{
+    transition:all .25s ease;
+    border:none!important;
+    border-radius:18px!important;
+    box-shadow:0 8px 25px rgba(0,0,0,.08)!important;
+}
+
+.student-card:hover{
+    transform:translateY(-6px);
+    box-shadow:0 18px 40px rgba(13,110,253,.18)!important;
+}
+
+.student-card h4{
+    color:#1e293b;
+}
+
+.table{
+    margin-bottom:0;
+}
+
+.table thead th{
+    background:#f8fafc;
+    border-bottom:2px solid #e5e7eb;
+    color:#475569;
+    font-weight:700;
+}
+
+.table tbody tr{
+    transition:.2s;
+}
+
+.table tbody tr:hover{
+    background:#f8fbff;
+}
+
+.btn{
+    transition:.25s;
+}
+
+.btn:hover{
+    transform:translateY(-2px);
+}
+
+.alert{
+    border-radius:16px;
+}
+
+.badge{
+    font-size:.85rem;
+}
+
+.grade-badge{
+    padding:8px 14px;
+    border-radius:30px;
+    font-size:.9rem;
+    font-weight:700;
+    min-width:42px;
+}
+
+.class-section .card-header{
+    background:linear-gradient(135deg,#ffffff,#f8fbff)!important;
+}
+
+.class-section{
+    margin-bottom:30px;
+}
+
+@media (max-width:768px){
+
+.student-card{
+    padding:18px!important;
+}
+
+.student-card h4{
+    font-size:1.1rem;
+}
+
+.table{
+    font-size:.85rem;
+}
+
+.btn{
+    font-size:.8rem;
+}
+
+}
+</style>
+
+<div class="container-fluid py-4">
+
+    <!-- HERO -->
+
+    <div class="hero-card mb-4">
+
+        <div class="p-4">
+
+            <div class="row align-items-center">
+
+                <div class="col-lg-8">
+
+                    <div class="d-flex align-items-center">
+
+                        <div class="hero-icon me-3">
+
+                            📊
+
+                        </div>
+
+                        <div>
+
+                            <div class="hero-title">
+
+                                Teacher Results
+
+                            </div>
+
+                            <div class="hero-subtitle">
+
+                                Review draft results, edit scores where necessary, and submit completed class results to the administrator.
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-4 mt-4 mt-lg-0">
+
+                    <div class="row g-3">
+
+                        <div class="col-6">
+
+                            <div class="bg-white rounded-4 text-dark p-3 text-center">
+
+                                <div class="text-muted small">
+
+                                    Classes
+
+                                </div>
+
+                                <div class="fw-bold fs-4">
+
+                                    {{ classes_with_students|length }}
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-6">
+
+                            <div class="bg-white rounded-4 text-dark p-3 text-center">
+
+                                <div class="text-muted small">
+
+                                    Current Term
+
+                                </div>
+
+                                <div class="fw-bold">
+
+                                    {{ term_name }}
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- FILTERS -->
+
+    <div class="card filter-card mb-4">
+
+        <div class="card-body">
+
+            <form method="get"
+                  id="filter-form"
+                  class="row g-3 align-items-end">
+
+                <div class="col-md-4">
+
+                    <div class="filter-label">
+
+                        Academic Term
+
+                    </div>
+
+                    <select name="term"
+                            id="term-select"
+                            class="form-select"
+                            onchange="this.form.submit()">
+
+                        <option value="1" {% if selected_term|stringformat:"s" == "1" %}selected{% endif %}>
+                            First Term
+                        </option>
+
+                        <option value="2" {% if selected_term|stringformat:"s" == "2" %}selected{% endif %}>
+                            Second Term
+                        </option>
+
+                        <option value="3" {% if selected_term|stringformat:"s" == "3" %}selected{% endif %}>
+                            Third Term
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <div class="filter-label">
+
+                        Academic Year
+
+                    </div>
+
+                    <select name="year"
+                            id="year-select"
+                            class="form-select"
+                            onchange="this.form.submit()">
+
+                        {% for year in academic_years %}
+
+                        <option value="{{ year.id }}"
+                            {% if selected_year == year.id %}selected{% endif %}>
+
+                            {{ year.name }}
+
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <!-- TERM INFORMATION -->
+
+    <div class="card term-banner mb-4">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4">
+
+                    <div class="term-stat">
+
+                        <div class="term-title">
+
+                            TERM
+
+                        </div>
+
+                        <div class="term-value">
+
+                            {{ term_name }}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <div class="term-stat">
+
+                        <div class="term-title">
+
+                            ACADEMIC YEAR
+
+                        </div>
+
+                        <div class="term-value">
+
+                            {{ term_obj.academic_year.name }}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <div class="term-stat">
+
+                        <div class="term-title">
+
+                            STATUS
+
+                        </div>
+
+                        <div class="term-value text-success">
+
+                            Active
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+<!-- START: NEW CLASS GROUPING LOOP -->
+{% for class_group in classes_with_students %}
+
+<div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+
+    <!-- Class Header -->
+
+    <div class="card-header border-0 bg-white p-4">
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+
+            <div>
+
+                <h4 class="fw-bold mb-1">
+
+                    <i class="fas fa-users text-primary me-2"></i>
+
+                    {{ class_group.school_class.name }}
+
+                </h4>
+
+                <div class="text-muted">
+
+                    <i class="fas fa-book me-1"></i>
+
+                    {{ class_group.subject.name }}
+
+                    &nbsp;&nbsp;•&nbsp;&nbsp;
+
+                    <i class="fas fa-user-graduate me-1"></i>
+
+                    {{ class_group.student_cards|length }} Students
+
+                </div>
+
+            </div>
+
+            <button
+                class="btn btn-outline-primary rounded-pill px-4"
+                onclick="toggleClass('class-{{ forloop.counter }}')">
+
+                <span id="arrow-{{ forloop.counter }}">
+                    ▼
+                </span>
+
+                View Results
+
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- Submit Status -->
+
+    <div class="px-4 pb-3">
+
+        {% if class_group.draft_count > 0 %}
+
+        <div class="alert alert-warning border-0 rounded-4 d-flex justify-content-between align-items-center flex-wrap">
+
+            <div>
+
+                <strong>
+
+                    Draft Results Available
+
+                </strong>
+
+                <br>
+
+                <small>
+
+                    These results are still in draft and must be submitted to the administrator.
+
+                </small>
+
+            </div>
+
+            <form method="post"
+                  action="{% url 'accounts:submit_results_to_admin' %}"
+                  class="submit-form">
+
+                {% csrf_token %}
+
+                <input type="hidden"
+                       name="class_id"
+                       value="{{ class_group.school_class.id }}">
+
+                <input type="hidden"
+                       name="subject_id"
+                       value="{{ class_group.subject.id }}">
+
+                <input type="hidden"
+                       name="term"
+                       value="{{ selected_term }}">
+
+                <input type="hidden"
+                       name="year"
+                       value="{{ selected_year }}">
+
+                <button
+                    type="submit"
+                    class="btn btn-success rounded-pill px-4">
+
+                    <i class="fas fa-paper-plane me-2"></i>
+
+                    Submit Results
+
+                </button>
+
+            </form>
+
+        </div>
+
+        {% else %}
+
+        <div class="alert alert-success border-0 rounded-4">
+
+            <i class="fas fa-check-circle me-2"></i>
+
+            All
+
+            <strong>
+
+                {{ class_group.school_class.name }}
+
+            </strong>
+
+            -
+
+            <strong>
+
+                {{ class_group.subject.name }}
+
+            </strong>
+
+            results have already been submitted to the administrator.
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+    <!-- Student Cards -->
+
+    <div id="class-{{ forloop.counter }}" class="collapse">
+
+        <div class="container-fluid">
+
+            <div class="row cards-row">
+
+
+                {% for card in class_group.student_cards %}
+               <div class="col-12 col-md-6 mb-4">
+                   <div class="student-card">
+
+    <div class="d-flex justify-content-between align-items-start flex-wrap mb-3">
+
+        <div>
+
+            <h4 class="fw-bold mb-1">
+
+                👤 {{ card.student.first_name }}
+                {{ card.student.last_name }}
+
+            </h4>
+
+            <div class="text-muted">
+
+                <i class="fas fa-id-card me-1"></i>
+
+                {{ card.student.student_number }}
+
+            </div>
+
+        </div>
+
+        <div class="text-end">
+
+            <div class="badge bg-primary rounded-pill px-3 py-2 fs-6">
+
+                Rank {{ card.rank }}
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="row g-3 mb-3">
+
+        <div class="col-6">
+
+            <div class="border rounded-4 p-3 text-center">
+
+                <small class="text-muted d-block">
+
+                    Total Score
+
+                </small>
+
+                <h4 class="fw-bold text-primary mb-0">
+
+                    {{ card.total }}
+
+                </h4>
+
+            </div>
+
+        </div>
+
+        <div class="col-6">
+
+            <div class="border rounded-4 p-3 text-center">
+
+                <small class="text-muted d-block">
+
+                    Average
+
+                </small>
+
+                <h4 class="fw-bold text-success mb-0">
+
+                    {{ card.average|floatformat:1 }}
+
+                </h4>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-6">
+
+            <div class="border rounded-4 p-3 text-center">
+
+                <small class="text-muted d-block">
+
+                    Grade
+
+                </small>
+
+                <h5 class="fw-bold text-warning mb-0">
+
+                    {{ card.grade }}
+
+                </h5>
+
+            </div>
+
+        </div>
+
+        <div class="col-6">
+
+            <div class="border rounded-4 p-3 text-center">
+
+                <small class="text-muted d-block">
+
+                    Remark
+
+                </small>
+
+                <strong>
+
+                    {{ card.remark }}
+
+                </strong>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <hr class="my-3">
+
+                        <!-- STUDENT RESULTS TABLE -->
+                        <div class="table-responsive mt-2">
+                            <table class="table table-bordered table-sm mb-0">
+                                <thead class="table-light">
+                                    <tr class="small text-uppercase text-muted">
+                                        <th class="fw-bold">Subject</th>
+                                        <th class="text-center fw-bold" style="width: 25%;">Score</th>
+                                        <th class="text-center fw-bold" style="width: 15%;">Grade</th>
+                                        <th class="text-end fw-bold pe-3" style="width: 20%;">Action</th>
+                                    </tr>
+                                </thead>
+<tbody>
+
+{% for result in card.results %}
+
+<tr>
+
+    <td class="align-middle">
+
+        <div class="fw-bold">
+
+            📘 {{ result.subject.name }}
+
+        </div>
+
+    </td>
+
+    <td class="text-center align-middle">
+
+        <div class="fw-bold fs-5 text-primary">
+
+            {{ result.class_score|add:result.exam_score|floatformat:0 }}
+
+        </div>
+
+        <small class="text-muted">
+
+            CA {{ result.class_score|floatformat:0 }}
+            |
+            Exam {{ result.exam_score|floatformat:0 }}
+
+        </small>
+
+    </td>
+
+    <td class="text-center align-middle">
+
+        <span class="grade-badge grade-{% if result.total_score >= 80 %}A{% elif result.total_score >= 70 %}B{% elif result.total_score >= 60 %}C{% elif result.total_score >= 50 %}D{% elif result.total_score >= 40 %}E{% else %}F{% endif %}">
+
+            {% if result.total_score >= 80 %}
+                A
+            {% elif result.total_score >= 70 %}
+                B
+            {% elif result.total_score >= 60 %}
+                C
+            {% elif result.total_score >= 50 %}
+                D
+            {% elif result.total_score >= 40 %}
+                E
+            {% else %}
+                F
+            {% endif %}
+
+        </span>
+
+    </td>
+
+    <td class="text-end">
+
+        {% if result.status == 'draft' or result.status == 'returned' %}
+
+            <a href="{% url 'accounts:edit-result' result.id %}"
+               class="btn btn-warning btn-sm rounded-pill px-3">
+
+                <i class="fas fa-edit me-1"></i>
+
+                Edit
+
+            </a>
+
+        {% else %}
+
+            <span class="badge bg-secondary rounded-pill px-3 py-2">
+
+                <i class="fas fa-lock me-1"></i>
+
+                Submitted
+
+            </span>
+
+        {% endif %}
+
+    </td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="col-12">
+    <p>No students found in your classes.</p>
+</div>
+{% endfor %}
+
+<script>
+function toggleClass(classId) {
+    const element = document.getElementById(classId);
+
+    if (!element) return;
+
+    const arrowId = classId.replace('class-', 'arrow-');
+    const arrow = document.getElementById(arrowId);
+
+    if (element.style.display === 'block') {
+        element.style.display = 'none';
+
+        if (arrow) {
+            arrow.textContent = '▼';
+        }
+    } else {
+        element.style.display = 'block';
+
+        if (arrow) {
+            arrow.textContent = '▲';
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.collapse').forEach(el => {
+        el.style.display = 'none';
+    });
+
+    // Keep hidden term/year inputs in sync with dropdowns
+    document.getElementById('term-select').addEventListener('change', function() {
+        document.querySelectorAll('.hidden-term').forEach(input => input.value = this.value);
+    });
+    document.getElementById('year-select').addEventListener('change', function() {
+        document.querySelectorAll('.hidden-year').forEach(input => input.value = this.value);
+    });
+});
+</script>
+
+{% endblock %}

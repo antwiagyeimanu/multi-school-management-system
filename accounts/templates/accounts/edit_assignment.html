@@ -1,0 +1,128 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block content %}
+    <title>Edit Assignment</title>
+
+    <!-- Simple styling -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+        .container {
+    width: 100%;
+    max-width: 650px;
+    margin: 60px auto;
+}
+
+        .card {
+    background: white;
+    padding: 50px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    font-size: 20px;
+}
+
+      h2 {
+    text-align: center;
+    font-size: 26px;
+    margin-bottom: 20px;
+}
+        label {
+            font-weight: bold;
+        }
+
+        select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    margin-bottom: 18px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 18px;
+}
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+         body {
+        background-color: #f4f6f9;
+        color: #000;
+    }
+
+    select, input, button {
+        background-color: #fff;
+        color: #000;
+    }
+
+    button {
+        background: #007bff;
+        color: white;
+    }
+
+    button:hover {
+        background: #0056b3;
+    }
+    
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="card">
+
+        <h2>Edit Assignment</h2>
+
+        <form method="POST">
+            {% csrf_token %}
+{% if error %}
+    <div style="color: #fff; background: #dc3545; padding: 12px; border-radius: 4px; margin-bottom: 20px; font-weight: bold;">
+        {{ error }}
+    </div>
+{% endif %}
+            <label>Class:</label>
+<select name="school_class" required>
+                    {% for c in classes %}
+                    <option value="{{ c.id }}"
+                        {% if c.id == assignment.school_class.id %}selected{% endif %}>
+                        {{ c.name }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <label>Subject:</label>
+<select name="subject" required>
+                    {% for s in subjects %}
+                    <option value="{{ s.id }}"
+                        {% if s.id == assignment.subject.id %}selected{% endif %}>
+                        {{ s.name }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">Update</button>
+
+        </form>
+        <br>
+
+<a href="{% url 'accounts:delete-assignment' assignment.id %}" 
+   onclick="return confirm('Delete this assignment?');"
+   style="display:block; text-align:center; margin-top:10px; color:red;">
+   Delete Assignment
+</a>
+
+    </div>
+</div>
+
+</body>
+{% endblock %}

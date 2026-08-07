@@ -1,0 +1,929 @@
+{% extends "accounts/dashboard_base.html" %}
+{% load custom_filters %}
+
+{% block title %}Teacher Dashboard{% endblock %}
+{% block content %}
+<style>
+/* ========== DASHBOARD CONTAINER ========== */
+.dashboard-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ========== WEEK NAVIGATION ========== */
+.week-nav-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.week-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.week-nav-btn {
+  padding: 4px 10px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  text-decoration: none;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.week-nav-btn:hover {
+  background: #e2e8f0;
+}
+
+.week-nav-btn.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.week-nav-label {
+  color: #475569;
+  font-weight: 600;
+}
+
+/* ========== STATS GRID BASE ========== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  max-width: 850px;
+  margin: 0 auto 30px auto;
+}
+
+/* ========== STAT CARD BASE ========== */
+.stat-card {
+  border-radius: 12px;
+  padding: 24px;
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.stat-card.green { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+.stat-card.blue { 
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8); 
+  color: #ffffff !important; 
+}
+.stat-card.red { background: linear-gradient(135deg, #e74c3c, #dc2626); }
+.stat-card.gray { background: linear-gradient(135deg, #95a5a6, #7f8c8d); }
+
+.stat-card-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-period {
+  font-size: 16px;
+  font-weight: 700;
+  opacity: 1.8;
+  margin: 4px 0 10px 0;
+  color: #ffffff !important;
+  letter-spacing: 0.5px;
+}
+
+.stat-percent {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+
+.stat-breakdown {
+  font-size: 18px;
+  opacity: 1.9;
+  line-height: 1.5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.stat-card-icon {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-size: 28px;
+  opacity: 1.5;
+}
+
+/* ========== TABLET: 768px to 1024px ========== */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .stats-grid {
+    max-width: 700px;
+    gap: 20px;
+  }
+  
+  .stat-percent {
+    font-size: 32px;
+  }
+  
+  .stat-card-icon {
+    font-size: 24px;
+    top: 16px;
+    right: 16px;
+    opacity:1.1
+  }
+}
+
+/* ========== MOBILE: below 768px ========== */
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    max-width: 100%;
+    padding: 0 16px;
+    margin-bottom: 24px;
+  }
+  
+  .week-nav-container {
+    justify-content: center;
+  }
+  
+  .stat-card {
+    padding: 18px 16px;
+    border-radius: 10px;
+    min-height: auto;
+  }
+  
+  .stat-card-title {
+    font-size: 13px;
+  }
+  
+  .stat-period {
+    font-size: 11px;
+    margin: 2px 0 8px 0;
+  }
+  
+  .stat-percent {
+    font-size: 30px;
+    margin-bottom: 4px;
+  }
+  
+  .stat-breakdown {
+    font-size: 13px;
+    line-height: 1.4;
+    gap: 4px 8px;
+  }
+  
+  .stat-card-icon {
+    font-size: 20px;
+    top: 14px;
+    right: 14px;
+    opacity: 1
+  }
+}
+/* ===== PREMIUM TODAY ATTENDANCE ===== */
+
+.attendance-widget{
+    background:#fff;
+    border-radius:22px;
+    padding:28px;
+    margin-bottom:30px;
+    box-shadow:0 10px 28px rgba(15,23,42,.08);
+    border-left:6px solid #2563eb;
+}
+
+.attendance-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:20px;
+    margin-bottom:28px;
+}
+
+.teacher-profile{
+    display:flex;
+    align-items:center;
+    gap:18px;
+}
+
+.teacher-avatar{
+    width:72px;
+    height:72px;
+    border-radius:50%;
+    object-fit:cover;
+    border:4px solid #dbeafe;
+}
+
+.teacher-avatar-placeholder{
+    width:72px;
+    height:72px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:26px;
+    font-weight:800;
+}
+
+.teacher-details h4{
+    margin:0;
+    font-weight:800;
+    color:#1e293b;
+}
+
+.teacher-details p{
+    margin:4px 0;
+    color:#64748b;
+}
+
+.today-date{
+    text-align:right;
+}
+
+.today-date h5{
+    margin:0;
+    font-weight:800;
+}
+
+.today-date span{
+    color:#64748b;
+}
+
+.attendance-summary{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:18px;
+    margin-bottom:25px;
+}
+
+.summary-card{
+    background:#f8fafc;
+    border-radius:16px;
+    padding:18px;
+    text-align:center;
+    transition:.25s;
+}
+
+.summary-card:hover{
+    transform:translateY(-4px);
+}
+
+.summary-card i{
+    font-size:24px;
+    margin-bottom:10px;
+}
+
+.summary-card small{
+    display:block;
+    color:#64748b;
+    margin-bottom:6px;
+    font-weight:600;
+}
+
+.summary-card h5{
+    margin:0;
+    font-weight:800;
+}
+
+.status-present{
+    color:#16a34a;
+}
+
+.status-late{
+    color:#f59e0b;
+}
+
+.status-absent{
+    color:#dc2626;
+}
+
+.status-none{
+    color:#64748b;
+}
+
+.action-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:15px;
+}
+
+.action-buttons{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+}
+
+.action-buttons .btn{
+    border-radius:40px;
+    padding:12px 26px;
+    font-weight:700;
+}
+
+.status-pill{
+    padding:12px 20px;
+    border-radius:40px;
+    font-weight:700;
+}
+
+.completed{
+    background:#dcfce7;
+    color:#15803d;
+}
+
+.waiting{
+    background:#fef3c7;
+    color:#b45309;
+}
+
+.not-started{
+    background:#e2e8f0;
+    color:#475569;
+}
+
+@media(max-width:992px){
+
+.attendance-summary{
+    grid-template-columns:repeat(2,1fr);
+}
+
+}
+
+@media(max-width:576px){
+
+.attendance-summary{
+    grid-template-columns:1fr;
+}
+
+.teacher-profile{
+    flex-direction:column;
+    text-align:center;
+}
+
+.today-date{
+    text-align:center;
+}
+
+.action-row{
+    flex-direction:column;
+}
+
+.action-buttons{
+    width:100%;
+}
+
+.action-buttons .btn{
+    width:100%;
+}
+
+}
+/* ================= PREMIUM HERO ================= */
+
+.hero-banner{
+    background:linear-gradient(135deg,#1e3a8a,#2563eb,#3b82f6);
+    border-radius:24px;
+    padding:30px;
+    color:#fff;
+    margin-top:25px;
+    margin-bottom:30px;
+    box-shadow:0 15px 40px rgba(37,99,235,.25);
+    position:relative;
+    overflow:hidden;
+}
+
+.hero-banner::before{
+    content:"";
+    position:absolute;
+    width:280px;
+    height:280px;
+    background:rgba(255,255,255,.08);
+    border-radius:50%;
+    right:-100px;
+    top:-120px;
+}
+
+.hero-content{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:20px;
+    position:relative;
+    z-index:2;
+}
+
+.hero-profile{
+    display:flex;
+    align-items:center;
+    gap:18px;
+}
+
+.hero-avatar{
+    width:82px;
+    height:82px;
+    border-radius:50%;
+    object-fit:cover;
+    border:4px solid rgba(255,255,255,.35);
+}
+
+.hero-avatar-placeholder{
+    width:82px;
+    height:82px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,.15);
+    font-size:28px;
+    font-weight:800;
+}
+
+.hero-text h2{
+    margin:0;
+    font-weight:800;
+    font-size:30px;
+}
+
+.hero-text p{
+    margin:6px 0 0;
+    opacity:.9;
+    font-size:15px;
+}
+
+.hero-date{
+    text-align:right;
+}
+
+.hero-date h4{
+    margin:0;
+    font-weight:800;
+}
+
+.hero-date p{
+    margin-top:6px;
+    opacity:.9;
+}
+
+@media(max-width:768px){
+
+.hero-content{
+    flex-direction:column;
+    text-align:center;
+}
+
+.hero-profile{
+    flex-direction:column;
+}
+
+.hero-date{
+    text-align:center;
+}
+
+.hero-text h2{
+    font-size:24px;
+}
+
+}
+/* ================= PREMIUM KPI GRID ================= */
+
+.kpi-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:22px;
+    margin-bottom:35px;
+}
+
+.kpi-card{
+    background:#fff;
+    border-radius:20px;
+    padding:24px;
+    box-shadow:0 10px 25px rgba(15,23,42,.08);
+    transition:.25s;
+    position:relative;
+    overflow:hidden;
+    border-top:5px solid transparent;
+}
+
+.kpi-card:hover{
+    transform:translateY(-6px);
+}
+
+.kpi-card.blue{border-color:#2563eb;}
+.kpi-card.green{border-color:#16a34a;}
+.kpi-card.purple{border-color:#7c3aed;}
+.kpi-card.orange{border-color:#f59e0b;}
+.kpi-card.red{border-color:#dc2626;}
+.kpi-card.cyan{border-color:#0891b2;}
+
+.kpi-icon{
+    width:56px;
+    height:56px;
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    color:#fff;
+    margin-bottom:18px;
+}
+
+.kpi-card.blue .kpi-icon{background:#2563eb;}
+.kpi-card.green .kpi-icon{background:#16a34a;}
+.kpi-card.purple .kpi-icon{background:#7c3aed;}
+.kpi-card.orange .kpi-icon{background:#f59e0b;}
+.kpi-card.red .kpi-icon{background:#dc2626;}
+.kpi-card.cyan .kpi-icon{background:#0891b2;}
+
+.kpi-title{
+    color:#64748b;
+    font-size:14px;
+    font-weight:600;
+    margin-bottom:8px;
+}
+
+.kpi-value{
+    font-size:34px;
+    font-weight:800;
+    color:#1e293b;
+    line-height:1;
+}
+
+.kpi-sub{
+    margin-top:10px;
+    font-size:13px;
+    color:#94a3b8;
+}
+.attendance-status{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 18px;
+    border-radius:40px;
+    font-weight:800;
+    font-size:15px;
+}
+
+.attendance-status.present{
+    background:#dcfce7;
+    color:#15803d;
+}
+
+.attendance-status.late{
+    background:#fef3c7;
+    color:#b45309;
+}
+
+.attendance-status.absent{
+    background:#fee2e2;
+    color:#b91c1c;
+}
+
+
+
+</style>
+
+<div class="hero-banner">
+
+<div class="hero-content">
+
+<div class="hero-profile">
+
+{% if request.user.photo %}
+<img src="{{ request.user.photo.url }}" class="hero-avatar">
+{% else %}
+<div class="hero-avatar-placeholder">
+{{ request.user.first_name|slice:":1"|upper }}{{ request.user.last_name|slice:":1"|upper }}
+</div>
+{% endif %}
+
+<div class="hero-text">
+
+<h2>
+{{ greeting }},
+Mr. {{ request.user.first_name|default:request.user.username }} 👋
+</h2>
+
+<p>
+
+<strong>Staff ID:</strong>
+{{ request.user.staff_id }}
+
+{% if request.user.school %}
+&nbsp;&nbsp;•&nbsp;&nbsp;
+<strong>{{ request.user.school.name }}</strong>
+{% endif %}
+
+</p>
+
+</div>
+
+</div>
+
+<div class="hero-date">
+
+<h4>
+{{ today_date|date:"l" }}
+</h4>
+
+<p>
+{{ today_date|date:"d F Y" }}
+</p>
+
+</div>
+
+</div>
+
+</div>
+  
+  <div class="kpi-grid">
+
+<div class="kpi-card green">
+<div class="kpi-icon">
+<i class="fas fa-chalkboard"></i>
+</div>
+<div class="kpi-title">My Classes</div>
+<div class="kpi-value">{{ classes_count }}</div>
+<div class="kpi-sub">Assigned Classes</div>
+</div>
+
+<div class="kpi-card blue">
+<div class="kpi-icon">
+<i class="fas fa-book-open"></i>
+</div>
+<div class="kpi-title">My Subjects</div>
+<div class="kpi-value">{{ subjects_count }}</div>
+<div class="kpi-sub">Teaching Subjects</div>
+</div>
+
+<div class="kpi-card purple">
+<div class="kpi-icon">
+<i class="fas fa-user-graduate"></i>
+</div>
+<div class="kpi-title">Students</div>
+<div class="kpi-value">{{ students_count }}</div>
+<div class="kpi-sub">Total Learners</div>
+</div>
+
+<div class="kpi-card cyan">
+<div class="kpi-icon">
+<i class="fas fa-paper-plane"></i>
+</div>
+<div class="kpi-title">Submitted</div>
+<div class="kpi-value">{{ submitted_count }}</div>
+<div class="kpi-sub">Results Submitted</div>
+</div>
+
+<div class="kpi-card orange">
+<div class="kpi-icon">
+<i class="fas fa-edit"></i>
+</div>
+<div class="kpi-title">Draft</div>
+<div class="kpi-value">{{ draft_count }}</div>
+<div class="kpi-sub">Awaiting Submission</div>
+</div>
+
+<div class="kpi-card red">
+<div class="kpi-icon">
+<i class="fas fa-undo"></i>
+</div>
+<div class="kpi-title">Returned</div>
+<div class="kpi-value">{{ returned_count }}</div>
+<div class="kpi-sub">Need Corrections</div>
+</div>
+
+
+
+</div>
+<!-- TODAY'S ATTENDANCE -->
+
+<h4 style="margin-bottom:18px;color:#34495e;">
+    Today's Attendance
+</h4>
+
+<div class="attendance-widget">
+
+<div class="attendance-header">
+
+<div>
+<h4 style="margin:0;font-weight:800;color:#1e293b;">
+<i class="fas fa-calendar-check text-primary"></i>
+Today's Attendance Status
+</h4>
+
+<p style="margin:6px 0 0;color:#64748b;">
+Your attendance record for today
+</p>
+
+</div>
+
+</div>
+
+<div class="attendance-summary">
+
+<div class="summary-card">
+
+<i class="fas fa-user-check"></i>
+
+<small>Status</small>
+
+{% if today_attendance %}
+
+{% if today_attendance.status == "P" %}
+
+<span class="attendance-status present">
+<i class="fas fa-check-circle"></i>
+Present
+</span>
+
+{% elif today_attendance.status == "L" %}
+
+<span class="attendance-status late">
+<i class="fas fa-clock"></i>
+Late
+</span>
+
+{% elif today_attendance.status == "A" %}
+
+<span class="attendance-status absent">
+<i class="fas fa-times-circle"></i>
+Absent
+</span>
+
+{% endif %}
+<h5>{{ today_attendance.get_status_display }}</h5>
+
+
+{% else %}
+
+<h5 class="status-none">
+Not Marked
+</h5>
+
+{% endif %}
+
+</div>
+
+<div class="summary-card">
+
+<i class="fas fa-sign-in-alt text-success"></i>
+
+<small>Check In</small>
+
+<h5>
+
+{% if today_attendance and today_attendance.time_in %}
+{{ today_attendance.time_in|time:"H:i" }}
+{% else %}
+--
+{% endif %}
+
+</h5>
+
+</div>
+
+<div class="summary-card">
+
+<i class="fas fa-sign-out-alt text-danger"></i>
+
+<small>Check Out</small>
+
+<h5>
+
+{% if today_attendance and today_attendance.time_out %}
+{{ today_attendance.time_out|time:"H:i" }}
+{% else %}
+--
+{% endif %}
+
+</h5>
+
+</div>
+
+<div class="summary-card">
+
+<i class="fas fa-user-shield text-primary"></i>
+
+<small>Recorded By</small>
+
+<h5>
+
+{% if today_attendance and today_attendance.marked_by %}
+{{ today_attendance.marked_by.username }}
+
+{% elif today_attendance %}
+Self
+
+{% else %}
+--
+
+{% endif %}
+
+</h5>
+
+</div>
+
+</div>
+<div class="action-row">
+
+    <div class="action-buttons">
+
+        {% if can_check_in %}
+
+        <a href="{% url 'accounts:teacher-check-in' %}"
+           class="btn btn-success">
+
+            <i class="fas fa-sign-in-alt"></i>
+
+            Check In
+
+        </a>
+
+        {% endif %}
+
+
+        {% if can_check_out %}
+
+        <a href="{% url 'accounts:teacher-check-out' %}"
+           class="btn btn-danger">
+
+            <i class="fas fa-sign-out-alt"></i>
+
+            Check Out
+
+        </a>
+
+        {% endif %}
+
+
+        <a href="{% url 'accounts:my-attendance' %}"
+           class="btn btn-primary">
+
+            <i class="fas fa-calendar-check"></i>
+
+            My Attendance
+
+        </a>
+
+    </div>
+
+
+    <div>
+
+        {% if today_attendance %}
+
+            {% if today_attendance.time_out %}
+
+                <span class="status-pill completed">
+
+                    <i class="fas fa-check-circle"></i>
+
+                    Attendance Completed
+
+                </span>
+
+            {% else %}
+
+                <span class="status-pill waiting">
+
+                    <i class="fas fa-hourglass-half"></i>
+
+                    Waiting for Check Out
+
+                </span>
+
+            {% endif %}
+
+        {% else %}
+
+            <span class="status-pill not-started">
+
+                <i class="fas fa-clock"></i>
+
+                Not Checked In
+
+            </span>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+</div>
+{% endblock %}

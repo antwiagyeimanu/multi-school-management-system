@@ -1,0 +1,128 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block content %}
+<style>
+:root{ --primary:#4f46e5; --success:#10b981; --warning:#f59e0b; --danger:#ef4444; --dark:#111827; --light:#f8fafc; }
+body{ background:#f5f7fb; }
+.page-header{ background:linear-gradient(135deg,#4f46e5,#2563eb); border-radius:22px; padding:28px; color:#fff; margin-bottom:25px; box-shadow:0 15px 35px rgba(79,70,229,.25); }
+.page-header h3{ font-weight:700; margin-bottom:5px; } .page-header p{ opacity:.9; margin:0; }
+.filter-card{ background:#fff; border:none; border-radius:18px; box-shadow:0 10px 30px rgba(0,0,0,.06); margin-bottom:25px; }
+.filter-card .card-body{ padding:20px; }
+.form-select{ border-radius:12px; min-height:48px; }
+.filter-btn{ border-radius:12px; min-height:48px; background:linear-gradient(135deg,#4f46e5,#2563eb); border:none; font-weight:600; }
+.stat-card{ border:none; border-radius:20px; overflow:hidden; color:#fff; transition:.3s; height:100%; }
+.stat-card:hover{ transform:translateY(-6px); }
+.bg-green{ background:linear-gradient(135deg,#10b981,#059669); }
+.bg-blue{ background:linear-gradient(135deg,#3b82f6,#2563eb); }
+.bg-orange{ background:linear-gradient(135deg,#f59e0b,#d97706); }
+.bg-red{ background:linear-gradient(135deg,#ef4444,#dc2626); }
+.stat-body{ padding:24px; } .stat-title{ font-size:14px; opacity:.9; } .stat-value{ font-size:30px; font-weight:700; margin-top:6px; }
+.icon-box{ width:60px; height:60px; border-radius:16px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.18); font-size:28px; }
+.stat-small{ font-size:13px; opacity:.9; }
+.report-card{ border:none; border-radius:20px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.06); }
+.report-card .card-header{ background:#111827; color:#fff; padding:18px 22px; font-weight:700; border:none; cursor:pointer; }
+.table{ margin-bottom:0; } .table thead th{ background:#f3f4f6; border:none; padding:15px; font-weight:700; color:#374151; }
+.table tbody td{ padding:15px; vertical-align:middle; border-color:#eef2f7; } .table tbody tr:hover{ background:#f9fafb; }
+.badge-rank{ background:#111827; color:#fff; padding:7px 14px; border-radius:20px; }
+.grade-badge{ padding:7px 14px; border-radius:20px; font-weight:600; }
+.print-btn{ border-radius:12px; padding:10px 20px; }
+@media print { .filter-card, .print-btn, .pagination, .page-header .btn { display: none !important; } body { background: #fff !important; } .report-card { box-shadow: none !important; } .stat-card { break-inside: avoid; } .collapse{ display:block !important; } }
+</style>
+
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap">
+    <div><h3>📊 Student Performance Report</h3><p>View student rankings, averages, grades and overall academic performance.</p></div>
+    <button onclick="printDirect()" class="btn btn-light print-btn">🖨 Print All ({{ total_students }})</button>
+    <iframe id="printFrame" style="display:none;"></iframe>
+</div>
+
+<div class="card filter-card"><div class="card-body">
+    <form method="get" class="row g-3">
+        <div class="col-lg-4"><select name="class" class="form-select"><option value="">All Classes</option>{% for c in classes %}<option value="{{ c.id }}" {% if selected_class == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></div>
+        <div class="col-lg-4"><select name="term" class="form-select"><option value="">All Terms</option>{% for t in terms %}<option value="{{ t.id }}" {% if selected_term == t.id|stringformat:"s" %}selected{% endif %}>{{ t }}</option>{% endfor %}</select></div>
+        <div class="col-lg-4"><button class="btn filter-btn text-white w-100">🔍 Filter Report</button></div>
+    </form>
+</div></div>
+
+<div class="row g-4 mb-4">
+  <div class="col-xl-3 col-md-6"><div class="stat-card bg-green"><div class="stat-body"><div class="d-flex justify-content-between"><div><div class="stat-title">Total Students</div><div class="stat-value">{{ total_students }}</div></div><div class="icon-box">👨‍🎓</div></div><hr class="border-light"><div class="stat-small">In selected filter</div></div></div></div>
+  <div class="col-xl-3 col-md-6"><div class="stat-card bg-blue"><div class="stat-body"><div class="d-flex justify-content-between"><div><div class="stat-title">Class Average</div><div class="stat-value">{{ avg_score|floatformat:1 }}%</div></div><div class="icon-box">📈</div></div><hr class="border-light"><div class="stat-small">Average performance</div></div></div></div>
+  <div class="col-xl-3 col-md-6"><div class="stat-card bg-orange"><div class="stat-body"><div class="d-flex justify-content-between"><div><div class="stat-title">Top Student</div><div class="stat-value" style="font-size:18px">{% if top_student %}{{ top_student.student.first_name }}{% else %}-{% endif %}</div></div><div class="icon-box">🏆</div></div><hr class="border-light"><div class="stat-small">{% if top_student %}{{ top_student.term_average }}% - Rank {{ top_student.rank }}{% else %}No data{% endif %}</div></div></div></div>
+  <div class="col-xl-3 col-md-6"><div class="stat-card bg-red"><div class="stat-body"><div class="d-flex justify-content-between"><div><div class="stat-title">Pass Rate</div><div class="stat-value">{{ pass_rate }}%</div></div><div class="icon-box">✅</div></div><hr class="border-light"><div class="stat-small">50% and above</div></div></div></div>
+</div>
+
+{% if grouped_summaries %}
+<div class="accordion" id="allClassesAccordion">
+{% for group in grouped_summaries %}
+<div class="card report-card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}">
+        <span>📚 {{ group.class_obj.name }} - Student Rankings</span>
+        <span><span class="badge bg-white text-dark me-2">{{ group.total_students }} Students - Avg: {{ group.class_avg }}%</span><span class="badge bg-primary">▼</span></span>
+    </div>
+    <div id="collapse{{ forloop.counter }}" class="collapse {% if forloop.first %}show{% endif %}" data-bs-parent="#allClassesAccordion">
+        <div class="card-body p-0"><div class="table-responsive">
+            <table class="table align-center">
+                <thead><tr><th>Rank</th><th>Student Name</th><th>Student No.</th><th>Total</th><th>Average</th><th>Grade</th><th>Remark</th></tr></thead>
+                <tbody>
+                {% for s in group.students %}
+                <tr>
+                    <td><span class="badge-rank">#{{ s.rank }}</span></td>
+                    <td><strong>{{ s.student.get_full_name }}</strong></td>
+                    <td>{{ s.student.student_number }}</td>
+                    <td><strong>{{ s.term_total }}</strong></td>
+                    <td><span class="text-success fw-bold">{{ s.term_average }}%</span></td>
+                    <td><span class="badge bg-primary grade-badge">{{ s.term_grade }}</span></td>
+                    <td>{{ s.term_remark }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div></div>
+    </div>
+</div>
+{% empty %}
+<div class="card report-card"><div class="card-body text-center py-5"><h5>No performance records found</h5></div></div>
+{% endfor %}
+</div>
+{% else %}
+<div class="card report-card">
+    <div class="card-header">Student Rankings</div>
+    <div class="card-body p-0"><div class="table-responsive">
+        <table class="table align-middle">
+            <thead><tr><th>Rank</th><th>Student Name</th><th>Student No.</th><th>Class</th><th>Total</th><th>Average</th><th>Grade</th><th>Remark</th></tr></thead>
+            <tbody>
+            {% for s in summaries %}
+            <tr>
+                <td><span class="badge-rank">#{{ s.rank }}</span></td>
+                <td><strong>{{ s.student.get_full_name }}</strong></td>
+                <td>{{ s.student.student_number }}</td>
+                <td>{{ s.school_class.name }}</td>
+                <td><strong>{{ s.term_total }}</strong></td>
+                <td><span class="text-success fw-bold">{{ s.term_average }}%</span></td>
+                <td><span class="badge bg-primary grade-badge">{{ s.term_grade }}</span></td>
+                <td>{{ s.term_remark }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8" class="text-center py-5"><h5>No performance records found</h5><small class="text-muted">Try selecting another class or term.</small></td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% if summaries.has_other_pages %}
+        <div class="d-flex justify-content-center p-3"><nav><ul class="pagination">
+            {% if summaries.has_previous %}<li class="page-item"><a class="page-link" href="?class={{ selected_class }}&term={{ selected_term }}&page={{ summaries.previous_page_number }}">Previous</a></li>{% endif %}
+            <li class="page-item active"><span class="page-link">Page {{ summaries.number }} of {{ summaries.paginator.num_pages }}</span></li>
+            {% if summaries.has_next %}<li class="page-item"><a class="page-link" href="?class={{ selected_class }}&term={{ selected_term }}&page={{ summaries.next_page_number }}">Next</a></li>{% endif %}
+        </ul></nav></div>
+        {% endif %}
+    </div></div>
+</div>
+{% endif %}
+<script>
+function printDirect(){
+    var url = "?class={{ selected_class }}&term={{ selected_term }}&print=1";
+    var iframe = document.getElementById('printFrame');
+    iframe.src = url;
+    // NO print here - print page will print itself
+}
+</script>
+
+
+{% endblock %}

@@ -1,0 +1,198 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block title %}Fee Structure Settings{% endblock %}
+{% block content %}
+<style>
+.settings-card .mb-2 {
+    margin-bottom: 1.2rem !important;
+}
+.settings-card .form-label {
+    margin-bottom: 0.5rem !important;
+    display: block;
+}
+.form-group-spaced {
+    margin-bottom: 1.5rem !important;
+}
+.form-group-spaced .form-label {
+    margin-bottom: 0.6rem !important;
+    display: block;
+}
+/* cursor fix */
+.settings-card, .card-body, label, p, div {
+    cursor: default;
+}
+select,  button, a, .btn {
+    cursor: pointer !important;
+}
+</style>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>💰 Fee Structure Settings - {{ school.name }}</h2>
+    </div>
+
+    <!-- Create/Edit Form -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            Create Fee Structure
+        </div>
+        <div class="card-body">
+           <form method="post" class="mb-4 p-3 border rounded bg-light">
+    {% csrf_token %}
+    <input type="hidden" name="create_fee_structure" value="1">
+    
+<div class="row g-3 justify-content-center align-items-end">
+    <div class="col-md-3 col-6 mb-2">
+        <label class="form-label" style="color:#212529 !important; font-weight:600;">Stage / Level</label>
+        <select name="stage" class="form-select form-select-sm" required style="color:#212529; cursor:pointer;">
+            <option value="">Select Stage</option>
+            {% for value, label in stage_choices %}
+            <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3 col-6 mb-2">
+        <label class="form-label" style="color:#212529 !important; font-weight:600;">Term</label>
+        <select name="term" class="form-select form-select-sm" required style="color:#212529; cursor:pointer;">
+            <option value="1">First Term</option>
+            <option value="2">Second Term</option>
+            <option value="3">Third Term</option>
+        </select>
+    </div>
+    <div class="col-md-3 col-6 mb-2">
+        <label class="form-label" style="color:#212529 !important; font-weight:600;">Academic Year</label>
+        <input type="text" name="academic_year" placeholder="2025/2026" class="form-control form-control-sm" required style="color:#212529;">
+    </div>
+    <div class="col-md-3 col-6 mb-2">
+        <label class="form-label" style="color:#212529 !important; font-weight:600;">Due date</label>
+        <input type="date" name="due_date" class="form-control form-control-sm" style="color:#212529; cursor:pointer;"
+               value="{% if selected_fee_structure.due_date %}{{ selected_fee_structure.due_date|date:'Y-m-d' }}{% endif %}">
+    </div>
+</div>
+ 
+
+<div class="row">
+    <div class="col-md-4 form-group-spaced">
+        <label class="form-label" style="color:#212529 !important; margin-top: 15px; font-weight:600;">School Fees</label>
+        <input type="number" step="0.01" name="school_fees" class="form-control" placeholder="e.g. 500" 
+               value="{% if selected_fee_structure.school_fees %}{{ selected_fee_structure.school_fees }}{% endif %}">
+    </div>
+        <div class="col-md-4 form-group-spaced">
+        <label class="form-label" style="color:#212529 !important; margin-top: 15px; font-weight:600;">Feeding Fee</label>
+        <input type="number" step="0.01" name="canteen_amount" class="form-control" placeholder="e.g. 150" 
+               value="{% if selected_fee_structure.canteen_amount %}{{ selected_fee_structure.canteen_amount }}{% endif %}">
+    </div>
+    <div class="col-md-4 form-group-spaced">
+    <label class="form-label" style="color:#212529 !important; margin-top: 15px; font-weight:600;">Boarding Fee</label>
+    <input type="number" step="0.01" name="boarding_fee" class="form-control" placeholder="e.g. 300" 
+           value="{% if selected_fee_structure.boarding_fee %}{{ selected_fee_structure.boarding_fee }}{% endif %}">
+</div>
+<div class="col-md-4 form-group-spaced">
+    <label class="form-label" style="color:#212529 !important; margin-top: 15px; font-weight:600;">Hostel Fee</label>
+    <input type="number" step="0.01" name="hostel_fee" class="form-control" placeholder="e.g. 400" 
+           value="{% if selected_fee_structure.hostel_fee %}{{ selected_fee_structure.hostel_fee }}{% endif %}">
+</div>
+     <div class="col-md-4 form-group-spaced">
+        <label class="form-label" style="color:#212529 !important; margin-top: 15px; font-weight:600;">Exam Fees</label>
+        <input type="number" step="0.01" name="exam_fees" class="form-control" placeholder="e.g. 100" 
+               value="{% if selected_fee_structure.exam_fees %}{{ selected_fee_structure.exam_fees }}{% endif %}">
+    </div>
+    <div class="col-md-4 form-group-spaced">
+    <label class="form-label" style="color:#212529 !important; margin-top: 15px; font-weight:600;">Development Fee</label>
+    <input type="number" step="0.01" name="development_fee" class="form-control" placeholder="e.g. 200" 
+           value="{% if selected_fee_structure.development_fee %}{{ selected_fee_structure.development_fee }}{% endif %}">
+</div>
+    <div class="col-md-4 form-group-spaced">
+        <label class="form-label" style="color:#212529 !important; font-weight:600;">PTA Dues</label>
+        <input type="number" step="0.01" name="pta_dues" class="form-control" placeholder="e.g. 200" 
+               value="{% if selected_fee_structure.pta_dues %}{{ selected_fee_structure.pta_dues }}{% endif %}">
+    </div>
+    <div class="col-md-4 form-group-spaced">
+        <label class="form-label" style="color:#212529 !important; font-weight:600;">Computer Levy</label>
+        <input type="number" step="0.01" name="computer_levy" class="form-control" placeholder="e.g. 50" 
+               value="{% if selected_fee_structure.computer_levy %}{{ selected_fee_structure.computer_levy }}{% endif %}">
+    </div>
+   
+    <div class="col-md-4 form-group-spaced">
+        <label class="form-label" style="color:#212529 !important; font-weight:600;">Other Fees</label>
+        <input type="number" step="0.01" name="other_fees" class="form-control" placeholder="e.g. 30" 
+               value="{% if selected_fee_structure.other_fees %}{{ selected_fee_structure.other_fees }}{% endif %}">
+    </div>
+
+    <!-- Canteen Amount only -->
+
+</div>
+
+<button type="submit" class="btn btn-primary mt-2">Save Fee Structure</button>
+</form>
+    </div>
+</div>
+</div>
+
+  {% if fee_breakdown %}
+    <div class="settings-card mt-3">
+        <div class="mb-2">
+            <strong>Ready to generate for:</strong> {{ fee_breakdown.get_stage_display }}, 
+            Term: {{ fee_breakdown.term.get_term_number_display }}- Academic Year: {{ fee_breakdown.academic_year }}
+        </div>
+        
+        <div class="mb-3 small text-muted">
+{% if fee_breakdown.school_fees %}
+School Fees: ₵{{ fee_breakdown.school_fees }} |
+{% endif %}
+
+{% if fee_breakdown.canteen_amount %}
+Feeding: ₵{{ fee_breakdown.canteen_amount }} |
+{% endif %}
+
+{% if fee_breakdown.boarding_fee %}
+Boarding: ₵{{ fee_breakdown.boarding_fee }} |
+{% endif %}
+
+{% if fee_breakdown.hostel_fee %}
+Hostel: ₵{{ fee_breakdown.hostel_fee }} |
+{% endif %}
+
+{% if fee_breakdown.exam_fees %}
+Exam: ₵{{ fee_breakdown.exam_fees }} |
+{% endif %}
+
+{% if fee_breakdown.development_fee %}
+Development: ₵{{ fee_breakdown.development_fee }} |
+{% endif %}
+
+{% if fee_breakdown.pta_dues %}
+PTA: ₵{{ fee_breakdown.pta_dues }} |
+{% endif %}
+
+{% if fee_breakdown.computer_levy %}
+Computer: ₵{{ fee_breakdown.computer_levy }} |
+{% endif %}
+
+{% if fee_breakdown.other_fees %}
+Other: ₵{{ fee_breakdown.other_fees }}
+{% endif %}
+        </div>
+
+        <form method="POST" action="{% url 'accounts:generate_fees_for_term' %}">
+            {% csrf_token %}
+            <input type="hidden" name="stage_group" value="{{ fee_breakdown.stage }}">
+            <input type="hidden" name="term" value="{{ fee_breakdown.term.id }}">
+            <input type="hidden" name="academic_year" value="{{ fee_breakdown.academic_year }}">
+                    
+            {% with key=fee_breakdown.stage|add:':'|add:fee_breakdown.term.id|stringformat:'s'|add:':'|add:fee_breakdown.academic_year %}
+                {% if key in existing_fee_keys %}
+                    <button type="submit" class="btn btn-warning w-100">
+                        <i class="fas fa-sync-alt me-1"></i>
+                        Generate Fees for {{ fee_breakdown.get_stage_display }}
+                    </button>
+                {% else %}
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-plus me-1"></i>
+                        Generate Fees for {{ fee_breakdown.get_stage_display }} -  {{ fee_breakdown.term.get_term_number_display }} - {{ fee_breakdown.academic_year }}
+                    </button>
+                {% endif %}
+            {% endwith %}
+        </form>
+    </div>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,557 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block content %}
+
+<style>
+
+/* PAGE SPACE */
+.timetable-page{
+    margin-top:25px;
+}
+
+
+/* HERO */
+
+.timetable-header{
+
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+
+    color:white;
+
+    padding:28px;
+
+    border-radius:22px;
+
+    margin-bottom:30px;
+
+    box-shadow:0 12px 30px rgba(37,99,235,.18);
+
+}
+
+
+.timetable-header h3{
+
+    margin:0;
+
+    font-weight:800;
+
+}
+
+
+.timetable-header p{
+
+    margin:8px 0 0;
+
+    opacity:.9;
+
+}
+
+
+
+/* NAVIGATION */
+
+.week-controls{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    background:white;
+
+    padding:15px 20px;
+
+    border-radius:18px;
+
+    margin-bottom:25px;
+
+    box-shadow:0 8px 25px rgba(0,0,0,.08);
+
+}
+
+
+
+.week-btn{
+
+    border-radius:30px!important;
+
+    padding:8px 18px!important;
+
+    font-weight:600;
+
+}
+
+
+
+/* DAY CARD */
+
+.day-card{
+
+    background:white;
+
+    border-radius:22px;
+
+    overflow:hidden;
+
+    margin-bottom:25px;
+
+    border:1px solid #e5e7eb;
+
+    box-shadow:0 8px 25px rgba(15,23,42,.08);
+
+}
+
+
+
+.day-card.today{
+
+    border:2px solid #2563eb;
+
+}
+
+
+
+/* DAY HEADER */
+
+.day-header{
+
+    background:#475569;
+
+    color:white;
+
+    padding:16px 22px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    font-weight:700;
+
+}
+
+
+
+.day-header.today{
+
+    background:#2563eb;
+
+}
+
+
+
+/* EVENT */
+
+.event-banner{
+
+    padding:18px;
+
+    text-align:center;
+
+    font-weight:600;
+
+}
+
+
+
+/* TABLE */
+
+.timetable-table{
+
+    width:100%;
+
+}
+
+
+
+.timetable-table thead th{
+
+    background:#f8fafc;
+
+    color:#475569;
+
+    font-size:.85rem;
+
+    border:none;
+
+}
+
+
+
+.timetable-table td{
+
+    padding:15px;
+
+    vertical-align:middle;
+
+    border-bottom:1px solid #f1f5f9;
+
+}
+
+
+
+.class-badge{
+
+    background:#dbeafe;
+
+    color:#1d4ed8;
+
+    padding:6px 14px;
+
+    border-radius:30px;
+
+    font-weight:700;
+
+    display:inline-block;
+
+}
+
+
+
+.subject-badge{
+
+    background:#f1f5f9;
+
+    color:#334155;
+
+    padding:6px 14px;
+
+    border-radius:30px;
+
+    font-weight:600;
+
+}
+
+
+
+.time-box{
+
+    color:#64748b;
+
+    font-weight:600;
+
+}
+
+
+
+.empty-box{
+
+    padding:25px;
+
+    text-align:center;
+
+    color:#64748b;
+
+}
+
+
+
+/* MOBILE */
+
+@media(max-width:768px){
+
+.week-controls{
+
+    flex-direction:column;
+
+    gap:15px;
+
+}
+
+
+.day-header{
+
+    flex-direction:column;
+
+    gap:5px;
+
+}
+
+
+.timetable-table{
+
+    font-size:.85rem;
+
+}
+
+}
+
+</style>
+
+
+
+<div class="timetable-page">
+
+
+<div class="timetable-header">
+
+<h3>
+<i class="fas fa-calendar-alt"></i>
+My Timetable
+</h3>
+
+<p>
+View your assigned classes and teaching schedule
+</p>
+
+</div>
+
+
+
+<div class="week-controls">
+
+
+<div>
+
+<a href="?week={{ prev_week }}" 
+class="btn btn-outline-primary week-btn">
+
+<i class="fas fa-chevron-left"></i>
+Previous
+
+</a>
+
+
+{% if week_offset != 0 %}
+
+<a href="?week=0"
+class="btn btn-outline-secondary week-btn">
+
+Today
+
+</a>
+
+{% endif %}
+
+
+<a href="?week={{ next_week }}"
+class="btn btn-outline-primary week-btn">
+
+Next
+<i class="fas fa-chevron-right"></i>
+
+</a>
+
+</div>
+
+
+</div>
+
+
+
+
+{% for day in timetable_by_day %}
+
+
+<div class="day-card {% if day.num == today %}today{% endif %}">
+
+
+<div class="day-header {% if day.num == today %}today{% endif %}">
+
+<span>
+{{ day.name }}
+</span>
+
+
+<span>
+
+{{ day.date|date:"M d" }}
+
+
+{% if day.num == today %}
+
+<span class="badge bg-light text-primary ms-2">
+Today
+</span>
+
+{% endif %}
+
+</span>
+
+
+</div>
+
+
+
+
+{% if day.event %}
+
+
+<div class="event-banner 
+{% if day.event.affects_timetable %}
+bg-warning-subtle
+{% else %}
+bg-info-subtle
+{% endif %}">
+
+
+<h5 class="mb-1">
+
+{% if day.event.affects_timetable %}
+
+🎉 {{ day.event.name }}
+
+{% else %}
+
+📚 {{ day.event.name }}
+
+{% endif %}
+
+</h5>
+
+
+
+{% if day.event.affects_timetable %}
+
+<small>
+No classes scheduled
+</small>
+
+{% endif %}
+
+
+</div>
+
+
+{% endif %}
+
+
+
+
+
+<div class="p-3">
+
+
+{% if day.entries %}
+
+
+<div class="table-responsive">
+
+
+<table class="timetable-table">
+
+
+<thead>
+
+<tr>
+
+<th>Class</th>
+
+<th>Subject</th>
+
+<th>Period</th>
+
+<th>Time</th>
+
+</tr>
+
+</thead>
+
+
+
+<tbody>
+
+
+{% for entry in day.entries %}
+
+
+<tr>
+
+
+<td>
+
+<span class="class-badge">
+
+<i class="fas fa-school"></i>
+
+{{ entry.school_class.name }}
+
+</span>
+
+</td>
+
+
+
+<td>
+
+<span class="subject-badge">
+
+<i class="fas fa-book"></i>
+
+{{ entry.subject.name }}
+
+</span>
+
+</td>
+
+
+
+<td>
+
+{{ entry.period|default:"-" }}
+
+</td>
+
+
+
+<td>
+
+<span class="time-box">
+
+<i class="far fa-clock"></i>
+
+{{ entry.start_time|time:"H:i" }}
+-
+{{ entry.end_time|time:"H:i" }}
+
+</span>
+
+</td>
+
+
+</tr>
+
+
+{% endfor %}
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+{% elif not day.event or day.event.affects_timetable %}
+
+
+<div class="empty-box">
+
+<i class="fas fa-calendar-times fa-2x mb-2"></i>
+
+<p class="mb-0">
+No classes scheduled
+</p>
+
+</div>
+
+
+{% endif %}
+
+
+</div>
+
+
+</div>
+
+
+{% endfor %}
+
+
+</div>
+
+
+{% endblock %}

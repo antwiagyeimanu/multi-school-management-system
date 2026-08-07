@@ -1,0 +1,27 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h3>Assign Subjects to {{ school_class.name }}</h3>
+    <p class="text-muted">Checked subjects will be assigned to all students in this class.</p>
+    
+    <form method="POST">
+        {% csrf_token %}
+        <div class="card">
+            <div class="card-body">
+                {{ form.subjects.errors }}
+                {% for checkbox in form.subjects %}
+                <div class="form-check mb-2">
+                    {{ checkbox.tag }}
+                    <label class="form-check-label" for="{{ checkbox.id_for_label }}">
+                        {{ checkbox.choice_label }}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <button type="submit" class="btn btn-success mt-3">Save Subjects</button>
+        <a href="{% url 'accounts:class_detail' school_class.id %}" class="btn btn-secondary mt-3">Cancel</a>
+    </form>
+</div>
+{% endblock %}

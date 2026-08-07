@@ -1,0 +1,51 @@
+{% extends "accounts/dashboard_base.html" %}
+
+{% block content %}
+
+<div style="display:flex; justify-content:center; padding-top:40px;">
+
+    <div style="width:100%; max-width:500px; background:#fff;
+                border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.1);
+                padding:25px;">
+
+        <!-- Header -->
+        <div style="text-align:center; margin-bottom:20px;">
+            <div style="width:80px; height:80px; background:#1abc9c;
+                        border-radius:50%; margin:0 auto;
+                        display:flex; align-items:center; justify-content:center;
+                        font-size:30px; color:white;">
+                👤
+            </div>
+
+            <h3 style="margin-top:10px;">My Profile</h3>
+        </div>
+
+        <!-- Info -->
+        <div style="font-size:16px; line-height:1.8;">
+
+            <p><strong>First Name:</strong> {{ request.user.first_name }}</p>
+
+            <p><strong>Last Name:</strong> {{ request.user.last_name }}</p>
+            <p><strong>Phone No:</strong> {{ request.user.phone }}</p>
+            <p><strong>Email:</strong> {{ request.user.email }}</p>
+
+            <p><strong>Username:</strong> {{ request.user.username }}</p>
+
+            <p><strong>Role:</strong> {{ request.user.role }}</p>
+
+        </div>
+
+        <!-- Button -->
+        <div style="margin-top:20px; text-align:center;">
+            <a href="{% url 'logout' %}"
+               style="background:#e74c3c; color:white; padding:10px 20px;
+                      border-radius:6px; text-decoration:none; display:inline-block;">
+                Logout
+            </a>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

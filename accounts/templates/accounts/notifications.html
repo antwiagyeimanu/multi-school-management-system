@@ -1,0 +1,125 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block content %}
+<style>
+:root{
+    --primary:#4f46e5;
+    --primary-light:#eef2ff;
+    --success:#10b981;
+    --danger:#ef4444;
+    --text:#1f2937;
+    --muted:#6b7280;
+    --border:#e5e7eb;
+    --bg:#f8fafc;
+}
+body{background:var(--bg);}
+.notifications-wrapper{max-width:900px;margin:auto;}
+.page-header{background:#fff;border-radius:20px;padding:24px;box-shadow:0 8px 25px rgba(0,0,0,.06);margin-bottom:30px;}
+.page-title{font-weight:700;color:var(--text);margin:0;}
+.page-title i{color:var(--primary);}
+.count-badge{background:linear-gradient(135deg,#4f46e5,#6366f1);border-radius:50px;padding:6px 12px;font-size:.8rem;}
+.filter-btn{border-radius:30px;padding:.45rem 1rem;font-weight:600;transition:.3s;}
+.filter-btn.active{background:linear-gradient(135deg,#4f46e5,#6366f1);border:none;color:#fff;}
+.filter-btn:not(.active){background:#fff;border:1px solid var(--border);}
+.date-heading{display:flex;align-items:center;gap:10px;margin:30px 0 15px;color:var(--muted);font-size:.9rem;font-weight:600;}
+.date-heading::after{content:"";flex:1;height:1px;background:var(--border);}
+.notification-card{border:none;border-radius:18px;overflow:hidden;margin-bottom:16px;transition:.3s;background:#fff;box-shadow:0 6px 18px rgba(0,0,0,.05);position:relative;}
+.notification-card:hover{transform:translateY(-4px);box-shadow:0 14px 30px rgba(0,0,0,.08);}
+.notification-card.unread::before{content:"";position:absolute;left:0;top:0;width:5px;height:100%;background:linear-gradient(180deg,#4f46e5,#6366f1);}
+.icon-box{width:55px;height:55px;border-radius:16px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+.notification-title{font-weight:700;color:var(--text);}
+.notification-message{color:var(--muted);margin:8px 0 12px;line-height:1.6;}
+.meta{display:flex;align-items:center;flex-wrap:wrap;gap:8px;justify-content:space-between;}
+.badge-soft{background:#e0f2fe;color:#0369a1;font-weight:600;padding:6px 12px;border-radius:30px;}
+.new-badge{background:#fee2e2;color:#b91c1c;border-radius:30px;padding:6px 12px;font-weight:600;}
+.btn-action{border-radius:30px;padding:4px 12px;font-size:.8rem;font-weight:600;}
+/* Custom Popup */
+.custom-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:9999;}
+.custom-modal.show{display:flex;}
+.modal-box{background:#fff;border-radius:20px;padding:28px;max-width:380px;width:90%;text-align:center;box-shadow:0 25px 50px rgba(0,0,0,.2);}
+</style>
+
+
+<div class="container py-4">
+<div class="notifications-wrapper">
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center header-top">
+            <div>
+                <h3 class="page-title"><i class="bi bi-bell-fill me-2"></i>Notifications <span class="badge count-badge">{{ total }}</span></h3>
+            </div>
+            <div class="filters">
+                <a href="?filter=all" class="btn filter-btn {% if filter == 'all' %}active{% endif %}">All</a>
+                <a href="?filter=today" class="btn filter-btn {% if filter == 'today' %}active{% endif %}">Today</a>
+                <a href="?filter=week" class="btn filter-btn {% if filter == 'week' %}active{% endif %}">This Week</a>
+            </div>
+        </div>
+    </div>
+
+    {% for date, items in grouped_notifications.items %}
+        <div class="date-heading">{{ date }} • {{ items|length }} notification{{ items|length|pluralize }}</div>
+        {% for n in items %}
+        <div class="notification-card {% if not n.is_read %}unread{% endif %}">
+            <div class="card-body p-4">
+                <div class="d-flex">
+                    <div class="icon-box me-3">🔔</div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div><span class="fw-bold">Title:</span> <span class="notification-title ms-1">{{ n.notification.title }}</span></div>
+                            <small class="text-muted">{{ n.notification.created_at|timesince }} ago</small>
+                        </div>
+                        <div class="mb-3"><span class="fw-bold">Message:</span> <span class="notification-message ms-1">{{ n.notification.message }}</span></div>
+                        <div class="meta">
+                            <div>
+                                <span class="badge-soft">Sent to: {{ n.notification.target_group }}</span>
+                                {% if not n.is_read %}<span class="new-badge">New</span>{% endif %}
+                            </div>
+                            <div class="d-flex gap-1">
+                                <button class="btn btn-danger btn-action" onclick="openDelete({{ n.notification.id }})">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% empty %}
+    <div class="empty-state"><div class="icon">🔔</div><h4 class="fw-bold mb-2">No Notifications</h4><p class="text-muted mb-0">You're all caught up.</p></div>
+    {% endfor %}
+    {% if page_obj.has_other_pages %}
+<div class="d-flex justify-content-center mt-4 gap-2">
+  {% if page_obj.has_previous %}
+    <a href="?filter={{ filter }}&page={{ page_obj.previous_page_number }}" class="btn btn-light btn-sm">Previous</a>
+  {% endif %}
+  
+  <span class="btn btn-dark btn-sm">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+  
+  {% if page_obj.has_next %}
+    <a href="?filter={{ filter }}&page={{ page_obj.next_page_number }}" class="btn btn-light btn-sm">Next</a>
+  {% endif %}
+</div>
+{% endif %}
+</div>
+</div>
+
+<!-- Custom Delete Popup -->
+<div id="deleteModal" class="custom-modal">
+  <div class="modal-box">
+    <div style="font-size:40px;">🗑️</div>
+    <h5 class="fw-bold mt-2">Delete Announcement?</h5>
+    <p class="text-muted small">This will delete the announcement for everyone. This action cannot be undone.</p>
+    <div class="d-flex gap-2 justify-content-center mt-4">
+      <button class="btn btn-light px-4" style="border-radius:30px;" onclick="closeDelete()">Cancel</button>
+      <button class="btn btn-danger px-4" style="border-radius:30px;" id="confirmBtn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let delId = null;
+function openDelete(id){ delId=id; document.getElementById('deleteModal').classList.add('show'); }
+function closeDelete(){ document.getElementById('deleteModal').classList.remove('show'); }
+document.getElementById('confirmBtn').onclick = function(){
+  window.location.href = `/communication/announcements/${delId}/delete/`;
+}
+</script>
+
+{% endblock %}

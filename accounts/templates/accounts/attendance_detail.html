@@ -1,0 +1,606 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block content %}
+
+<style>
+
+.attendance-page{
+    padding:20px;
+    background:#f8fafc;
+}
+
+/* HERO */
+.attendance-hero{
+    background:white;
+    border-radius:20px;
+    padding:25px;
+    box-shadow:0 10px 30px rgba(15,23,42,.08);
+    margin-bottom:25px;
+}
+
+.attendance-title{
+    font-size:24px;
+    font-weight:800;
+    color:#0f172a;
+    text-align:center;
+}
+
+.attendance-subtitle{
+    text-align:center;
+    color:#64748b;
+    margin-top:8px;
+}
+
+
+/* SUMMARY CARDS */
+
+.summary-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:15px;
+    margin:25px 0;
+}
+
+
+.summary-card{
+    background:white;
+    padding:20px;
+    border-radius:18px;
+    display:flex;
+    align-items:center;
+    gap:15px;
+    box-shadow:0 8px 20px rgba(0,0,0,.06);
+}
+
+
+.summary-icon{
+    width:55px;
+    height:55px;
+    border-radius:15px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:25px;
+}
+
+
+.present-icon{
+    background:#dcfce7;
+}
+
+
+.absent-icon{
+    background:#fee2e2;
+}
+
+
+.total-icon{
+    background:#dbeafe;
+}
+
+
+.rate-icon{
+    background:#ede9fe;
+}
+
+
+
+.summary-label{
+    font-size:13px;
+    color:#64748b;
+}
+
+
+.summary-value{
+    font-size:24px;
+    font-weight:800;
+}
+
+
+/* TABLE */
+
+.table-card{
+
+    background:white;
+    border-radius:20px;
+    padding:20px;
+    box-shadow:0 8px 25px rgba(0,0,0,.07);
+
+}
+
+
+.table thead th{
+
+    background:linear-gradient(135deg,#052342,#1d4ed8);
+    color:white;
+    padding:14px;
+    text-align:center;
+    font-size:13px;
+
+}
+
+
+.table tbody td{
+
+    padding:14px;
+    text-align:center;
+    vertical-align:middle;
+
+}
+
+
+.table tbody tr:hover{
+
+    background:#f8fafc;
+
+}
+
+
+
+/* STATUS */
+
+.status-present{
+
+    background:#dcfce7;
+    color:#15803d;
+    padding:8px 14px;
+    border-radius:50px;
+    font-weight:700;
+
+}
+
+
+.status-absent{
+
+    background:#fee2e2;
+    color:#b91c1c;
+    padding:8px 14px;
+    border-radius:50px;
+    font-weight:700;
+
+}
+
+
+.edit-status{
+
+    margin-left:8px;
+
+}
+
+
+/* PAGINATION */
+
+.pagination .page-link{
+
+    border-radius:10px;
+    margin:3px;
+}
+
+
+/* MOBILE */
+
+@media(max-width:768px){
+
+.summary-grid{
+
+grid-template-columns:repeat(2,1fr);
+
+}
+
+
+.attendance-title{
+
+font-size:20px;
+
+}
+
+}
+
+
+@media(max-width:500px){
+
+.summary-grid{
+
+grid-template-columns:1fr;
+
+}
+
+}
+
+
+</style>
+
+
+<div class="attendance-page">
+
+
+<div class="attendance-hero">
+
+<h2 class="attendance-title">
+📋 Attendance Details
+</h2>
+
+
+{% if attendance_mode == "class_teacher" %}
+
+<p class="attendance-subtitle">
+📚 {{ session.school_class.name }}
+<br>
+{{ session.date|date:"l, F d, Y" }}
+<br>
+Teacher: {{ session.teacher.get_full_name }}
+</p>
+
+
+{% else %}
+
+
+<p class="attendance-subtitle">
+
+📚 {{ session.school_class.name }}
+<br>
+
+📘 {{ session.subject.name }}
+
+<br>
+
+{{ session.date|date:"M d, Y" }}
+
+<br>
+
+Teacher: {{ session.teacher.get_full_name }}
+
+</p>
+
+
+{% endif %}
+
+
+
+</div>
+
+
+
+<div class="summary-grid">
+
+
+<div class="summary-card">
+
+<div class="summary-icon present-icon">
+🟢
+</div>
+
+<div>
+
+<div class="summary-label">
+Present
+</div>
+
+<div class="summary-value text-success">
+{{ present_count }}
+</div>
+
+</div>
+
+</div>
+
+
+
+<div class="summary-card">
+
+<div class="summary-icon absent-icon">
+🔴
+</div>
+
+<div>
+
+<div class="summary-label">
+Absent
+</div>
+
+<div class="summary-value text-danger">
+{{ absent_count }}
+</div>
+
+</div>
+
+</div>
+
+
+
+
+<div class="summary-card">
+
+<div class="summary-icon total-icon">
+👨‍🎓
+</div>
+
+<div>
+
+<div class="summary-label">
+Total Students
+</div>
+
+<div class="summary-value">
+{{ total_count }}
+</div>
+
+</div>
+
+</div>
+
+
+
+<div class="summary-card">
+
+<div class="summary-icon rate-icon">
+📊
+</div>
+
+<div>
+
+<div class="summary-label">
+Attendance Rate
+</div>
+
+<div class="summary-value">
+{{ attendance_rate }}%
+</div>
+
+</div>
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+<div class="d-flex justify-content-between mb-3">
+
+<a href="{% url 'accounts:export_attendance' session.id %}"
+class="btn btn-success rounded-pill px-4">
+
+<i class="fas fa-file-excel"></i>
+Export
+
+</a>
+
+
+{% if tsc_obj and request.user == session.teacher %}
+
+<a href="{% url 'accounts:mark_attendance' %}?tsc={{ tsc_obj.id }}&date={{ session.date|date:'Y-m-d' }}"
+class="btn btn-warning rounded-pill px-4">
+
+<i class="fas fa-edit"></i>
+Edit Attendance
+
+</a>
+
+{% endif %}
+
+
+</div>
+
+
+
+
+<div class="table-card">
+
+
+<div class="table-responsive">
+
+
+<table class="table table-bordered">
+
+
+<thead>
+
+<tr>
+
+<th>#</th>
+
+<th>Student Name</th>
+
+<th>Student ID</th>
+
+<th>Status</th>
+
+</tr>
+
+</thead>
+
+
+
+<tbody>
+
+
+{% for record in page_obj %}
+
+
+<tr>
+
+
+<td>
+{{ page_obj.start_index|add:forloop.counter0 }}
+</td>
+
+
+
+<td class="fw-bold">
+
+{{ record.student.get_full_name }}
+
+</td>
+
+
+
+<td>
+
+{{ record.student.student_number }}
+
+</td>
+
+
+
+<td>
+
+
+{% if record.status == 'P' %}
+
+
+<span class="status-present">
+
+✓ Present
+
+</span>
+
+
+{% else %}
+
+
+<span class="status-absent">
+
+✕ Absent
+
+</span>
+
+
+{% endif %}
+
+
+
+{% if tsc_obj and request.user == session.teacher %}
+
+
+<a href="{% url 'accounts:mark_attendance' %}?tsc={{ tsc_obj.id }}&date={{ session.date|date:'Y-m-d' }}"
+class="btn btn-sm btn-outline-primary rounded-pill edit-status">
+
+<i class="fas fa-edit"></i>
+Edit
+
+</a>
+
+
+{% endif %}
+
+
+
+</td>
+
+
+</tr>
+
+
+
+{% empty %}
+
+
+<tr>
+
+<td colspan="4" class="text-center">
+
+No attendance records for this session.
+
+</td>
+
+</tr>
+
+
+{% endfor %}
+
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+{% if page_obj.has_other_pages %}
+
+<nav class="mt-4">
+
+<ul class="pagination justify-content-center">
+
+
+{% if page_obj.has_previous %}
+
+<li class="page-item">
+
+<a class="page-link"
+href="?page={{ page_obj.previous_page_number }}">
+
+Previous
+
+</a>
+
+</li>
+
+{% endif %}
+
+
+
+<li class="page-item active">
+
+<span class="page-link">
+
+Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+
+</span>
+
+</li>
+
+
+
+{% if page_obj.has_next %}
+
+<li class="page-item">
+
+<a class="page-link"
+href="?page={{ page_obj.next_page_number }}">
+
+Next
+
+</a>
+
+</li>
+
+{% endif %}
+
+
+
+</ul>
+
+</nav>
+
+
+{% endif %}
+
+
+
+
+<a href="{% url 'accounts:attendance_report' %}"
+class="btn btn-secondary rounded-pill mt-3">
+
+← Back to Report
+
+</a>
+
+
+
+</div>
+
+
+{% endblock %}

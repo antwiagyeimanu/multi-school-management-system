@@ -1,0 +1,125 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block content %}
+
+<style>
+  .provider-box { display:none; margin-top:15px; padding:0; }
+  .provider-box.active { display:block; }
+  .mini-card { background:#f8f9ff; border:1px solid #ddd; border-radius:10px; padding:15px; }
+</style>
+
+<div class="container mt-3">
+  <div class="card" style="max-width:900px; margin:auto;">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">📱 SMS Settings</h5>
+      <small>Test Mode = FREE</small>
+    </div>
+    <div class="card-body p-3">
+      <form method="POST">
+        {% csrf_token %}
+        
+        <!-- Row 1: Toggles -->
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <div class="mini-card">{{ form.sms_enabled }} <strong>Enable SMS</strong></div>
+          </div>
+          <div class="col-6">
+            <div class="mini-card">{{ form.sms_test_mode }} <strong>Test Mode (FREE)</strong></div>
+          </div>
+        </div>
+
+        <!-- Row 2: Provider + Sender ID side by side -->
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold small">SMS Provider</label>
+            {{ form.sms_provider }}
+          </div>
+          <div class="col-md-6"> 
+            <label class="form-label fw-bold small">Sender ID (e.g. School Name)</label>
+            {{ form.sms_sender_id }}
+          </div>
+        </div>
+
+        <!-- Hubtel Box -->
+        <div id="hubtel-box" class="provider-box">
+          <div class="mini-card" style="background:#e3f2fd; border-color:#90caf9;">
+            <h6 class="fw-bold">🔵 Hubtel</h6>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="small">Client ID</label>
+                {{ form.hubtel_client_id }}
+              </div>
+              <div class="col-md-6">
+                <label class="small">Client Secret</label>
+                {{ form.hubtel_client_secret }}
+              </div>
+              <div class="col-12 mt-2">
+                <label class="small">Merchant Account</label>
+                {{ form.hubtel_merchant_account }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MNotify Box -->
+        <div id="mnotify-box" class="provider-box">
+          <div class="mini-card" style="background:#f3e5f5; border-color:#ce93d8;">
+            <h6 class="fw-bold">🟣 MNotify</h6>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="small">API Key</label>
+                {{ form.mnotify_api_key }}
+              </div>
+              <div class="col-md-6">
+                <label class="small">Sender ID</label>
+                {{ form.mnotify_sender_id }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary w-100 mt-3">Save Settings</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleProvider() {
+  const provider = document.getElementById('id_sms_provider').value;
+  const enableSms = document.getElementById('id_sms_enabled').checked;
+  const testMode = document.getElementById('id_sms_test_mode').checked;
+
+  document.getElementById('hubtel-box').classList.toggle('active', provider==='hubtel' || provider==='both');
+  document.getElementById('mnotify-box').classList.toggle('active', provider==='mnotify' || provider==='both');
+
+  // === NEW: Make field required INSIDE box ===
+  const isLive = enableSms && !testMode;
+  
+  const senderId = document.getElementById('id_sms_sender_id');
+  const hubtelId = document.getElementById('id_hubtel_client_id');
+  const hubtelSecret = document.getElementById('id_hubtel_client_secret');
+  const mnotifyKey = document.getElementById('id_mnotify_api_key');
+
+  if (senderId) senderId.required = isLive;
+  if (provider === 'hubtel' || provider === 'both') {
+    if (hubtelId) hubtelId.required = isLive;
+    if (hubtelSecret) hubtelSecret.required = isLive;
+  } else {
+    if (hubtelId) hubtelId.required = false;
+    if (hubtelSecret) hubtelSecret.required = false;
+  }
+  if (provider === 'mnotify' || provider === 'both') {
+    if (mnotifyKey) mnotifyKey.required = isLive;
+  } else {
+    if (mnotifyKey) mnotifyKey.required = false;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  toggleProvider();
+  document.getElementById('id_sms_provider').addEventListener('change', toggleProvider);
+  document.getElementById('id_sms_enabled').addEventListener('change', toggleProvider);
+  document.getElementById('id_sms_test_mode').addEventListener('change', toggleProvider);
+});
+</script>
+{% endblock %}

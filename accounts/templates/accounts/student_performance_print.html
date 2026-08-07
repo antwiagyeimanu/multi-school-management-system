@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Performance Report</title>
+<style>
+@page{ margin:20mm 15mm; }
+body{ font-family: 'Segoe UI', Arial, sans-serif; margin:0; padding:0; color:#111827; position:relative; }
+
+/* WATERMARK - SCHOOL NAME */
+.watermark{
+    position:fixed; top:48%; left:50%; transform:translate(-50%,-50%) rotate(-28deg);
+    font-size:75px; font-weight:900; color:rgba(79,70,229,0.05); 
+    z-index:0; width:90%; text-align:center; line-height:1.15;
+    letter-spacing:3px; text-transform:uppercase; pointer-events:none;
+}
+.watermark span{ display:block; }
+
+.header{ 
+    display:flex; align-items:center; 
+    border-bottom:4px solid #4f46e5; padding-bottom:18px; 
+    margin-bottom:20px; position:relative; z-index:1;
+}
+.logo-wrap{ width:110px; height:110px; flex-shrink:0; }
+.logo-wrap img{ width:100%; height:100%; object-fit:contain; border-radius:12px; }
+.logo-placeholder{ 
+    width:110px; height:110px; background:linear-gradient(135deg,#4f46e5,#2563eb); 
+    color:#fff; border-radius:18px; display:flex; align-items:center; justify-content:center; 
+    font-size:38px; font-weight:800; 
+}
+.school-info{ flex:1; text-align:center; padding:0 20px; }
+.school-info h1{ margin:0; font-size:28px; color:#111827; letter-spacing:0.5px; font-weight:800; }
+.school-info h2{ margin:4px 0; font-size:15px; color:#4f46e5; font-weight:600; }
+.school-info p{ margin:2px 0; font-size:13px; color:#6b7280; }
+
+.report-title{ text-align:center; margin:25px 0 15px; z-index:1; position:relative; }
+.report-title h3{ margin:0; font-size:20px; background:#111827; color:#fff; display:inline-block; padding:8px 28px; border-radius:30px; letter-spacing:1px; }
+.report-title small{ display:block; margin-top:8px; color:#6b7280; }
+
+.meta{ 
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+    background:#f8fafc; border:1px solid #e5e7eb; padding:12px 15px; border-radius:12px; font-size:13px;
+}
+.stats-row{ display:flex; gap:12px; margin:15px 0; }
+.stat-box{ flex:1; border:2px solid #e5e7eb; border-radius:12px; padding:10px; text-align:center; }
+.stat-box strong{ display:block; font-size:20px; color:#4f46e5; }
+
+h4.class-head{ 
+    margin:25px 0 8px; background:linear-gradient(135deg,#111827,#374151); 
+    color:#fff; padding:10px 15px; border-radius:10px; font-size:14px; 
+}
+
+table{ width:100%; border-collapse:collapse; font-size:13px; margin-top:8px; z-index:1; position:relative; }
+th{ background:#111827; color:#fff; padding:11px 10px; text-align:left; font-size:12px; text-transform:uppercase; }
+td{ padding:9px 10px; border-bottom:1px solid #eef2f7; }
+tr:nth-child(even){ background:#f9fafb; }
+
+.footer{ margin-top:40px; display:flex; justify-content:space-between; font-size:12px; border-top:2px solid #111827; padding-top:15px; }
+.footer div{ text-align:center; }
+.line{ width:140px; border-top:1px solid #111; margin:30px auto 5px; }
+
+@media print { .no-print{ display:none; } }
+</style>
+</head>
+<body>
+
+<div class="watermark">{{ school.name }}</div>
+
+<div class="header">
+    <div class="logo-wrap">
+        {% if school.logo %}
+        <img src="{{ school.logo.url }}" alt="Logo">
+        {% else %}
+        <div class="logo-placeholder">{{ school.name|slice:":2"|upper }}</div>
+        {% endif %}
+    </div>
+    <div class="school-info">
+        <h1>{{ school.name|upper }}</h1>
+        <h2>Student Performance Report</h2>
+        <p>{{ school.address|default:"School Address" }}</p>
+        <p>{{ school.address|default:"School Address" }} {% if school.gps_address %} | GPS: {{ school.gps_address }}{% endif %}</p>
+<p>Tel: {{ school.phone|default:"" }} {% if school.email %} | Email: {{ school.email }}{% endif %} {% if school.postal_address %} | P.O.Box: {{ school.postal_address }}{% endif %}</p>
+    </div>
+    <div style="width:110px;"></div>
+</div>
+
+<div class="report-title">
+    <h3>ACADEMIC PERFORMANCE</h3>
+    <small>Generated on {% now "d M Y, h:i A" %} by {{ request.user.get_full_name }}</small>
+</div>
+
+<div class="meta">
+    <span><strong>Class:</strong> {{ class_name }}</span>
+    <span><strong>Term:</strong> {{ term_name }}</span>
+    <span><strong>Total Students:</strong> {{ total_students }}</span>
+    <span><strong>Average:</strong> {{ avg_score }}%</span>
+    <span><strong>Pass Rate:</strong> {{ pass_rate }}%</span>
+</div>
+
+{% if grouped_summaries %}
+{% for group in grouped_summaries %}
+<h4 class="class-head">📚 {{ group.class_obj.name }} - {{ group.total_students }} Students - Avg: {{ group.class_avg }}%</h4>
+<table>
+<thead><tr><th>#</th><th>Student Name</th><th>Student No.</th><th>Total</th><th>Average</th><th>Grade</th><th>Remark</th></tr></thead>
+<tbody>
+{% for s in group.students %}
+<tr><td><strong>#{{ s.rank }}</strong></td><td>{{ s.student.get_full_name }}</td><td>{{ s.student.student_number }}</td><td>{{ s.term_total }}</td><td><strong>{{ s.term_average }}%</strong></td><td>{{ s.term_grade }}</td><td>{{ s.term_remark }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+{% endfor %}
+{% else %}
+<table>
+<thead><tr><th>Rank</th><th>Student Name</th><th>Student No.</th><th>Class</th><th>Total</th><th>Average</th><th>Grade</th><th>Remark</th></tr></thead>
+<tbody>
+{% for s in summaries %}
+<tr><td>#{{ s.rank }}</td><td>{{ s.student.get_full_name }}</td><td>{{ s.student.student_number }}</td><td>{{ s.school_class.name }}</td><td>{{ s.term_total }}</td><td>{{ s.term_average }}%</td><td>{{ s.term_grade }}</td><td>{{ s.term_remark }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+{% endif %}
+
+<div class="footer">
+    <div><div class="line"></div>Class Teacher</div>
+    <div><div class="line"></div>Headmaster</div>
+    <div><div class="line"></div>School Stamp</div>
+</div>
+
+<script>window.onload=function(){ setTimeout(()=>{ window.print(); }, 700); }</script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block title %}Edit User{% endblock %}
+
+{% block content %}
+<h2>Edit User</h2>
+
+<form method="POST">
+  {% csrf_token %}
+
+  <label>Username:</label>
+  <input type="text" name="username" value="{{ user.username }}" required>
+
+  <label>Email:</label>
+  <input type="email" name="email" value="{{ user.email }}" required>
+
+  <label>Role:</label>
+  <select name="role" required>
+    <option value="admin" {% if user.role  == "admin" %}selected{% endif %}>Admin</option>
+    <option value="teacher" {% if user.role == "teacher" %}selected{% endif %}>Teacher</option>
+    <option value="student" {% if user.role == "student" %}selected{% endif %}>Student</option>
+    <option value="parent" {% if user.role == "parent" %}selected{% endif %}>Parent</option>
+  </select>
+
+  <button type="submit">Save</button>
+</form>
+{% endblock %}

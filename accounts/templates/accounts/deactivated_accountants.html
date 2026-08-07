@@ -1,0 +1,536 @@
+{% extends "accounts/base.html" %}
+
+{% block title %}Deactivated Accountants{% endblock %}
+
+{% block content %}
+
+<style>
+
+.deactivated-wrapper{
+    background:#f8fafc;
+    min-height:100vh;
+    padding:35px 20px;
+}
+
+
+/* HERO */
+
+.deactivated-hero{
+
+    background:white;
+    border-radius:24px;
+    padding:30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:30px;
+    box-shadow:0 10px 30px rgba(0,0,0,.06);
+    border:1px solid #e5e7eb;
+
+}
+
+
+.hero-left h1{
+
+    margin:0;
+    font-size:34px;
+    font-weight:800;
+    color:#111827;
+
+}
+
+
+.hero-left p{
+
+    margin-top:8px;
+    color:#6b7280;
+    font-size:16px;
+
+}
+
+
+.count-card{
+
+    background:linear-gradient(135deg,#dc2626,#991b1b);
+    color:white;
+    padding:20px 35px;
+    border-radius:18px;
+    text-align:center;
+
+}
+
+
+.count-number{
+
+    display:block;
+    font-size:36px;
+    font-weight:800;
+
+}
+
+
+.count-text{
+
+    font-size:14px;
+
+}
+
+
+/* BUTTON */
+
+.back-btn{
+
+    display:inline-block;
+    margin-bottom:25px;
+    background:#2563eb;
+    color:white;
+    padding:12px 20px;
+    border-radius:12px;
+    text-decoration:none;
+    font-weight:700;
+
+}
+
+
+.back-btn:hover{
+
+    background:#1d4ed8;
+    color:white;
+
+}
+
+
+/* GRID */
+
+.accountant-grid{
+
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:25px;
+
+}
+
+
+
+/* CARD */
+
+.accountant-card{
+
+    background:white;
+    border-radius:22px;
+    overflow:hidden;
+    border:1px solid #e5e7eb;
+    box-shadow:0 5px 20px rgba(0,0,0,.06);
+    transition:.3s;
+
+}
+
+
+.accountant-card:hover{
+
+    transform:translateY(-6px);
+    box-shadow:0 15px 35px rgba(0,0,0,.12);
+
+}
+
+
+
+/* HEADER */
+
+.card-header-custom{
+
+    background:linear-gradient(135deg,#6b7280,#374151);
+    padding:25px;
+    text-align:center;
+    color:white;
+
+}
+
+
+.card-header-custom img{
+
+    width:90px;
+    height:90px;
+    border-radius:50%;
+    object-fit:cover;
+    border:4px solid white;
+
+}
+
+
+.avatar{
+
+    width:90px;
+    height:90px;
+    margin:auto;
+    border-radius:50%;
+    background:white;
+    color:#374151;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:30px;
+    font-weight:800;
+
+}
+
+
+.card-header-custom h3{
+
+    margin:15px 0 0;
+    font-size:22px;
+    font-weight:800;
+
+}
+/* CARD BODY */
+
+.card-body-custom{
+
+    padding:22px;
+
+}
+
+
+.info-line{
+
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:12px;
+    font-size:15px;
+
+}
+
+
+.info-label{
+
+    color:#6b7280;
+    font-weight:600;
+
+}
+
+
+.info-value{
+
+    color:#111827;
+    font-weight:700;
+    text-align:right;
+    word-break:break-word;
+
+}
+
+
+
+/* FOOTER */
+
+.card-footer-custom{
+
+    padding:18px 22px;
+    background:#f9fafb;
+    border-top:1px solid #e5e7eb;
+
+}
+
+
+
+.status-badge{
+
+    display:block;
+    text-align:center;
+    background:#fee2e2;
+    color:#b91c1c;
+    padding:8px;
+    border-radius:10px;
+    font-weight:800;
+    margin-bottom:12px;
+
+}
+
+
+
+.reactivate-btn{
+
+    display:block;
+    width:100%;
+    text-align:center;
+    background:#16a34a;
+    color:white;
+    padding:12px;
+    border-radius:12px;
+    text-decoration:none;
+    font-weight:700;
+    transition:.3s;
+
+}
+
+
+.reactivate-btn:hover{
+
+    background:#15803d;
+    color:white;
+    transform:translateY(-2px);
+
+}
+
+
+
+/* EMPTY */
+
+.empty-box{
+
+    background:white;
+    padding:60px;
+    border-radius:20px;
+    text-align:center;
+    color:#6b7280;
+    font-size:20px;
+
+}
+
+
+
+/* RESPONSIVE */
+
+@media(max-width:1100px){
+
+.accountant-grid{
+
+grid-template-columns:repeat(2,1fr);
+
+}
+
+}
+
+
+@media(max-width:700px){
+
+.deactivated-hero{
+
+flex-direction:column;
+gap:20px;
+text-align:center;
+
+}
+
+
+.hero-left h1{
+
+font-size:28px;
+
+}
+
+
+.accountant-grid{
+
+grid-template-columns:1fr;
+
+}
+
+
+}
+
+</style>
+
+
+
+<div class="deactivated-wrapper">
+
+
+<!-- HERO -->
+
+<div class="deactivated-hero">
+
+
+<div class="hero-left">
+
+<h1>🚫 Deactivated Accountants</h1>
+
+<p>
+Manage inactive accountant accounts and restore access when needed.
+</p>
+
+</div>
+
+
+
+<div class="count-card">
+
+<span class="count-number">
+{{ accountants.count }}
+</span>
+
+<span class="count-text">
+Inactive Accountants
+</span>
+
+</div>
+
+
+</div>
+
+
+
+<a href="{% url 'accounts:manage_accountant_grid' %}" 
+class="back-btn">
+
+← Back to Active Accountants
+
+</a>
+
+
+
+<div class="accountant-grid">
+
+
+{% for accountant in accountants %}
+
+
+<div class="accountant-card">
+
+
+<div class="card-header-custom">
+
+
+{% if accountant.photo %}
+
+<img src="{{ accountant.photo.url }}" 
+alt="{{ accountant.get_full_name }}">
+
+{% else %}
+
+<div class="avatar">
+
+{{ accountant.first_name|first }}{{ accountant.last_name|first }}
+
+</div>
+
+{% endif %}
+
+
+
+<h3>
+{{ accountant.first_name }}
+{{ accountant.last_name }}
+</h3>
+
+
+</div>
+<div class="card-body-custom">
+
+
+<div class="info-line">
+
+<span class="info-label">
+Staff ID
+</span>
+
+<span class="info-value">
+{{ accountant.staff_id|default:"N/A" }}
+</span>
+
+</div>
+
+
+
+<div class="info-line">
+
+<span class="info-label">
+Username
+</span>
+
+<span class="info-value">
+{{ accountant.username|default:"N/A" }}
+</span>
+
+</div>
+
+
+
+<div class="info-line">
+
+<span class="info-label">
+Phone
+</span>
+
+<span class="info-value">
+{{ accountant.phone|default:"N/A" }}
+</span>
+
+</div>
+
+
+
+<div class="info-line">
+
+<span class="info-label">
+Email
+</span>
+
+<span class="info-value">
+{{ accountant.email|default:"N/A" }}
+</span>
+
+</div>
+
+
+
+<div class="info-line">
+
+<span class="info-label">
+Joined
+</span>
+
+<span class="info-value">
+{{ accountant.date_joined|date:"M d, Y" }}
+</span>
+
+</div>
+
+
+</div>
+
+
+
+<div class="card-footer-custom">
+
+
+<span class="status-badge">
+Inactive Account
+</span>
+
+
+<a href="{% url 'accounts:reactivate_accountant' accountant.id %}"
+class="reactivate-btn">
+
+✓ Reactivate Accountant
+
+</a>
+
+
+</div>
+
+
+
+</div>
+
+
+{% empty %}
+
+
+<div class="empty-box">
+
+No deactivated accountants found.
+
+</div>
+
+
+{% endfor %}
+
+
+</div>
+
+
+</div>
+
+
+{% endblock %}

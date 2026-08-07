@@ -1,0 +1,118 @@
+<!-- accounts/templates/accounts/login.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background-color: #f4f6f9;
+            margin: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            margin: 80px auto;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        p {
+            text-align: center;
+        }
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+    <div class="card">
+
+        <h1>Login</h1>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <label for="{{ form.username.id_for_label }}">
+                Username / Staff ID / Student ID:
+            </label>
+<input type="text" name="username" placeholder="Username / Staff ID / Student ID" required>
+
+            <label for="{{ form.password.id_for_label }}">
+                Password:
+            </label>
+<div style="position: relative;">
+    <input type="password" id="password" name="password" placeholder="Password" required>
+
+    <span onclick="togglePassword()" 
+          style="position: absolute; right: 10px; top: 8px; cursor: pointer;">
+        👁️
+    </span>
+</div>
+            <button type="submit">Login</button>
+
+        </form>
+
+        <p>
+            Don't have an account?
+            <a href="{% url 'accounts:signup' %}">Signup here</a>
+        </p>
+
+    </div>
+</div>
+
+</body>
+</html>
+<script>
+function togglePassword() {
+    var passwordField = document.getElementById("password");
+
+    if (passwordField.type === "password") {
+        passwordField.type = "text";
+    } else {
+        passwordField.type = "password";
+    }
+}
+</script>

@@ -1,0 +1,115 @@
+{% extends "accounts/dashboard_base.html" %}
+{% block title %}Fee Defaulters Report{% endblock %}
+
+{% block content %}
+<style>
+.beautiful-page{ max-width:1100px; margin:0 auto; }
+.beautiful-card{ background:#fff; border-radius:16px; box-shadow:0 6px 20px rgba(0,0,0,0.06); border:1px solid #f1f5f9; overflow:hidden; }
+.print-only-header{ display:none; }
+.print-only-class-title{ display:none; }
+.print-header-new{ display:flex; align-items:center; gap:20px; padding:18px 25px; border-bottom:3px solid #111827; }
+.school-logo-new{ width:100px; height:100px; object-fit:contain; }
+.school-info-new{ flex:1; text-align:center; }
+.school-info-new h2{ margin:0; font-size:20px; font-weight:800; text-transform:uppercase; }
+.watermark{ display:none; }
+.table thead th{ background:#f8fafc !important; font-weight:800; font-size:12px; text-transform:uppercase; border-bottom:2px solid #0f172a !important; }
+.balance-pill{ background:#fee2e2; color:#991b1b; padding:5px 12px; border-radius:20px; font-weight:700; font-size:13px; }
+
+@media print{
+  .no-print, .accordion-button, .accordion-header{ display:none !important; }
+  .print-only-header{ display:block !important; }
+  .print-only-class-title{ display:block !important; background:#111827; color:#fff !important; padding:10px 15px; margin:0; font-weight:800; font-size:14px; text-transform:uppercase; }
+  .beautiful-card{ box-shadow:none !important; border:none !important; }
+  .school-logo-new{ width:160px !important; height:140px !important; }
+  .school-info-new h2{ font-size:20px !important; white-space:nowrap !important; }
+  .school-info-new p{ font-size:14px !important; white-space:nowrap !important; }
+  .watermark{ display:block !important; position:fixed; top:45%; left:50%; transform:translate(-50%,-50%) rotate(-28deg); font-size:36px; font-weight:900; color:rgba(0,0,0,0.06); width:65%; text-align:center; text-transform:uppercase; }
+  body.printing-single .print-all-only{ display:none !important; }
+  body.printing-all .print-class-only{ display:none !important; }
+  body.printing-single .accordion-item{ display:none !important; }
+  body.printing-single .accordion-item.active-print{ display:block !important; }
+  body.printing-single .accordion-collapse{ display:block !important; }
+  body.printing-all .accordion-collapse{ display:block !important; }
+  .accordion-item{ page-break-inside:avoid; break-after:avoid; }
+  @page{ margin:10mm; }
+  *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+}
+</style>
+
+<div class="watermark">{{ request.user.school.name|upper }}</div>
+
+<div class="beautiful-page px-3">
+
+<!-- PRINT HEADER - SHOWS ONLY IN PRINT -->
+<div class="beautiful-card print-only-header mb-3">
+  <div class="print-header-new">
+    <div style="width:110px;">{% if request.user.school.logo %}<img src="{{ request.user.school.logo.url }}" class="school-logo-new">{% endif %}</div>
+    <div class="school-info-new">
+      <h2>{{ request.user.school.name|upper }}</h2>
+      <p style="text-transform:uppercase; font-weight:600;">{{ request.user.school.address }} {% if request.user.school.gps_address %} | GPS: {{ request.user.school.gps_address }}{% endif %}</p>
+      <p>Tel: {{ request.user.school.phone }} | Email: {{ request.user.school.email }}</p>
+      <p style="margin-top:8px; font-weight:800; font-size:14px;">FEE DEFAULTERS REPORT - Term: {{ current_term }} | {{ current_year }}</p>
+    </div>
+    <div style="width:110px;"></div>
+  </div>
+</div>
+
+<!-- SCREEN BEAUTIFUL -->
+<div class="beautiful-card mb-4">
+  <div class="p-4 d-flex justify-content-between align-items-center no-print" style="background:linear-gradient(135deg,#0f172a,#334155); color:#fff;">
+    <div><h4 class="m-0 fw-bold">Fee Defaulters Report</h4><small style="opacity:0.8;">{{ total_defaulters }} students - GH₵ {{ total_owing|floatformat:2 }}</small></div>
+    <button class="btn btn-light rounded-pill px-4 fw-bold" onclick="printAll()"><i class="fas fa-print me-1"></i> Print All Classes</button>
+  </div>
+
+  {% if class_data %}
+  <div id="defaultersAccordion">
+  {% for class_group in class_data %}
+  <div class="accordion-item border-bottom" id="item-{{ forloop.counter }}">
+    <!-- SCREEN ACCORDION -->
+    <div class="d-flex align-items-center px-3 py-2 no-print">
+      <button class="accordion-button collapsed bg-white shadow-none flex-grow-1 fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#class{{ forloop.counter }}">
+        {{ class_group.class_name }} <span class="badge bg-danger rounded-pill ms-2">{{ class_group.count }}</span> <span class="ms-3 text-muted small">GH₵ {{ class_group.total_owing|floatformat:2 }}</span>
+      </button>
+      <button class="btn btn-sm btn-dark rounded-pill ms-2 px-3" onclick="printSingle('{{ forloop.counter }}')"><i class="fas fa-print"></i> Print</button>
+    </div>
+    
+    <!-- PRINT CONTENT -->
+    <div id="class{{ forloop.counter }}" class="accordion-collapse collapse print-area">
+      <h5 class="print-only-class-title">{{ class_group.class_name }} - {{ class_group.count }} Students - GH₵ {{ class_group.total_owing|floatformat:2 }} Outstanding</h5>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead><tr><th>Student Name</th><th>ID</th><th>Total Fee</th><th>Paid</th><th>Balance</th></tr></thead>
+          <tbody>
+          {% for s in class_group.students %}
+            <tr><td><strong>{{ s.student.get_full_name }}</strong></td><td><small>{{ s.student_number }}</small></td><td>GH₵ {{ s.total|floatformat:2 }}</td><td class="text-success fw-bold">GH₵ {{ s.paid|floatformat:2 }}</td><td><span class="balance-pill">GH₵ {{ s.balance|floatformat:2 }}</span></td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endfor %}
+  </div>
+  <div class="p-3 bg-light border-top fw-bold print-all-only">Total Outstanding (All Classes): GH₵ {{ total_owing|floatformat:2 }} from {{ total_defaulters }} students</div>
+  {% else %}
+  <div class="text-center p-5"><h5 class="text-success">🎉 No defaulters!</h5></div>
+  {% endif %}
+</div>
+</div>
+
+<script>
+function printAll(){
+  document.body.className = 'printing-all';
+  document.querySelectorAll('.accordion-collapse').forEach(c=>c.classList.add('show'));
+  window.print();
+  setTimeout(()=>{ document.body.className=''; document.querySelectorAll('.accordion-collapse').forEach(c=>c.classList.remove('show')); }, 800);
+}
+function printSingle(num){
+  document.body.className = 'printing-single';
+  document.querySelectorAll('.accordion-item').forEach(i=>i.classList.remove('active-print'));
+  document.getElementById('item-'+num).classList.add('active-print');
+  document.getElementById('class'+num).classList.add('show');
+  window.print();
+  setTimeout(()=>{ document.body.className=''; document.querySelectorAll('.accordion-item').forEach(i=>i.classList.remove('active-print')); document.getElementById('class'+num).classList.remove('show'); }, 800);
+}
+</script>
+{% endblock %}

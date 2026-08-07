@@ -1,0 +1,315 @@
+
+{% extends 'accounts/dashboard_base.html' %}
+{% block content %}
+<style>
+.notif-card{border:none;border-radius:22px;box-shadow:0 12px 30px rgba(0,0,0,.07);background:#fff;overflow:hidden;margin-bottom:20px;}
+.notif-top{height:5px;background:linear-gradient(90deg,#6a11cb,#2575fc);}
+.label{font-weight:800;color:#111;font-size:14px;text-transform:uppercase;letter-spacing:.5px;}
+.value{color:#333;font-size:16px;margin-top:4px;}
+.hero-card{
+background:linear-gradient(135deg,#6a11cb,#2575fc);
+border-radius:24px;
+padding:28px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+color:#fff;
+box-shadow:0 18px 45px rgba(0,0,0,.15);
+flex-wrap:wrap;
+gap:20px;
+}
+
+.hero-left{
+display:flex;
+align-items:center;
+gap:18px;
+}
+
+.hero-icon{
+width:70px;
+height:70px;
+border-radius:18px;
+background:rgba(255,255,255,.18);
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:28px;
+}
+
+.hero-card h2{
+margin:0;
+font-weight:800;
+}
+
+.hero-card p{
+margin-top:6px;
+opacity:.9;
+}
+
+.hero-badge{
+background:#fff;
+color:#2575fc;
+padding:12px 20px;
+border-radius:30px;
+font-weight:700;
+}
+
+.filter-bar{
+display:flex;
+gap:12px;
+flex-wrap:wrap;
+}
+
+.filter-pill{
+padding:10px 18px;
+border-radius:30px;
+background:#fff;
+color:#555;
+text-decoration:none;
+font-weight:700;
+box-shadow:0 8px 18px rgba(0,0,0,.05);
+transition:.3s;
+}
+
+.filter-pill.active{
+background:#2575fc;
+color:#fff;
+}
+
+.filter-pill span{
+margin-left:6px;
+background:rgba(255,255,255,.2);
+padding:3px 10px;
+border-radius:20px;
+}
+
+.notification-header{
+display:flex;
+align-items:center;
+gap:15px;
+}
+
+.notification-avatar{
+width:55px;
+height:55px;
+border-radius:50%;
+background:linear-gradient(135deg,#6a11cb,#2575fc);
+color:#fff;
+display:flex;
+align-items:center;
+justify-content:center;
+font-weight:800;
+font-size:22px;
+}
+
+.role-pill{
+background:#eef2ff;
+padding:7px 15px;
+border-radius:20px;
+font-size:12px;
+font-weight:700;
+color:#4f46e5;
+}
+
+.message-box{
+margin-top:18px;
+background:#f8f9ff;
+padding:18px;
+border-radius:14px;
+line-height:1.8;
+}
+
+.notification-footer{
+margin-top:18px;
+padding-top:18px;
+border-top:1px solid #ececec;
+display:flex;
+justify-content:space-between;
+flex-wrap:wrap;
+gap:10px;
+}
+
+.empty-card{
+text-align:center;
+padding:70px 30px;
+border-radius:24px;
+background:#fff;
+box-shadow:0 12px 30px rgba(0,0,0,.06);
+}
+
+.empty-icon{
+font-size:60px;
+color:#cbd5e1;
+margin-bottom:18px;
+}
+
+.premium-pagination{
+display:flex;
+justify-content:center;
+align-items:center;
+gap:18px;
+}
+
+.premium-pagination a{
+width:42px;
+height:42px;
+border-radius:50%;
+background:#fff;
+display:flex;
+align-items:center;
+justify-content:center;
+text-decoration:none;
+box-shadow:0 8px 18px rgba(0,0,0,.08);
+color:#2575fc;
+}
+
+.premium-pagination span{
+font-weight:700;
+}
+
+@media(max-width:768px){
+
+.hero-card{
+text-align:center;
+justify-content:center;
+}
+
+.hero-left{
+flex-direction:column;
+}
+
+.notification-footer{
+flex-direction:column;
+text-align:center;
+}
+
+}
+</style>
+
+<div class="container py-4" style="max-width:900px;">
+<!-- Premium Hero -->
+<div class="hero-card mb-4">
+    <div class="hero-left">
+        <div class="hero-icon">
+            <i class="fas fa-bell"></i>
+        </div>
+
+        <div>
+            <h2>Parent Notifications</h2>
+            <p>
+                Stay informed with school announcements, reminders and important updates.
+            </p>
+        </div>
+    </div>
+
+    <div class="hero-badge">
+        {{ total }} Notification{{ total|pluralize }}
+    </div>
+</div>
+<div class="filter-bar mb-4">
+
+    <a href="?filter=all"
+       class="filter-pill {% if filter == 'all' %}active{% endif %}">
+        All
+        <span>{{ total }}</span>
+    </a>
+
+    <a href="?filter=today"
+       class="filter-pill {% if filter == 'today' %}active{% endif %}">
+        Today
+    </a>
+
+    <a href="?filter=week"
+       class="filter-pill {% if filter == 'week' %}active{% endif %}">
+        This Week
+    </a>
+
+</div>
+
+ {% for ann in announcements %}
+
+<div class="notif-card">
+
+    <div class="notif-top"></div>
+
+    <div class="p-4">
+
+<div class="mb-3">
+    <div class="label">📌 Title</div>
+
+    <div class="value fw-bold" style="font-size:20px;">
+        {{ ann.title }}
+    </div>
+</div>
+
+<div class="mb-3">
+    <div class="label">💬 Message</div>
+
+    <div class="message-box">
+        {{ ann.message }}
+    </div>
+</div>
+
+
+
+        <div class="notification-footer">
+
+            <small class="text-muted">
+                🕒 {{ ann.created_at|timesince }} ago
+            </small>
+
+            <span class="role-pill">
+                By {{ ann.created_by.get_full_name|default:ann.created_by.username }}
+            </span>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% empty %}
+
+<div class="empty-card">
+
+    <div class="empty-icon">
+        <i class="far fa-bell-slash"></i>
+    </div>
+
+    <h4>No Notifications</h4>
+
+    <p>You're all caught up.</p>
+
+</div>
+
+{% endfor %}
+  {% if page_obj.has_other_pages %}
+<div class="premium-pagination mt-4">
+
+    {% if page_obj.has_previous %}
+    <a href="?filter={{ filter }}&page={{ page_obj.previous_page_number }}">
+        <i class="fas fa-chevron-left"></i>
+    </a>
+    {% endif %}
+
+    <span>
+
+        {{ page_obj.number }}
+
+        /
+
+        {{ page_obj.paginator.num_pages }}
+
+    </span>
+
+    {% if page_obj.has_next %}
+    <a href="?filter={{ filter }}&page={{ page_obj.next_page_number }}">
+        <i class="fas fa-chevron-right"></i>
+    </a>
+    {% endif %}
+
+</div>
+{% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,519 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block title %}Edit Parent{% endblock %}
+
+{% block content %}
+
+<style>
+
+/* PAGE */
+
+.edit-parent-page{
+    background:#f8fafc;
+    min-height:100vh;
+    padding:30px 15px;
+}
+
+
+/* CARD */
+
+.edit-parent-card{
+    max-width:1000px;
+    margin:auto;
+    background:white;
+    border-radius:25px;
+    box-shadow:0 15px 35px rgba(0,0,0,.08);
+    overflow:hidden;
+}
+
+
+/* HEADER */
+
+.edit-parent-header{
+
+    background:linear-gradient(135deg,#2563eb,#1e40af);
+    padding:35px;
+    color:white;
+    text-align:center;
+
+}
+
+
+.edit-parent-header h2{
+
+    margin:0;
+    font-size:32px;
+    font-weight:900;
+
+}
+
+
+
+/* BODY */
+
+.edit-parent-body{
+
+    padding:35px;
+
+}
+
+
+/* ALERT */
+
+.success-message{
+
+    background:#ecfdf5;
+    color:#065f46;
+    border-left:5px solid #10b981;
+    padding:15px;
+    border-radius:12px;
+    margin-bottom:20px;
+    font-weight:700;
+
+}
+
+
+
+/* READ ONLY */
+
+.readonly-box{
+
+    background:#fffbeb;
+    border:1px solid #fbbf24;
+    padding:20px;
+    border-radius:18px;
+    margin-bottom:25px;
+
+}
+
+
+.section-title{
+
+    font-size:18px;
+    font-weight:900;
+    color:#92400e;
+    margin-bottom:15px;
+
+}
+
+
+
+/* GRID */
+
+.form-grid{
+
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:25px;
+
+}
+
+
+@media(max-width:768px){
+
+    .form-grid{
+        grid-template-columns:1fr;
+    }
+
+
+    .edit-parent-body{
+        padding:20px;
+    }
+
+}
+
+
+
+/* INPUT GROUP */
+
+.input-group{
+
+    background:#f8fafc;
+    padding:20px;
+    border-radius:18px;
+    border:1px solid #e5e7eb;
+
+}
+
+
+label{
+
+    display:block;
+    font-size:14px;
+    font-weight:800;
+    color:#374151;
+    margin-bottom:7px;
+
+}
+
+
+input{
+
+    width:100%;
+    padding:12px 14px;
+    border-radius:12px;
+    border:1px solid #d1d5db;
+    font-size:15px;
+    box-sizing:border-box;
+    margin-bottom:15px;
+
+}
+
+
+input:focus{
+
+    outline:none;
+    border-color:#2563eb;
+    box-shadow:0 0 0 4px rgba(37,99,235,.12);
+
+}
+
+
+
+/* PHOTO */
+
+.photo-box{
+
+    background:#f8fafc;
+    border:2px dashed #cbd5e1;
+    padding:20px;
+    border-radius:18px;
+    margin-top:25px;
+
+}
+
+
+.photo-box img{
+
+    width:90px;
+    height:90px;
+    border-radius:50%;
+    object-fit:cover;
+    border:4px solid white;
+    box-shadow:0 5px 15px rgba(0,0,0,.15);
+
+}
+
+
+
+/* BUTTONS */
+
+.action-buttons{
+
+    display:flex;
+    gap:15px;
+    margin-top:30px;
+
+}
+
+
+.save-btn{
+
+    flex:1;
+    padding:14px;
+    border:none;
+    border-radius:50px;
+    background:linear-gradient(135deg,#10b981,#059669);
+    color:white;
+    font-weight:800;
+    font-size:16px;
+    cursor:pointer;
+
+}
+
+
+.cancel-btn{
+
+    flex:1;
+    padding:14px;
+    border-radius:50px;
+    background:#6b7280;
+    color:white;
+    text-decoration:none;
+    text-align:center;
+    font-weight:800;
+
+}
+
+
+@media(max-width:600px){
+
+.action-buttons{
+
+    flex-direction:column;
+
+}
+
+}
+
+</style>
+
+
+
+
+<div class="edit-parent-page">
+
+
+<div class="edit-parent-card">
+
+
+
+<div class="edit-parent-header">
+
+<h2>
+✏️ Edit Parent Information
+</h2>
+
+</div>
+
+
+
+<div class="edit-parent-body">
+
+
+
+{% if messages %}
+
+{% for message in messages %}
+
+<div class="success-message">
+
+{{ message }}
+
+</div>
+
+{% endfor %}
+
+{% endif %}
+
+
+
+
+
+
+<form method="POST" enctype="multipart/form-data">
+
+{% csrf_token %}
+
+
+
+
+
+<!-- READ ONLY -->
+
+<div class="readonly-box">
+
+
+<div class="section-title">
+
+🔒 Read Only Information
+
+</div>
+
+
+
+<div class="form-grid">
+
+
+<div>
+
+<label>
+Username
+</label>
+
+<input type="text" value="{{ parent.username }}" disabled>
+
+</div>
+
+
+
+<div>
+
+<label>
+Role
+</label>
+
+<input type="text" value="Parent" disabled>
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- FORM -->
+
+<div class="form-grid">
+
+
+
+<div class="input-group">
+
+
+<label>
+First Name *
+</label>
+
+<input type="text"
+name="first_name"
+value="{{ parent.first_name }}"
+required>
+
+
+
+<label>
+Middle Name
+</label>
+
+<input type="text"
+name="middle_name"
+value="{{ parent.middle_name|default_if_none:'' }}">
+
+
+
+<label>
+Last Name *
+</label>
+
+<input type="text"
+name="last_name"
+value="{{ parent.last_name }}"
+required>
+
+
+
+</div>
+
+
+
+
+
+
+<div class="input-group">
+
+
+<label>
+Email
+</label>
+
+<input type="email"
+name="email"
+value="{{ parent.email }}">
+
+
+
+<label>
+Phone Number
+</label>
+
+<input type="text"
+name="phone"
+value="{{ parent.phone }}">
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+<!-- PHOTO -->
+
+
+<div class="photo-box">
+
+
+<label>
+Update Parent Photo
+</label>
+
+
+
+{% if parent.photo %}
+
+
+<img src="{{ parent.photo.url }}">
+
+
+<p style="color:#6b7280;">
+Current photo
+</p>
+
+
+{% endif %}
+
+
+
+
+<input type="file"
+name="photo"
+accept="image/*">
+
+
+<small style="color:#6b7280;">
+Leave empty to keep current photo
+</small>
+
+
+</div>
+
+
+
+
+
+
+
+<div class="action-buttons">
+
+
+<button type="submit" class="save-btn">
+
+✅ Save Changes
+
+</button>
+
+
+
+<a href="{% url 'accounts:manage-parents' %}" class="cancel-btn">
+
+❌ Cancel
+
+</a>
+
+
+</div>
+
+
+
+
+</form>
+
+
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends 'accounts/dashboard_base.html' %}
+
+{% block title %}Assign Subject{% endblock %}
+
+{% block content %}
+<h2>Assign Subject to {{ teacher.username }}</h2>
+
+<form method="POST">
+    {% csrf_token %}
+    <label>Select Subject:</label>
+    <select name="subject_id" required>
+        <option value="">-- Choose Subject --</option>
+        {% for subj in subjects %}
+            <option value="{{ subj.id }}">{{ subj.name }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit">Assign</button>
+</form>
+
+{% for message in messages %}
+    <p style="color:green">{{ message }}</p>
+{% endfor %}
+{% endblock %}

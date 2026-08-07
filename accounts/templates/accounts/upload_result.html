@@ -1,0 +1,893 @@
+{% extends "accounts/dashboard_base.html" %}
+{% load static %}
+
+{% block content %}
+
+<style>
+
+/* ==========================
+   RESULT UPLOAD PAGE STYLE
+========================== */
+
+.result-page{
+    background:#f6f8fc;
+    min-height:100vh;
+    padding:25px 15px;
+}
+
+
+/* HERO HEADER */
+
+.result-header{
+    background:white;
+    border-radius:22px;
+    padding:30px;
+    box-shadow:0 10px 30px rgba(0,0,0,.06);
+    margin-bottom:25px;
+}
+
+
+.result-title{
+    font-size:30px;
+    font-weight:800;
+    color:#1e293b;
+}
+
+
+.result-subtitle{
+    color:#64748b;
+    margin-top:5px;
+    font-size:15px;
+}
+
+
+/* ICON */
+
+.result-icon{
+    width:70px;
+    height:70px;
+    border-radius:20px;
+    background:linear-gradient(135deg,#16a34a,#22c55e);
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:32px;
+}
+
+
+/* INFO CARDS */
+
+.info-card{
+
+    background:white;
+    border-radius:18px;
+    padding:20px;
+    height:100%;
+    border:1px solid #eef2f7;
+    transition:.3s;
+
+}
+
+
+.info-card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+}
+
+
+.info-label{
+    font-size:13px;
+    color:#64748b;
+    font-weight:600;
+}
+
+
+.info-value{
+
+    font-size:18px;
+    font-weight:800;
+    margin-top:5px;
+    color:#0f172a;
+
+}
+
+
+/* MAIN CARD */
+
+.result-card{
+
+    background:white;
+    border-radius:22px;
+    padding:30px;
+    box-shadow:0 10px 30px rgba(0,0,0,.05);
+}
+
+
+/* FORM */
+
+.form-label{
+
+    font-weight:700;
+    color:#334155;
+    margin-bottom:8px;
+}
+
+
+.form-control,
+.form-select{
+
+    border-radius:12px!important;
+    padding:13px;
+    border:2px solid #e2e8f0;
+
+}
+
+
+.form-control:focus,
+.form-select:focus{
+
+    border-color:#16a34a;
+    box-shadow:0 0 0 3px rgba(22,163,74,.15);
+
+}
+
+
+/* BUTTON */
+
+.save-btn{
+
+    width:100%;
+    border:none;
+    padding:15px;
+    border-radius:14px;
+    background:linear-gradient(135deg,#16a34a,#15803d);
+    color:white;
+    font-weight:800;
+    font-size:17px;
+    transition:.3s;
+
+}
+
+
+.save-btn:hover{
+
+    transform:translateY(-2px);
+    box-shadow:0 10px 20px rgba(22,163,74,.25);
+
+}
+
+.progress-summary{
+
+    background:linear-gradient(135deg,#0d6efd,#198754);
+    color:white;
+    padding:18px 22px;
+    border-radius:16px;
+    font-size:17px;
+    font-weight:700;
+    cursor:pointer;
+    list-style:none;
+
+}
+
+
+.progress-summary .arrow{
+
+    float:right;
+
+}
+
+
+
+.progress-table{
+
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0 12px;
+
+}
+
+
+.progress-table th{
+
+    padding:15px;
+    text-align:center;
+    background:#f1f5f9;
+    font-weight:800;
+    color:#334155;
+
+}
+
+
+.progress-table td{
+
+    background:white;
+    padding:18px 20px;
+    text-align:center;
+    border:none;
+    box-shadow:0 4px 15px rgba(0,0,0,0.05);
+
+}
+
+
+.progress-table tr td:first-child{
+
+    border-radius:14px 0 0 14px;
+
+}
+
+
+.progress-table tr td:last-child{
+
+    border-radius:0 14px 14px 0;
+
+}
+
+
+.student-name{
+
+    font-weight:800;
+    color:#1e293b;
+
+}
+
+
+.student-id{
+
+    color:#64748b;
+    font-weight:600;
+
+}
+
+
+.score{
+
+    padding:8px 16px;
+    border-radius:20px;
+    font-weight:700;
+    display:inline-block;
+
+}
+
+
+.ca-score{
+
+    background:#e0f2fe;
+    color:#0369a1;
+
+}
+
+
+.exam-score{
+
+    background:#dcfce7;
+    color:#15803d;
+
+}
+
+
+.total-score{
+
+    background:#dbeafe;
+    color:#1d4ed8;
+
+}
+
+
+.status-badge{
+
+    background:#dcfce7;
+    color:#15803d;
+    padding:8px 16px;
+    border-radius:20px;
+    font-weight:700;
+
+}
+
+
+@media(max-width:768px){
+
+.progress-table{
+
+    min-width:850px;
+
+}
+
+}
+</style>
+
+
+<div class="result-page">
+
+
+<!-- HEADER -->
+
+<div class="result-header">
+
+<div class="row align-items-center">
+
+
+<div class="col-lg-7">
+
+<div class="d-flex align-items-center gap-3">
+
+<div class="result-icon">
+    📝
+</div>
+
+
+<div>
+
+<h2 class="result-title">
+    Upload Results
+</h2>
+
+
+<p class="result-subtitle">
+Enter continuous assessment and examination scores for your assigned class.
+</p>
+
+
+</div>
+
+</div>
+
+</div>
+
+
+
+<div class="col-lg-5 mt-4 mt-lg-0">
+
+<div class="row g-3">
+
+
+<div class="col-6">
+
+<div class="info-card">
+
+<div class="info-label">
+Class
+</div>
+
+<div class="info-value">
+🏫 {{ school_class.name }}
+</div>
+
+</div>
+
+</div>
+
+
+
+<div class="col-6">
+
+<div class="info-card">
+
+<div class="info-label">
+Subject
+</div>
+
+<div class="info-value">
+📘 {{ subject.name }}
+</div>
+
+</div>
+
+</div>
+
+
+</div>
+
+</div>
+
+
+</div>
+
+
+{% if active_term %}
+
+<div class="row g-3 mt-3">
+
+
+<div class="col-md-3">
+
+<div class="info-card">
+
+<div class="info-label">
+Term
+</div>
+
+<div class="info-value">
+{{ active_term.get_term_number_display }}
+</div>
+
+</div>
+
+</div>
+
+
+
+<div class="col-md-3">
+
+<div class="info-card">
+
+<div class="info-label">
+Academic Year
+</div>
+
+<div class="info-value">
+{{ active_term.academic_year }}
+</div>
+
+</div>
+
+</div>
+
+
+
+<div class="col-md-3">
+
+<div class="info-card">
+
+<div class="info-label">
+Maximum CA
+</div>
+
+<div class="info-value text-primary">
+{{ active_term.ca_total }}
+</div>
+
+</div>
+
+</div>
+
+
+
+<div class="col-md-3">
+
+<div class="info-card">
+
+<div class="info-label">
+Maximum Exam
+</div>
+
+<div class="info-value text-success">
+{{ active_term.exam_total }}
+</div>
+
+</div>
+
+</div>
+
+
+</div>
+
+{% endif %}
+
+
+</div>
+
+   <!-- MAIN RESULT ENTRY CARD -->
+
+<div class="result-card">
+
+
+{% if messages %}
+
+{% for message in messages %}
+
+<div class="alert 
+{% if message.tags == 'success' %}
+alert-success
+{% else %}
+alert-danger
+{% endif %}
+rounded-3">
+
+{{ message }}
+
+</div>
+
+{% endfor %}
+
+{% endif %}
+
+
+
+{% if active_term %}
+
+
+<form method="POST" id="resultForm">
+
+{% csrf_token %}
+
+
+
+<!-- STUDENT SELECT -->
+
+<div class="mb-4">
+
+<label class="form-label">
+Select Student
+</label>
+
+
+{{ form.student }}
+
+
+{% if form.student.errors %}
+
+<div class="text-danger small mt-2">
+{{ form.student.errors }}
+</div>
+
+{% endif %}
+
+
+</div>
+
+
+
+
+<!-- CA SECTION -->
+
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+
+
+<div class="card-header bg-white border-0 p-4">
+
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+
+<div>
+
+<h5 class="fw-bold mb-1">
+📚 Continuous Assessment
+</h5>
+
+
+<p class="text-muted mb-0 small">
+Add quizzes, tests, assignments or any assessment required.
+</p>
+
+
+</div>
+
+
+
+<button type="button"
+onclick="addRow()"
+class="btn btn-primary rounded-pill px-4">
+
+➕ Add Assessment
+
+</button>
+
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="card-body p-4">
+
+
+
+<div id="score-message"
+class="text-danger fw-bold text-center mb-3">
+</div>
+
+
+
+<div class="table-responsive">
+
+
+<table class="table align-middle">
+
+<thead class="table-light">
+
+
+<tr>
+
+<th class="text-center">
+Assessment Title
+</th>
+
+
+<th class="text-center">
+Score
+</th>
+
+
+<th class="text-center">
+Action
+</th>
+
+
+</tr>
+
+
+</thead>
+
+
+
+<tbody id="caBody">
+
+
+</tbody>
+
+
+
+</table>
+
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<input type="hidden"
+name="ca_data"
+id="caData">
+
+
+
+
+
+<!-- EXAM -->
+
+
+<div class="mb-4">
+
+
+<label class="form-label text-center d-block">
+
+Exam Score 
+(Max {{ active_term.exam_total }})
+
+</label>
+
+
+{{ form.exam_score }}
+
+
+</div>
+
+
+
+
+<button type="submit"
+class="save-btn">
+
+💾 Save Result
+
+</button>
+
+
+
+</form>
+
+
+{% endif %}
+
+       <!-- PROGRESS TABLE -->
+{% if entered_results %}
+
+<details class="mt-4">
+
+<summary class="progress-summary">
+
+    📊 Progress:
+    {{ entered_results.count }}/{{ students.count }}
+    Students Uploaded
+
+    <span class="arrow">▼</span>
+
+</summary>
+
+
+<div class="table-responsive mt-3">
+
+<table class="progress-table">
+
+<thead>
+
+<tr>
+    <th>Student Name</th>
+    <th>Student ID</th>
+    <th>CA</th>
+    <th>Exam</th>
+    <th>Total Score</th>
+    <th>Status</th>
+</tr>
+
+</thead>
+
+
+<tbody>
+
+{% for result in entered_results %}
+
+<tr>
+
+<td>
+    <div class="student-name">
+        {{ result.student.first_name }}
+        {{ result.student.last_name }}
+    </div>
+</td>
+
+
+<td>
+    <div class="student-id">
+        {{ result.student.student_number }}
+    </div>
+</td>
+
+
+<td>
+    <span class="score ca-score">
+        {{ result.class_score }}
+    </span>
+</td>
+
+
+<td>
+    <span class="score exam-score">
+        {{ result.exam_score }}
+    </span>
+</td>
+
+
+<td>
+    <span class="score total-score">
+        {{ result.class_score|add:result.exam_score }}
+    </span>
+</td>
+
+
+<td>
+    <span class="status-badge">
+        ✓ Saved
+    </span>
+</td>
+
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+
+</table>
+
+</div>
+
+</details>
+
+{% else %}
+<p style="margin-top: 25px; text-align: center; color: #666;">No results entered yet for this class.</p>
+{% endif %}
+    </div>
+</div>
+</div>
+<script>
+    const MAX_CA = {{ active_term.ca_total }};
+    const MAX_EXAM = {{ active_term.exam_total }};
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    console.log("JS READY");
+
+    function addRow() {
+
+        let tbody = document.getElementById("caBody");
+
+        let row = document.createElement("tr");
+
+        row.innerHTML = `
+            <td style="padding-right:20px;">
+                <input type="text"
+                    class="ca-title form-control text-center"
+                    placeholder="Quiz 1 / Midterm / Test">
+            </td>
+
+            <td style="padding-right:20px;">
+                <input type="number"
+                    class="ca-score form-control text-center"
+                    placeholder="20 / 30 / 10">
+            </td>
+
+            <td style="text-align:center;">
+                <button type="button" onclick="this.closest('tr').remove()">
+                    ❌
+                </button>
+            </td>
+        `;
+
+        tbody.appendChild(row);
+    }
+
+    window.addRow = addRow;
+
+    const form = document.getElementById("resultForm");
+
+    form.addEventListener("submit", function (e) {
+
+        let rows = document.querySelectorAll("#caBody tr");
+
+        let data = [];
+
+        rows.forEach(row => {
+
+            let title = row.querySelector(".ca-title")?.value;
+            let score = row.querySelector(".ca-score")?.value;
+
+            if (title && score) {
+                data.push({
+                    title: title,
+                    score: parseFloat(score)
+                });
+            }
+        });
+
+        document.getElementById("caData").value = JSON.stringify(data);
+    });
+
+    // =========================
+    // INLINE VALIDATION (FIXED)
+    // =========================
+    document.addEventListener("input", function (e) {
+
+        const msgBox = document.getElementById("score-message");
+
+        // CA validation
+        if (e.target.classList.contains("ca-score")) {
+
+            let value = parseFloat(e.target.value || 0);
+
+            if (value > MAX_CA) {
+                e.target.value = MAX_CA;
+
+                msgBox.textContent = "CA cannot be more than " + MAX_CA;
+
+                setTimeout(() => {
+                    msgBox.textContent = "";
+                }, 3000);
+            }
+        }
+
+        // Exam validation
+        if (e.target.name === "exam_score") {
+
+            let value = parseFloat(e.target.value || 0);
+
+            if (value > MAX_EXAM) {
+                e.target.value = MAX_EXAM;
+
+                msgBox.textContent = "Exam cannot be more than " + MAX_EXAM;
+
+                setTimeout(() => {
+                    msgBox.textContent = "";
+                }, 3000);
+            }
+        }
+
+    });
+
+});
+</script>
+{% endblock %}

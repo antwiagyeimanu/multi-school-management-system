@@ -1,0 +1,264 @@
+{% extends "accounts/dashboard_base.html" %}
+
+{% block content %}
+
+<style>
+
+/* PAGE */
+.assignments-page{
+    max-width:1200px;
+    margin:25px auto;
+}
+
+
+/* HEADER */
+.page-header{
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:white;
+    padding:28px;
+    border-radius:22px;
+    margin-bottom:30px;
+    box-shadow:0 12px 30px rgba(37,99,235,.18);
+}
+
+.page-header h2{
+    
+    margin:0;
+    font-weight:800;
+}
+
+.page-header p{
+    margin:8px 0 0;
+    opacity:.9;
+}
+
+
+/* GRID */
+
+.assignment-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+    gap:25px;
+}
+
+
+/* CARD */
+
+.assignment-card{
+
+    background:white;
+    border-radius:22px;
+    padding:25px;
+
+    border:1px solid #e5e7eb;
+
+    box-shadow:
+    0 8px 25px rgba(15,23,42,.08);
+
+    transition:.3s;
+
+    position:relative;
+    overflow:hidden;
+
+}
+
+
+.assignment-card:before{
+
+    content:"";
+    position:absolute;
+    left:0;
+    top:0;
+
+    width:6px;
+    height:100%;
+
+    background:#2563eb;
+
+}
+
+
+.assignment-card:hover{
+
+    transform:translateY(-6px);
+
+    box-shadow:
+    0 15px 35px rgba(15,23,42,.15);
+
+}
+
+
+
+/* ICON */
+
+.assignment-icon{
+
+    width:55px;
+    height:55px;
+
+    border-radius:16px;
+
+    background:#dbeafe;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:25px;
+
+    margin-bottom:18px;
+
+}
+
+
+
+/* CLASS */
+
+.class-name{
+
+    font-size:20px;
+    font-weight:800;
+
+    color:#1e293b;
+
+    margin-bottom:12px;
+
+}
+
+
+/* SUBJECT */
+
+.subject-name{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    background:#f1f5f9;
+
+    padding:8px 15px;
+
+    border-radius:30px;
+
+    color:#475569;
+
+    font-weight:700;
+
+    font-size:.9rem;
+
+}
+
+
+.subject-name i{
+
+    color:#2563eb;
+
+}
+
+
+.empty-state{
+
+    background:white;
+    padding:40px;
+    border-radius:20px;
+    text-align:center;
+    color:#64748b;
+
+}
+
+
+
+</style>
+
+
+<div class="assignments-page">
+
+
+<div class="page-header">
+
+<h2>
+<i class="fas fa-chalkboard-teacher"></i>
+My Assignments
+</h2>
+
+<p>
+Classes and subjects assigned to you
+</p>
+
+</div>
+
+
+
+{% if assignments %}
+
+
+<div class="assignment-grid">
+
+
+{% for assignment in assignments %}
+
+
+<div class="assignment-card">
+
+
+<div class="assignment-icon">
+
+<i class="fas fa-book-open"></i>
+
+</div>
+
+
+<div class="class-name">
+
+<i class="fas fa-school text-primary"></i>
+
+{{ assignment.school_class.name }}
+
+</div>
+
+
+
+<div class="subject-name">
+
+<i class="fas fa-book"></i>
+
+{{ assignment.subject.name }}
+
+</div>
+
+
+</div>
+
+
+{% endfor %}
+
+
+</div>
+
+
+{% else %}
+
+
+<div class="empty-state">
+
+<i class="fas fa-folder-open fa-3x mb-3"></i>
+
+<h5>No assignments found</h5>
+
+<p>
+You have not been assigned any class or subject yet.
+</p>
+
+</div>
+
+
+{% endif %}
+
+
+
+</div>
+
+
+{% endblock %}
