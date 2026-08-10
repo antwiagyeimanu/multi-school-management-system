@@ -19,8 +19,6 @@ from django.contrib.auth import get_user_model
 # Add these imports at top if not there
 
 
-
-
 STAGE_GROUP_MAP = {
     'creche': ['Creche'],
     'nursery': ['Nursery'],
@@ -150,7 +148,7 @@ class School(models.Model):
 
     def __str__(self):
         return self.name
-    
+
 # -------------------------------
 # User model
 # -------------------------------
@@ -437,7 +435,7 @@ class AttendanceSession(models.Model):
         ('E', 'Excused'), 
     ]
 
-    school = models.ForeignKey('School', on_delete=models.CASCADE, null=True, blank=True) # ✅ NEW - for isolation
+    school = models.ForeignKey('School', on_delete=models.CASCADE, null=True, blank=True) 
     school_class = models.ForeignKey('SchoolClass', on_delete=models.CASCADE)
     subject = models.ForeignKey('Subject', on_delete=models.CASCADE)
     teacher = models.ForeignKey('User', on_delete=models.CASCADE,
@@ -454,7 +452,6 @@ class AttendanceSession(models.Model):
         verbose_name_plural = "Attendance Sessions"
 
     def save(self, *args, **kwargs):
-        # Auto fill school from class
         if not self.school and self.school_class_id:
             self.school = self.school_class.school
         super().save(*args, **kwargs)
@@ -490,7 +487,7 @@ class AttendanceRecord(models.Model):
     ('E', 'Excused'),
 ]
 
-
+    school = models.ForeignKey('School', on_delete=models.CASCADE, null=True, blank=True) 
     session = models.ForeignKey(AttendanceSession, on_delete=models.CASCADE, related_name='records')
     student = models.ForeignKey('User', on_delete=models.CASCADE,
                                related_name='attendance_records',
@@ -499,20 +496,24 @@ class AttendanceRecord(models.Model):
     marked_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('session', 'student') # Student can only be marked once per session
+        unique_together = ('session', 'student') 
         ordering = ['student__first_name']
         verbose_name = "Attendance Record"
         verbose_name_plural = "Attendance Records"
+    def save(self, *args, **kwargs): 
+        if not self.school and self.school_class_id:
+            self.school = self.school_class.school
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.student.get_full_name()} - {self.get_status_display()}"
-    
+
 
 # -------------------------------
 # Results
 # -------------------------------
 class Result(models.Model):
-    school = models.ForeignKey('School', on_delete=models.CASCADE, null=True, blank=True) # ✅ NEW
+    school = models.ForeignKey('School', on_delete=models.CASCADE, null=True, blank=True) 
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='results')
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     exam_score = models.DecimalField(max_digits=5, decimal_places=2, default=0, null=True, blank=True)
@@ -605,7 +606,7 @@ class Result(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.school and self.student_id:
-            self.school = self.student.school  # auto fill school from student
+            self.school = self.student.school 
         self.full_clean()
         super().save(*args, **kwargs)
 
@@ -642,18 +643,33 @@ class Fee(models.Model):
     def __str__(self):
         return f"{self.student.username} - {self.description}"
 
+
 # -------------------------------
 # StudentSubjectClass
 # -------------------------------
 class StudentSubjectClass(models.Model):
-    student = models.ForeignKey('User', on_delete=models.CASCADE, limit_choices_to={'role': 'student'})
-    subject = models.ForeignKey('Subject', on_delete=models.CASCADE)
-    school_class = models.ForeignKey('SchoolClass', on_delete=models.CASCADE, null=True, blank=True)
+    student = models.ForeignKey(
+        "User", on_delete=models.CASCADE, limit_choices_to={"role": "student"}
+    )
+    subject = models.ForeignKey("Subject", on_delete=models.CASCADE)
+    school_class = models.ForeignKey(
+        "SchoolClass", on_delete=models.CASCADE, null=True, blank=True
+    )
+    school = models.ForeignKey(
+        "School", on_delete=models.CASCADE, null=True, blank=True
+    )  
+
     class Meta:
-        unique_together = ('student', 'subject', 'school_class')
+        unique_together = (
+            "student",
+            "subject",
+            "school_class",
+            "school",
+        )  
+
     def __str__(self):
         return f"{self.student.username} - {self.subject.name} ({self.school_class.name if self.school_class else 'None'})"
-    
+
 
 # -------------------------------
 # Student Term Summary
@@ -739,7 +755,7 @@ def get_current_academic_year():
         return f"{year}/{year + 1}"
     else:
         return f"{year - 1}/{year}"
-    
+
 
 class AcademicYear(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='academic_years', null=True, blank=True)
@@ -763,9 +779,9 @@ class AcademicYear(models.Model):
 
     def __str__(self):
         return self.name
-    
 
-# NO SPACES BEFORE 'class' - start at column 1  
+
+# NO SPACES BEFORE 'class' - start at column 1
 class StudentFee(models.Model):
     student = models.ForeignKey(
         'accounts.User', 
@@ -840,7 +856,6 @@ class StudentFee(models.Model):
             self.other_fees
         )
         super().save(*args, **kwargs)
-
 
 
 class FeeStructure(models.Model):
@@ -1012,8 +1027,6 @@ class TermSetting(models.Model):
 
     def __str__(self):
         return f"{self.session} - {self.term}"
-    
-
 
 
 WEEKDAY_CHOICES = [
@@ -1022,7 +1035,7 @@ WEEKDAY_CHOICES = [
 ]
 
 class Timetable(models.Model):
-    school = models.ForeignKey('School', on_delete=models.CASCADE, null=True, blank=True) # ✅ NEW
+    school = models.ForeignKey('School', on_delete=models.CASCADE, null=True, blank=True) 
     teacher = models.ForeignKey(
     settings.AUTH_USER_MODEL,
     on_delete=models.CASCADE,
@@ -1049,7 +1062,7 @@ class Timetable(models.Model):
     null=True,
     blank=True
 )
-    def save(self, *args, **kwargs): # ✅ NEW
+    def save(self, *args, **kwargs): 
         if not self.school and self.school_class_id:
             self.school = self.school_class.school
         super().save(*args, **kwargs)
@@ -1116,7 +1129,7 @@ class Break(models.Model):
     def __str__(self):
         return f"{self.stage} - {self.name} ({self.start_time} - {self.end_time})"
 
-    
+
 class AcademicCalendar(models.Model):
     TERM_CHOICES = [
         ('term1', 'First Term'),
@@ -1210,8 +1223,8 @@ class Expense(models.Model):
 
     def __str__(self):
         return f"{self.get_category_display()} - GHS {self.amount} - {self.expense_date}"
-    
-    
+
+
 class CanteenPayment(models.Model):
     student_fee = models.ForeignKey(StudentFee, on_delete=models.CASCADE, related_name='canteen_payments')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -1220,14 +1233,6 @@ class CanteenPayment(models.Model):
     
     def __str__(self):
         return f"{self.student_fee.student.first_name} - GHS {self.amount} on {self.date}"
-    
-
-
-
-
-
-
-
 
 
 class PaymentTransaction(models.Model):
@@ -1314,7 +1319,7 @@ class FeeAuditLog(models.Model):
 
     def __str__(self):
         return f"{self.action} - {self.transaction.receipt_number} - {self.created_at.date()}"
-    
+
 
 class PendingPayment(models.Model):
     STATUS_CHOICES = (
@@ -1393,7 +1398,7 @@ class PendingPayment(models.Model):
     @property
     def school(self):
         return self.student.school
-    
+
 
 class PendingPaymentItem(models.Model):
     pending_payment = models.ForeignKey(
@@ -1437,9 +1442,6 @@ class PaymentItem(models.Model):
 
     def __str__(self):
         return f"{self.fee_name}: GHS {self.amount}"
-    
-
-
 
 
 class PaymentType(models.Model):
@@ -1459,7 +1461,6 @@ class PaymentType(models.Model):
 
     def __str__(self):
         return self.name
-    
 
 
 class ContinuousAssessment(models.Model):
@@ -1482,6 +1483,12 @@ class ContinuousAssessment(models.Model):
 
 
 class StudentRemark(models.Model):
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
     student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'role': 'student'})
     term = models.ForeignKey(Term, on_delete=models.CASCADE)
     class_teacher_remark = models.TextField(blank=True, null=True)
@@ -1497,10 +1504,6 @@ class StudentRemark(models.Model):
         year = self.term.academic_year if self.term else 'No Year'
         student_name = self.student.get_full_name() or self.student.username
         return f"{student_name} - {term_name} {year}"
-    
-
-
-
 
 
 # ADD THIS AT THE TOP OF THE FILE, BEFORE YOUR CLASS
@@ -1596,8 +1599,6 @@ class ParentStudentLink(models.Model):
 
     def __str__(self):
         return f"{self.parent.get_full_name()} → {self.student.get_full_name()}"
-    
-
 
 
 class Notification(models.Model):
@@ -1619,7 +1620,7 @@ class NotificationRecipient(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.notification.title}"
-    
+
 
 class SmsLog(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE, null=True)
@@ -1634,10 +1635,6 @@ class SmsLog(models.Model):
 
     def __str__(self):
         return f"{self.phone} - {self.status} - {self.created_at.date()}"
-
-
-
-
 
 
 class TeacherAttendance(models.Model):

@@ -206,57 +206,311 @@ grid-template-columns:1fr;
 
 }
 
+.attendance-hero{
 
+    background:linear-gradient(135deg,#0f172a,#1d4ed8);
+
+    border-radius:24px;
+
+    padding:30px;
+
+    color:white;
+
+    box-shadow:0 15px 40px rgba(15,23,42,.18);
+
+    margin-bottom:30px;
+    margin-top:30px;
+
+}
+
+
+
+.hero-top{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    gap:25px;
+
+}
+
+
+
+.attendance-title{
+
+    font-size:32px;
+
+    font-weight:800;
+      color:#dbeafe;
+
+    margin:0;
+
+}
+
+
+
+.attendance-description{
+
+    margin-top:8px;
+
+    color:#dbeafe;
+
+    font-size:15px;
+
+}
+
+
+
+.attendance-date-box{
+
+    background:rgba(255,255,255,.15);
+
+    padding:18px 28px;
+
+    border-radius:18px;
+
+    text-align:center;
+
+}
+
+
+
+.attendance-date-box span{
+
+    display:block;
+
+    font-size:11px;
+
+    opacity:.8;
+
+    letter-spacing:1px;
+
+}
+
+
+
+.attendance-date-box strong{
+
+    display:block;
+
+    font-size:24px;
+
+}
+
+
+
+.attendance-date-box small{
+
+    color:#dbeafe;
+
+}
+
+
+
+.attendance-info-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(4,1fr);
+
+    gap:15px;
+
+    margin-top:30px;
+
+}
+
+
+
+.attendance-info-card{
+
+    background:rgba(255,255,255,.12);
+
+    border-radius:16px;
+
+    padding:16px;
+
+    backdrop-filter:blur(10px);
+
+}
+
+
+
+.attendance-info-card span{
+
+    display:block;
+
+    color:#bfdbfe;
+
+    font-size:13px;
+
+    margin-bottom:6px;
+
+}
+
+
+
+.attendance-info-card strong{
+    font-size:16px;
+    color:white;
+}
+
+.attendance-info-card span{
+    display:block;
+    color:#ffff;
+    font-size:13px;
+    margin-bottom:6px;
+}
+.attendance-date-box strong{
+    color:white;
+}
+
+
+
+@media(max-width:900px){
+
+.hero-top{
+
+    flex-direction:column;
+
+    align-items:flex-start;
+
+}
+
+
+.attendance-info-grid{
+
+    grid-template-columns:1fr 1fr;
+
+}
+
+
+}
+
+
+
+@media(max-width:600px){
+
+.attendance-info-grid{
+
+    grid-template-columns:1fr;
+
+}
+
+
+.attendance-title{
+
+    font-size:24px;
+
+}
+
+}
 </style>
-
-
-<div class="attendance-page">
 
 
 <div class="attendance-hero">
 
-<h2 class="attendance-title">
-📋 Attendance Details
-</h2>
+    <div class="hero-top">
 
+        <div>
+            <h2 class="attendance-title">
+                📋 Attendance Details
+            </h2>
 
-{% if attendance_mode == "class_teacher" %}
-
-<p class="attendance-subtitle">
-📚 {{ session.school_class.name }}
-<br>
-{{ session.date|date:"l, F d, Y" }}
-<br>
-Teacher: {{ session.teacher.get_full_name }}
-</p>
-
-
-{% else %}
-
-
-<p class="attendance-subtitle">
-
-📚 {{ session.school_class.name }}
-<br>
-
-📘 {{ session.subject.name }}
-
-<br>
-
-{{ session.date|date:"M d, Y" }}
-
-<br>
-
-Teacher: {{ session.teacher.get_full_name }}
-
-</p>
-
-
-{% endif %}
+            <p class="attendance-description">
+                Review attendance records and student participation details.
+            </p>
+        </div>
 
 
 
-</div>
+    </div>
+
+
+    <div class="attendance-info-grid">
+
+
+        <div class="attendance-info-card">
+
+            <span>
+                🏫 Class
+            </span>
+
+            <strong>
+                {{ session.school_class.name }}
+            </strong>
+
+        </div>
+
+
+
+        {% if attendance_mode != "class_teacher" %}
+
+        <div class="attendance-info-card">
+
+            <span>
+                📘 Subject
+            </span>
+
+            <strong>
+                {{ session.subject.name }}
+            </strong>
+
+        </div>
+
+        {% endif %}
+
+
+
+        <div class="attendance-info-card">
+
+            <span>
+                👨‍🏫 Marked By
+            </span>
+
+            <strong>
+                {{ session.teacher.get_full_name }}
+            </strong>
+            </div>
+                    <div class="attendance-date-box">
+                    
+
+            <span>
+                DATE
+            </span>
+
+            <strong>
+                {{ session.date|date:"d M Y" }}
+            </strong>
+
+            <small>
+                {{ session.date|date:"l" }}
+            </small>
+
+        </div>
+                <div class="attendance-info-card">
+
+            <span>
+                📅 Week
+            </span>
+
+            <strong>
+               Week {{ attendance_week}}
+            </strong>
+
+        </div>
+
+        
+
+        </div>
+
+
+    </div>
+
+
+
 
 
 

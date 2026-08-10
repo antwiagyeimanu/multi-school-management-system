@@ -2,36 +2,533 @@
 {% block title %}Fee Structure Settings{% endblock %}
 {% block content %}
 <style>
-.settings-card .mb-2 {
-    margin-bottom: 1.2rem !important;
+
+/* ===============================
+   PREMIUM FEE STRUCTURE SETTINGS
+================================ */
+
+body{
+    background:#f8fafc;
 }
-.settings-card .form-label {
-    margin-bottom: 0.5rem !important;
-    display: block;
+
+/* PAGE TITLE */
+
+.page-title{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:15px;
+    margin-bottom:24px;
 }
-.form-group-spaced {
-    margin-bottom: 1.5rem !important;
+
+.page-title h2{
+    margin:0;
+    font-size:28px;
+    font-weight:800;
+    color:#111827;
 }
-.form-group-spaced .form-label {
-    margin-bottom: 0.6rem !important;
-    display: block;
+
+.page-title small{
+    color:#64748b;
 }
-/* cursor fix */
-.settings-card, .card-body, label, p, div {
-    cursor: default;
+
+/* CARD */
+
+.card{
+    border:none;
+    border-radius:22px;
+    overflow:hidden;
+    background:#fff;
+    box-shadow:0 10px 30px rgba(15,23,42,.07);
 }
-select,  button, a, .btn {
-    cursor: pointer !important;
+
+.card-header{
+    background:linear-gradient(135deg,#2563eb,#1d4ed8) !important;
+    color:#fff !important;
+    padding:18px 24px;
+    border:none;
+    font-size:18px;
+    font-weight:700;
+}
+
+.card-body{
+    padding:28px;
+}
+
+/* FORM */
+
+.form-label{
+    font-size:13px;
+    font-weight:700;
+    color:#374151 !important;
+    margin-bottom:8px;
+}
+
+.form-control,
+.form-select{
+    height:48px;
+    border-radius:12px;
+    border:1px solid #dbe2ea;
+    font-size:14px;
+    box-shadow:none;
+}
+
+.form-control:focus,
+.form-select:focus{
+    border-color:#2563eb;
+    box-shadow:0 0 0 3px rgba(37,99,235,.10);
+}
+
+/* SPACING */
+
+.form-group-spaced{
+    margin-bottom:18px !important;
+}
+
+/* BUTTON */
+
+.btn-primary{
+
+    border:none;
+    border-radius:12px;
+    padding:12px 24px;
+    font-weight:700;
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    box-shadow:0 10px 24px rgba(37,99,235,.25);
+
+}
+
+.btn-primary:hover{
+
+    transform:translateY(-2px);
+
+}
+
+/* SETTINGS CARD */
+
+.settings-card{
+
+    background:#fff;
+    border-radius:22px;
+    padding:24px;
+    margin-top:25px;
+    box-shadow:0 10px 30px rgba(15,23,42,.07);
+
+}
+
+.settings-card strong{
+
+    color:#111827;
+
+}
+
+.settings-card .small{
+
+    line-height:2;
+
+}
+
+/* GENERATE BUTTON */
+
+.btn-warning{
+
+    border:none;
+    border-radius:12px;
+    padding:13px;
+    font-weight:700;
+
+}
+
+/* CURSOR */
+
+.settings-card,
+.card-body,
+label,
+p,
+div{
+
+    cursor:default;
+
+}
+
+select,
+button,
+a,
+.btn{
+
+    cursor:pointer !important;
+
+}
+
+/* MOBILE */
+
+@media(max-width:768px){
+
+.card-body{
+
+    padding:18px;
+
+}
+
+.page-title{
+
+    flex-direction:column;
+    align-items:flex-start;
+
+}
+
+.page-title h2{
+
+    font-size:22px;
+
+}
+
+.form-control,
+.form-select{
+
+    height:45px;
+    font-size:13px;
+
+}
+
+.btn-primary,
+.btn-warning{
+
+    width:100%;
+
+}
+
+}
+
+/* SMALL PHONES */
+
+@media(max-width:576px){
+
+.card{
+
+    border-radius:18px;
+
+}
+
+.card-header{
+
+    padding:16px;
+    font-size:16px;
+
+}
+
+.page-title h2{
+
+    font-size:20px;
+
+}
+
+}
+/* HERO */
+
+.premium-hero{
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:#fff;
+    border-radius:22px;
+    padding:28px;
+    box-shadow:0 15px 35px rgba(37,99,235,.25);
+}
+
+.hero-badge{
+    display:inline-flex;
+    align-items:center;
+    padding:6px 14px;
+    border-radius:30px;
+    background:rgba(255,255,255,.18);
+    font-size:12px;
+    font-weight:700;
+}
+
+.hero-title{
+    font-size:30px;
+    font-weight:800;
+}
+
+.hero-subtitle{
+    opacity:.9;
+    font-size:15px;
+}
+
+.hero-icon{
+    width:90px;
+    height:90px;
+    border-radius:24px;
+    background:rgba(255,255,255,.12);
+    justify-content:center;
+    align-items:center;
+    font-size:42px;
+}
+
+@media(max-width:768px){
+
+.premium-hero{
+    padding:22px;
+    border-radius:18px;
+}
+
+.hero-title{
+    font-size:23px;
+}
+
+.hero-subtitle{
+    font-size:13px;
+}
+
+}
+/* ===============================
+   PREMIUM FORM
+================================ */
+
+.premium-form-card{
+    border:none;
+    border-radius:24px;
+    overflow:hidden;
+    box-shadow:0 18px 40px rgba(15,23,42,.08);
+}
+
+.premium-form-card .card-header{
+
+    padding:18px 24px;
+    font-size:18px;
+    font-weight:800;
+    letter-spacing:.3px;
+
+}
+
+.premium-form-card .card-body{
+
+    padding:30px;
+
+}
+
+.premium-form-card .form-control,
+.premium-form-card .form-select{
+
+    height:52px;
+    border-radius:14px;
+    border:1px solid #dbe3ef;
+    transition:.25s;
+
+}
+
+.premium-form-card .form-control:hover,
+.premium-form-card .form-select:hover{
+
+    border-color:#93c5fd;
+
+}
+
+.premium-form-card .form-control:focus,
+.premium-form-card .form-select:focus{
+
+    border-color:#2563eb;
+    box-shadow:0 0 0 4px rgba(37,99,235,.10);
+
+}
+
+.premium-form-card .form-label{
+
+    font-size:13px;
+    font-weight:700;
+    color:#374151 !important;
+
+}
+
+.premium-form-card .btn-primary{
+
+    min-width:220px;
+    height:52px;
+    border-radius:14px;
+    font-size:15px;
+    font-weight:700;
+
+}
+
+@media(max-width:768px){
+
+.premium-form-card .card-body{
+
+    padding:18px;
+
+}
+
+.premium-form-card .btn-primary{
+
+    width:100%;
+    min-width:100%;
+
+}
+
+}
+/* ===============================
+   FEE BREAKDOWN
+================================ */
+
+.settings-card{
+
+    border:none;
+    border-radius:22px;
+    background:#fff;
+    box-shadow:0 15px 35px rgba(15,23,42,.08);
+    padding:26px;
+
+}
+
+.settings-card .small{
+
+    color:#374151 !important;
+
+}
+
+.settings-card strong{
+
+    color:#111827;
+
+}
+
+.settings-card .btn{
+
+    height:52px;
+    border-radius:14px;
+    font-weight:700;
+    font-size:15px;
+
+}
+
+.alert-primary{
+
+    background:#eff6ff;
+    border:none;
+    color:#1d4ed8;
+    border-radius:16px;
+    padding:18px;
+
+}
+
+@media(max-width:768px){
+
+.settings-card{
+
+    padding:18px;
+
+}
+
+.alert-primary{
+
+    font-size:13px;
+
+}
+
+}
+/* ===============================
+   PREMIUM FEE SUMMARY ITEMS
+================================ */
+
+.fee-summary-item{
+    height:100%;
+    min-height:105px;
+    padding:18px;
+    display:flex;
+    align-items:center;
+    gap:13px;
+    background:#f8fafc;
+    border:1px solid #e5e7eb;
+    border-radius:16px;
+    transition:.25s ease;
+}
+
+.fee-summary-item:hover{
+    transform:translateY(-3px);
+    background:#fff;
+    border-color:#bfdbfe;
+    box-shadow:0 10px 25px rgba(15,23,42,.08);
+}
+
+.fee-summary-icon{
+    width:46px;
+    height:46px;
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:13px;
+    background:#eff6ff;
+    font-size:21px;
+}
+
+.fee-summary-label{
+    color:#64748b;
+    font-size:12px;
+    font-weight:600;
+    margin-bottom:4px;
+}
+
+.fee-summary-value{
+    color:#111827;
+    font-size:18px;
+    font-weight:800;
+}
+
+@media(max-width:576px){
+
+    .fee-summary-item{
+        min-height:92px;
+        padding:14px;
+        gap:10px;
+    }
+
+    .fee-summary-icon{
+        width:40px;
+        height:40px;
+        font-size:18px;
+        border-radius:11px;
+    }
+
+    .fee-summary-label{
+        font-size:11px;
+    }
+
+    .fee-summary-value{
+        font-size:15px;
+    }
+
 }
 </style>
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>💰 Fee Structure Settings - {{ school.name }}</h2>
+<div class="container-fluid px-2 px-md-4 py-3">
+
+<div class="premium-hero mb-4">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center">
+
+        <div>
+            <div class="hero-badge mb-2">
+                <i class="bi bi-cash-stack me-2"></i>
+                School Finance
+            </div>
+
+            <h2 class="hero-title mb-1">
+                Fee Structure Settings
+            </h2>
+
+            <p class="hero-subtitle mb-0">
+                {{ school.name }}
+            </p>
+        </div>
+
+        <div class="hero-icon d-none d-lg-flex">
+            <i class="bi bi-wallet2"></i>
+        </div>
+
     </div>
+</div>
 
     <!-- Create/Edit Form -->
-    <div class="card mb-4">
+    <div class="card premium-form-card mb-4">
         <div class="card-header bg-primary text-white">
             Create Fee Structure
         </div>
@@ -129,49 +626,151 @@ select,  button, a, .btn {
 </div>
 
   {% if fee_breakdown %}
-    <div class="settings-card mt-3">
-        <div class="mb-2">
-            <strong>Ready to generate for:</strong> {{ fee_breakdown.get_stage_display }}, 
-            Term: {{ fee_breakdown.term.get_term_number_display }}- Academic Year: {{ fee_breakdown.academic_year }}
+    <div class="settings-card mt-4">
+
+<div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+
+    <div>
+
+        <h5 class="mb-1 fw-bold">
+            📋 Fee Generation Summary
+        </h5>
+
+        <small class="text-muted">
+            Review the fee structure before generating student fees.
+        </small>
+
+    </div>
+
+</div>
+<div class="alert alert-primary border-0 rounded-4 mb-4">
+
+<strong>Stage:</strong>
+{{ fee_breakdown.get_stage_display }}
+
+&nbsp;&nbsp;|&nbsp;&nbsp;
+
+<strong>Term:</strong>
+{{ fee_breakdown.term.get_term_number_display }}
+
+&nbsp;&nbsp;|&nbsp;&nbsp;
+
+<strong>Academic Year:</strong>
+{{ fee_breakdown.academic_year }}
+
+</div>
+<div class="row g-3 mb-4">
+
+    {% if fee_breakdown.school_fees %}
+    <div class="col-6 col-lg-3">
+        <div class="fee-summary-item">
+            <div class="fee-summary-icon">💰</div>
+            <div>
+                <div class="fee-summary-label">School Fees</div>
+                <div class="fee-summary-value">₵{{ fee_breakdown.school_fees }}</div>
+            </div>
         </div>
-        
-        <div class="mb-3 small text-muted">
-{% if fee_breakdown.school_fees %}
-School Fees: ₵{{ fee_breakdown.school_fees }} |
-{% endif %}
+    </div>
+    {% endif %}
 
-{% if fee_breakdown.canteen_amount %}
-Feeding: ₵{{ fee_breakdown.canteen_amount }} |
-{% endif %}
-
-{% if fee_breakdown.boarding_fee %}
-Boarding: ₵{{ fee_breakdown.boarding_fee }} |
-{% endif %}
-
-{% if fee_breakdown.hostel_fee %}
-Hostel: ₵{{ fee_breakdown.hostel_fee }} |
-{% endif %}
-
-{% if fee_breakdown.exam_fees %}
-Exam: ₵{{ fee_breakdown.exam_fees }} |
-{% endif %}
-
-{% if fee_breakdown.development_fee %}
-Development: ₵{{ fee_breakdown.development_fee }} |
-{% endif %}
-
-{% if fee_breakdown.pta_dues %}
-PTA: ₵{{ fee_breakdown.pta_dues }} |
-{% endif %}
-
-{% if fee_breakdown.computer_levy %}
-Computer: ₵{{ fee_breakdown.computer_levy }} |
-{% endif %}
-
-{% if fee_breakdown.other_fees %}
-Other: ₵{{ fee_breakdown.other_fees }}
-{% endif %}
+    {% if fee_breakdown.canteen_amount %}
+    <div class="col-6 col-lg-3">
+        <div class="fee-summary-item">
+            <div class="fee-summary-icon">🍽️</div>
+            <div>
+                <div class="fee-summary-label">Feeding</div>
+                <div class="fee-summary-value">₵{{ fee_breakdown.canteen_amount }}</div>
+            </div>
         </div>
+    </div>
+    {% endif %}
+
+    {% if fee_breakdown.boarding_fee %}
+    <div class="col-6 col-lg-3">
+        <div class="fee-summary-item">
+            <div class="fee-summary-icon">🏫</div>
+            <div>
+                <div class="fee-summary-label">Boarding</div>
+                <div class="fee-summary-value">₵{{ fee_breakdown.boarding_fee }}</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if fee_breakdown.hostel_fee %}
+    <div class="col-6 col-lg-3">
+        <div class="fee-summary-item">
+            <div class="fee-summary-icon">🛏️</div>
+            <div>
+                <div class="fee-summary-label">Hostel</div>
+                <div class="fee-summary-value">₵{{ fee_breakdown.hostel_fee }}</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if fee_breakdown.exam_fees %}
+    <div class="col-6 col-lg-3">
+        <div class="fee-summary-item">
+            <div class="fee-summary-icon">📝</div>
+            <div>
+                <div class="fee-summary-label">Exam Fees</div>
+                <div class="fee-summary-value">₵{{ fee_breakdown.exam_fees }}</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if fee_breakdown.development_fee %}
+    <div class="col-6 col-lg-3">
+        <div class="fee-summary-item">
+            <div class="fee-summary-icon">🏗️</div>
+            <div>
+                <div class="fee-summary-label">Development</div>
+                <div class="fee-summary-value">₵{{ fee_breakdown.development_fee }}</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if fee_breakdown.pta_dues %}
+    <div class="col-6 col-lg-3">
+        <div class="fee-summary-item">
+            <div class="fee-summary-icon">👥</div>
+            <div>
+                <div class="fee-summary-label">PTA Dues</div>
+                <div class="fee-summary-value">₵{{ fee_breakdown.pta_dues }}</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if fee_breakdown.computer_levy %}
+    <div class="col-6 col-lg-3">
+        <div class="fee-summary-item">
+            <div class="fee-summary-icon">💻</div>
+            <div>
+                <div class="fee-summary-label">Computer Levy</div>
+                <div class="fee-summary-value">₵{{ fee_breakdown.computer_levy }}</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if fee_breakdown.other_fees %}
+    <div class="col-6 col-lg-3">
+        <div class="fee-summary-item">
+            <div class="fee-summary-icon">📦</div>
+            <div>
+                <div class="fee-summary-label">Other Fees</div>
+                <div class="fee-summary-value">₵{{ fee_breakdown.other_fees }}</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+
+</div>
 
         <form method="POST" action="{% url 'accounts:generate_fees_for_term' %}">
             {% csrf_token %}

@@ -4,15 +4,11 @@ from .models import SchoolSetting
 from datetime import date, timedelta
 from .models import Term  # adjust if needed
 from django.utils import timezone
-from .views import calculate_remaining_school_days
+from .utils import calculate_remaining_school_days
 from .models import AcademicCalendar
 from .models import Announcement, AnnouncementRead
 from django.db.models import Q
-
-
-
-
-
+from .utils import get_active_week
 
 def active_term(request):
     if request.user.is_authenticated and hasattr(request.user, 'school'):
@@ -60,9 +56,6 @@ def attendance_mode(request):
     }
 
 
-
-
-
 def week_info(request):
 
     if not request.user.is_authenticated:
@@ -94,13 +87,7 @@ def week_info(request):
             return {}
     school_start = active_term.start_date
 
-    def get_active_week(start_date, today):
-        if today < start_date:
-            return 1
-        days_diff = (today - start_date).days
-        start_weekday = start_date.weekday()
-        week = (days_diff + start_weekday) // 7 + 1
-        return week
+
 
     def get_week_range(start_date, week_number):
         current_start = start_date
@@ -159,7 +146,6 @@ def week_info(request):
     }
 
 
-
 def global_context(request):
     return {
         'today_date': timezone.now().date(),
@@ -186,7 +172,6 @@ def calculate_total_school_days(start_date, end_date, school):
             days += 1
         current += timedelta(days=1)
     return days
-
 
 
 def announcements_processor(request):

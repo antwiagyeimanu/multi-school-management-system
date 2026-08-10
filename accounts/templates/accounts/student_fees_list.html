@@ -1,109 +1,465 @@
-{% extends "accounts/dashboard_base.html" %}
+{% extends 'accounts/dashboard_base.html' %}
 {% block title %}Student Fees{% endblock %}
 
 {% block content %}
-<div class="container-fluid px-4">
-   <h1 class="mt-4">
-    Student Fees -
-    {{ selected_year|default:"Current Year" }}
-    -
-    {{ term_label }}
-</h1>
-    
-    <!-- Filters -->
-<form method="get" class="row g-2 mb-3 align-items-end">
 
-    <div class="col-md-2">
-        <label class="form-label">Academic Year</label>
-        <select name="year" class="form-control">
-            {% for y in year_choices %}
-                <option value="{{ y.id }}"
-                {% if selected_year and selected_year.id == y.id %}selected{% endif %}>
-                    {{ y }}
-                </option>
-            {% endfor %}
-        </select>
+<style>
+/* =========================================================
+   PREMIUM STUDENT FEES
+   UI ONLY — EXISTING LOGIC PRESERVED
+========================================================= */
+.student-fees-page {
+    padding: 8px 0 35px;
+}
+/* PAGE HERO */
+.fees-hero {
+    background: linear-gradient(135deg, #0f172a, #1e3a8a);
+    border-radius: 22px;
+    padding: 26px 30px;
+    margin-bottom: 22px;
+    color: #fff;
+    box-shadow: 0 14px 35px rgba(15,23,42,.14);
+    position: relative;
+    overflow: hidden;
+}
+.fees-hero::after {
+    content: "";
+    position: absolute;
+    width: 190px;
+    height: 190px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.06);
+    right: -55px;
+    top: -75px;
+}
+.fees-hero-content {
+    position: relative;
+    z-index: 1;
+}
+.fees-hero h1 {
+    margin: 0;
+    font-size: 25px;
+    font-weight: 800;
+    letter-spacing: -.3px;
+}
+.fees-hero-subtitle {
+    margin-top: 7px;
+    color: rgba(255,255,255,.72);
+    font-size: 13px;
+}
+/* FILTER CARD */
+.fees-filter-card {
+    background: #fff;
+    border: 1px solid #e7edf5;
+    border-radius: 18px;
+    padding: 20px;
+    margin-bottom: 22px;
+    box-shadow: 0 8px 25px rgba(15,23,42,.06);
+}
+.filter-heading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 800;
+    color: #172033;
+    margin-bottom: 16px;
+}
+.filter-heading-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #eff6ff;
+    color: #2563eb;
+}
+.fees-filter-card .form-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 7px;
+}
+.fees-filter-card .form-control {
+    min-height: 44px;
+    border: 1px solid #dce3ed;
+    border-radius: 10px;
+    font-size: 13px;
+    color: #1e293b;
+    box-shadow: none;
+}
+.fees-filter-card .form-control:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.10);
+}
+.fees-filter-card .form-check {
+    padding-left: 1.8rem;
+}
+.fees-filter-card .form-check-input {
+    width: 18px;
+    height: 18px;
+    margin-left: -1.8rem;
+    margin-top: .15rem;
+    cursor: pointer;
+}
+.fees-filter-card .form-check-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+}
+.filter-btn {
+    min-height: 44px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg,#2563eb,#1d4ed8);
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: 0 6px 15px rgba(37,99,235,.18);
+    transition: .2s ease;
+}
+.filter-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 9px 20px rgba(37,99,235,.25);
+}
+/* TABLE CARD */
+.fees-table-card {
+    background: #fff;
+    border: 1px solid #e7edf5;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(15,23,42,.07);
+}
+/* TABLE */
+.student-fees-table {
+    margin: 0;
+    width: 100%;
+    min-width: 850px;
+}
+.student-fees-table thead {
+    background: linear-gradient(135deg,#1d4ed8,#2563eb);
+    color: #fff;
+}
+.student-fees-table thead th {
+    border: none;
+    padding: 15px 14px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    white-space: nowrap;
+}
+.student-fees-table tbody td {
+    padding: 15px 14px;
+    font-size: 13px;
+    color: #475569;
+    vertical-align: middle;
+    border-bottom: 1px solid #edf1f6;
+    white-space: nowrap;
+}
+.student-fees-table tbody tr {
+    transition: .2s ease;
+}
+.student-fees-table tbody tr:hover {
+    background: #f8fbff;
+}
+/* STUDENT NAME */
+.student-name {
+    font-weight: 750;
+    color: #172033 !important;
+}
+.student-id {
+    font-weight: 650;
+    color: #64748b !important;
+}
+/* MONEY */
+.total-fee {
+    font-weight: 750;
+    color: #172033 !important;
+}
+.amount-paid {
+    font-weight: 750;
+    color: #15803d !important;
+}
+.amount-balance {
+    font-weight: 800;
+    color: #dc2626 !important;
+}
+/* STATUS */
+.fee-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 11px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 800;
+}
+.status-paid {
+    background: #dcfce7;
+    color: #15803d;
+}
+.status-unpaid {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+/* EDIT BUTTON */
+.edit-fee-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 9px;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    transition: .2s ease;
+}
+.edit-fee-btn:hover {
+    transform: translateY(-1px);
+}
+/* EMPTY STATE */
+.fees-empty {
+    background: #fff;
+    border: 1px solid #e7edf5;
+    border-radius: 18px;
+    padding: 40px 20px;
+    text-align: center;
+    color: #64748b;
+    box-shadow: 0 8px 25px rgba(15,23,42,.05);
+}
+.fees-empty-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 15px;
+    background: #eff6ff;
+    color: #2563eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    font-size: 22px;
+}
+/* MOBILE */
+@media (max-width: 768px) {
+    .student-fees-page {
+        padding: 5px 0 25px;
+    }
+    .fees-hero {
+        padding: 21px 19px;
+        border-radius: 18px;
+    }
+    .fees-hero h1 {
+        font-size: 20px;
+        line-height: 1.35;
+    }
+    .fees-hero-subtitle {
+        font-size: 12px;
+    }
+    .fees-filter-card {
+        padding: 16px;
+        border-radius: 16px;
+    }
+    .filter-heading {
+        margin-bottom: 13px;
+    }
+    .fees-table-card {
+        border-radius: 16px;
+    }
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .student-fees-table thead th {
+        padding: 13px 11px;
+        font-size: 10px;
+    }
+    .student-fees-table tbody td {
+        padding: 12px 11px;
+        font-size: 12px;
+    }
+    .edit-fee-btn {
+        padding: 7px 10px;
+        font-size: 11px;
+    }
+}
+/* SMALL PHONES */
+@media (max-width: 480px) {
+    .fees-hero h1 {
+        font-size: 18px;
+    }
+    .fees-filter-card {
+        padding: 14px;
+    }
+    .fees-filter-card .form-control {
+        min-height: 42px;
+        font-size: 12px;
+    }
+    .filter-btn {
+        min-height: 42px;
+    }
+}
+</style>
+<div class="container-fluid px-4 student-fees-page">
+<!-- HERO -->
+<div class="fees-hero">
+    <div class="fees-hero-content">
+        <h1>
+            <i class="fas fa-wallet me-2"></i>
+            Student Fees -
+            {{ selected_year|default:"Current Year" }}
+            -
+            {{ term_label }}
+        </h1>
+        <div class="fees-hero-subtitle">
+            Manage student fee balances, payments and outstanding amounts.
+        </div>
     </div>
-
-    <div class="col-md-2">
-        <label class="form-label">Term</label>
-        <select name="term" class="form-control">
-            <option value="">All Terms</option>
-            {% for t in terms %}
-                <option value="{{ t.id }}"
-                {% if selected_term == t.id|stringformat:"s" %}selected{% endif %}>
-                    {{ t }}
-                </option>
-            {% endfor %}
-        </select>
+</div>
+<!-- FILTERS -->
+<div class="fees-filter-card">
+    <div class="filter-heading">
+        <span class="filter-heading-icon">
+            <i class="fas fa-filter"></i>
+        </span>
+        Fee Filters
     </div>
-
-    <div class="col-md-3">
-        <label class="form-label">Search Student</label>
-        <input type="text" name="search" class="form-control"
-               placeholder="ID or Name" value="{{ search }}">
-    </div>
-
-    <div class="col-md-3 d-flex align-items-center">
-        <div class="form-check mt-4">
-            <input type="checkbox" name="new_only" id="new_only"
-                   class="form-check-input"
-                   {% if new_only %}checked{% endif %}
-                   onchange="this.form.submit()">
-
-            <label for="new_only" class="form-check-label">
-                Joined This Term Only
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-2">
+            <label class="form-label">
+                Academic Year
             </label>
+            <select name="year" class="form-control">
+                {% for y in year_choices %}
+                    <option value="{{ y.id }}"
+                    {% if selected_year and selected_year.id == y.id %}selected{% endif %}>
+                        {{ y }}
+                    </option>
+                {% endfor %}
+            </select>
         </div>
-    </div>
-
-    <div class="col-md-2">
-        <button type="submit" class="btn btn-primary w-100">
-            Filter
-        </button>
-    </div>
-
-</form>
-
-    {% if fees %}
-    <div class="card">
-        <div class="card-body p-0">
-            <table class="table table-striped table-hover mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Student Name</th>
-                        <th>Student ID</th>
-                        <th>Total Fee</th>
-                        <th>Amount Paid</th>
-                        <th>Balance</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for fee in fees %}
-<tr>
- <td>{{ fee.student.get_full_name }}</td>
-<td>{{ fee.student.student_number }}</td>
-<td>GH₵  {{ fee.total_amount|floatformat:2 }}</td>
-<td class="text-success">GH₵  {{ fee.amount_paid|floatformat:2 }}</td>
-<td class="text-danger fw-bold">GH₵  {{ fee.balance|floatformat:2 }}</td>
-<td>{% if fee.balance > 0 %}Unpaid{% else %}Paid{% endif %}</td>
-<td>
-  <a href="{% url 'accounts:edit_student_fee' fee.id %}" class="btn btn-sm btn-outline-primary">
-    <i class="fas fa-edit"></i> Edit
-  </a>
-</td>
-</tr>
-{% endfor %}
-                </tbody>
-            </table>
+        <div class="col-md-2">
+            <label class="form-label">
+                Term
+            </label>
+            <select name="term" class="form-control">
+                <option value="">All Terms</option>
+                {% for t in terms %}
+                    <option value="{{ t.id }}"
+                    {% if selected_term == t.id|stringformat:"s" %}selected{% endif %}>
+                        {{ t }}
+                    </option>
+                {% endfor %}
+            </select>
         </div>
+        <div class="col-md-3">
+            <label class="form-label">
+                Search Student
+            </label>
+            <input
+                type="text"
+                name="search"
+                class="form-control"
+                placeholder="ID or Name"
+                value="{{ search }}"
+            >
+        </div>
+        <div class="col-md-3 d-flex align-items-center">
+            <div class="form-check mt-4">
+                <input
+                    type="checkbox"
+                    name="new_only"
+                    id="new_only"
+                    class="form-check-input"
+                    {% if new_only %}checked{% endif %}
+                    onchange="this.form.submit()"
+                >
+                <label for="new_only" class="form-check-label">
+                    Joined This Term Only
+                </label>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary filter-btn w-100">
+                <i class="fas fa-search me-1"></i>
+                Filter
+            </button>
+        </div>
+    </form>
+</div>
+{% if fees %}
+<!-- FEES TABLE -->
+<div class="fees-table-card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 student-fees-table">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Student ID</th>
+                    <th>Total Fee</th>
+                    <th>Amount Paid</th>
+                    <th>Balance</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fee in fees %}
+                <tr>
+                    <td class="student-name">
+                        {{ fee.student.get_full_name }}
+                    </td>
+                    <td class="student-id">
+                        {{ fee.student.student_number }}
+                    </td>
+                    <td class="total-fee">
+                        GH₵ {{ fee.total_amount|floatformat:2 }}
+                    </td>
+                    <td class="amount-paid">
+                        GH₵ {{ fee.amount_paid|floatformat:2 }}
+                    </td>
+                    <td class="amount-balance">
+                        GH₵ {{ fee.balance|floatformat:2 }}
+                    </td>
+                    <td>
+                        {% if fee.balance > 0 %}
+                            <span class="fee-status status-unpaid">
+                                <i class="fas fa-circle-exclamation"></i>
+                                Unpaid
+                            </span>
+                        {% else %}
+                            <span class="fee-status status-paid">
+                                <i class="fas fa-circle-check"></i>
+                                Paid
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a
+                            href="{% url 'accounts:edit_student_fee' fee.id %}"
+                            class="btn btn-sm btn-outline-primary edit-fee-btn"
+                        >
+                            <i class="fas fa-edit"></i>
+                            Edit
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-    {% else %}
-    <div class="alert alert-info text-center">
+</div>
+{% else %}
+<!-- EMPTY STATE -->
+<div class="fees-empty">
+    <div class="fees-empty-icon">
+        <i class="fas fa-wallet"></i>
+    </div>
+    <div>
         No student fees found for this term.
     </div>
-    {% endif %}
 </div>
+{% endif %}
+</div>
+
 {% endblock %}

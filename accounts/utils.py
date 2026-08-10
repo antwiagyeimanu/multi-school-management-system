@@ -11,6 +11,13 @@ STAGE_LABELS = {
     'jhs': 'JHS',
     'shs': 'SHS',
 }
+def get_active_week(start_date, today):
+        if today < start_date:
+            return 1
+        days_diff = (today - start_date).days
+        start_weekday = start_date.weekday()
+        week = (days_diff + start_weekday) // 7 + 1
+        return week
 
 def get_active_term(school):
     """Returns the term where is_active=True for this school"""
@@ -86,18 +93,6 @@ def get_next_term_begins(school):
     active_term = get_active_term(school)
     return active_term.next_term_begins if active_term else None
 
-def calculate_school_days(start, end, school):
-    days = 0
-    current = start
-
-    while current <= end:
-        if is_school_day(current, school):
-            days += 1
-        current += timedelta(days=1)
-
-    return days
-
-
 
 def get_week_info(school, week_number=None):
     """
@@ -160,8 +155,6 @@ def get_week_info(school, week_number=None):
     }
 
 
-
-
 def get_term_year_filter(request, school):
     """
     Reusable Academic Year + Term filter
@@ -171,13 +164,10 @@ def get_term_year_filter(request, school):
     years = AcademicYear.objects.all(
     ).order_by('-start_date')
 
-
     selected_year = request.GET.get('year')
     selected_term = request.GET.get('term')
 
-
     selected_term_obj = None
-
 
     if selected_year and selected_term:
 
@@ -187,10 +177,54 @@ def get_term_year_filter(request, school):
             term_number=selected_term
         ).first()
 
-
     return {
         'years': years,
         'selected_year': selected_year,
         'selected_term': selected_term,
         'selected_term_obj': selected_term_obj,
     }
+
+
+def calculate_remaining_school_days(today, end, school):
+    days = 0
+    current = today + timedelta(days=1)  # Start TOMORROW, not today
+
+    while current <= end:
+        is_weekend = current.weekday() in [5, 6]
+
+        is_holiday = AcademicCalendar.objects.filter(
+            school=school,
+            start_date__lte=current,
+            end_date__gte=current,
+            affects_timetable=True,
+        ).exists()
+
+        if not is_weekend and not is_holiday:
+            days += 1
+
+        current += timedelta(days=1)
+
+    return days
+
+
+def calculate_school_days(start, end, school):
+    days = 0
+    current = start
+
+    while current <= end:
+
+        is_weekend = current.weekday() in [5, 6]
+
+        is_holiday = AcademicCalendar.objects.filter(
+            school=school,
+            start_date__lte=current,
+            end_date__gte=current,
+            affects_timetable=True,
+        ).exists()
+
+        if not is_weekend and not is_holiday:
+            days += 1
+
+        current += timedelta(days=1)
+
+    return days

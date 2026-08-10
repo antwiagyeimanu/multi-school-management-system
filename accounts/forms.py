@@ -237,32 +237,27 @@ class StudentForm(forms.ModelForm):
 
             visible_ids = []
 
-            # Find parents that truly have sections
             parents_with_sections = set()
 
             for c in classes:
 
                 name = c.name.strip()
 
-                # Example: Grade 4A
-                # Parent becomes: Grade 4
+               
 
                 if len(name) > 1 and name[-1].isalpha():
 
                     parent_name = name[:-1].strip()
 
-                    # Check parent exists
                     parent_exists = classes.filter(name=parent_name).exists()
 
                     if parent_exists:
                         parents_with_sections.add(parent_name)
 
-            # Decide visible classes
             for c in classes:
 
                 name = c.name.strip()
 
-                # Hide parent if it has sections
                 if name in parents_with_sections:
                     continue
 

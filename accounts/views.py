@@ -59,7 +59,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from django import template
 register = template.Library()
-from .utils import calculate_school_days
+from .utils import calculate_school_days, calculate_remaining_school_days, get_active_week
 import requests
 from django.views.decorators.csrf import csrf_exempt
 
@@ -68,6 +68,7 @@ from .models import (
     CanteenPayment, PaymentTransaction, PaymentItem, PaymentType, Subject, AttendanceSession, School, SchoolSetting, Notification, NotificationRecipient,
     StudentFee, Term, Timetable, AcademicCalendar, FeePayment, StudentSubjectClass, AcademicYear, Fee, PendingPayment, PendingPaymentItem, FeeAuditLog, TeacherAttendance,
     Expense, STAGE_GROUP_MAP, FeeStructure, SchoolClass, AttendanceRecord, Result, TeacherSubjectClass, ParentStudentLink, StudentTermSummary, TeacherAttendance, Break,
+    TermSetting
 )
 from django.db.models import Case, When, Value, IntegerField, CharField, Min
 
@@ -100,56 +101,9 @@ def is_admin(user):
     return user.role in ['admin', 'school_owner']
 
 
-
-
-def calculate_school_days(start, end, school):
-    days = 0
-    current = start
-
-    while current <= end:
-
-        is_weekend = current.weekday() in [5, 6]
-
-        is_holiday = AcademicCalendar.objects.filter(
-            school=school,
-            start_date__lte=current,
-            end_date__gte=current,
-            affects_timetable=True
-        ).exists()
-
-        if not is_weekend and not is_holiday:
-            days += 1
-
-        current += timedelta(days=1)
-
-    return days
-
-
-def calculate_remaining_school_days(today, end, school):
-    days = 0
-    current = today + timedelta(days=1) # Start TOMORROW, not today
-
-    while current <= end:
-        is_weekend = current.weekday() in [5, 6]
-
-        is_holiday = AcademicCalendar.objects.filter(
-            school=school,
-            start_date__lte=current,
-            end_date__gte=current,
-            affects_timetable=True
-        ).exists()
-
-        if not is_weekend and not is_holiday:
-            days += 1
-
-        current += timedelta(days=1)
-
-    return days
-
-
 def check_clash(school, teacher_id, class_id, weekday, start_time, end_time, exclude_id=None):
     clashes = Timetable.objects.filter(
-        school_class__school=school,
+        school=school,
         weekday=weekday,
         start_time__lt=end_time,
         end_time__gt=start_time
@@ -216,9 +170,9 @@ def role_required(allowed_roles=[]):
         return wrapper
     return decorator
 
-#--------------------------
-  #ADMIN
-#--------------------------
+# --------------------------
+# ADMIN
+# --------------------------
 @login_required
 def dashboard(request):
     user = request.user
@@ -329,7 +283,6 @@ def admin_dashboard(request):
     )
 
 
-
 @login_required
 def admin_profile(request):
     context = {'admin': request.user}
@@ -423,7 +376,6 @@ def student_dashboard(request):
 
     present_days = 0
     for statuses in daily_statuses.values():
-        # FINAL RULE: If any P that day = Present, else Absent (No Late)
         if 'P' in statuses:
             present_days += 1
 
@@ -441,6 +393,7 @@ def student_dashboard(request):
     today_timetable = []
     if weekday_int <= 4:
         today_timetable = Timetable.objects.filter(
+            school = student.school,
             school_class=student.school_class,
             weekday=weekday_int
         ).select_related('subject','teacher').order_by('start_time')
@@ -521,7 +474,6 @@ def login_view(request):
         if not user:
             messages.error(request, "Invalid login details")
             return render(request, "accounts/login.html")
-        # 🚫 ACCESS CONTROL (IMPORTANT PART)
         if user.role == "student" and not user.can_login:
             messages.error(request, "Your account is not active yet. Contact admin.")
             return render(request, "accounts/login.html")
@@ -532,10 +484,8 @@ def login_view(request):
         )
         if authenticated_user:
             login(request, authenticated_user)
-            # force password change
             if not authenticated_user.is_password_changed:
                 return redirect('accounts:change-password')
-            # role redirects
             if authenticated_user.role == "admin":
                 return redirect('accounts:admin_dashboard')
             elif authenticated_user.role == "teacher":
@@ -550,9 +500,9 @@ def login_view(request):
         messages.error(request, "Invalid login details")
     return render(request, "accounts/login.html")
 
-#--------------------------------
-#PASSWORD
-#-------------------------------
+# --------------------------------
+# PASSWORD
+# -------------------------------
 @login_required
 def change_password(request):
     if request.method == "POST":
@@ -590,9 +540,9 @@ def change_password(request):
     return render(request, "accounts/change-password.html")
 
 
-#--------------------------
-#SET STONG PASSWORD 
-#------------------------
+# --------------------------
+# SET STONG PASSWORD
+# ------------------------
 def is_strong_password(password):
     if not password:
         return False, "Password cannot be empty."
@@ -615,14 +565,13 @@ def is_strong_password(password):
     return True, "Password is strong."
 
 
-#---------------------------
-#LOGOUT VIEW
-#----------------------------
+# ---------------------------
+# LOGOUT VIEW
+# ----------------------------
 def logout_view(request):
     logout(request)
     messages.success(request, "You have been logged out.")
     return redirect('accounts:login')
-
 
 
 @login_required
@@ -662,12 +611,14 @@ def toggle_student_login(request, student_id):
 # ----------------------------
 @login_required
 def dashboard(request):
+    school = request.user.school  
+    
     if request.user.role == 'admin':
         context = {
-            'total_students': User.objects.filter(role='student').count(),
-            'total_teachers': User.objects.filter(role='teacher').count(),
-            'total_parents': User.objects.filter(role='parent').count(),
-            'total_users': User.objects.count(),
+            'total_students': User.objects.filter(role='student', school=school).count(),  
+            'total_teachers': User.objects.filter(role='teacher', school=school).count(),
+            'total_parents': User.objects.filter(role='parent', school=school).count(),
+            'total_users': User.objects.filter(school=school).count(),
         }
         return render(request, 'accounts/admin_dashboard.html', context)
     elif request.user.role == 'teacher':
@@ -676,12 +627,11 @@ def dashboard(request):
         return render(request, 'accounts/student_dashboard.html')
     elif request.user.role == 'parent':
         return render(request, 'accounts/parent_dashboard.html')
-    return render(request, 'accounts/dashboard_base.html')  # fallback
-
+    return render(request, 'accounts/dashboard_base.html')
 
 # ----------------------------
 # ADMIN VIEWS
-#--------------------------------
+# --------------------------------
 
 
 @login_required
@@ -693,13 +643,14 @@ def manage_students(request, class_id=None):
         ).values_list('id', flat=True)
     else:  
         allowed_class_ids = TeacherSubjectClass.objects.filter(
+            school_class__school=request.user.school,
             teacher=request.user
         ).values_list('school_class_id', flat=True).distinct()
     
     if class_id and int(class_id) not in allowed_class_ids:
         raise Http404("You are not assigned to teach in this class")
     
-    classes = SchoolClass.objects.filter(id__in=allowed_class_ids)
+    classes = SchoolClass.objects.filter(id__in=allowed_class_ids, school = request.user.school)
     all_students = User.objects.filter(
         is_active=True,
         role='student',
@@ -761,43 +712,79 @@ def manage_students(request, class_id=None):
 
 @login_required
 def manage_students_grid(request, class_id=None):
-    if request.method == 'POST':
-        class_id = request.POST.get('class_id')
-        subject_ids = request.POST.getlist('subjects')
+    credentials = request.session.pop("credentials", None)
+    if request.user.role == 'admin':
+        allowed_class_ids = SchoolClass.objects.filter(
+            school=request.user.school
+        ).values_list('id', flat=True)
+    else:  
+        allowed_class_ids = TeacherSubjectClass.objects.filter(
+            school_class__school=request.user.school,
+            teacher=request.user
+        ).values_list('school_class_id', flat=True).distinct()
     
-        if class_id and subject_ids:
-            school_class = get_object_or_404(SchoolClass, id=class_id)
-            students_in_class = User.objects.filter(school_class=school_class)
-            
-            for student in students_in_class:
-                for subject_id in subject_ids:
-                    subject = get_object_or_404(Subject, id=subject_id)
-                    StudentSubjectClass.objects.get_or_create(
-                        student=student,
-                        subject=subject,
-                        school_class=school_class
-                    )
-        return redirect('manage_students_grid', class_id=class_id)
+    if class_id and int(class_id) not in allowed_class_ids:
+        raise Http404("You are not assigned to teach in this class")
     
-
-    # GET: Show the page
-    current_class = get_object_or_404(SchoolClass, id=class_id) if class_id else None
-    students = User.objects.filter(
-            school_class=current_class,
-            role='student'
-        ).select_related('school', 'school_class').prefetch_related(
-            'studentsubjectclass_set__subject'
-        ).order_by('last_name', 'first_name')
+    classes = SchoolClass.objects.filter(id__in=allowed_class_ids, school = request.user.school)
+    all_students = User.objects.filter(
+        is_active=True,
+        role='student',
+        school=request.user.school,
+        student__school_class_id__in=allowed_class_ids
+    ).select_related('student')
     
-    all_subjects = Subject.objects.all().order_by('name')
+    search_query = request.GET.get('q', '')
+    class_filter = request.GET.get('class', '')
+    subject_filter = request.GET.get('subject', '')
+    
+    if class_id:
+        all_students = all_students.filter(school_class_id=class_id)
+        current_class = get_object_or_404(SchoolClass, id=class_id, school=request.user.school)
+    else:
+        current_class = None
+    
+    if search_query:
+        all_students = all_students.filter(
+            Q(first_name__icontains=search_query) | 
+            Q(last_name__icontains=search_query) |
+            Q(student_number__icontains=search_query)
+        )
+    
+    if class_filter:
+        all_students = all_students.filter(school_class_id=class_filter)
+    
+    if subject_filter:
+        all_students = all_students.filter(
+            studentsubjectclass__subject_id=subject_filter
+        ).distinct()
+    
+    all_students = all_students.order_by('last_name')
+    paginator = Paginator(all_students, 4)
+    page_number = request.GET.get('page', 1)
+    students = paginator.get_page(page_number)
+    
+    if request.user.role == 'admin':
+        subjects = Subject.objects.filter(school=request.user.school)
+    else:
+        subject_ids = TeacherSubjectClass.objects.filter(
+            teacher=request.user
+        ).values_list('subject_id', flat=True).distinct()
+        subjects = Subject.objects.filter(id__in=subject_ids)
     
     context = {
         'students': students,
+        'classes': classes,
+        'subjects': subjects,
+        'all_subjects': subjects,
+        'search_query': search_query,
+        'class_filter': class_filter,
+        'subject_filter': subject_filter,
         'current_class': current_class,
-        'all_subjects': all_subjects,
-    }
-    return render(request, 'accounts/manage_students_grid.html', context)  
+        'credentials': credentials
 
+    }
+    return render(request, "accounts/manage_students.html", context) 
 
 
 @login_required
@@ -870,8 +857,6 @@ def assign_student_subject(request, student_id):
             'assignments': assignments
         }
     )
-
-
 
 
 @login_required
@@ -1010,7 +995,7 @@ def add_student(request):
         "credentials": credentials
     })
 
-   
+
 @login_required
 def edit_student_assignment(request, id):
     assignment = get_object_or_404(StudentSubjectClass, id=id)
@@ -1773,8 +1758,6 @@ def view_teacher(request, teacher_id):
     })
 
 
-
-
 @login_required
 def edit_teacher(request, teacher_id):
     teacher = get_object_or_404(User, id=teacher_id, role='teacher', school=request.user.school)
@@ -1915,7 +1898,7 @@ def assign_teacher(request, teacher_id):
         'form': form,
         'assignments': assignments
     })
-    
+
 @login_required
 def manage_assignments(request):
     if request.user.role != 'admin':
@@ -1937,9 +1920,9 @@ def manage_assignments(request):
         'assignments': assignments,
     })
 
-#-----------------------------
+# -----------------------------
 
-#-----------------------
+# -----------------------
 
 @login_required
 def admin_attendance_dashboard(request):
@@ -2252,14 +2235,13 @@ def profile_view(request):
     return render(request, 'accounts/profile.html')
 
 
-
 # ----------------------------
 # TEACHER VIEWS
 # ----------------------------
 
-#---------------------------
-#TEACHER DASHBOARD 
-#--------------------------
+# ---------------------------
+# TEACHER DASHBOARD
+# --------------------------
 @role_required(['teacher'])
 def teacher_dashboard(request):
     
@@ -2461,7 +2443,7 @@ def teacher_dashboard(request):
         "today_date": today_date,
                 
     })
-    
+
 
 @role_required(['teacher'])
 def teacher_timetable(request):
@@ -2516,18 +2498,18 @@ def teacher_timetable(request):
     })
 
 
-#---------------------------
-#TEACHER CLASSES 
-#--------------------------
+# ---------------------------
+# TEACHER CLASSES
+# --------------------------
 @login_required
 def teacher_classes(request):
     if request.user.role != "teacher":
         return redirect('accounts:dashboard')
     return render(request, 'accounts/teacher_classes.html')
 
-#-----------------------------------
-#TEACHER UPLOAD RESULTS 
-#----------------------------------
+# -----------------------------------
+# TEACHER UPLOAD RESULTS
+# ----------------------------------
 
 @login_required
 def upload_result(request, class_id, subject_id):
@@ -2647,10 +2629,10 @@ def upload_result(request, class_id, subject_id):
         'form': form,
         'entered_results': entered_results,
     })
-    
-#--------------------------------
-#UPLOAD RESULTS LIST NEW
-#------------------------------------
+
+# --------------------------------
+# UPLOAD RESULTS LIST NEW
+# ------------------------------------
 @login_required
 def upload_results_list(request):
     assignments = TeacherSubjectClass.objects.filter(
@@ -2660,10 +2642,10 @@ def upload_results_list(request):
     return render(request, 'accounts/upload_results_list.html', {
         'assignments': assignments
     })
-    
-#-----------------------------------
-#TEACHER SEES RESULTS 
-#------------------------------
+
+# -----------------------------------
+# TEACHER SEES RESULTS
+# ------------------------------
 
 @login_required
 def teacher_results(request):
@@ -2882,9 +2864,9 @@ def student_results_table_view(request):
     return render(request, 'accounts/student_results_table.html', context)
 
 
-#-----------------------------------
-#TEACHER EDIT RESULTS 
-#----------------------------------
+# -----------------------------------
+# TEACHER EDIT RESULTS
+# ----------------------------------
 @login_required
 def edit_result(request, pk):
     result = get_object_or_404(Result, pk=pk)
@@ -2918,7 +2900,6 @@ def edit_result(request, pk):
         'form': form,
         'result': result
     })
-
 
 
 @login_required
@@ -2975,9 +2956,9 @@ def submit_results_to_admin(request):
     
     return redirect(f"{reverse('accounts:teacher-results')}?year={year_id}&term={term_id}")
 
-#--------------------------------
+# --------------------------------
 # TEACHER MARK ATTENDANCE
-#---------------------------
+# ---------------------------
 
 @login_required
 def mark_attendance(request):
@@ -3126,9 +3107,9 @@ def mark_attendance(request):
     }
     
     return render(request, 'accounts/mark_attendance.html', context)
-#--------------------------------
+# --------------------------------
 
-#--------------------------------
+# --------------------------------
 @login_required
 def attendance_mark(request, session_id):
     session = AttendanceSession.objects.select_related('school_class', 'subject').get(id=session_id)
@@ -3158,83 +3139,183 @@ def attendance_mark(request, session_id):
     })
 
 
-
-
-
-
 @login_required
 def attendance_report(request):
     teacher = request.user
     school = teacher.school
-    setting = SchoolSetting.objects.filter(school=school).first()
-    attendance_mode = setting.attendance_mode if setting else "subject"
 
+    setting = SchoolSetting.objects.filter(
+        school=school
+    ).first()
+
+    attendance_mode = (
+        setting.attendance_mode
+        if setting else "subject"
+    )
+
+    # =========================================================
+    # FILTERS
+    # =========================================================
+
+    selected_year_id = request.GET.get("academic_year")
+    selected_term_id = request.GET.get("term")
     class_id = request.GET.get("class_id")
 
-    try:
-        active_term = Term.objects.get(
+    # =========================================================
+    # ACADEMIC YEARS
+    # =========================================================
+
+    academic_years = AcademicYear.objects.filter(
+        school=school
+    ).order_by("-start_date")
+
+    # =========================================================
+    # TERMS
+    # =========================================================
+
+    terms = Term.objects.filter(
+        school=school
+    ).select_related(
+        "academic_year"
+    ).order_by(
+        "-academic_year__start_date",
+        "term_number"
+    )
+
+    # If academic year is selected, only show its terms
+    if selected_year_id:
+        terms = terms.filter(
+            academic_year_id=selected_year_id
+        )
+
+    # =========================================================
+    # SELECT TERM
+    # =========================================================
+
+    active_term = None
+
+    if selected_term_id:
+        active_term = Term.objects.filter(
+            id=selected_term_id,
+            school=school
+        ).first()
+
+    # If no term selected, use selected academic year's active term
+    if not active_term and selected_year_id:
+        active_term = Term.objects.filter(
+            school=school,
+            academic_year_id=selected_year_id,
+            is_active=True
+        ).first()
+
+    # Otherwise use current active term
+    if not active_term:
+        active_term = Term.objects.filter(
             school=school,
             is_active=True
-        )
-    except Term.DoesNotExist:
+        ).first()
+
+    if not active_term:
         messages.error(
             request,
-            "No active academic term found."
+            "No academic term found."
         )
-        return redirect("accounts:teacher-dashboard")
+        return redirect(
+            "accounts:teacher-dashboard"
+        )
 
-    week_param = request.GET.get("attendance_week")
+    # =========================================================
+    # KEEP FILTER VALUES CORRECT
+    # =========================================================
+
+    selected_year_id = active_term.academic_year_id
+    selected_term_id = active_term.id
+
+    # =========================================================
+    # WEEK FUNCTIONS
+    # =========================================================
 
     def get_week_number(start_date, target_date):
         if target_date < start_date:
             return 1
 
-        days = (target_date - start_date).days
-        return ((days + start_date.weekday()) // 7) + 1
+        days = (
+            target_date - start_date
+        ).days
 
+        return (
+            (days + start_date.weekday()) // 7
+        ) + 1
 
     def get_week_range(start_date, week_number):
         current_start = start_date
 
         for _ in range(week_number - 1):
+
             friday = current_start + timedelta(
                 days=(4 - current_start.weekday())
             )
-            current_start = friday + timedelta(days=3)
+
+            current_start = (
+                friday + timedelta(days=3)
+            )
 
         week_start = current_start
-        week_end = week_start + timedelta(
-            days=(4 - week_start.weekday())
+
+        week_end = (
+            week_start +
+            timedelta(
+                days=(4 - week_start.weekday())
+            )
         )
 
         return week_start, week_end
 
-
     def get_total_weeks(start_date, end_date):
+
         week = 1
         current_start = start_date
 
         while current_start <= end_date:
+
             friday = current_start + timedelta(
                 days=(4 - current_start.weekday())
             )
-            current_start = friday + timedelta(days=3)
+
+            current_start = (
+                friday + timedelta(days=3)
+            )
+
             week += 1
 
         return week - 1
 
+    # =========================================================
+    # SELECTED WEEK
+    # =========================================================
 
     today = timezone.localdate()
 
+    week_param = request.GET.get(
+        "attendance_week"
+    )
+
     if week_param:
+
         try:
-            selected_week = int(week_param)
+            selected_week = int(
+                week_param
+            )
+
         except ValueError:
+
             selected_week = get_week_number(
                 active_term.start_date,
                 today
             )
+
     else:
+
         selected_week = get_week_number(
             active_term.start_date,
             today
@@ -3247,7 +3328,10 @@ def attendance_report(request):
 
     selected_week = max(
         1,
-        min(selected_week, total_weeks)
+        min(
+            selected_week,
+            total_weeks
+        )
     )
 
     week_start, week_end = get_week_range(
@@ -3265,21 +3349,49 @@ def attendance_report(request):
         selected_week + 1
     )
 
-    if attendance_mode == "class_teacher" and teacher.role == 'teacher':
-        teacher_classes = SchoolClass.objects.filter(class_teacher=teacher, school=school).order_by('name')
-    elif teacher.role == 'teacher':
-        teacher_classes = SchoolClass.objects.filter(teachersubjectclass__teacher=teacher, school=school).distinct().order_by('name')
-    else:
-        teacher_classes = SchoolClass.objects.filter(school=school).order_by('name')
+    # =========================================================
+    # TEACHER CLASSES
+    # =========================================================
 
-    report = {}
-    # TOTAL STUDENTS CARD
-# Respect teacher assignment + selected class filter
+    if (
+        attendance_mode == "class_teacher"
+        and teacher.role == "teacher"
+    ):
+
+        teacher_classes = SchoolClass.objects.filter(
+            class_teacher=teacher,
+            school=school
+        ).order_by("name")
+
+    elif teacher.role == "teacher":
+
+        teacher_classes = SchoolClass.objects.filter(
+            teachersubjectclass__teacher=teacher,
+            school=school
+        ).distinct().order_by("name")
+
+    else:
+
+        teacher_classes = SchoolClass.objects.filter(
+            school=school
+        ).order_by("name")
+
+    # =========================================================
+    # CLASS FILTER
+    # =========================================================
 
     student_filter_classes = teacher_classes
 
     if class_id:
-        student_filter_classes = teacher_classes.filter(id=class_id)
+        student_filter_classes = (
+            teacher_classes.filter(
+                id=class_id
+            )
+        )
+
+    # =========================================================
+    # TOTAL STUDENTS
+    # =========================================================
 
     total_students = User.objects.filter(
         role="student",
@@ -3288,137 +3400,313 @@ def attendance_report(request):
         school_class__in=student_filter_classes
     ).distinct().count()
 
+    # =========================================================
+    # REPORT
+    # =========================================================
+
+    report = {}
+
+    # =========================================================
+    # CLASS TEACHER ATTENDANCE
+    # =========================================================
+
     if attendance_mode == "class_teacher":
+
         classes_qs = teacher_classes
+
         if class_id:
-            classes_qs = classes_qs.filter(id=class_id)
+            classes_qs = classes_qs.filter(
+                id=class_id
+            )
+
         for school_class in classes_qs:
-            # FIX: Only sessions WITH records
-            class_sessions = AttendanceSession.objects.filter(
-                date__range=[week_start, week_end],
-                school_class=school_class
-            ).order_by("date")
+
+            class_sessions = (
+                AttendanceSession.objects.filter(
+                    date__range=[
+                        week_start,
+                        week_end
+                    ],
+                    school_class=school_class,
+                    school=school
+                )
+                .order_by("date")
+            )
+
             if not class_sessions.exists():
                 continue
 
-            records = AttendanceRecord.objects.filter(session__in=class_sessions).values('student_id','status')
+            records = (
+                AttendanceRecord.objects.filter(
+                    session__in=class_sessions
+                )
+                .values(
+                    "student_id",
+                    "status"
+                )
+            )
+
             by_student = defaultdict(list)
-            for r in records:
-                by_student[r['student_id']].append(r['status'])
 
-            present_count = sum(1 for s in by_student.values() if 'P' in s)
-            absent_count = sum(1 for s in by_student.values() if 'P' not in s)
+            for record in records:
 
-            base = class_sessions.first() # has id for URL
+                by_student[
+                    record["student_id"]
+                ].append(
+                    record["status"]
+                )
+
+            present_count = sum(
+                1
+                for statuses in by_student.values()
+                if "P" in statuses
+            )
+
+            absent_count = sum(
+                1
+                for statuses in by_student.values()
+                if "P" not in statuses
+            )
+
+            base = class_sessions.first()
+
             base.present = present_count
             base.absent = absent_count
-            base.total = present_count + absent_count
-            report[school_class] = [base]
+            base.total = (
+                present_count +
+                absent_count
+            )
+
+            report[school_class] = [
+                base
+            ]
+
+    # =========================================================
+    # SUBJECT ATTENDANCE
+    # =========================================================
+
     else:
-            sessions = AttendanceSession.objects.select_related(
+
+        sessions = (
+            AttendanceSession.objects
+            .select_related(
                 "school_class",
                 "subject",
                 "teacher"
-            ).filter(
-                date__range=[week_start, week_end],
-                school_class__school=school
+            )
+            .filter(
+                date__range=[
+                    week_start,
+                    week_end
+                ],
+                school=school
+            )
+        )
+
+        if teacher.role == "teacher":
+
+            sessions = sessions.filter(
+                teacher=teacher
             )
 
-            if teacher.role == 'teacher':
-                sessions = sessions.filter(teacher=teacher)
+        if class_id:
 
-            if class_id:
-                sessions = sessions.filter(
-                    school_class_id=class_id
-                )
+            sessions = sessions.filter(
+                school_class_id=class_id
+            )
 
-            sessions = sessions.annotate(
-                total=Count('records'),
+        sessions = (
+            sessions
+            .annotate(
+                total=Count(
+                    "records"
+                ),
                 present=Count(
-                    'records',
-                    filter=Q(records__status='P')
+                    "records",
+                    filter=Q(
+                        records__status="P"
+                    )
                 ),
                 absent=Count(
-                    'records',
-                    filter=Q(records__status='A')
+                    "records",
+                    filter=Q(
+                        records__status="A"
+                    )
                 )
-            ).filter(
+            )
+            .filter(
                 total__gt=0
-            ).order_by(
-                'school_class__name',
-                'subject__name'
+            )
+            .order_by(
+                "school_class__name",
+                "subject__name",
+                "date"
+            )
+        )
+
+        for school_class, class_sessions in groupby(
+            sessions,
+            key=lambda x: x.school_class
+        ):
+
+            report[school_class] = list(
+                class_sessions
             )
 
-            for school_class, class_sessions in groupby(
-                sessions,
-                key=lambda x: x.school_class
-            ):
-                report[school_class] = list(class_sessions)
+    # =========================================================
+    # CLASS COUNT
+    # =========================================================
 
-
-        # PUT THIS HERE (OUTSIDE IF/ELSE)
-    teacher_classes_count = teacher_classes.count()
+    teacher_classes_count = (
+        teacher_classes.count()
+    )
 
     if class_id:
-            teacher_classes_count = teacher_classes.filter(
-                id=class_id
-            ).count()
+
+        teacher_classes_count = (
+            teacher_classes
+            .filter(id=class_id)
+            .count()
+        )
+
+    # =========================================================
+    # TOTAL PRESENT / ABSENT
+    # =========================================================
 
     total_present = 0
     total_absent = 0
 
     for sessions in report.values():
+
         for session in sessions:
-            total_present += getattr(session, "present", 0)
-            total_absent += getattr(session, "absent", 0)
 
+            total_present += getattr(
+                session,
+                "present",
+                0
+            )
 
-    return render(request, 'accounts/attendance_report.html', {
-        'report': report,
-        'total_students': total_students,
-        'all_classes': teacher_classes,
-        'selected_class_id': int(class_id) if class_id else None,
-        'attendance_mode': attendance_mode,
+            total_absent += getattr(
+                session,
+                "absent",
+                0
+            )
 
-        # Attendance report week (separate from global top bar)
-        "attendance_week_number": selected_week,
-        "attendance_week_start": week_start,
-        "attendance_week_end": week_end,
+    # =========================================================
+    # TEMPLATE
+    # =========================================================
 
-        "attendance_previous_week": prev_week,
-        "attendance_next_week": next_week,
-        "total_weeks": total_weeks,
+    return render(
+        request,
+        "accounts/attendance_report.html",
+        {
+            "report": report,
 
-        "teacher_classes_count": teacher_classes_count,
-        "total_present": total_present,
+            "total_students": total_students,
 
-        "total_absent": total_absent,
-    })
+            "all_classes": teacher_classes,
 
+            "selected_class_id": (
+                int(class_id)
+                if class_id
+                else None
+            ),
+
+            "attendance_mode": attendance_mode,
+
+            # Academic year / term filters
+            "academic_years": academic_years,
+            "terms": terms,
+
+            "selected_year_id": (
+                int(selected_year_id)
+                if selected_year_id
+                else None
+            ),
+
+            "selected_term_id": (
+                int(selected_term_id)
+                if selected_term_id
+                else None
+            ),
+
+            "selected_term": active_term,
+
+            # Week
+            "attendance_week_number": selected_week,
+
+            "attendance_week_start": week_start,
+
+            "attendance_week_end": week_end,
+
+            "attendance_previous_week": prev_week,
+
+            "attendance_next_week": next_week,
+
+            "total_weeks": total_weeks,
+
+            # Summary
+            "teacher_classes_count": (
+                teacher_classes_count
+            ),
+
+            "total_present": total_present,
+
+            "total_absent": total_absent,
+        }
+    )
 
 @login_required
 def attendance_detail(request, session_id):
     school = request.user.school
-    setting = SchoolSetting.objects.first()
+    setting = SchoolSetting.objects.filter(
+        school=school
+    ).first()  # ✅ FIX 1 - filter by school
     attendance_mode = setting.attendance_mode if setting else "subject"
     user = request.user
-    is_school_admin = getattr(user, 'role', '') in ['admin','proprietor','school_admin','director']
+    is_school_admin = getattr(user, "role", "") in [
+        "admin",
+        "proprietor",
+        "school_admin",
+        "director",
+    ]
 
     # Get base session
     if user.is_staff or user.is_superuser:
-        base_session = get_object_or_404(AttendanceSession, id=session_id)
+        base_session = get_object_or_404(
+            AttendanceSession, id=session_id, school=school
+        )
     elif is_school_admin:
-        base_session = get_object_or_404(AttendanceSession, id=session_id, school_class__school=school)
+        base_session = get_object_or_404(
+            AttendanceSession, id=session_id, school=school
+        )  # ✅ FIX 2 - use school
     else:
         if attendance_mode == "class_teacher":
-            base_session = get_object_or_404(AttendanceSession, id=session_id, school_class__school=school, school_class__class_teacher=user)
+            base_session = get_object_or_404(
+                AttendanceSession,
+                id=session_id,
+                school=school,
+                school_class__class_teacher=user,
+            )
         else:
-            base_session = get_object_or_404(AttendanceSession, id=session_id, teacher=user, school_class__school=school)
+            base_session = get_object_or_404(
+                AttendanceSession, id=session_id, teacher=user, school=school
+            )
 
     # === CLASS TEACHER MODE: MERGE ALL SUBJECTS OF THAT DAY ===
     if attendance_mode == "class_teacher":
-        all_sessions = AttendanceSession.objects.filter(date=base_session.date, school_class=base_session.school_class).annotate(total=Count('records')).filter(total__gt=0)
-        all_records = AttendanceRecord.objects.filter(session__in=all_sessions).select_related('student')
+        all_sessions = (
+            AttendanceSession.objects.filter(
+                date=base_session.date,
+                school_class=base_session.school_class,
+                school=school,
+            )
+            .annotate(total=Count("records"))
+            .filter(total__gt=0)
+        )  # ✅ added school
+        all_records = AttendanceRecord.objects.filter(
+            session__in=all_sessions
+        ).select_related("student")
 
         by_student = defaultdict(list)
         student_objs = {}
@@ -3426,53 +3714,60 @@ def attendance_detail(request, session_id):
             by_student[r.student_id].append(r.status)
             student_objs[r.student_id] = r.student
 
-        # Build merged list: 1 row per student with final status
         merged_list = []
         for sid, statuses in by_student.items():
-            final = 'P' if 'P' in statuses else 'A'
-            # Create fake record for template
+            final = "P" if "P" in statuses else "A"
+
             class FakeRec:
                 pass
+
             fr = FakeRec()
             fr.student = student_objs[sid]
             fr.status = final
-            fr.breakdown = statuses # P,A list for tooltip
+            fr.breakdown = statuses
             merged_list.append(fr)
 
-        present_count = sum(1 for s in by_student.values() if 'P' in s)
-        absent_count = sum(1 for s in by_student.values() if 'P' not in s)
+        present_count = sum(1 for s in by_student.values() if "P" in s)
+        absent_count = sum(1 for s in by_student.values() if "P" not in s)
         total_count = len(by_student)
         attendance_rate = (present_count / total_count * 100) if total_count else 0
 
         paginator = Paginator(merged_list, 25)
-        page_obj = paginator.get_page(request.GET.get('page'))
+        page_obj = paginator.get_page(request.GET.get("page"))
 
     else:
-        # SUBJECT MODE - normal
-        records = AttendanceRecord.objects.filter(session=base_session).select_related('student').order_by('student__last_name')
+        records = (
+            AttendanceRecord.objects.filter(session=base_session)
+            .select_related("student")
+            .order_by("student__last_name")
+        )
         total_count = records.count()
-        present_count = records.filter(status='P').count()
-        absent_count = records.filter(status='A').count()
+        present_count = records.filter(status="P").count()
+        absent_count = records.filter(status="A").count()
         attendance_rate = (present_count / total_count * 100) if total_count else 0
         paginator = Paginator(records, 25)
-        page_obj = paginator.get_page(request.GET.get('page'))
+        page_obj = paginator.get_page(request.GET.get("page"))
 
-    tsc_obj = TeacherSubjectClass.objects.filter(school_class=base_session.school_class).first()
-
-    return render(request, 'accounts/attendance_detail.html', {
-        'session': base_session,
-        'page_obj': page_obj,
-        'total_count': total_count,
-        'present_count': present_count,
-        'absent_count': absent_count,
-        'late_count': 0,
-        'attendance_rate': round(attendance_rate, 2),
-        'tsc_obj': tsc_obj,
-        'attendance_mode': attendance_mode
-    })
+    tsc_obj = TeacherSubjectClass.objects.filter(
+        school_class=base_session.school_class
+    ).first()
 
 
-
+    return render(
+        request,
+        "accounts/attendance_detail.html",
+        {
+            "session": base_session,
+            "page_obj": page_obj,
+            "total_count": total_count,
+            "present_count": present_count,
+            "absent_count": absent_count,
+            "late_count": 0,
+            "attendance_rate": round(attendance_rate, 2),
+            "tsc_obj": tsc_obj,
+            "attendance_mode": attendance_mode,
+        },
+    )
 
 
 @login_required
@@ -3502,26 +3797,26 @@ def attendance_create_session(request):
     })
 
 
-#TEACHER STUDENTS LIST 
-#--------------------------
+# TEACHER STUDENTS LIST
+# --------------------------
 @login_required
 def teacher_student_list(request):
     if request.user.role != "teacher":
         return redirect('accounts:dashboard')
     return render(request, 'accounts/teacher_student_list.html')
 
-#---------------------------
-#TEACHER ATTENDANCE 
-#--------------------------
+# ---------------------------
+# TEACHER ATTENDANCE
+# --------------------------
 @login_required
 def teacher_attendance_report(request):
     if request.user.role != "teacher":
         return redirect('accounts:dashboard')
     return render(request, 'accounts/teacher_attendance_report.html')
 
-#---------------------------
-#TEACHER ASSIGNMENTS 
-#--------------------------
+# ---------------------------
+# TEACHER ASSIGNMENTS
+# --------------------------
 @login_required
 def teacher_assignments(request):
     assignments = TeacherSubjectClass.objects.filter(teacher=request.user)
@@ -3531,10 +3826,9 @@ def teacher_assignments(request):
     })
 
 
+# -------------------------------
 
-#-------------------------------
-
-#----------------------------
+# ----------------------------
 @login_required
 def school_settings(request):
     if request.user.role != 'admin':
@@ -3747,7 +4041,6 @@ def assign_students_to_class(request):
     })
 
 
-
 @login_required
 def view_students_by_class(request):
     
@@ -3827,7 +4120,6 @@ def view_students_by_class(request):
         'total_students': total_students,
     })
 
-   
 
 @login_required  
 def view_students_in_class(request, class_id):
@@ -3968,7 +4260,6 @@ def view_student_subjects(request):
     return render(request, 'accounts/view_student_subjects.html', context)
 
 
-
 @login_required
 def student_subject_progress(request, subject_id):
     if request.user.role != 'student':
@@ -3999,7 +4290,6 @@ def student_subject_progress(request, subject_id):
         'results': results,  # So template can show the table too
     }
     return render(request, 'accounts/student_subject_progress.html', context)
-
 
 
 @login_required
@@ -4190,8 +4480,6 @@ def get_class_position(student, term_number, year_id):
             return idx, total_students
 
     return 0, total_students
-
-
 
 
 @login_required
@@ -4470,8 +4758,6 @@ def view_child_results(request):
         'remark': remark,
     }
     return render(request, 'accounts/view_child_results.html', context)
-
-
 
 
 @login_required
@@ -5045,8 +5331,6 @@ def student_attendance_report(request):
     })
 
 
-
-
 @login_required
 def teacher_attendance_report(request):
 
@@ -5440,8 +5724,6 @@ def export_students_excel(request):
     return response
 
 
-
-
 # EDIT CLASS
 def edit_class(request, pk):
     class_obj = SchoolClass.objects.get(id=pk)
@@ -5465,7 +5747,7 @@ def delete_class(request, pk):
     messages.success(request, "Class deleted successfully 🗑️")
     return redirect('accounts:admin_classes')
 
-#CLASS DETAILS
+# CLASS DETAILS
 def class_detail(request, pk):
     class_obj = SchoolClass.objects.get(pk=pk)
     students = class_obj.students.all()  
@@ -5480,7 +5762,7 @@ def class_detail(request, pk):
         'assignments': assignments
     })
 
-#ASING_TEACHER_SUBJECT
+# ASING_TEACHER_SUBJECT
 @login_required
 def assign_teacher_subject(request):
     teachers = User.objects.filter(role='teacher')
@@ -5526,9 +5808,9 @@ def assign_teacher_subject(request):
     })
 
 
-#-------------------------------
+# -------------------------------
 
-#----------------------------------
+# ----------------------------------
 def admin_classes(request):
 
     school = request.user.school
@@ -5605,9 +5887,9 @@ def admin_classes(request):
             'school': school,
         }
     )
-#------------------------------
-#ADD SUBJECT
-#----------------------------------
+# ------------------------------
+# ADD SUBJECT
+# ----------------------------------
 @login_required
 def add_subject_to_class(request, class_id):
     school_class = get_object_or_404(SchoolClass, id=class_id, school=request.user.school)
@@ -5645,9 +5927,9 @@ def add_subject_to_class(request, class_id):
         'form': form,
         'school_class': school_class
     })
-#---------------------------------
-#VIEW SBJECTS
-#--------------------------------
+# ---------------------------------
+# VIEW SBJECTS
+# --------------------------------
 @login_required
 def subject_list(request):
     school = request.user.school
@@ -5703,9 +5985,9 @@ def delete_subject(request, pk):
     return redirect('accounts:subject_list')
 
 
-#---------------------------------
+# ---------------------------------
 
-#--------------------------------
+# --------------------------------
 @login_required
 def export_teachers_excel(request):
     if request.user.role != 'admin':
@@ -5752,7 +6034,7 @@ def export_teachers_excel(request):
     wb.save(response)
     return response
 
-#Edit_ASSIGNMENT
+# Edit_ASSIGNMENT
 @login_required
 def edit_assignment(request, id):
     assignment = get_object_or_404(
@@ -5802,7 +6084,6 @@ def edit_assignment(request, id):
         'classes': classes,
         'subjects': subjects,
     })
-
 
 
 @login_required
@@ -5870,7 +6151,6 @@ def test_view(request):
     return HttpResponse("Test page works")
 
 
-
 @login_required
 def remove_student_subject(request, student_id, subject_id):
     student = get_object_or_404(
@@ -5925,9 +6205,6 @@ def add_subjects_to_class(request):
             return redirect(request.META.get('HTTP_REFERER', '/'))
     
     return redirect(request.META.get('HTTP_REFERER', '/'))
-
-
-
 
 
 @login_required
@@ -6101,33 +6378,28 @@ def student_profile(request, student_id=None):
     return render(request, 'accounts/student_profile.html', context)
 
 
-
-
-
 @login_required
 @role_required(['student'])
 def download_results_pdf(request):
     student = request.user
+    school=student.school,
     
-    # Get active term for the student's school
-    active_term = Term.objects.filter(is_active=True, school=student.school).first()
+    active_term = Term.objects.filter(is_active=True, school=school).first()
     
     if not active_term:
         return HttpResponse("No active term set. Contact your admin.", status=400)
     
-    # Allow override via GET, else use active term
     term = int(request.GET.get('term', active_term.term_number))
     year = request.GET.get('year', active_term.academic_year)
     
-    # 1. GET REAL RESULTS FROM DATABASE
     results = Result.objects.filter(
         student=student,
+        school=school,
         term=term,
         academic_year=year,
-        status='published'  # only show published results
+        status='published'  
     ).select_related('subject')
 
-    # 2. CALCULATE TOTALS
     totals = results.aggregate(
         total_score=Sum('score'),
         subject_count=Count('id')
@@ -6149,6 +6421,7 @@ def download_results_pdf(request):
     try:
         term_summary = StudentTermSummary.objects.get(
             student=student,
+            school=school,
             term=f"Term {term}",
             academic_year=year
         )
@@ -6159,11 +6432,12 @@ def download_results_pdf(request):
     total_students_in_class = student.school_class.students.count() if student.school_class else 0
 
     # 5. ATTENDANCE
-    sessions = AttendanceSession.objects.filter(school_class=student.school_class)
+    sessions = AttendanceSession.objects.filter(school_class=student.school_class, school=school)
     days_opened = sessions.count()
     
     days_present = AttendanceRecord.objects.filter(
         student=student,
+        school=school,
         session__in=sessions,
         status='P'
     ).count()
@@ -6204,7 +6478,6 @@ def download_results_pdf(request):
     response = HttpResponse(pdf, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{student.username}_Term{term}_Results.pdf"'
     return response
-
 
 
 @login_required
@@ -6277,6 +6550,7 @@ def student_attendance(request):
     if attendance_mode == 'class_teacher':
         qs = AttendanceRecord.objects.filter(
             student=student,
+            school=student.school,
             session__date__gte=target_monday,
             session__date__lte=target_friday
         )
@@ -6308,9 +6582,10 @@ def student_attendance(request):
     else:
         qs = AttendanceRecord.objects.filter(
             student=student,
+            school=student.school,
             session__date__gte=target_monday,
-            session__date__lte=target_friday
-        ).select_related('session__subject','session__teacher')
+            session__date__lte=target_friday,
+        ).select_related("session__subject", "session__teacher")
 
         if selected_year_id:
             qs = qs.filter(session__term__academic_year_id=selected_year_id)
@@ -6376,22 +6651,21 @@ def dashboard_dispatcher(request):
     return redirect_to_dashboard(request.user)
 
 
-
-
 @login_required
 def export_attendance_excel(request, session_id):
-    # 1. Get session first - admin can see all
+    school = request.user.school
     if request.user.is_staff or request.user.is_superuser:
-        session = get_object_or_404(AttendanceSession, id=session_id)
+        session = get_object_or_404(AttendanceSession, id=session_id, school=school)
     else:
         session = get_object_or_404(
             AttendanceSession, 
             id=session_id, 
-            teacher=request.user
+            teacher=request.user,
+            school=school
         )
-    
+
     # 2. NOW define records - must be after session
-    records = AttendanceRecord.objects.filter(session=session).select_related('student').order_by('student__last_name', 'student__first_name')
+    records = AttendanceRecord.objects.filter(session=session, school=school).select_related('student').order_by('student__last_name', 'student__first_name')
     wb = Workbook()
     ws = wb.active
     ws.title = "Attendance"
@@ -6442,26 +6716,24 @@ def export_attendance_excel(request, session_id):
     return response
 
 
-
-
 @login_required
 def admin_review_results(request):
-    if request.user.role != 'admin':
-        return redirect('accounts:dashboard')
-    
-    results = Result.objects.filter(status='submitted').select_related(
-        'student', 'student__school_class', 'subject'
-    ).order_by(
-        'student__school_class__name',
-        'subject__name',
-        'student__last_name'
+    if request.user.role != "admin":
+        return redirect("accounts:dashboard")
+
+    school = request.user.school 
+
+    results = (
+        Result.objects.filter(status="submitted", school=school)  
+        .select_related("student", "student__school_class", "subject")
+        .order_by("student__school_class__name", "subject__name", "student__last_name")
     )
-    
-    class_id = request.GET.get('class')
-    subject_id = request.GET.get('subject')
-    term = request.GET.get('term')
-    year = request.GET.get('year')
-    
+
+    class_id = request.GET.get("class")
+    subject_id = request.GET.get("subject")
+    term = request.GET.get("term")
+    year = request.GET.get("year")
+
     if class_id:
         results = results.filter(student__school_class_id=class_id)
     if subject_id:
@@ -6470,41 +6742,53 @@ def admin_review_results(request):
         results = results.filter(term__term_number=term)
     if year:
         results = results.filter(academic_year_id=year)
-    
-    classes = SchoolClass.objects.all()
-    subjects = Subject.objects.all()
-    years = AcademicYear.objects.all().order_by('-name')
+
+    classes = SchoolClass.objects.filter(school=school)  
+    subjects = Subject.objects.filter(school=school)  
+    years = AcademicYear.objects.filter(school=school).order_by("-name") 
+
     results = list(results)
 
     for r in results:
         assignment = TeacherSubjectClass.objects.filter(
             subject=r.subject,
-            school_class=r.student.school_class
+            school_class=r.student.school_class,
+            school_class__school=school,  
         ).first()
 
-        r.teacher = assignment.teacher.get_full_name() if assignment else "No Teacher"
+        r.teacher = (
+            assignment.teacher.get_full_name()
+            if assignment and assignment.teacher
+            else "No Teacher"
+        )
 
         ca = float(r.class_score or 0)
         exam = float(r.exam_score or 0)
+        r.total = ca + exam
 
-        total = ca + exam
-
-  
-    return render(request, 'accounts/admin_review_results.html', {
-        'results': results,
-        'classes': classes,
-        'subjects': subjects,
-        'years': years,
-        'total_pending': len(results),
-        'term_choices': Result.TERM_CHOICES,
-    })
+    return render(
+        request,
+        "accounts/admin_review_results.html",
+        {
+            "results": results,
+            "classes": classes,
+            "subjects": subjects,
+            "years": years,
+            "total_pending": len(results),
+            "term_choices": Result.TERM_CHOICES,
+        },
+    )
 
 
 @login_required
 def approve_result(request, pk):
     if request.user.role != 'admin':
         return redirect('accounts:dashboard')
-    result = get_object_or_404(Result, pk=pk, status='submitted')
+    
+    school = request.user.school 
+    
+    result = get_object_or_404(Result, pk=pk, status='submitted', school=school)
+    
     result.status = 'published'
     result.published_at = timezone.now()
     result.save()
@@ -6515,22 +6799,40 @@ def approve_result(request, pk):
 def return_result(request, pk):
     if request.user.role != 'admin':
         return redirect('accounts:dashboard')
-    result = get_object_or_404(Result, pk=pk, status='submitted')
+    
+    school = request.user.school
+    
+    result = get_object_or_404(Result, pk=pk, status='submitted', school=school)
+    
     if request.method == 'POST':
         result.status = 'returned'
         result.returned_reason = request.POST.get('reason', '')
         result.save()
         messages.warning(request, f'Result returned to teacher.')
+        
     return redirect('accounts:admin_review_results')
 
 @login_required
 def teacher_profile(request, user_id):
-    teacher = get_object_or_404(User, id=user_id, role='teacher')
+    school = request.user.school
     
-    assignments = TeacherSubjectClass.objects.filter(teacher=teacher).select_related('school_class', 'subject')
+    if not school:
+        messages.error(request, "No school assigned")
+        return redirect('accounts:dashboard')
+    
+    teacher = get_object_or_404(User, id=user_id, role='teacher', school=school)
+    
+    assignments = TeacherSubjectClass.objects.filter(
+        teacher=teacher,
+        school=school  
+    ).select_related('school_class', 'subject')
     
     allowed_class_ids = assignments.values_list('school_class_id', flat=True)
-    total_students = User.objects.filter(school_class_id__in=allowed_class_ids).count()
+    
+    total_students = User.objects.filter(
+        school=school,
+        school_class_id__in=allowed_class_ids
+    ).count()
     
     context = {
         'teacher': teacher,
@@ -6543,32 +6845,44 @@ def teacher_profile(request, user_id):
 @login_required
 def add_subject_to_student(request, student_id):
     if request.method == 'POST':
-
+        school = request.user.school
+        
         student = get_object_or_404(
             User,
             id=student_id,
             role='student',
-            school=request.user.school
+            school=school  
         )
 
         subject_ids = request.POST.getlist('subject_ids')
+        
+        if not student.school_class:
+            messages.error(request, f'{student.first_name} has no class assigned')
+            return redirect('accounts:view-student', student_id=student_id)
 
+        added = 0
         for subject_id in subject_ids:
             subject = get_object_or_404(
                 Subject,
                 id=subject_id,
-                school=request.user.school
+                school=school  
             )
 
-            StudentSubjectClass.objects.get_or_create(
+            obj, created = StudentSubjectClass.objects.get_or_create(
                 student=student,
                 subject=subject,
-                school_class=student.school_class
+                school_class=student.school_class,
+                school=school,  
+                defaults={
+                    'school': school,  
+                }
             )
+            if created:
+                added += 1
 
         messages.success(
             request,
-            f'Added {len(subject_ids)} subject(s) to {student.first_name}'
+            f'Added {added} new subject(s) to {student.first_name}'
         )
 
     return redirect(
@@ -6577,16 +6891,12 @@ def add_subject_to_student(request, student_id):
     )
 
 
-
-
-
 @login_required
 def view_student_grades(request, student_id):
-    # Make sure the student belongs to the logged-in user's school
-    student = get_object_or_404(User, id=student_id, role='student', school=request.user.school)
+    school = request.user.school
+    student = get_object_or_404(User, id=student_id, role='student', school=school)
     
-    # Get active term for this school
-    active_term = Term.objects.filter(is_active=True, school=request.user.school).first()
+    active_term = Term.objects.filter(is_active=True, school=school).first()
     
     if not active_term:
         messages.error(request, "No active term set. Ask admin to set one in Term Settings.")
@@ -6596,33 +6906,42 @@ def view_student_grades(request, student_id):
             'active_term': None,
         })
     
-    # Allow overriding with GET params, else use active term
     term = active_term
     year = active_term.academic_year
         
     student_results = Result.objects.filter(
+        school=school,  
         student=student,
         term=term,
         academic_year=year,
         status__in=['submitted', 'published']
     ).select_related('subject').order_by('subject__name') 
-    print("FILTERED RESULTS:", student_results.count())
-    # Calculate overall average
+
     overall_average = 0
     overall_grade = "N/A"
     overall_remark = "N/A"
     
     if student_results.exists():
-        total_percentage = sum([float(result.percentage) for result in student_results])
-        overall_average = round(total_percentage / student_results.count(), 1)
+        total_percentage = 0
+        valid_count = 0
+        for result in student_results:
+            try:
+                if result.percentage is not None:
+                    total_percentage += float(result.percentage)
+                    valid_count += 1
+            except (ValueError, TypeError):
+                pass
         
-        # Get overall grade from average
-        if overall_average >= 80: overall_grade, overall_remark = "A", "Excellent"
-        elif overall_average >= 70: overall_grade, overall_remark = "B", "Very Good"
-        elif overall_average >= 60: overall_grade, overall_remark = "C", "Good"
-        elif overall_average >= 50: overall_grade, overall_remark = "D", "Pass"
-        elif overall_average >= 40: overall_grade, overall_remark = "E", "Weak"
-        else: overall_grade, overall_remark = "F", "Fail"
+        if valid_count > 0:
+            overall_average = round(total_percentage / valid_count, 1)
+            
+            # Get overall grade from average
+            if overall_average >= 80: overall_grade, overall_remark = "A", "Excellent"
+            elif overall_average >= 70: overall_grade, overall_remark = "B", "Very Good"
+            elif overall_average >= 60: overall_grade, overall_remark = "C", "Good"
+            elif overall_average >= 50: overall_grade, overall_remark = "D", "Pass"
+            elif overall_average >= 40: overall_grade, overall_remark = "E", "Weak"
+            else: overall_grade, overall_remark = "F", "Fail"
     
     return render(request, 'accounts/student_grades.html', {
         'student': student,
@@ -6638,26 +6957,43 @@ def view_student_grades(request, student_id):
     })
 
 
-
 @login_required
 def edit_student_grade(request, assignment_id):
-    assignment = get_object_or_404(StudentSubjectClass, id=assignment_id)
+    school = request.user.school
+    
+    if not school:
+        messages.error(request, "No school assigned")
+        return redirect('accounts:dashboard')
+    
+    assignment = get_object_or_404(StudentSubjectClass, id=assignment_id, school=school)
+    
+    # Role check
+    if request.user.role not in ['admin', 'teacher'] and not request.user.is_superuser:
+        messages.error(request, "Permission denied")
+        return redirect('accounts:dashboard')
     
     if request.method == 'POST':
         score = request.POST.get('score')
         grade = request.POST.get('grade')
         
-        assignment.score = int(score) if score else None
-        assignment.grade = grade if grade else None
+        if score and score.strip() != "":
+            try:
+                assignment.score = int(score)
+            except (ValueError, TypeError):
+                messages.error(request, "Score must be a valid number")
+                return render(request, 'accounts/edit_grade.html', {'assignment': assignment})
+        else:
+            assignment.score = None
+            
+        assignment.grade = grade.strip() if grade and grade.strip() else None
         
         assignment.save()
-        messages.success(request, f'Grade updated for {assignment.subject.name}')
+        messages.success(request, f'Grade updated for {assignment.subject.name} - {assignment.student}')
         return redirect('accounts:view-student-grades', student_id=assignment.student.id)
     
     return render(request, 'accounts/edit_grade.html', {
         'assignment': assignment
-    })          
-
+    })        
 
 
 @login_required
@@ -6666,17 +7002,25 @@ def all_results(request):
         messages.error(request, "Admin only")
         return redirect('accounts:dashboard')
     
+    school = request.user.school
+    if not school:
+        messages.error(request, "No school assigned to your account")
+        return redirect('accounts:dashboard')
+
     results = Result.objects.filter(
+        school=school,  # Direct isolation - most important!
         status__in=['submitted', 'published'],
-        student__school_class__school=request.user.school
     ).select_related(
         'student', 
         'subject', 
-        'student__school_class'
+        'student__school_class',
+        'academic_year',
+        'term'
     ).order_by('-date', 'student__last_name')
     
     return render(request, 'accounts/all_results.html', {
-        'results': results
+        'results': results,
+        'school': school
     })
 
 
@@ -6685,7 +7029,8 @@ def results_by_class(request):
     if request.user.role != 'admin' and not request.user.is_superuser:
         return redirect('accounts:dashboard')
     
-    active_term = Term.objects.filter(is_active=True, school=request.user.school).first()
+    school = request.user.school
+    active_term = Term.objects.filter(is_active=True, school=school).first()
     
     if not active_term:
         return render(request, 'accounts/results_by_class.html', {
@@ -6697,7 +7042,6 @@ def results_by_class(request):
     term = request.GET.get('term')
     year_id = request.GET.get('year')
 
-    # SAFE TERM
     if not term:
         term = active_term.term_number
     else:
@@ -6706,7 +7050,6 @@ def results_by_class(request):
         except (ValueError, TypeError):
             term = active_term.term_number
 
-    # SAFE YEAR
     if not year_id:
         year_id = active_term.academic_year.id
     else:
@@ -6715,21 +7058,20 @@ def results_by_class(request):
         except (ValueError, TypeError):
             year_id = active_term.academic_year.id
 
-    year_obj = AcademicYear.objects.filter(id=year_id).first()
+    year_obj = AcademicYear.objects.filter(id=year_id, school=school).first() # ✅ FIX 1 - add school
     
     classes = SchoolClass.objects.filter(
-        school=request.user.school,
+        school=school,
         students__results__status='published',
+        students__results__school=school, 
         students__results__term__term_number=term,
         students__results__academic_year_id=year_id
     ).annotate(
-        result_count=Count('students__results', filter=Q(students__results__status='published'))
+        result_count=Count('students__results', filter=Q(students__results__status='published', students__results__school=school))
     ).distinct().order_by('name')
-    terms = Term.objects.filter(
-        school=request.user.school
-    ).order_by('term_number')
 
-    years = AcademicYear.objects.order_by('-name').distinct()
+    terms = Term.objects.filter(school=school).order_by('term_number')
+    years = AcademicYear.objects.filter(school=school).order_by('-name').distinct() 
     
     return render(request, 'accounts/results_by_class.html', {
         'classes': classes,
@@ -6746,10 +7088,11 @@ def results_by_class(request):
 def results_by_subject(request, class_id):
     if request.user.role != 'admin' and not request.user.is_superuser:
         return redirect('accounts:dashboard')
-        
-    school_class = get_object_or_404(SchoolClass, id=class_id, school=request.user.school)
-    active_term = Term.objects.filter(is_active=True, school=request.user.school).first()
-    
+
+    school = request.user.school
+    school_class = get_object_or_404(SchoolClass, id=class_id, school=school)
+    active_term = Term.objects.filter(is_active=True, school=school).first()
+
     if not active_term:
         return render(request, 'accounts/results_by_subject.html', {
             'school_class': school_class,
@@ -6757,28 +7100,40 @@ def results_by_subject(request, class_id):
             'active_term': None,
             'error': 'No active term set. Ask admin to set one in Term Settings.'
         })
-    
-    term = int(request.GET.get('term', active_term.term_number))
-    year = request.GET.get('year')
 
-    if not year:
+    term_param = request.GET.get('term')
+    year_param = request.GET.get('year')
+
+    if not term_param or term_param == "":
+        term = active_term.term_number
+    else:
+        try:
+            term = int(term_param)
+        except (ValueError, TypeError):
+            term = active_term.term_number
+
+    if not year_param or year_param == "":
         year = active_term.academic_year.id
-        
+    else:
+        try:
+            year = int(year_param)
+        except (ValueError, TypeError):
+            year = active_term.academic_year.id
+
     subjects = Subject.objects.filter(
+        school=school,
         result__student__school_class=school_class,
         result__status='published',
+        result__school=school,
         result__term__term_number=term,
         result__academic_year_id=year,
-        result__student__school_class__school=request.user.school
     ).annotate(
         student_count=Count('result', distinct=True)
     ).distinct().order_by('name')
-    terms = Term.objects.filter(
-        school=request.user.school
-    ).order_by('term_number')
 
-    years = AcademicYear.objects.all().order_by('-name')
-    
+    terms = Term.objects.filter(school=school).order_by('term_number')
+    years = AcademicYear.objects.filter(school=school).order_by('-name').distinct()
+
     return render(request, 'accounts/results_by_subject.html', {
         'school_class': school_class,
         'subjects': subjects,
@@ -6790,99 +7145,109 @@ def results_by_subject(request, class_id):
     })
 
 
-
 @login_required
 def results_detail(request, class_id, subject_id):
-    if request.user.role != 'admin' and not request.user.is_superuser:
-        return redirect('accounts:dashboard')
-    
-    school_class = get_object_or_404(SchoolClass, id=class_id, school=request.user.school)
-    subject = get_object_or_404(Subject, id=subject_id)
-    active_term = Term.objects.filter(is_active=True, school=request.user.school).first()
-    
-    if not active_term:
-        return render(request, 'accounts/results_detail.html', {
-            'school_class': school_class,
-            'subject': subject,
-            'results': [],
-            'active_term': None,
-            'error': 'No active term set. Ask admin to set one in Term Settings.'
-        })
-    
-    term = int(request.GET.get('term', active_term.term_number))
-    year = request.GET.get('year')
+    if request.user.role != "admin" and not request.user.is_superuser:
+        return redirect("accounts:dashboard")
 
-    if not year:
+    school = request.user.school
+    school_class = get_object_or_404(SchoolClass, id=class_id, school=school)
+    subject = get_object_or_404(Subject, id=subject_id, school=school)
+    active_term = Term.objects.filter(is_active=True, school=school).first()
+
+    if not active_term:
+        return render(
+            request,
+            "accounts/results_detail.html",
+            {
+                "school_class": school_class,
+                "subject": subject,
+                "results": [],
+                "active_term": None,
+                "error": "No active term set. Ask admin to set one in Term Settings.",
+            },
+        )
+
+    # ✅ FIX - Safe handling for ?term=&year=1
+    term_param = request.GET.get("term")
+    year_param = request.GET.get("year")
+
+    if not term_param or term_param.strip() == "":
+        term = active_term.term_number
+    else:
+        try:
+            term = int(term_param)
+        except (ValueError, TypeError):
+            term = active_term.term_number
+
+    if not year_param or year_param.strip() == "":
         year = active_term.academic_year.id
     else:
-        year = int(year)    
-
+        try:
+            year = int(year_param)
+        except (ValueError, TypeError):
+            year = active_term.academic_year.id
 
     results = Result.objects.filter(
+        school=school,
         student__school_class=school_class,
         subject=subject,
-        status='published',
+        status="published",
         term__term_number=term,
         academic_year__id=year,
-    ).select_related('student', 'subject')
+    ).select_related("student", "subject", "academic_year", "term")
 
     results = list(results)
 
     for r in results:
         r.total = float(r.class_score or 0) + float(r.exam_score or 0)
-        
 
     results.sort(key=lambda x: x.total, reverse=True)
-    terms = Term.objects.all().order_by('term_number')
-    years = AcademicYear.objects.all().order_by('-name')
-    for r in results:
-        total = float(r.class_score or 0) + float(r.exam_score or 0)
+    terms = Term.objects.filter(school=school).order_by("term_number")
+    years = AcademicYear.objects.filter(school=school).order_by("-name").distinct()
 
-      
-    return render(request, 'accounts/results_detail.html', {
-        'school_class': school_class,
-        'subject': subject,
-        'results': results,
-        'term': term,
-        'year': year,
-        'terms': terms,
-        'years': years,
-        'active_term': active_term,
-    })
-
+    return render(
+        request,
+        "accounts/results_detail.html",
+        {
+            "school_class": school_class,
+            "subject": subject,
+            "results": results,
+            "term": term,
+            "year": year,
+            "terms": terms,
+            "years": years,
+            "active_term": active_term,
+        },
+    )
 
 
 @login_required
 def print_class_report(request, class_id):
-    
-    # Ensure user can only access their own school's class
-    school_class = get_object_or_404(SchoolClass, id=class_id, school=request.user.school)
 
-    # Get active term for THIS school only
-    active_term = Term.objects.filter(is_active=True, school=request.user.school).first()
+    school = request.user.school
+    school_class = get_object_or_404(SchoolClass, id=class_id, school=school)
+    active_term = Term.objects.filter(is_active=True, school=school).first()
 
     if not active_term:
         return HttpResponse("No active term set. Ask admin to set one in Term Settings.", status=400)
 
-    # Use GET params if passed, else use active term
     term = int(request.GET.get('term', active_term.term_number))
     year = request.GET.get('year', active_term.academic_year.id)
     year = int(year)
 
     results = Result.objects.filter(
+        school=school, # ✅ FIX 1 - direct school filter, more safe
         student__school_class=school_class,
         term__term_number=term,
         academic_year_id=year,
         status='published',
-        student__school_class__school=request.user.school
-    )
-
+    ).select_related('student', 'subject') # ✅ add select_related for speed
 
     student_data = {}
     subjects = set()
 
     for r in results:
-
         student_name = f"{r.student.first_name} {r.student.last_name}"
         student_number = r.student.student_number
 
@@ -6894,28 +7259,18 @@ def print_class_report(request, class_id):
             }
 
         ca_total = ContinuousAssessment.objects.filter(
+            school=school, # ✅ FIX 2 - add school if your model has it
             student=r.student,
             subject=r.subject,
             term__term_number=term,
             academic_year_id=year
         ).aggregate(total=Sum('score'))['total'] or 0
 
-        exam = r.exam_score or 0
-
+        exam = float(r.exam_score or 0)
         ca_total = float(ca_total or 0)
-        exam = float(exam or 0)
-
         total = ca_total + exam
 
-        student_data[student_name]["subjects"][r.subject.name] = {
-            "ca": ca_total,
-            "exam": exam,
-            "total": total
-        }
-
-        student_data[student_name]["total"] += total
         subject_code = r.subject.code or r.subject.name
-
         subjects.add(subject_code)
 
         student_data[student_name]["subjects"][subject_code] = {
@@ -6924,15 +7279,12 @@ def print_class_report(request, class_id):
             "total": total
         }
 
-    sorted_students = sorted(
-        student_data.items(),
-        key=lambda x: x[1]['total'],
-        reverse=True
-    )
+        student_data[student_name]["total"] += total
+
+    sorted_students = sorted(student_data.items(), key=lambda x: x[1]['total'], reverse=True)
 
     for i, (name, data) in enumerate(sorted_students, 1):
         data['position'] = i
-        
 
     subjects = sorted(list(subjects))
     return render(request, 'accounts/print_class_report.html', {
@@ -6945,105 +7297,132 @@ def print_class_report(request, class_id):
     })
 
 
-
 def get_position_suffix(pos):
     if 11 <= pos % 100 <= 13:
         return 'th'
     return {1: 'st', 2: 'nd', 3: 'rd'}.get(pos % 10, 'th')
 
+
 @login_required
 def print_student_report(request, student_id):
-    active_term = Term.objects.filter(is_active=True, school=request.user.school).first()
+    school = request.user.school
+    active_term = Term.objects.filter(is_active=True, school=school).first()
     if not active_term:
-        return HttpResponse("No active term set. Ask admin to set one in Term Settings.", status=400)
+        return HttpResponse(
+            "No active term set. Ask admin to set one in Term Settings.", status=400
+        )
 
-    term_number = int(request.GET.get('term') or active_term.term_number)
-    year_id = int(request.GET.get('year') or active_term.academic_year.id)
-    term_obj = get_object_or_404(Term, term_number=term_number, academic_year_id=year_id, school=request.user.school)
+    term_number = int(request.GET.get("term") or active_term.term_number)
+    year_id = int(request.GET.get("year") or active_term.academic_year.id)
+    term_obj = get_object_or_404(
+        Term, term_number=term_number, academic_year_id=year_id, school=school
+    )
 
     if student_id == 0:
-        class_id = request.GET.get('class_id')
+        class_id = request.GET.get("class_id")
         students = User.objects.filter(
-            school_class_id=class_id,
-            school=request.user.school,
-            role='student'
-        ).order_by('student_number')
+            school_class_id=class_id, school=school, role="student"
+        ).order_by("student_number")
     else:
-        students = [get_object_or_404(User, id=student_id, school=request.user.school)]
+        students = [get_object_or_404(User, id=student_id, school=school)]
 
     students_with_scores = []
     for s in students:
         results = Result.objects.filter(
+            school=school,  # ✅ FIX 1
             student=s,
             term__term_number=term_number,
             academic_year_id=year_id,
-            status='published'
+            status="published",
         )
         student_total = 0
         for r in results:
-            ca_total = ContinuousAssessment.objects.filter(
-                student=r.student, subject=r.subject,
-                term__term_number=term_number, academic_year_id=year_id
-            ).aggregate(total=Sum('score'))['total'] or 0
+            ca_total = (
+                ContinuousAssessment.objects.filter(
+                    school=school,  # ✅ FIX 2
+                    student=r.student,
+                    subject=r.subject,
+                    term__term_number=term_number,
+                    academic_year_id=year_id,
+                ).aggregate(total=Sum("score"))["total"]
+                or 0
+            )
             student_total += float(ca_total or 0) + float(r.exam_score or 0)
-        students_with_scores.append({'student': s, 'total': student_total})
+        students_with_scores.append({"student": s, "total": student_total})
 
-    students_with_scores.sort(key=lambda x: x['total'], reverse=True)
-    position_map = {s['student'].id: i for i, s in enumerate(students_with_scores, 1)}
+    students_with_scores.sort(key=lambda x: x["total"], reverse=True)
+    position_map = {s["student"].id: i for i, s in enumerate(students_with_scores, 1)}
 
     student_class = students[0].school_class if students else None
-    total_students_in_class = User.objects.filter(
-        role='student', school=request.user.school, school_class=student_class
-    ).count() if student_class else 0
+    total_students_in_class = (
+        User.objects.filter(
+            role="student", school=school, school_class=student_class
+        ).count()
+        if student_class
+        else 0
+    )
 
     students_data = []
     for student in students:
         results = Result.objects.filter(
+            school=school,  # ✅ FIX 3
             student=student,
             term__term_number=term_number,
             academic_year_id=year_id,
-            status='published',
-            student__school_class__school=request.user.school
+            status="published",
         )
 
         subjects_data = {}
         grand_total = 0
         for r in results:
-            ca_total = ContinuousAssessment.objects.filter(
-                student=r.student, subject=r.subject,
-                term__term_number=term_number, academic_year_id=year_id
-            ).aggregate(total=Sum('score'))['total'] or 0
+            ca_total = (
+                ContinuousAssessment.objects.filter(
+                    school=school,  # ✅ FIX 4
+                    student=r.student,
+                    subject=r.subject,
+                    term__term_number=term_number,
+                    academic_year_id=year_id,
+                ).aggregate(total=Sum("score"))["total"]
+                or 0
+            )
             exam = float(r.exam_score or 0)
             ca_total = float(ca_total or 0)
             total = ca_total + exam
             grand_total += total
-            if total >= 80: grade, remark = "A", "Excellent"
-            elif total >= 70: grade, remark = "B", "Very Good"
-            elif total >= 60: grade, remark = "C", "Good"
-            elif total >= 50: grade, remark = "D", "Pass"
-            elif total >= 40: grade, remark = "E", "Weak"
-            else: grade, remark = "F", "Fail"
+            if total >= 80:
+                grade, remark = "A", "Excellent"
+            elif total >= 70:
+                grade, remark = "B", "Very Good"
+            elif total >= 60:
+                grade, remark = "C", "Good"
+            elif total >= 50:
+                grade, remark = "D", "Pass"
+            elif total >= 40:
+                grade, remark = "E", "Weak"
+            else:
+                grade, remark = "F", "Fail"
             subject_code = r.subject.code or r.subject.name
-            subjects_data[subject_code] = {"ca": ca_total, "exam": exam, "total": total, "grade": grade, "remark": remark}
+            subjects_data[subject_code] = {
+                "ca": ca_total,
+                "exam": exam,
+                "total": total,
+                "grade": grade,
+                "remark": remark,
+            }
 
         num_subjects = len(subjects_data)
         average = grand_total / num_subjects if num_subjects > 0 else 0
 
-        # === FIXED ATTENDANCE - FINAL RULE: ONLY P and A, 1 P = Whole day Present ===
         start = term_obj.start_date
-        # Include TODAY like dashboards
         today = timezone.now().date()
-        if term_obj.end_date < today:
-            end = term_obj.end_date
-        else:
-            end = today
+        end = term_obj.end_date if term_obj.end_date < today else today
 
         holiday_dates = set()
         events = AcademicCalendar.objects.filter(
-            school=request.user.school,
+            school=school,
             start_date__lte=end,
             end_date__gte=start,
-            affects_timetable=True
+            affects_timetable=True,
         )
         for event in events:
             d = event.start_date
@@ -7052,25 +7431,23 @@ def print_student_report(request, student_id):
                     holiday_dates.add(d)
                 d += timedelta(days=1)
 
-        attendance_records = AttendanceRecord.objects.filter(
-            student=student,
-            session__date__gte=start,
-            session__date__lte=end,
-        ).exclude(session__date__in=holiday_dates).values('session__date', 'status')
+        attendance_records = (
+            AttendanceRecord.objects.filter(
+                student=student,
+                session__school=school,  # ✅ FIX 5 - attendance school
+                session__date__gte=start,
+                session__date__lte=end,
+            )
+            .exclude(session__date__in=holiday_dates)
+            .values("session__date", "status")
+        )
 
-        # FINAL RULE: Group by date
         by_date = defaultdict(list)
         for rec in attendance_records:
-            by_date[rec['session__date']].append(rec['status'])
+            by_date[rec["session__date"]].append(rec["status"])
 
-        times_present = 0
-        times_absent = 0
-        for statuses in by_date.values():
-            if 'P' in statuses:
-                times_present += 1
-            else:
-                times_absent += 1
-
+        times_present = sum(1 for statuses in by_date.values() if "P" in statuses)
+        times_absent = sum(1 for statuses in by_date.values() if "P" not in statuses)
         times_late = 0
         times_excused = 0
 
@@ -7081,80 +7458,104 @@ def print_student_report(request, student_id):
                 days_opened += 1
             d += timedelta(days=1)
 
-        attendance_percentage = round((times_present / days_opened) * 100, 1) if days_opened > 0 else 0
+        attendance_percentage = (
+            round((times_present / days_opened) * 100, 1) if days_opened > 0 else 0
+        )
 
-        # === FIXED OVERALL GRADE + REMARK ===
-        if average >= 80: overall_grade, overall_remark = "A", "Excellent"
-        elif average >= 70: overall_grade, overall_remark = "B", "Very Good"
-        elif average >= 60: overall_grade, overall_remark = "C", "Good"
-        elif average >= 50: overall_grade, overall_remark = "D", "Pass"
-        elif average >= 40: overall_grade, overall_remark = "E", "Weak"
-        else: overall_grade, overall_remark = "F", "Fail"
+        if average >= 80:
+            overall_grade, overall_remark = "A", "Excellent"
+        elif average >= 70:
+            overall_grade, overall_remark = "B", "Very Good"
+        elif average >= 60:
+            overall_grade, overall_remark = "C", "Good"
+        elif average >= 50:
+            overall_grade, overall_remark = "D", "Pass"
+        elif average >= 40:
+            overall_grade, overall_remark = "E", "Weak"
+        else:
+            overall_grade, overall_remark = "F", "Fail"
 
-        remark_obj = StudentRemark.objects.filter(student=student, term__term_number=term_number, term__academic_year_id=year_id).first()
+        remark_obj = StudentRemark.objects.filter(
+            school=school,  # ✅ FIX 6 - if your model has school, if not use student__school=school
+            student=student,
+            term__term_number=term_number,
+            term__academic_year_id=year_id,
+        ).first()
 
-        students_data.append({
-            'student': student,
-            'subjects': subjects_data,
-            'grand_total': round(grand_total, 1),
-            'average': round(average, 1),
-            'grade': overall_grade,
-            'overall_remark': overall_remark,
-            'remark': overall_remark,
-            'position': position_map.get(student.id, '-'),
-            'position_suffix': get_position_suffix(position_map.get(student.id, 0)),
-            'times_present': times_present,
-            'times_absent': times_absent,
-            'times_late': times_late,
-            'times_excused': times_excused,
-            'days_opened': days_opened,
-            'next_term_date': term_obj.next_term_begins,
-            'total_students_in_class': total_students_in_class,
-            'attendance_percentage': attendance_percentage,
-            'class_teacher_remark': remark_obj.class_teacher_remark if remark_obj else '',
-            'headteacher_remark': remark_obj.headteacher_remark if remark_obj else ''
-        })
+        students_data.append(
+            {
+                "student": student,
+                "subjects": subjects_data,
+                "grand_total": round(grand_total, 1),
+                "average": round(average, 1),
+                "grade": overall_grade,
+                "overall_remark": overall_remark,
+                "remark": overall_remark,
+                "position": position_map.get(student.id, "-"),
+                "position_suffix": get_position_suffix(position_map.get(student.id, 0)),
+                "times_present": times_present,
+                "times_absent": times_absent,
+                "times_late": times_late,
+                "times_excused": times_excused,
+                "days_opened": days_opened,
+                "next_term_date": term_obj.next_term_begins,
+                "total_students_in_class": total_students_in_class,
+                "attendance_percentage": attendance_percentage,
+                "class_teacher_remark": (
+                    remark_obj.class_teacher_remark if remark_obj else ""
+                ),
+                "headteacher_remark": (
+                    remark_obj.headteacher_remark if remark_obj else ""
+                ),
+            }
+        )
 
-    return render(request, 'accounts/print_student_report.html', {
-        'students_data': students_data,
-        'active_term': active_term,
-        'term': term_obj,
-        'year': year_id,
-    })
+    return render(
+        request,
+        "accounts/print_student_report.html",
+        {
+            "students_data": students_data,
+            "active_term": active_term,
+            "term": term_obj,
+            "year": year_id,
+        },
+    )
 
 
 @login_required
 def class_remarks_list(request):
-    # Only class teacher of this class or admin can access
     if not request.user.is_class_teacher and request.user.role != 'admin':
         return HttpResponse("Only class teachers can access this", status=403)
     
+    school = request.user.school
     class_obj = request.user.class_teacher_of
-    if not class_obj:
+    
+    # ✅ Also verify class belongs to same school
+    if not class_obj or class_obj.school_id != school.id:
         return HttpResponse("You are not assigned as class teacher of any class", status=403)
     
-    term = Term.objects.filter(is_active=True, school=request.user.school).first()
+    term = Term.objects.filter(is_active=True, school=school).first()
     if not term:
         return HttpResponse("No active term found", status=403)
     
-    # KEY FIX: Get ALL students in this class
     students = User.objects.filter(
         role='student',
         school_class=class_obj,
-        school=request.user.school
+        school=school
     ).order_by('last_name', 'first_name')
     
-    # Build remarks list - create StudentRemark if it doesn't exist
     remarks = []
     for student in students:
         remark, created = StudentRemark.objects.get_or_create(
             student=student,
             term=term,
-            defaults={}
+            school=school, # ✅ FIX 1 - add school if model has it, if not add student__school=school check via filter before
+            defaults={'school': school} # ✅ include in defaults too
         )
         remarks.append({'student': student, 'remark': remark})
-        setting = SchoolSetting.objects.first()
-        attendance_mode = setting.attendance_mode if setting else "subject"
+    
+    setting = SchoolSetting.objects.filter(school=school).first() # ✅ FIX 2 - was .first() for all schools
+    attendance_mode = setting.attendance_mode if setting else "subject"
     
     return render(request, 'accounts/class_remarks.html', {
         'remarks': remarks, 
@@ -7163,37 +7564,37 @@ def class_remarks_list(request):
         'term': term,
     })
 
-
 @login_required
 def save_student_remark(request, student_id):
     if request.method == 'POST':
-        student = get_object_or_404(User, id=student_id, school=request.user.school)
-        term = Term.objects.filter(is_active=True, school=request.user.school).first()
+        school = request.user.school
+        student = get_object_or_404(User, id=student_id, school=school)
+        term = Term.objects.filter(is_active=True, school=school).first()
         
+        if not term:
+            return HttpResponse("No active term found", status=403)
         
-        # SECURITY: Only class teacher of this student's class can edit
-        if not request.user.is_class_teacher or student.school_class != request.user.class_teacher_of:
+        # ✅ Also check class school
+        if not request.user.is_class_teacher or student.school_class != request.user.class_teacher_of or student.school_class.school_id != school.id:
             return HttpResponse("You can only edit remarks for your own class", status=403)
         
         remark, created = StudentRemark.objects.get_or_create(
             student=student,
             term=term,
-            defaults={}
+            school=school, # ✅ FIX - add if your model has school field
+            defaults={'school': school}
         )
         
-        # Only class teacher can edit class teacher remark
         if request.user.is_class_teacher:
             remark.class_teacher_remark = request.POST.get('class_teacher_remark', '')
         
-        # Only headteacher/admin can edit headteacher remark  
-        if request.user.role in ['headteacher', 'admin']:
+        if request.user.role in ['headteacher', 'admin', 'headmaster']:
             remark.headteacher_remark = request.POST.get('headteacher_remark', '')
             
         remark.save()
         return HttpResponse("Remarks saved successfully")
     
     return HttpResponse("Invalid request", status=400)
-
 
 
 @login_required
@@ -7231,34 +7632,37 @@ def add_subject(request):
 @login_required
 @user_passes_test(lambda u: u.is_staff)
 def set_active_term(request):
-    if request.method == 'POST':
-        ca = request.POST.get('ca_total')
-        exam = request.POST.get('exam_total')
-        term_id = request.POST.get('term_id')  # pass the term you want to activate
+    if request.method == "POST":
+        school = request.user.school
+        ca = request.POST.get("ca_total")
+        exam = request.POST.get("exam_total")
+        term_id = request.POST.get("term_id")
 
         if not term_id:
             messages.error(request, "Select a term to activate")
-            return redirect('term_settings')
+            return redirect("term_settings")
 
-        # Deactivate all terms
-        Term.objects.filter(is_active=True).update(is_active=False)
+        # ✅ FIX 1: Verify term belongs to my school
+        term = get_object_or_404(Term, id=term_id, school=school)
+
+        # ✅ FIX 2: Deactivate only MY school terms
+        Term.objects.filter(is_active=True, school=school).update(is_active=False)
 
         # Activate the selected term
-        term = Term.objects.get(id=term_id)
         term.is_active = True
         term.save()
 
         # Update CA/Exam totals if provided
         if ca is not None and exam is not None:
             TermSetting.objects.update_or_create(
-                term=term,
-                defaults={'ca_total': ca, 'exam_total': exam}
+                term=term, defaults={"ca_total": ca, "exam_total": exam}
             )
 
-        messages.success(request, f"Active term set to: {term.academic_year} Term {term.term_number}")
+        messages.success(
+            request, f"Active term set to: {term.academic_year} Term {term.term_number}"
+        )
 
-    return redirect('term_settings')
-
+    return redirect("term_settings")
 
 
 @login_required
@@ -7318,30 +7722,37 @@ def term_settings(request):
 
 @login_required
 def edit_term(request, pk):
-    term = get_object_or_404(Term, pk=pk)
+    school = request.user.school
+    term = get_object_or_404(Term, pk=pk, school=school)
+    
     if request.method == 'POST':
-        form = TermForm(request.POST, instance=term)  # instance=term is critical
+        form = TermForm(request.POST, instance=term)
         if form.is_valid():
             if form.cleaned_data['is_active']:
-                Term.objects.filter(is_active=True).update(is_active=False)
-            form.save()
+                Term.objects.filter(is_active=True, school=school).update(is_active=False) 
+            
+            edited_term = form.save(commit=False)
+            edited_term.school = school
+            edited_term.save()
+            
             messages.success(request, "Term updated")
             return redirect('accounts:term_settings')
         else:
             messages.error(request, "Error: " + str(form.errors))
     else:
-        form = TermForm(instance=term)  # instance=term is critical
+        form = TermForm(instance=term)
+        
     return render(request, 'accounts/edit_term.html', {'form': form})
 
 
 @login_required
 @user_passes_test(lambda u: u.is_staff)
 def delete_term(request, pk):
-    term = get_object_or_404(Term, pk=pk)
+    school = request.user.school
+    term = get_object_or_404(Term, pk=pk, school=school) 
     term.delete()
     messages.success(request, "Term deleted")
     return redirect('accounts:term_settings')
-
 
 
 @login_required
@@ -7385,11 +7796,9 @@ def add_class(request):
     )
 
 
-
 @register.filter
 def get_item(dictionary, key):
     return dictionary.get(key)
-
 
 
 @role_required(['hod', 'admin'])
@@ -7869,7 +8278,6 @@ def student_timetable(request):
     })
 
 
-
 @role_required(['hod', 'admin'])
 def timetable_manager_edit(request, timetable_id):
 
@@ -8053,8 +8461,6 @@ def break_edit(request, break_id):
     return redirect(
         "accounts:manage_timetable"
     )
-
-
 
 
 @login_required
@@ -8381,7 +8787,6 @@ def reactivate_accountant(request, user_id):
     return redirect('accounts:deactivated_accountants')
 
 
-
 @login_required
 def accountant_dashboard(request):
     if request.user.role!= 'accountant':
@@ -8590,10 +8995,6 @@ def accountant_dashboard(request):
     }
 
     return render(request, 'accounts/accountant_dashboard.html', context)
-
-
-
-
 
 
 @login_required
@@ -8820,7 +9221,6 @@ def record_payment(request, fee_id=None):
     return render(request, 'accounts/record_payment.html', context)
 
 
-
 @login_required
 def add_expense(request):
     if request.user.role != 'accountant':
@@ -8847,36 +9247,61 @@ def expense_list(request):
 
     school = request.user.school
     
-    # 1. Get the active term for this school. If none, show nothing.
     active_term = Term.objects.filter(school=school, is_active=True).first()
+    all_terms = Term.objects.filter(school=school).select_related('academic_year').order_by('-academic_year__name', '-term_number')
     
-    if not active_term:
-        context = {
-            'expenses': Expense.objects.none(),
-            'active_term': None,
-            'total_expense': 0,
-            'message': 'No active term set. Ask admin to set an active term.'
-        }
-        return render(request, 'accounts/expense_list.html', context)
+    years = AcademicYear.objects.filter(school=school).order_by('-name')
     
-    # 2. Filter expenses by the active term's date range
-    expenses = Expense.objects.filter(
-        school=school,
-        expense_date__gte=active_term.start_date,
-        expense_date__lte=active_term.end_date
-    ).order_by('-expense_date', '-id')
-    
-    # 3. Calculate totals for this term only
+    selected_term_id = request.GET.get('term')
+    selected_year = request.GET.get('year') 
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    expenses = Expense.objects.filter(school=school)
+
+    if start_date and end_date:
+        expenses = expenses.filter(expense_date__gte=start_date, expense_date__lte=end_date)
+        selected_term = None
+    elif selected_year and selected_year.isdigit():
+        year_obj = years.filter(id=selected_year).first()
+        if year_obj:
+            terms_in_year = all_terms.filter(academic_year=year_obj)
+            if terms_in_year.exists():
+                first_term = terms_in_year.order_by('start_date').first()
+                last_term = terms_in_year.order_by('-end_date').first()
+                expenses = expenses.filter(
+                    expense_date__gte=first_term.start_date,
+                    expense_date__lte=last_term.end_date
+                )
+        selected_term = None
+    else:
+        if selected_term_id and selected_term_id.isdigit():
+            selected_term = all_terms.filter(id=selected_term_id).first()
+        else:
+            selected_term = active_term
+        
+        if selected_term:
+            expenses = expenses.filter(
+                expense_date__gte=selected_term.start_date,
+                expense_date__lte=selected_term.end_date
+            )
+        else:
+            expenses = Expense.objects.none()
+
+    expenses = expenses.order_by('-expense_date', '-id')
     total_expense = expenses.aggregate(total=Sum('amount'))['total'] or 0
-    
-    # 4. Optional: keep dropdowns if you want to view old terms
-    all_terms = Term.objects.filter(school=school).order_by('-academic_year', '-term_number')
     
     context = {
         'expenses': expenses,
         'active_term': active_term,
+        'selected_term': selected_term if 'selected_term' in locals() else None,
         'total_expense': total_expense,
-        'all_terms': all_terms,  # for dropdown if needed
+        'all_terms': all_terms,
+        'years': years, 
+        'selected_term_id': selected_term_id,
+        'selected_year_param': selected_year,
+        'start_date': start_date,
+        'end_date': end_date,
     }
     return render(request, 'accounts/expense_list.html', context)
 
@@ -9134,8 +9559,6 @@ def set_student_fee(request):
     return render(request, 'accounts/set_student_fee.html', context)
 
 
-
-
 @login_required
 def all_students_fees_list(request):
     if request.user.role != 'accountant':
@@ -9242,7 +9665,6 @@ def all_students_fees_list(request):
     return render(request, 'accounts/all_students_fees_list.html', context)
 
 
-
 @login_required
 def payment_history(request):
     
@@ -9300,7 +9722,6 @@ def payment_history(request):
         'grouped_transactions': dict(grouped),
         'active_term': Term.objects.filter(school=school, is_active=True).first()
     })
-
 
 
 @login_required
@@ -9546,7 +9967,6 @@ def generate_report(request):
     return HttpResponse('Error generating PDF', status=500)
 
 
-
 @login_required
 def report_filters(request):
     if request.user.role != 'accountant':
@@ -9764,8 +10184,6 @@ def auto_fit(ws):
         auto_fit(ws4)
 
 
-
-
 def render_to_pdf(template_src, context_dict={}):
     template = get_template(template_src)
     html = template.render(context_dict)
@@ -9849,7 +10267,6 @@ def download_defaulters_pdf(request):
     return HttpResponse("PDF generation failed")
 
 
-
 @login_required
 def download_class_defaulters_pdf(request, class_id):
     if request.user.role != 'accountant':
@@ -9916,7 +10333,6 @@ def download_class_defaulters_pdf(request, class_id):
     return HttpResponse("PDF generation failed")
 
 
-
 @login_required
 def apply_fee_structure(request):
     if request.user.role != 'accountant':
@@ -9925,7 +10341,6 @@ def apply_fee_structure(request):
     school = request.user.school
     fee_structures = FeeStructure.objects.filter(school=school, is_active=True)
     
-    # Stage group mapping
     STAGE_GROUP_MAP = {
         'creche': ['creche'],
         'nursery': ['nursery'],
@@ -9943,7 +10358,6 @@ def apply_fee_structure(request):
 
         structure = get_object_or_404(FeeStructure, id=structure_id, school=school)
         
-        # Get students for this stage group
         student_stages = STAGE_GROUP_MAP.get(stage_group, [])
         students = User.objects.filter(
             school=school, 
@@ -9983,11 +10397,9 @@ def apply_fee_structure(request):
 
     context = {
         'fee_structures': fee_structures,
-        'stage_groups': FeeStructure.STAGE_CHOICES,  # Pass stage choices instead of classes
+        'stage_groups': FeeStructure.STAGE_CHOICES,  
     }
     return render(request, 'accounts/apply_fee_structure.html', context)
-
-
 
 
 from django.urls import reverse
@@ -9998,18 +10410,16 @@ def fee_structure_settings(request):
     if request.user.role != 'admin':
         messages.error(request, "Only school owners can access this page.")
         return redirect('accounts:dashboard')
-    
+
     school = request.user.school
-    
-    # Get all years for dropdown
+
     years = FeeStructure.objects.filter(school=school).values_list('academic_year', flat=True).distinct().order_by('-academic_year')
-    
-    # Default to current active year, or latest year
+
     selected_year = request.GET.get('year')
     if not selected_year:
-        active_term = Term.objects.filter(is_active=True).first()
+        active_term = Term.objects.filter(is_active=True, school=school).first()
         selected_year = active_term.academic_year if active_term else (years.first() if years else '')
-    
+
     fee_structures = FeeStructure.objects.filter(school=school, academic_year=selected_year).order_by('stage', 'term')
 
     if request.method == 'POST':
@@ -10020,10 +10430,10 @@ def fee_structure_settings(request):
         if not term:
             messages.error(request, "Term not found for this school.")
             return redirect('accounts:fee_structure_settings')
-        
+
         academic_year = request.POST.get('academic_year')
         due_date = request.POST.get('due_date') or None
-        
+
         def to_decimal(val):
             try:
                 return Decimal(val) if val not in [None, ''] else Decimal('0')
@@ -10065,20 +10475,18 @@ def fee_structure_settings(request):
                 'is_active': True
             }
         )
-        
+
         if created:
             messages.success(request, f"Fee structure for {obj.get_stage_display()} - Term {obj.term.term_number} {academic_year} created.")
         else:
             messages.success(request, f"Fee structure for {obj.get_stage_display()} - Term {obj.term.term_number} {academic_year} updated.")
-        
-        # remember last edited fee
+
         request.session['last_fee_stage'] = stage
         request.session['last_fee_term'] = term.id
         request.session['last_fee_year'] = academic_year
-        
+
         return redirect(f"{reverse('accounts:fee_structure_settings')}?stage={stage}&term={term.id}&year={academic_year}")
 
-    # --- fee_breakdown with persistence ---
     selected_stage = request.GET.get('stage')
     selected_term_id = request.GET.get('term')
     selected_year_param = request.GET.get('year') or selected_year
@@ -10097,7 +10505,6 @@ def fee_structure_settings(request):
             request.session['last_fee_term'] = selected_term_id
             request.session['last_fee_year'] = selected_year_param
 
-    # try session
     if not fee_breakdown:
         last_stage = request.session.get('last_fee_stage')
         last_term = request.session.get('last_fee_term')
@@ -10111,7 +10518,6 @@ def fee_structure_settings(request):
                 is_active=True
             ).first()
 
-        # fallback to most recently created
         if not fee_breakdown:
             fee_breakdown = FeeStructure.objects.filter(
                 school=school, is_active=True
@@ -10125,9 +10531,6 @@ def fee_structure_settings(request):
         'stage_choices': FeeStructure.STAGE_CHOICES,
         'fee_breakdown': fee_breakdown,
     })
-
-
-
 
 
 @login_required
@@ -10203,9 +10606,11 @@ def generate_fees_for_term(request):
         for student in students:
             obj, created_flag = StudentFee.objects.update_or_create(
                 student=student,
-                term=term_obj,  # use term_number
-                academic_year=academic_year_str,  # use string
+                school=school,
+                term=term_obj,  
+                academic_year=academic_year_str, 
                 defaults={
+                    'school': school,
                     'school_fees': fee_structure.school_fees,
                     'canteen_amount': fee_structure.canteen_amount,
                     'pta_dues': fee_structure.pta_dues,
@@ -10240,40 +10645,40 @@ def generate_fees_for_term(request):
         )
         return redirect('accounts:fee_structure_settings')    
     return redirect('accounts:fee_structure_settings')  
-    
+
 
 def is_admin(user):
     return user.is_superuser or user.is_staff
 
 @login_required
 def student_fees_list(request):
-    logger.warning("HIT STUDENT_FEES_LIST VIEW")
-    logger.warning(f"GET params: {request.GET}")
+    school = request.user.school  
     
-    term_id = request.GET.get('term', '')  # this is now '3' not text
+    term_id = request.GET.get('term', '')  
     year_id = request.GET.get('year')
     search = request.GET.get('search', '')
     new_only = request.GET.get('new_only') == 'on'
     
-    terms = Term.objects.all().order_by('term_number')  # rename to 'terms'
-    year_choices = AcademicYear.objects.all().order_by('-name')
+    terms = Term.objects.filter(school=school).order_by('term_number')  
+    year_choices = AcademicYear.objects.filter(school=school).order_by('-name')
     
-    fees = StudentFee.objects.select_related('student', 'term').all()
+    fees = StudentFee.objects.filter(school=school).select_related('student', 'term')
     selected_year = year_choices.filter(id=year_id).first()
 
     if selected_year:
         fees = fees.filter(academic_year=selected_year.name)
-    # Only filter if term_id is actually a number
+    
     if term_id and term_id.isdigit():
         fees = fees.filter(term_id=term_id)
-    current_year = AcademicYear.objects.last()
-    current_term = Term.objects.filter(is_active=True).first()
+    
+    current_year = AcademicYear.objects.filter(school=school).last()
+    current_term = Term.objects.filter(school=school, is_active=True).first()
 
     if not year_id and current_year:
         year_id = str(current_year.id)
-
     if not term_id and current_term:
         term_id = str(current_term.id)
+    
     if search:
         fees = fees.filter(
             Q(student__first_name__icontains=search) |
@@ -10281,21 +10686,17 @@ def student_fees_list(request):
             Q(student__student_number__icontains=search)
         )
     
-    # Send ID string for template comparison, not object
     selected_term_id = term_id if term_id and term_id.isdigit() else ''
     selected_term_obj = terms.filter(id=selected_term_id).first() if selected_term_id else None
     
-    
-    logger.warning(f"term_id: {term_id}")
-    logger.warning(f"Fees found: {fees.count()}")  
     selected_year = year_choices.filter(id=year_id).first()
     
     context = {
         'fees': fees,
         'selected_year': selected_year,
-        'terms': terms,  # was term_choices
+        'terms': terms,
         'year_choices': year_choices,
-        'selected_term': selected_term_id,  # send '3' not Term object
+        'selected_term': selected_term_id,
         'term_label': str(selected_term_obj) if selected_term_obj else "All Terms", 
         'search': search,
         'new_only': new_only,
@@ -10304,14 +10705,15 @@ def student_fees_list(request):
 
 @login_required
 def edit_student_fee(request, fee_id):
-    fee = get_object_or_404(StudentFee, id=fee_id)
+    school = request.user.school
+    fee = get_object_or_404(StudentFee, id=fee_id, school=school) 
     
     if request.method == 'POST':
         form = StudentFeeForm(request.POST, instance=fee)
         if form.is_valid():
             form.save()
             messages.success(request, f"Fees updated for {fee.student.get_full_name()}")
-            return redirect(f"{reverse('accounts:student_fees_list')}?term={fee.term}")  # fixed
+            return redirect(f"{reverse('accounts:student_fees_list')}?term={fee.term.id}")  
         else:
             messages.error(request, "Please fix the errors below")
     else:
@@ -10322,16 +10724,15 @@ def edit_student_fee(request, fee_id):
         'fee': fee
     })
 
-
-
 @login_required
 def receipt_pdf(request, payment_id):
+    school = request.user.school
     payment = get_object_or_404(
         PaymentTransaction.objects.select_related('student', 'recorded_by'),
-        id=payment_id
+        id=payment_id,
+        student__school=school  
     )
 
-    # Get readable names from your method
     display_text = payment.get_payment_types_display()
     if display_text == "—":
         fee_items = [('School Fees', payment.total_amount)]
@@ -10342,7 +10743,7 @@ def receipt_pdf(request, payment_id):
 
     context = {
         'payment': payment,
-        'school': payment.student.school,
+        'school': school, 
         'accountant': payment.recorded_by,
         'total_paid': payment.total_amount,
         'fee_items': fee_items,
@@ -10358,7 +10759,6 @@ def receipt_pdf(request, payment_id):
     return response
 
 
-
 class CustomLoginView(LoginView):
     def get_success_url(self):
         user = self.request.user
@@ -10367,11 +10767,10 @@ class CustomLoginView(LoginView):
         return '/student/dashboard/'
 
 
-
 from django.views.decorators.http import require_GET
 
 @login_required
-@require_GET  # Changed from POST to GET
+@require_GET  
 def mark_announcements_read(request):
     ann_id = request.GET.get('id')
     if ann_id:
@@ -10553,7 +10952,7 @@ def school_payment_settings(request):
 @login_required
 def fee_list_page(request):
     fee_structures = FeeStructure.objects.filter(school=request.user.school, is_published=True)
-    years = FeeStructure.objects.values_list('academic_year', flat=True).distinct()
+    years = FeeStructure.objects.filter(school=request.user.school).values_list('academic_year', flat=True).distinct()
     terms = Term.objects.filter(school=request.user.school)
     fee_breakdown = FeeStructure.objects.filter(school=request.user.school, is_active=True, is_published=True).first()
     
@@ -10573,10 +10972,6 @@ def fee_list_page(request):
         'selected_term': selected_term,
         'fee_breakdown': fee_breakdown,
     })
-
-
-
-
 
 
 @login_required
@@ -10669,7 +11064,7 @@ def verify_paystack_payment(request):
         return JsonResponse({'status': False, 'message': 'Fee record not found'}, status=404)
     except Exception as e:
         return JsonResponse({'status': False, 'message': str(e)}, status=500)
-    
+
 @login_required
 def fee_history(request, fee_id):
     fee = get_object_or_404(StudentFee, id=fee_id)
@@ -10692,7 +11087,6 @@ def fee_history(request, fee_id):
         'transactions': transactions,
         'student': fee.student,
     })
-
 
 
 @login_required
@@ -11806,8 +12200,6 @@ def get_notification_count(request):
     return JsonResponse({'count': count})
 
 
-
-
 def _filter_announcements_by_date(queryset, filter_type):
     today = timezone.now().date()
     if filter_type == 'today':
@@ -11930,7 +12322,6 @@ def school_sms_settings(request):
     return render(request, 'accounts/school_sms_settings.html', {'form': form, 'school': school})
 
 
-
 @login_required
 def admin_fee_monitoring(request):
     if request.user.role != 'admin':
@@ -11970,7 +12361,7 @@ def admin_fee_monitoring(request):
         base_tx = base_tx.filter(created_at__month=today.month, created_at__year=today.year)
         voided_qs = voided_qs.filter(voided_at__month=today.month, voided_at__year=today.year)
         expense_qs = expense_qs.filter(expense_date__month=today.month, expense_date__year=today.year)
-        log_qs = log_qs.filter(created_at__month=today.month)
+        log_qs = log_qs.filter(created_at_month=today.month, created_at_year=today.year)  
         title = f"This Month - {today.strftime('%B %Y')}"
     else:  # all
         period = 'all'
@@ -12027,9 +12418,9 @@ def admin_fee_monitoring(request):
 def void_transaction(request, txn_id):
     if request.user.role != 'admin':
         return redirect('accounts:home')
-    
+
     txn = get_object_or_404(PaymentTransaction, id=txn_id, student__school=request.user.school)
-    
+
     if request.method == 'POST':
         reason = request.POST.get('void_reason', '')
         txn.is_voided = True
@@ -12046,119 +12437,75 @@ def void_transaction(request, txn_id):
         )
         messages.success(request, f"Receipt {txn.receipt_number} voided")
         return redirect('accounts:admin_fee_monitoring')
-    
+
     return render(request, 'accounts/void_confirm.html', {'txn': txn})
-
-
-
-
 
 
 @login_required
 @require_http_methods(["GET", "POST"])
 def mark_teacher_attendance(request):
 
-    if request.user.role not in ['admin', 'headmaster']:
+    if request.user.role not in ["admin", "headmaster"]:
         messages.error(
-            request,
-            "You do not have permission to mark teacher attendance."
-        )
-        return redirect('accounts:home')
-
-    school = request.user.school
-
-    if not school:
-        messages.error(
-            request,
-            "Your account is not assigned to any school."
-        )
-        return redirect('accounts:home')
-
-
-    date_value = request.POST.get('attendance_date') or request.GET.get('date')
-
-    attendance_date = (
-        parse_date(date_value)
-        if date_value
-        else timezone.localdate()
-    )
-
-
-    if not attendance_date:
-        attendance_date = timezone.localdate()
-
-    active_term = Term.objects.filter(
-        school=school,
-        is_active=True
-    ).first()
-
-    if not active_term:
-        messages.error(
-            request,
-            "There is no active term."
+            request, "You do not have permission to mark teacher attendance."
         )
         return redirect("accounts:home")
 
-    # Don't allow weekends
+    school = request.user.school
+    if not school:
+        messages.error(request, "Your account is not assigned to any school.")
+        return redirect("accounts:home")
+
+    date_value = request.POST.get("attendance_date") or request.GET.get("date")
+    attendance_date = parse_date(date_value) if date_value else timezone.localdate()
+    if not attendance_date:
+        attendance_date = timezone.localdate()
+
+    active_term = Term.objects.filter(school=school, is_active=True).first()
+    if not active_term:
+        messages.error(request, "There is no active term.")
+        return redirect("accounts:home")
+
     is_weekend = attendance_date.weekday() >= 5
 
- 
-
-    # Don't allow dates outside the active term
-    if attendance_date < active_term.start_date or attendance_date > active_term.end_date:
-        messages.error(
-            request,
-            "This date is outside the active school term."
-        )
+    if (
+        attendance_date < active_term.start_date
+        or attendance_date > active_term.end_date
+    ):
+        messages.error(request, "This date is outside the active school term.")
         return redirect(f"{request.path}?date={timezone.localdate()}")
 
-
-    teachers = User.objects.filter(
-        school=school,
-        role='teacher'
-    ).order_by(
-        'first_name',
-        'last_name'
+    teachers = User.objects.filter(school=school, role="teacher").order_by(
+        "first_name", "last_name"
     )
+
+    # ✅ FIX: Load existing attendance for this date
+    existing_qs = TeacherAttendance.objects.filter(school=school, date=attendance_date)
+    existing_attendance = {att.teacher_id: att for att in existing_qs}
+
     if request.method == "POST":
-
         if attendance_date.weekday() >= 5:
-            messages.error(
-                request,
-                "Teacher attendance cannot be marked on weekends."
-            )
-
+            messages.error(request, "Teacher attendance cannot be marked on weekends.")
             for teacher in teachers:
-                teacher.today_attendance = None
-
+                teacher.today_attendance = existing_attendance.get(teacher.id)
             return render(
                 request,
                 "accounts/mark_teacher_attendance.html",
                 {
                     "teachers": teachers,
                     "attendance_date": attendance_date,
-                    "existing_attendance": {},
+                    "existing_attendance": existing_attendance,
                     "school": school,
                     "is_weekend": True,
-                }
+                },
             )
+
         for teacher in teachers:
-
-            status = request.POST.get(
-                f"status_{teacher.id}"
-            )
-
+            status = request.POST.get(f"status_{teacher.id}")
             if not status:
                 continue
-
-            time_in = request.POST.get(
-                f"time_in_{teacher.id}"
-            ) or None
-
-            note = request.POST.get(
-                f"note_{teacher.id}"
-            ) or ""
-
+            time_in = request.POST.get(f"time_in_{teacher.id}") or None
+            note = request.POST.get(f"note_{teacher.id}") or ""
 
             TeacherAttendance.objects.update_or_create(
                 teacher=teacher,
@@ -12170,21 +12517,17 @@ def mark_teacher_attendance(request):
                     "note": note,
                     "marked_by": request.user,
                     "record_source": "staff",
-                }
+                },
             )
 
-
         messages.success(
-            request,
-            f"Teacher attendance for {attendance_date} saved successfully!"
+            request, f"Teacher attendance for {attendance_date} saved successfully!"
         )
+        return redirect(f"{request.path}?date={attendance_date}")
 
-        return redirect(
-            f"{request.path}?date={attendance_date}"
-        )
-
-        
-
+    # Attach existing to teacher objects for easy template access
+    for teacher in teachers:
+        teacher.today_attendance = existing_attendance.get(teacher.id)
 
     return render(
         request,
@@ -12192,9 +12535,10 @@ def mark_teacher_attendance(request):
         {
             "teachers": teachers,
             "attendance_date": attendance_date,
+            "existing_attendance": existing_attendance,
             "school": school,
             "is_weekend": is_weekend,
-        }
+        },
     )
 
 

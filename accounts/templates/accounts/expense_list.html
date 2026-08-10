@@ -259,6 +259,50 @@
 
 </div>
 </div>
+<div class="card mb-3 p-3">
+<form method="get" class="row g-2">
+    <div class="col-md-3">
+        <label>Term</label>
+<select name="term" class="form-control">
+    <option value="">-- Select Term --</option>
+    {% for term in all_terms %}
+        <option value="{{ term.id }}" {% if selected_term_id == term.id|stringformat:"s" %}selected{% endif %}>
+            {% if term.term_number == 1 %}First Term
+            {% elif term.term_number == 2 %}Second Term
+            {% elif term.term_number == 3 %}Third Term
+            {% else %}Term {{ term.term_number }}
+            {% endif %}
+        </option>
+    {% endfor %}
+</select>
+    </div>
+    <div class="col-md-2">
+        <label>Year</label>
+<select name="year" class="form-control">
+    <option value="">-- All Years --</option>
+    {% for y in years %}
+        <option value="{{ y.id }}" {% if selected_year_param == y.id|stringformat:"s" %}selected{% endif %}>
+            {{ y.name }} 
+        </option>
+    {% endfor %}
+</select>
+    </div>
+    <div class="col-md-2">
+        <label>From</label>
+        <input type="date" name="start_date" value="{{ start_date }}" class="form-control">
+    </div>
+    <div class="col-md-2">
+        <label>To</label>
+        <input type="date" name="end_date" value="{{ end_date }}" class="form-control">
+    </div>
+    <div class="col-md-3 d-flex align-items-end gap-2">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="{% url 'accounts:expense_list' %}" class="btn btn-secondary">Reset</a>
+    </div>
+</form>
+</div>
+
+
 {% if not active_term %}
 <div class="alert alert-warning">
     {{ message|default:"No active term set. Ask admin to set an active term." }}

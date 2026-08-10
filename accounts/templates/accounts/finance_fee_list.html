@@ -1,227 +1,282 @@
-{% extends "accounts/dashboard_base.html" %}
+{% extends 'accounts/dashboard_base.html' %}
 {% block content %}
+
 <style>
-/* Page Title */
-.page-title {
-    font-size: 28px;
-    font-weight: 700;
-    margin-bottom: 20px;
-    color: #2c3e50;
+/* =========================================================
+   PREMIUM FEE STRUCTURES PAGE
+   UI ONLY — EXISTING VARIABLES/LOGIC PRESERVED
+========================================================= */
+.fee-page {
+    padding: 10px 0 30px;
 }
-
-/* Card Styling */
-.settings-card {
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-    padding: 25px;
-    background: #ffffff;
-    margin-bottom: 20px;
+/* PAGE HEADER */
+.fee-page-header {
+    background: linear-gradient(135deg, #0f172a, #1e3a8a);
+    border-radius: 22px;
+    padding: 28px 30px;
+    margin-bottom: 24px;
+    color: #fff;
+    box-shadow: 0 14px 35px rgba(15, 23, 42, .14);
+    position: relative;
+    overflow: hidden;
 }
-
-/* Section Title */
-.section-title {
-    font-size: 20px;
-    font-weight: 600;
-    margin-bottom: 15px;
-    color: #34495e;
+.fee-page-header::after {
+    content: "";
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.06);
+    right: -50px;
+    top: -70px;
 }
-
-/* Toggle Label */
-.form-check-label {
-    font-size: 16px;
-    font-weight: 500;
+.fee-page-header h2 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 800;
+    position: relative;
+    z-index: 1;
 }
-
-/* Description text */
-.description-text {
+.fee-page-header p {
+    margin: 7px 0 0;
+    color: rgba(255,255,255,.72);
+    font-size: 13px;
+    position: relative;
+    z-index: 1;
+}
+/* FILTER CARD */
+.fee-filter-card {
+    background: #fff;
+    border: 1px solid #e8edf5;
+    border-radius: 18px;
+    padding: 20px;
+    margin-bottom: 22px;
+    box-shadow: 0 8px 25px rgba(15,23,42,.06);
+}
+.fee-filter-title {
     font-size: 14px;
-    color: #021a1c;
-    margin-top: 8px;
+    font-weight: 800;
+    color: #172033;
+    margin-bottom: 15px;
 }
-
-/* Button */
-.save-btn {
-    font-size: 16px;
-    padding: 10px 20px;
-    border-radius: 8px;
+.fee-filter-card .form-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 7px;
 }
-
-/* Switch size */
-.form-check-input {
-    transform: scale(1.3);
-    margin-right: 10px;
+.fee-filter-card .form-select {
+    min-height: 45px;
+    border: 1px solid #dce3ed;
+    border-radius: 11px;
+    font-size: 13px;
+    color: #1e293b;
+    background-color: #fff;
+    box-shadow: none;
+    cursor: pointer;
 }
-
-/* Link card styling */
-.link-card {
-    display: block;
-    text-decoration: none;
-    color: inherit;
+.fee-filter-card .form-select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.10);
 }
-.link-card:hover {
-    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-    transform: translateY(-2px);
-    transition: all 0.2s;
+/* TABLE CARD */
+.fee-table-card {
+    background: #fff;
+    border: 1px solid #e8edf5;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(15,23,42,.07);
 }
+/* TABLE */
 #fee-table {
     width: 100%;
+    margin: 0;
     border-collapse: separate;
     border-spacing: 0;
-    background: #ffffff;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: #fff;
+    font-family: "Segoe UI", Tahoma, sans-serif;
 }
-
-/* Header */
+/* HEADER */
 #fee-table thead {
-    background: linear-gradient(135deg, #4e73df, #224abe);
+    background: linear-gradient(135deg, #1d4ed8, #2563eb);
     color: #fff;
 }
-
 #fee-table thead th {
-    padding: 12px 14px;
-    font-size: 14px;
+    padding: 15px 16px;
+    font-size: 11px;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: .6px;
+    white-space: nowrap;
     border: none;
 }
-
-/* Body rows */
-#fee-table tbody tr {
-    transition: all 0.2s ease-in-out;
+/* MAIN ROW */
+#fee-table tbody tr:not(.breakdown-row) {
+    background: #fff;
+    transition: .25s ease;
 }
-
-#fee-table tbody tr:hover {
-    background: #f5f8ff;
+#fee-table tbody tr:not(.breakdown-row):hover {
+    background: #f8fbff;
+    transform: scale(1.002);
 }
-
-/* Table cells */
-#fee-table td {
-    padding: 12px 14px;
-    border-bottom: 5px solid #eee;
-    font-size: 16px;
-    color: #333;
+#fee-table tbody td {
+    padding: 16px;
+    font-size: 13px;
+    color: #334155;
+    border-bottom: 1px solid #edf1f6;
+    vertical-align: middle;
+    white-space: nowrap;
 }
-
-/* Strong text */
-#fee-table td strong {
-    color: #111;
-    font-size: 18px;
+#fee-table tbody td strong {
+    font-size: 14px;
+    color: #111827;
 }
-
-/* Badge styles */
-.badge {
-    padding: 6px 10px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 500;
+/* STAGE */
+#fee-table tbody tr:not(.breakdown-row) td:first-child {
+    border-left: 4px solid #2563eb;
 }
-
-.bg-success {
-    background: #e6f7ee !important;
-    color: #1cc88a !important;
+#fee-table tbody tr:not(.breakdown-row) td:first-child strong {
+    color: #1d4ed8;
 }
-
-.bg-secondary {
-    background: #f0f0f0 !important;
-    color: #858796 !important;
+/* TERM */
+#fee-table tbody tr:not(.breakdown-row) td:nth-child(2) {
+    font-weight: 700;
+    color: #047857;
 }
-
-/* Breakdown row */
-.breakdown-row td {
-    background: #f9fafc;
+/* YEAR */
+#fee-table tbody tr:not(.breakdown-row) td:nth-child(3) {
+    font-weight: 700;
+    color: #475569;
+}
+/* TOTAL */
+#fee-table tbody tr:not(.breakdown-row) td:nth-child(4) strong {
+    color: #dc2626;
     font-size: 15px;
-    color: #170202;
-    border-bottom: 1px solid #eee;
-    padding: 10px 14px;
-    font-style: italic;
 }
-
-/* Optional: make breakdown look indented */
+/* STATUS */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 72px;
+    padding: 7px 12px;
+    border-radius: 50px;
+    font-size: 11px !important;
+    font-weight: 800;
+}
+.badge.bg-success {
+    background: #dcfce7 !important;
+    color: #15803d !important;
+}
+.badge.bg-secondary {
+    background: #f1f5f9 !important;
+    color: #64748b !important;
+}
+/* BREAKDOWN */
+.breakdown-row td {
+    background: #f8fafc !important;
+    border-left: 4px solid #dbe5f5 !important;
+    border-bottom: 1px solid #e5eaf1 !important;
+    padding: 13px 18px !important;
+    color: #64748b !important;
+    font-size: 12px !important;
+    line-height: 1.8;
+    white-space: normal !important;
+}
 .breakdown-row td::before {
     content: "↳ ";
-    color: #4e73df;
-    font-weight: bold;
+    color: #2563eb;
+    font-weight: 800;
 }
-
-/* Rounded corners */
-#fee-table thead th:first-child {
-    border-top-left-radius: 12px;
+/* EMPTY STATE */
+.description-text {
+    background: #fff;
+    border: 1px solid #e8edf5;
+    border-radius: 18px;
+    padding: 35px 20px;
+    text-align: center;
+    color: #64748b;
+    font-size: 14px;
+    box-shadow: 0 8px 25px rgba(15,23,42,.05);
 }
-#fee-table thead th:last-child {
-    border-top-right-radius: 12px;
+/* MOBILE */
+@media (max-width: 768px) {
+    .fee-page {
+        padding: 5px 0 25px;
+    }
+    .fee-page-header {
+        padding: 22px 20px;
+        border-radius: 18px;
+    }
+    .fee-page-header h2 {
+        font-size: 21px;
+    }
+    .fee-page-header p {
+        font-size: 12px;
+    }
+    .fee-filter-card {
+        padding: 17px;
+        border-radius: 16px;
+    }
+    .fee-table-card {
+        border-radius: 16px;
+    }
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    #fee-table {
+        min-width: 760px;
+    }
+    #fee-table thead th {
+        padding: 13px 12px;
+        font-size: 10px;
+    }
+    #fee-table tbody td {
+        padding: 13px 12px;
+        font-size: 12px;
+    }
+    #fee-table tbody td strong {
+        font-size: 13px;
+    }
+    .breakdown-row td {
+        font-size: 11px !important;
+        padding: 11px 14px !important;
+        white-space: normal !important;
+    }
 }
-/* Main data row (the "header" of each fee structure) */
-#fee-table tbody tr:not(.breakdown-row) {
-    background: linear-gradient(135deg, #eef4ff, #f8fbff);
-    border-left: 5px solid #4e73df;
-    font-weight: 500;
-}
-
-/* Add spacing between each group */
-#fee-table tbody tr.breakdown-row {
-    margin-bottom: 10px;
-}
-
-/* Make main row pop */
-#fee-table tbody tr:not(.breakdown-row):hover {
-    background: linear-gradient(135deg, #e0ecff, #f1f6ff);
-}
-
-/* Make key columns more colorful */
-#fee-table tbody tr td:nth-child(1) strong {
-    color: #4e73df; /* Stage */
-    font-size: 18px;
-}
-
-#fee-table tbody tr td:nth-child(2) {
-    color: #035135; /* Term */
-    font-weight: 600;
-    font-size: 18px;
-}
-
-#fee-table tbody tr td:nth-child(3) {
-    color: hsl(0, 0%, 0%); /* Year */
-    font-weight: 600;
-    font-size: 18px;
-}
-
-#fee-table tbody tr td:nth-child(4) strong {
-    color: #e74a3b; /* Total amount */
-    font-size: 18px;
-}
-
-/* Status badge stronger */
-.badge.bg-success {
-    background: #1cc88a !important;
-    color: #fff !important;
-    font-size: 18px;
-}
-
-.badge.bg-secondary {
-    background: #010310 !important;
-    color: #fff !important;
-    font-size: 18px;
-}
-
-/* Breakdown row stays soft */
-.breakdown-row td {
-    background: #ffffff;
-    border-left: 5px solid #d1d9ff;
-    padding-left: 20px;
+/* SMALL PHONES */
+@media (max-width: 480px) {
+    .fee-page-header h2 {
+        font-size: 19px;
+    }
+    .fee-filter-card {
+        padding: 15px;
+    }
+    .fee-filter-card .form-select {
+        min-height: 43px;
+        font-size: 12px;
+    }
+    #fee-table {
+        min-width: 720px;
+    }
 }
 </style>
-<div class="container mt-4">
-    <h2 class="page-title">💰 Fee Structures</h2>
-    
-
-    <!-- Filter Form -->
-    <form method="get" class="row g-2 mb-3">
+<div class="container mt-4 fee-page">
+<!-- PAGE HEADER -->
+<div class="fee-page-header">
+    <h2>💰 Fee Structures</h2>
+    <p>View and manage fee structures by academic year and term.</p>
+</div>
+<!-- FILTER CARD -->
+<div class="fee-filter-card">
+    <div class="fee-filter-title">
+        <i class="bi bi-funnel me-1"></i>
+        Filter Fee Structures
+    </div>
+    <form method="get" class="row g-3">
         <div class="col-md-4">
-            <label class="form-label fw-bold">Academic Year</label>
+            <label class="form-label">Academic Year</label>
             <select name="year" onchange="this.form.submit()" class="form-select">
                 {% for year in years %}
                     <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>
@@ -231,70 +286,110 @@
             </select>
         </div>
         <div class="col-md-4">
-            <label class="form-label fw-bold">Term</label>
+            <label class="form-label">Term</label>
             <select name="term" class="form-select" onchange="this.form.submit()">
                 {% for t in terms %}
-                <option value="{{ t.id }}" {% if t.id|stringformat:"s" == selected_term %}selected{% endif %}>
-                    {% if t.term_number == 1 %}First Term
-                    {% elif t.term_number == 2 %}Second Term
-                    {% elif t.term_number == 3 %}Third Term
-                    {% else %}Term {{ t.term_number }}
-                    {% endif %}
-                </option>
+                    <option value="{{ t.id }}" {% if t.id|stringformat:"s" == selected_term %}selected{% endif %}>
+                        {% if t.term_number == 1 %}
+                            First Term
+                        {% elif t.term_number == 2 %}
+                            Second Term
+                        {% elif t.term_number == 3 %}
+                            Third Term
+                        {% else %}
+                            Term {{ t.term_number }}
+                        {% endif %}
+                    </option>
                 {% endfor %}
             </select>
         </div>
     </form>
-
-    <!-- Table: Stage, Term, Academic Year, Total, Status -->
-    {% if fee_structures %}
-    <table id="fee-table" class="table table-sm align-middle mb-0">
-        <thead>
-            <tr>
-                <th>Stage</th>
-                <th>Term</th>
-                <th>Academic Year</th>
-                <th>Total</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for fs in fee_structures %}
-            <tr>
-                <td><strong>{{ fs.get_stage_display }}</strong></td>
-                <td>{{ fs.term.get_term_number_display }}</td>
-                <td>{{ fs.term.academic_year }}</td>
-                <td><strong>GH₵  {{ fs.total_amount }}</strong></td>
-                <td>
-                    {% if fs.is_active %}
-                        <span class="badge bg-success">Active</span>
-                    {% else %}
-                        <span class="badge bg-secondary">Inactive</span>
-                    {% endif %}
-                </td>
-            </tr>
-            <tr class="breakdown-row">
-                <td colspan="5" class="small text-muted">
-                    Breakdown:
-                    {% if fs.school_fees %}School Fees: {{ fs.school_fees }} |{% endif %}
-                    {% if fs.canteen_amount %}Feeding: {{ fs.canteen_amount }} |{% endif %}
-                    {% if fs.boarding_fee %}Boarding: {{ fs.boarding_fee }} |{% endif %}
-                    {% if fs.hostel_fee %}Hostel: {{ fs.hostel_fee }} |{% endif %}
-                    {% if fs.development_fee %}Development: {{ fs.development_fee }} |{% endif %}
-                    {% if fs.pta_dues %}PTA Dues: {{ fs.pta_dues }} |{% endif %}
-                    {% if fs.computer_levy %}Computer Fee: {{ fs.computer_levy }} |{% endif %}
-                    {% if fs.exam_fees %}Exam Fees: {{ fs.exam_fees }} |{% endif %}
-                    {% if fs.other_fees %}Other: {{ fs.other_fees }}{% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div class="description-text">
-        No fee structures created yet.
+</div>
+<!-- FEE STRUCTURES -->
+{% if fee_structures %}
+<div class="fee-table-card">
+    <div class="table-responsive">
+        <table id="fee-table" class="table table-sm align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Stage</th>
+                    <th>Term</th>
+                    <th>Academic Year</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fs in fee_structures %}
+                <tr>
+                    <td>
+                        <strong>{{ fs.get_stage_display }}</strong>
+                    </td>
+                    <td>
+                        {{ fs.term.get_term_number_display }}
+                    </td>
+                    <td>
+                        {{ fs.term.academic_year }}
+                    </td>
+                    <td>
+                        <strong>GH₵ {{ fs.total_amount }}</strong>
+                    </td>
+                    <td>
+                        {% if fs.is_active %}
+                            <span class="badge bg-success">
+                                <i class="bi bi-check-circle me-1"></i>
+                                Active
+                            </span>
+                        {% else %}
+                            <span class="badge bg-secondary">
+                                Inactive
+                            </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr class="breakdown-row">
+                    <td colspan="5" class="small text-muted">
+                        Breakdown:
+                        {% if fs.school_fees %}
+                            School Fees: {{ fs.school_fees }} |
+                        {% endif %}
+                        {% if fs.canteen_amount %}
+                            Feeding: {{ fs.canteen_amount }} |
+                        {% endif %}
+                        {% if fs.boarding_fee %}
+                            Boarding: {{ fs.boarding_fee }} |
+                        {% endif %}
+                        {% if fs.hostel_fee %}
+                            Hostel: {{ fs.hostel_fee }} |
+                        {% endif %}
+                        {% if fs.development_fee %}
+                            Development: {{ fs.development_fee }} |
+                        {% endif %}
+                        {% if fs.pta_dues %}
+                            PTA Dues: {{ fs.pta_dues }} |
+                        {% endif %}
+                        {% if fs.computer_levy %}
+                            Computer Fee: {{ fs.computer_levy }} |
+                        {% endif %}
+                        {% if fs.exam_fees %}
+                            Exam Fees: {{ fs.exam_fees }} |
+                        {% endif %}
+                        {% if fs.other_fees %}
+                            Other: {{ fs.other_fees }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-    {% endif %}
+</div>
+{% else %}
+<div class="description-text">
+    <i class="bi bi-wallet2 d-block mb-2 fs-3"></i>
+    No fee structures created yet.
+</div>
+{% endif %}
 </div>
 
 {% endblock %}

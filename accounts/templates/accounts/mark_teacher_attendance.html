@@ -1,358 +1,467 @@
-{% extends "accounts/dashboard_base.html" %}
+{% extends 'accounts/dashboard_base.html' %}
 
 {% block content %}
 
 <style>
+/* =========================================================
+   TEACHER ATTENDANCE — MODERN UI
+========================================================= */
 .teacher-attendance-wrapper{
-    padding:20px;
+    padding:24px 20px 40px;
+    max-width:1400px;
+    margin:0 auto;
 }
-
+/* PAGE HEADER */
 .page-header{
-    background:linear-gradient(135deg,#1e3a8a,#2563eb);
-    color:white;
-    padding:25px;
+    background:#ffffff;
+    border:1px solid #e5e7eb;
+    color:#111827;
+    padding:24px 26px;
     border-radius:20px;
-    margin-bottom:25px;
-    box-shadow:0 10px 25px rgba(0,0,0,.12);
+    margin-bottom:20px;
+    box-shadow:0 6px 20px rgba(15,23,42,.06);
 }
-
 .page-header h3{
     margin:0;
+    font-size:24px;
     font-weight:800;
+    letter-spacing:-.3px;
+    display:flex;
+    align-items:center;
+    gap:10px;
 }
-
+.page-header h3 i{
+    width:44px;
+    height:44px;
+    border-radius:13px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    background:#eff6ff;
+    color:#2563eb;
+    font-size:21px;
+}
 .page-header p{
-    margin-top:8px;
-    opacity:.85;
+    margin:10px 0 0;
+    color:#64748b;
+    font-size:13px;
 }
-
+/* MAIN CARD */
 .attendance-card{
-    background:white;
+    background:#ffffff;
+    border:1px solid #e5e7eb;
     border-radius:20px;
-    padding:20px;
-    box-shadow:0 8px 25px rgba(0,0,0,.08);
+    padding:22px;
+    box-shadow:0 6px 22px rgba(15,23,42,.06);
 }
-
-
+/* DATE / SAVE AREA */
 .date-box{
     display:flex;
     justify-content:space-between;
-    align-items:center;
-    margin-bottom:20px;
+    align-items:flex-end;
+    margin-bottom:22px;
+    padding:16px;
+    background:#f8fafc;
+    border:1px solid #e8edf3;
+    border-radius:15px;
     flex-wrap:wrap;
-    gap:15px;
+    gap:16px;
 }
-
-
+.date-box > div{
+    min-width:220px;
+}
+.date-box label{
+    display:block;
+    margin-bottom:7px;
+    color:#374151;
+    font-size:13px;
+}
+.date-box input{
+    height:44px;
+    background:#fff;
+    border:1px solid #dbe2ea;
+}
+/* SAVE BUTTON */
+.save-btn{
+    background:#2563eb;
+    border:0;
+    color:#fff;
+    min-height:44px;
+    padding:0 25px;
+    border-radius:11px;
+    font-weight:700;
+    font-size:13px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    cursor:pointer;
+    transition:.2s ease;
+    box-shadow:0 5px 14px rgba(37,99,235,.18);
+}
+.save-btn:hover{
+    background:#1d4ed8;
+    transform:translateY(-1px);
+    box-shadow:0 8px 18px rgba(37,99,235,.24);
+}
+/* TABLE */
+.table-responsive{
+    border:1px solid #e5e7eb;
+    border-radius:15px;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+}
+.table{
+    margin:0;
+    min-width:760px;
+    vertical-align:middle;
+}
+.table thead th{
+    background:#f8fafc;
+    color:#475569;
+    border-bottom:1px solid #e2e8f0;
+    border-top:0;
+    padding:13px 15px;
+    font-size:11px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    white-space:nowrap;
+}
+.table tbody td{
+    padding:13px 15px;
+    border-color:#eef2f7;
+    vertical-align:middle;
+}
+.table tbody tr{
+    transition:.18s ease;
+}
+.table tbody tr:hover{
+    background:#f8fafc;
+}
+/* TEACHER */
 .teacher-row{
     display:flex;
     align-items:center;
-    gap:15px;
+    gap:12px;
+    min-width:220px;
 }
-
-.teacher-photo{
-    width:55px;
-    height:55px;
-    border-radius:50%;
-    object-fit:cover;
-    border:3px solid #e5e7eb;
-}
-
+.teacher-photo,
 .avatar{
-    width:55px;
-    height:55px;
-    border-radius:50%;
-    background:#2563eb;
-    color:white;
+    width:48px;
+    height:48px;
+    border-radius:14px;
+    flex-shrink:0;
+}
+.teacher-photo{
+    object-fit:cover;
+    border:2px solid #e5e7eb;
+}
+.avatar{
+    background:#eff6ff;
+    color:#2563eb;
     display:flex;
     align-items:center;
     justify-content:center;
     font-weight:800;
-    font-size:18px;
+    font-size:15px;
+    border:1px solid #dbeafe;
 }
-
-
 .teacher-name{
     font-weight:700;
     color:#111827;
+    font-size:13px;
+    white-space:nowrap;
 }
-
 .staff-id{
-    font-size:12px;
+    margin-top:3px;
+    font-size:11px;
+    color:#94a3b8;
+}
+/* FORM CONTROLS */
+.status-select,
+.form-control{
+    height:42px;
+    border-radius:10px;
+    border:1px solid #dbe2ea;
+    font-size:13px;
+    color:#374151;
+    background:#fff;
+    box-shadow:none;
+}
+.status-select{
+    min-width:145px;
+}
+.status-select:focus,
+.form-control:focus{
+    border-color:#2563eb;
+    box-shadow:0 0 0 3px rgba(37,99,235,.10);
+}
+.form-control::placeholder{
+    color:#a1aab8;
+}
+/* EMPTY STATE */
+.table tbody td.text-center{
+    padding:45px 20px;
     color:#64748b;
 }
-
-
-.table{
-    vertical-align:middle;
-}
-
-.table thead th{
-    background:#111827;
-    color:white;
-    border:none;
-    font-size:13px;
-}
-
-
-.table tbody tr{
-    transition:.2s;
-}
-
-.table tbody tr:hover{
-    background:#f8fafc;
-}
-
-
-.status-select{
-    border-radius:12px;
-    padding:8px;
-    border:1px solid #d1d5db;
-}
-
-
-.form-control{
-    border-radius:12px;
-}
-
-
-.save-btn{
-    background:linear-gradient(135deg,#2563eb,#1e40af);
-    border:none;
-    color:white;
-    padding:12px 35px;
-    border-radius:40px;
-    font-weight:700;
-    box-shadow:0 8px 20px rgba(37,99,235,.3);
-}
-
-
+/* MOBILE */
 @media(max-width:768px){
-
-.table-responsive{
-    overflow-x:auto;
+    .teacher-attendance-wrapper{
+        padding:15px 10px 30px;
+    }
+    .page-header{
+        padding:20px;
+        border-radius:17px;
+        margin-bottom:15px;
+    }
+    .page-header h3{
+        font-size:20px;
+    }
+    .page-header h3 i{
+        width:40px;
+        height:40px;
+        border-radius:11px;
+        font-size:18px;
+    }
+    .page-header p{
+        font-size:12px;
+        line-height:1.5;
+    }
+    .attendance-card{
+        padding:12px;
+        border-radius:17px;
+    }
+    .date-box{
+        padding:13px;
+        border-radius:13px;
+        align-items:stretch;
+    }
+    .date-box > div{
+        width:100%;
+        min-width:0;
+    }
+    .date-box input{
+        width:100%;
+    }
+    .save-btn{
+        width:100%;
+        min-height:44px;
+    }
+    .table-responsive{
+        border-radius:12px;
+    }
+    .table{
+        min-width:720px;
+    }
+    .table thead th{
+        padding:11px 12px;
+        font-size:10px;
+    }
+    .table tbody td{
+        padding:11px 12px;
+    }
+    .teacher-row{
+        min-width:200px;
+    }
+    .teacher-photo,
+    .avatar{
+        width:42px;
+        height:42px;
+        border-radius:12px;
+    }
+    .teacher-name{
+        font-size:12px;
+    }
+    .staff-id{
+        font-size:10px;
+    }
 }
-
-.teacher-row{
-    min-width:200px;
+/* VERY SMALL PHONES */
+@media(max-width:400px){
+    .teacher-attendance-wrapper{
+        padding-left:7px;
+        padding-right:7px;
+    }
+    .page-header{
+        padding:17px;
+    }
+    .page-header h3{
+        font-size:18px;
+    }
+    .attendance-card{
+        padding:9px;
+    }
 }
-
-}
-
 </style>
-
-
 <div class="teacher-attendance-wrapper">
-
-
+<!-- PAGE HEADER -->
 <div class="page-header">
-
-<h3>
-<i class="bi bi-person-check"></i>
-Teacher Attendance
-</h3>
-
-<p>
-{{ school.name }} |
-Date: {{ attendance_date|date:"d M Y" }}
-</p>
-
+    <h3>
+        <i class="bi bi-person-check"></i>
+        Teacher Attendance
+    </h3>
+    <p>
+        {{ school.name }}
+        <span class="mx-1">•</span>
+        Date: {{ attendance_date|date:"d M Y" }}
+    </p>
 </div>
-
-
-
+<!-- ATTENDANCE CARD -->
 <div class="attendance-card">
-
-
-<form method="POST" autocomplete="off">
-{% csrf_token %}
-
-
-<div class="date-box">
-
-<div>
-<label class="fw-bold">
-Attendance Date
-</label>
-
-<input 
-type="date"
-name="attendance_date"
-class="form-control"
-value="{{ attendance_date|date:'Y-m-d' }}"
->
-
+    <form method="POST" autocomplete="off">
+        {% csrf_token %}
+        <!-- DATE + SAVE -->
+        <div class="date-box">
+            <div>
+                <label class="fw-bold">
+                    Attendance Date
+                </label>
+                <input
+                    type="date"
+                    name="attendance_date"
+                    class="form-control"
+                    value="{{ attendance_date|date:'Y-m-d' }}"
+                >
+            </div>
+            <button
+                type="submit"
+                class="save-btn"
+            >
+                <i class="bi bi-save"></i>
+                Save Attendance
+            </button>
+        </div>
+        <!-- TEACHER TABLE -->
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>
+                            Teacher
+                        </th>
+                        <th>
+                            Status
+                        </th>
+                        <th>
+                            Time In
+                        </th>
+                        <th>
+                            Note
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for teacher in teachers %}
+                    <tr>
+                        <!-- TEACHER -->
+                        <td>
+                            <div class="teacher-row">
+                                {% if teacher.photo %}
+                                <img
+                                    src="{{ teacher.photo.url }}"
+                                    class="teacher-photo"
+                                    alt="{{ teacher.get_full_name }}"
+                                >
+                                {% else %}
+                                <div class="avatar">
+                                    {{ teacher.first_name|slice:":1"|upper }}
+                                    {{ teacher.last_name|slice:":1"|upper }}
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <div class="teacher-name">
+                                        {{ teacher.get_full_name }}
+                                    </div>
+                                    <div class="staff-id">
+                                        {{ teacher.staff_id }}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <!-- STATUS -->
+                        <td>
+                            <select
+                                name="status_{{ teacher.id }}"
+                                class="status-select form-select"
+                            >
+                                <option value="">
+                                    -- Select Status --
+                                </option>
+                                <option
+                                    value="P"
+                                    {% if teacher.today_attendance.status == "P" %}selected{% endif %}
+                                >
+                                    Present
+                                </option>
+                                <option
+                                    value="L"
+                                    {% if teacher.today_attendance.status == "L" %}selected{% endif %}
+                                >
+                                    Late
+                                </option>
+                                <option
+                                    value="A"
+                                    {% if teacher.today_attendance.status == "A" %}selected{% endif %}
+                                >
+                                    Absent
+                                </option>
+                                <option
+                                    value="LV"
+                                    {% if teacher.today_attendance.status == "LV" %}selected{% endif %}
+                                >
+                                    Leave
+                                </option>
+                                <option
+                                    value="S"
+                                    {% if teacher.today_attendance.status == "S" %}selected{% endif %}
+                                >
+                                    Sick
+                                </option>
+                                <option
+                                    value="E"
+                                    {% if teacher.today_attendance.status == "E" %}selected{% endif %}
+                                >
+                                    Excused
+                                </option>
+                            </select>
+                        </td>
+                        <!-- TIME IN -->
+                        <td>
+                            <input
+                                type="time"
+                                name="time_in_{{ teacher.id }}"
+                                class="form-control"
+                                value="{{ teacher.today_attendance.time_in|time:'H:i' }}"
+                            >
+                        </td>
+                        <!-- NOTE -->
+                        <td>
+                            <input
+                                type="text"
+                                name="note_{{ teacher.id }}"
+                                class="form-control"
+                                placeholder="Optional note"
+                                value="{{ teacher.today_attendance.note }}"
+                            >
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td
+                            colspan="4"
+                            class="text-center"
+                        >
+                            <i class="bi bi-people fs-3 d-block mb-2"></i>
+                            No teachers found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </form>
 </div>
-
-
-<button class="save-btn">
-<i class="bi bi-save"></i>
-Save Attendance
-</button>
-
-
 </div>
-
-
-
-<div class="table-responsive">
-
-<table class="table">
-
-<thead>
-
-<tr>
-<th>Teacher</th>
-<th>Status</th>
-<th>Time In</th>
-<th>Note</th>
-</tr>
-
-</thead>
-
-
-<tbody>
-
-
-{% for teacher in teachers %}
-
-<tr>
-
-<td>
-
-<div class="teacher-row">
-
-
-{% if teacher.photo %}
-
-<img 
-src="{{ teacher.photo.url }}"
-class="teacher-photo"
->
-
-{% else %}
-
-<div class="avatar">
-{{ teacher.first_name|slice:":1"|upper }}
-{{ teacher.last_name|slice:":1"|upper }}
-</div>
-
-{% endif %}
-
-
-<div>
-
-<div class="teacher-name">
-{{ teacher.get_full_name }}
-</div>
-
-<div class="staff-id">
-{{ teacher.staff_id }}
-</div>
-
-</div>
-
-
-</div>
-
-</td>
-
-
-
-<td>
-
-<select 
-name="status_{{ teacher.id }}"
-class="status-select form-select"
->
-
-
-<option value="">-- Select Status --</option>
-
-<option value="P">
-Present
-</option>
-
-<option value="L">
-Late
-</option>
-
-<option value="A">
-Absent
-</option>
-
-<option value="LV">
-Leave
-</option>
-
-<option value="S">
-Sick
-</option>
-<option value="E">
-Excused
-</option>
-
-
-
-</select>
-
-
-</td>
-
-
-
-<td>
-
-<input 
-type="time"
-name="time_in_{{ teacher.id }}"
-class="form-control"
-value="{{ teacher.today_attendance.time_in|time:'H:i' }}"
->
-
-</td>
-<td>
-
-<input 
-type="text"
-name="note_{{ teacher.id }}"
-class="form-control"
-placeholder="Optional note"
-value="{{ teacher.today_attendance.note }}"
->
-
-</td>
-
-
-</tr>
-
-
-{% empty %}
-
-<tr>
-<td colspan="5" class="text-center">
-No teachers found.
-</td>
-</tr>
-
-{% endfor %}
-
-
-</tbody>
-
-
-</table>
-
-</div>
-
-
-</form>
-
-
-</div>
-
-
-</div>
-
 
 {% endblock %}
