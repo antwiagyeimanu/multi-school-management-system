@@ -2,7 +2,9 @@
 <html>
 <head>
 <meta charset="UTF-8">
+
 <style>
+
 @page{
     size:A4 landscape;
     margin:8mm;
@@ -15,9 +17,11 @@
 }
 
 body{
-    font-family:Inter,Segoe UI,Arial,sans-serif;
+    font-family:"Inter","Segoe UI",Arial,sans-serif;
     background:#f4f7fb;
     color:#1f2937;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
 }
 
 .wrap{
@@ -31,9 +35,13 @@ body{
     overflow:hidden;
 }
 
+/* =========================
+   WATERMARK — UNCHANGED
+========================= */
+
 .watermark{
     position:fixed;
-    top:50%;
+    top:60%;
     left:50%;
     transform:translate(-50%,-50%) rotate(-28deg);
     font-size:90px;
@@ -43,6 +51,10 @@ body{
     z-index:0;
     user-select:none;
 }
+
+/* =========================
+   HERO HEADER — KEEP
+========================= */
 
 .header{
     display:flex;
@@ -58,8 +70,8 @@ body{
 }
 
 .logo{
-    width:120px;
-    height:120px;
+    width:140px;
+    height:140px;
     object-fit:contain;
     background:#fff;
     border-radius:18px;
@@ -98,77 +110,169 @@ body{
     box-shadow:0 4px 15px rgba(0,0,0,.15);
 }
 
+/* =========================
+   REPORT FILTER INFO
+========================= */
+
+.report-info{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:14px;
+    margin:18px auto 20px;
+    position:relative;
+    z-index:2;
+    flex-wrap:wrap;
+}
+
+.report-info > div{
+    min-width:155px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:9px 16px;
+    border-radius:30px;
+    background:linear-gradient(135deg,#f8fafc,#ffffff);
+    border:1px solid #e2e8f0;
+    box-shadow:0 4px 12px rgba(15,23,42,.06);
+    font-size:11px;
+}
+
+.report-info span{
+    color:#64748b;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+}
+
+.report-info strong{
+    color:#1e3a8a;
+    font-weight:800;
+}
+
+/* =========================
+   STATISTICS CARDS
+========================= */
+
 .cards{
     display:grid;
     grid-template-columns:repeat(4,1fr);
-    gap:18px;
-    margin:22px 0;
+    gap:16px;
+    margin:0 0 22px;
     position:relative;
     z-index:2;
 }
 
 .card{
-    background:linear-gradient(135deg,#ffffff,#f8fafc);
+    position:relative;
+    overflow:hidden;
     border:none;
     border-radius:18px;
-    padding:20px;
+    padding:18px 16px;
     text-align:center;
-    box-shadow:0 8px 20px rgba(0,0,0,.08);
-    transition:.3s;
+    background:#fff;
+    box-shadow:0 8px 22px rgba(15,23,42,.08);
+    border:1px solid #edf1f7;
 }
 
-.card:hover{
-    transform:translateY(-4px);
+.card::before{
+    content:"";
+    position:absolute;
+    left:0;
+    top:0;
+    width:5px;
+    height:100%;
+    background:linear-gradient(180deg,#2563eb,#1e40af);
+}
+
+.card:nth-child(2)::before{
+    background:linear-gradient(180deg,#10b981,#059669);
+}
+
+.card:nth-child(3)::before{
+    background:linear-gradient(180deg,#f59e0b,#ea580c);
+}
+
+.card:nth-child(4)::before{
+    background:linear-gradient(180deg,#8b5cf6,#6d28d9);
 }
 
 .card small{
     display:block;
     color:#64748b;
-    font-size:12px;
-    margin-bottom:10px;
+    font-size:14px;
+    margin-bottom:7px;
     text-transform:uppercase;
-    font-weight:700;
-    letter-spacing:.5px;
+    font-weight:800;
+    letter-spacing:.8px;
 }
 
 .card b{
-    font-size:30px !important;
+    display:block;
+    font-size:26px !important;
+    line-height:1;
     color:#1e3a8a;
+    font-weight:900;
 }
 
+.card:nth-child(2) b{
+    color:#059669;
+}
+
+.card:nth-child(3) b{
+    color:#ea580c;
+}
+
+.card:nth-child(4) b{
+    color:#6d28d9;
+}
+
+/* =========================
+   CLASS TITLE
+========================= */
+
 .class-title{
-    margin-top:24px;
-    margin-bottom:10px;
-    padding:12px 18px;
+    margin-top:18px;
+    margin-bottom:8px;
+    padding:10px 16px;
     background:linear-gradient(90deg,#2563eb,#3b82f6);
     color:#fff;
-    border-radius:12px;
-    font-size:15px;
+    border-radius:11px;
+    font-size:13px;
     font-weight:800;
-    letter-spacing:.5px;
+    letter-spacing:.4px;
     position:relative;
     z-index:2;
+    box-shadow:0 5px 14px rgba(37,99,235,.18);
 }
+
+/* =========================
+   TABLE
+========================= */
 
 table{
     width:100%;
     border-collapse:separate;
     border-spacing:0;
     overflow:hidden;
-    border-radius:16px;
+    border-radius:13px;
     background:#fff;
-    box-shadow:0 8px 20px rgba(0,0,0,.06);
-    margin-bottom:18px;
+    box-shadow:0 7px 18px rgba(15,23,42,.06);
+    margin-bottom:15px;
+    position:relative;
+    z-index:2;
 }
 
 th{
     background:linear-gradient(135deg,#0f172a,#1e3a8a);
     color:#fff;
-    padding:13px 10px;
-    font-size:11px;
+    padding:12px 10px;
+    font-size:14px;
     text-transform:uppercase;
-    letter-spacing:.5px;
+    letter-spacing:.7px;
     text-align:center;
+    font-weight:800;
 }
 
 th:first-child{
@@ -178,60 +282,84 @@ th:first-child{
 
 td{
     padding:12px 10px;
-    border-bottom:1px solid #e5e7eb;
-    font-size:12px;
+    border-bottom:1px solid #e8edf3;
+    font-size:14px;
     text-align:center;
+    color:#334155;
+    font-weight:500;
 }
 
 td:first-child{
     text-align:left;
-    font-weight:600;
+    font-weight:700;
+    color:#1e293b;
 }
 
-tbody tr:nth-child(even),
 table tr:nth-child(even){
     background:#f8fafc;
+}
+
+table tr:last-child td{
+    border-bottom:none;
 }
 
 table tr:hover{
     background:#eef4ff;
 }
 
+/* =========================
+   FOOTER
+========================= */
+
 .footer{
-    margin-top:24px;
+    margin-top:20px;
     display:flex;
     justify-content:space-between;
     align-items:center;
-    padding-top:14px;
+    padding-top:12px;
     border-top:2px dashed #cbd5e1;
-    font-size:11px;
+    font-size:10px;
     color:#475569;
     position:relative;
     z-index:2;
 }
 
+.footer span{
+    min-width:180px;
+}
+
+.footer span:nth-child(2){
+    text-align:center;
+}
+
+.footer span:last-child{
+    text-align:right;
+}
+
+/* =========================
+   PRINT BUTTON
+========================= */
+
 .no-print{
     text-align:center;
-    margin-top:25px;
+    margin-top:18px;
 }
 
 .no-print button{
-    background:linear-gradient(135deg,#1e3a8a,#2563eb);
+    background:linear-gradient(135deg,#0f172a,#2563eb);
     color:#fff;
     border:none;
-    padding:13px 38px;
-    border-radius:40px;
-    font-size:14px;
-    font-weight:700;
+    padding:10px 30px;
+    border-radius:30px;
+    font-size:12px;
+    font-weight:800;
     cursor:pointer;
-    box-shadow:0 8px 20px rgba(37,99,235,.35);
-    transition:.3s;
+    box-shadow:0 8px 20px rgba(37,99,235,.25);
 }
 
-.no-print button:hover{
-    transform:translateY(-2px);
-    box-shadow:0 12px 25px rgba(37,99,235,.45);
-}
+/* =========================
+   PRINT
+========================= */
 
 @media print{
 
@@ -240,9 +368,14 @@ table tr:hover{
     }
 
     .wrap{
+        width:100%;
         box-shadow:none;
         border-radius:0;
         padding:0;
+    }
+
+    .header{
+        box-shadow:none;
     }
 
     .card,
@@ -250,78 +383,277 @@ table tr:hover{
         box-shadow:none;
     }
 
+    .report-info{
+        margin-top:12px;
+        margin-bottom:14px;
+    }
+
+    .cards{
+        margin-bottom:16px;
+    }
+
+    .card{
+        padding:14px 12px;
+    }
+
+    .class-title{
+        box-shadow:none;
+    }
+
+    table{
+        margin-bottom:12px;
+    }
+
+    th{
+        padding:8px 8px;
+    }
+
+    td{
+        padding:7px 8px;
+    }
+
+    .footer{
+        margin-top:15px;
+    }
+
     .no-print{
-        display:none;
+        display:none !important;
     }
 }
+
 </style>
 </head>
+
 <body>
+
 <div class="wrap">
-  <div class="watermark">{{ school.name|upper }}</div>
 
-  <div class="header">
-    {% if school.logo %}
-      <img class="logo" src="{{ school.logo.url }}">
+    <!-- WATERMARK — UNCHANGED -->
+    <div class="watermark">{{ school.name|upper }}</div>
+
+
+    <!-- HERO HEADER — UNCHANGED -->
+    <div class="header">
+
+        {% if school.logo %}
+
+            <img class="logo" src="{{ school.logo.url }}">
+
+        {% else %}
+
+            <div class="logo"
+                 style="display:flex; align-items:center; justify-content:center; font-weight:900;">
+                {{ school.name|slice:":2"|upper }}
+            </div>
+
+        {% endif %}
+
+
+        <div class="mid">
+
+            <h2>{{ school.name|upper }}</h2>
+
+            <p>
+                {{ school.address|default:"" }}
+                {% if school.gps_address %}
+                    | {{ school.gps_address }}
+                {% endif %}
+            </p>
+
+            <p>
+                Tel: {{ school.phone|default:"" }}
+                {% if school.email %}
+                    | {{ school.email }}
+                {% endif %}
+            </p>
+
+            <div class="badge">
+                STUDENT ATTENDANCE REPORT -
+                {% if selected_class_obj %}
+                    {{ selected_class_obj.name|upper }}
+                {% else %}
+                    ALL CLASSES
+                {% endif %}
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- CLASS / TERM / YEAR -->
+    <div class="report-info">
+
+        <div>
+            <span>Class</span>
+            <strong>
+                {{ class_name|default:"All Classes" }}
+            </strong>
+        </div>
+
+        <div>
+            <span>Term</span>
+            <strong>
+                {{ term_name|default:"All Terms" }}
+            </strong>
+        </div>
+
+        <div>
+            <span>Academic Year</span>
+            <strong>
+                {{ year_name|default:"All Years" }}
+            </strong>
+        </div>
+
+    </div>
+
+
+    <!-- STATISTICS -->
+    <div class="cards">
+
+        <div class="card">
+            <small>Total Present</small>
+            <b>{{ total_present }}</b>
+        </div>
+
+        <div class="card">
+            <small>Total Absent</small>
+            <b>{{ total_absent }}</b>
+        </div>
+
+        <div class="card">
+            <small>Total Records</small>
+            <b>{{ total_present|add:total_absent }}</b>
+        </div>
+
+        <div class="card">
+            <small>Attendance Rate</small>
+            <b>{{ attendance_rate }}%</b>
+        </div>
+
+    </div>
+
+
+    <!-- SELECTED CLASS -->
+    {% if selected_class %}
+
+        <table>
+
+            <tr>
+                <th>Date</th>
+                <th>Present</th>
+                <th>Absent</th>
+                <th>Total</th>
+            </tr>
+
+            {% for day in merged_days %}
+
+            <tr>
+
+                <td>
+                    {{ day.date|date:"d M Y" }}
+                </td>
+
+                <td>
+                    {{ day.present_count }}
+                </td>
+
+                <td>
+                    {{ day.absent_count }}
+                </td>
+
+                <td>
+                    {{ day.total }}
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </table>
+
+
+    <!-- ALL CLASSES -->
     {% else %}
-      <div class="logo" style="display:flex; align-items:center; justify-content:center; font-weight:900;">{{ school.name|slice:":2"|upper }}</div>
-    {% endif %}
-    <div class="mid">
-      <h2>{{ school.name|upper }}</h2>
-      <p>{{ school.address|default:"" }} {% if school.gps_address %}| {{ school.gps_address }}{% endif %}</p>
-      <p>Tel: {{ school.phone|default:"" }} {% if school.email %}| {{ school.email }}{% endif %}</p>
-      <div class="badge">STUDENT ATTENDANCE REPORT - {% if selected_class_obj %}{{ selected_class_obj.name|upper }}{% else %}ALL CLASSES{% endif %}</div>
-    </div>
-    <div style="text-align:right; font-size:10px;">
-      <b>{% now "d M Y" %}</b><br>Term: All Term
-    </div>
-  </div>
 
-  <div class="cards">
-    <div class="card"><small>Total Present</small><br><b style="font-size:18px;">{{ total_present }}</b></div>
-    <div class="card"><small>Total Absent</small><br><b style="font-size:18px;">{{ total_absent }}</b></div>
-    <div class="card"><small>Total Records</small><br><b style="font-size:18px;">{{ total_present|add:total_absent }}</b></div>
-    <div class="card"><small>Attendance Rate</small><br><b style="font-size:18px;">{{ attendance_rate }}%</b></div>
-  </div>
+        {% for group in grouped_by_class %}
 
-  {% if selected_class %}
-    <table>
-      <tr><th>Date</th><th>Present</th><th>Absent</th><th>Total</th></tr>
-      {% for day in merged_days %}
-      <tr>
-        <td>{{ day.date|date:"d M Y" }}</td>
+            <div class="class-title">
+                {{ group.klass.name }} - {{ group.total_days }} Days
+            </div>
 
-        <td>{{ day.present_count }}</td>
-        <td>{{ day.absent_count }}</td>
-        <td>{{ day.total }}</td>
-      </tr>
-      {% endfor %}
-    </table>
-  {% else %}
-    {% for group in grouped_by_class %}
-      <div class="class-title">{{ group.klass.name }} - {{ group.total_days }} Days</div>
-      <table>
-        <tr><th>Date</th><th>Present</th><th>Absent</th><th>Total</th></tr>
-        {% for day in group.days %}
-        <tr>
-          <td>{{ day.date|date:"d M Y" }}</td>
-          <td>{{ day.present_count }}</td>
-          <td>{{ day.absent_count }}</td>
-          <td>{{ day.total }}</td>
-        </tr>
+            <table>
+
+                <tr>
+                    <th>Date</th>
+                    <th>Present</th>
+                    <th>Absent</th>
+                    <th>Total</th>
+                </tr>
+
+                {% for day in group.days %}
+
+                <tr>
+
+                    <td>
+                        {{ day.date|date:"d M Y" }}
+                    </td>
+
+                    <td>
+                        {{ day.present_count }}
+                    </td>
+
+                    <td>
+                        {{ day.absent_count }}
+                    </td>
+
+                    <td>
+                        {{ day.total }}
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </table>
+
         {% endfor %}
-      </table>
-    {% endfor %}
-  {% endif %}
 
-<div class="footer">
-    <span><strong>Authorized Signature</strong></span>
-    <span><strong>{% now "d M Y h:i A" %}</strong></span>
-    <span><strong>School Stamp</strong></span>
+    {% endif %}
+
+
+    <!-- FOOTER -->
+
+    <div class="footer">
+
+        <span>
+            <strong>Authorized Signature</strong>
+        </span>
+
+        <span>
+            <strong>
+                {% now "d M Y h:i A" %}
+            </strong>
+        </span>
+
+        <span>
+            <strong>School Stamp</strong>
+        </span>
+
+    </div>
+
+
+    <!-- PRINT -->
+
+    <div class="no-print">
+
+        <button onclick="window.print()">
+            Print Now
+        </button>
+
+    </div>
+
 </div>
-  <div class="no-print" style="text-align:center; margin:18px;">
-    <button onclick="window.print()" style="background:#000; color:#fff; padding:10px 28px; border:none; border-radius:20px; font-weight:800;">Print Now</button>
-  </div>
-</div>
+
 </body>
 </html>

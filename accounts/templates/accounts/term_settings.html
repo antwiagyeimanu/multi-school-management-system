@@ -1,288 +1,759 @@
-{% extends "accounts/dashboard_base.html" %}
+{% extends 'accounts/dashboard_base.html' %}
 {% block content %}
 
 <style>
-.page-title {
-    font-size: 28px;
-    font-weight: 700;
-    margin-bottom: 20px;
-    color: #2c3e50;
+/* =========================================================
+   PREMIUM TERM SETTINGS
+   UI ONLY — NO DJANGO LOGIC / VARIABLES CHANGED
+========================================================= */
+.term-settings-wrapper{
+    max-width:1450px;
+    margin:auto;
+    padding:28px;
 }
-.settings-card {
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-    padding: 25px;
-    background: #ffffff;
-    margin-bottom: 20px;
+/* =========================================================
+   HERO
+========================================================= */
+.term-hero{
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:25px;
+    padding:30px 34px;
+    margin-bottom:26px;
+    border-radius:26px;
+    color:#fff;
+    background:
+        radial-gradient(circle at 85% 15%,rgba(255,255,255,.15),transparent 30%),
+        radial-gradient(circle at 10% 100%,rgba(96,165,250,.16),transparent 35%),
+        linear-gradient(135deg,#0f172a,#1e3a8a 55%,#2563eb);
+    box-shadow:0 18px 45px rgba(15,23,42,.18);
 }
-.section-title {
-    font-size: 20px;
-    font-weight: 600;
-    margin-bottom: 15px;
-    color: #34495e;
+.term-hero::before{
+    content:"";
+    position:absolute;
+    width:230px;
+    height:230px;
+    border-radius:50%;
+    right:-80px;
+    top:-100px;
+    background:rgba(255,255,255,.055);
 }
-.form-control, .form-select {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 15px;
-    transition: all 0.3s;
+.term-hero::after{
+    content:"";
+    position:absolute;
+    width:150px;
+    height:150px;
+    border-radius:50%;
+    left:40%;
+    bottom:-105px;
+    background:rgba(96,165,250,.08);
 }
-.form-control:focus, .form-select:focus {
-    border-color: #3498db;
-    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+.term-hero-content{
+    position:relative;
+    z-index:2;
 }
-.btn-primary {
-    background: #3498db;
-    border: none;
-    padding: 10px 24px;
-    border-radius: 8px;
-    color: white;
-    font-size: 15px;
-    font-weight: 500;
-    transition: all 0.3s;
+.term-hero-icon{
+    width:58px;
+    height:58px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:18px;
+    margin-bottom:14px;
+    background:rgba(255,255,255,.13);
+    border:1px solid rgba(255,255,255,.18);
+    font-size:27px;
 }
-.btn-primary:hover {
-    background: #2980b9;
-    transform: translateY(-1px);
+.term-hero h2{
+    margin:0;
+    font-size:31px;
+    font-weight:850;
+    letter-spacing:-.6px;
 }
-.btn-sm {
-    padding: 5px 12px;
-    font-size: 13px;
+.term-hero p{
+    margin:8px 0 0;
+    color:#dbeafe;
+    font-size:14px;
 }
-.table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
+.term-hero-badge{
+    position:relative;
+    z-index:2;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:12px 18px;
+    border-radius:40px;
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.20);
+    backdrop-filter:blur(12px);
+    font-size:13px;
+    font-weight:750;
 }
-.table th, .table td {
-    padding: 12px 15px;
-    border: 1px solid #e9ecef;
-    text-align: left;
-    vertical-align: middle;
+/* =========================================================
+   CARDS
+========================================================= */
+.term-settings-card{
+    background:#fff;
+    border:1px solid #e7edf5;
+    border-radius:22px;
+    padding:27px;
+    margin-bottom:25px;
+    box-shadow:0 10px 30px rgba(15,23,42,.065);
 }
-.table th {
-    background: #f8f9fa;
-    font-weight: 600;
-    color: #495057;
+.term-section-title{
+    display:flex;
+    align-items:center;
+    gap:11px;
+    margin:0 0 23px;
+    padding-bottom:15px;
+    border-bottom:1px solid #edf1f7;
+    color:#111827;
+    font-size:19px;
+    font-weight:800;
 }
-.table tr:hover {
-    background: #f8f9fa;
+/* =========================================================
+   ACTIVE TERM ALERT
+========================================================= */
+.active-term-alert{
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    gap:15px;
+    padding:17px 20px;
+    margin-bottom:25px;
+    border:1px solid #bbf7d0;
+    border-radius:17px;
+    background:linear-gradient(135deg,#f0fdf4,#ecfdf5);
+    color:#166534;
+    box-shadow:0 7px 20px rgba(22,163,74,.07);
 }
-.alert {
-    padding: 12px 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+.active-term-icon{
+    width:43px;
+    height:43px;
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:13px;
+    background:#dcfce7;
+    font-size:20px;
 }
-.alert-success {
-    background: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
+.active-term-content{
+    line-height:1.7;
+    font-size:13px;
 }
-.alert-error {
-    background: #ffe5e5;
-    border: 1px solid #ffb3b3;
-    color: #b00020;
-    padding: 12px 15px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.active-term-content strong{
+    color:#14532d;
 }
-.alert-error::before {
-    content: "❌";
-    font-size: 16px;
+/* =========================================================
+   FORM
+========================================================= */
+.term-settings-card label{
+    color:#374151;
+    font-size:13px;
+    font-weight:750;
 }
-.badge {
-    padding: 5px 10px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 600;
+.term-settings-card .form-control,
+.term-settings-card .form-select{
+    min-height:50px;
+    width:100%;
+    border:1.5px solid #dce3ed;
+    border-radius:13px;
+    padding:11px 14px;
+    background:#fff;
+    color:#111827;
+    font-size:14px;
+    font-weight:550;
+    transition:.25s ease;
 }
-.badge-success {
-    background: #28a745;
-    color: white;
+.term-settings-card .form-control:hover,
+.term-settings-card .form-select:hover{
+    border-color:#b8c5d8;
 }
-.badge-secondary {
-    background: #6c757d;
-    color: white;
+.term-settings-card .form-control:focus,
+.term-settings-card .form-select:focus{
+    border-color:#4f46e5;
+    outline:none;
+    box-shadow:0 0 0 4px rgba(79,70,229,.10);
 }
-.form-check {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+/* =========================================================
+   ACTIVE CHECKBOX
+========================================================= */
+.active-term-check{
+    padding:15px 17px;
+    border-radius:14px;
+    background:#f8fafc;
+    border:1px solid #edf1f6;
 }
-.form-check-input {
-    width: 18px;
-    height: 18px;
-    margin-top: 0;
+.active-term-check .form-check-input{
+    width:20px;
+    height:20px;
+    cursor:pointer;
 }
-.label{text-align: center;}
+.active-term-check .form-check-input:checked{
+    background-color:#4f46e5;
+    border-color:#4f46e5;
+}
+.active-term-check .form-check-label{
+    color:#374151;
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+}
+/* =========================================================
+   SAVE BUTTON
+========================================================= */
+.term-save-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    min-height:51px;
+    padding:12px 27px;
+    border:none;
+    border-radius:14px;
+    background:linear-gradient(135deg,#2563eb,#4f46e5);
+    color:#fff;
+    font-size:14px;
+    font-weight:750;
+    box-shadow:0 10px 22px rgba(37,99,235,.22);
+    transition:.25s ease;
+}
+.term-save-btn:hover{
+    color:#fff;
+    transform:translateY(-2px);
+    box-shadow:0 15px 28px rgba(37,99,235,.30);
+}
+/* =========================================================
+   TABLE
+========================================================= */
+.term-table-wrapper{
+    overflow-x:auto;
+    border:1px solid #e5eaf1;
+    border-radius:17px;
+}
+.term-table{
+    width:100%;
+    min-width:900px;
+    border-collapse:separate;
+    border-spacing:0;
+    margin:0;
+}
+.term-table thead th{
+    padding:14px 13px;
+    background:linear-gradient(135deg,#0f172a,#1e3a8a);
+    color:#fff;
+    border:none;
+    font-size:11px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.45px;
+    white-space:nowrap;
+}
+.term-table thead th:first-child{
+    border-top-left-radius:15px;
+}
+.term-table thead th:last-child{
+    border-top-right-radius:15px;
+}
+.term-table tbody td{
+    padding:14px 13px;
+    border-bottom:1px solid #edf1f5;
+    color:#374151;
+    font-size:13px;
+    vertical-align:middle;
+    white-space:nowrap;
+}
+.term-table tbody tr{
+    transition:.2s ease;
+}
+.term-table tbody tr:nth-child(even){
+    background:#f8fafc;
+}
+.term-table tbody tr:hover{
+    background:#eef4ff;
+}
+.term-table tbody tr:last-child td{
+    border-bottom:none;
+}
+.term-year{
+    color:#111827;
+    font-weight:800;
+}
+.term-name{
+    color:#374151;
+    font-weight:650;
+}
+/* =========================================================
+   BADGES
+========================================================= */
+.term-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:6px 11px;
+    border-radius:20px;
+    font-size:11px;
+    font-weight:800;
+}
+.term-badge-active{
+    background:#dcfce7;
+    color:#166534;
+    border:1px solid #bbf7d0;
+}
+.term-badge-inactive{
+    background:#f1f5f9;
+    color:#64748b;
+    border:1px solid #e2e8f0;
+}
+/* =========================================================
+   ACTION BUTTONS
+========================================================= */
+.term-edit-btn,
+.term-delete-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+    padding:7px 13px;
+    border:none;
+    border-radius:9px;
+    font-size:12px;
+    font-weight:750;
+    text-decoration:none;
+    transition:.2s ease;
+}
+.term-edit-btn{
+    background:#eef2ff;
+    color:#4338ca;
+}
+.term-edit-btn:hover{
+    background:#e0e7ff;
+    color:#3730a3;
+    transform:translateY(-1px);
+}
+.term-delete-btn{
+    background:#fee2e2;
+    color:#b91c1c;
+}
+.term-delete-btn:hover{
+    background:#fecaca;
+    color:#991b1b;
+    transform:translateY(-1px);
+}
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+.term-empty{
+    padding:45px 20px !important;
+    text-align:center;
+    color:#94a3b8 !important;
+    font-weight:600;
+}
+/* =========================================================
+   ALERT ERROR
+========================================================= */
+.alert-error{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    padding:12px 15px;
+    margin-bottom:18px;
+    border:1px solid #fecaca;
+    border-radius:12px;
+    background:#fef2f2;
+    color:#b91c1c;
+    font-size:13px;
+    font-weight:600;
+}
+/* =========================================================
+   DELETE MODAL
+========================================================= */
+.modal-content{
+    overflow:hidden;
+    border:none;
+    border-radius:20px;
+    box-shadow:0 25px 70px rgba(15,23,42,.25);
+}
+.modal-header.bg-danger{
+    padding:18px 22px;
+    background:linear-gradient(135deg,#991b1b,#dc2626) !important;
+    border:none;
+}
+.modal-title{
+    font-weight:800;
+}
+.modal-body{
+    padding:25px;
+    color:#374151;
+}
+.modal-footer{
+    padding:15px 22px;
+    border-top:1px solid #edf1f5;
+}
+.modal-footer .btn{
+    border-radius:10px;
+    font-weight:700;
+    padding:8px 18px;
+}
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+@media(max-width:992px){
+    .term-settings-wrapper{
+        padding:20px;
+    }
+    .term-hero{
+        padding:25px;
+    }
+    .term-hero h2{
+        font-size:27px;
+    }
+}
+@media(max-width:768px){
+    .term-settings-wrapper{
+        padding:14px;
+    }
+    .term-hero{
+        flex-direction:column;
+        align-items:flex-start;
+        padding:22px;
+        border-radius:20px;
+    }
+    .term-hero h2{
+        font-size:24px;
+    }
+    .term-hero-badge{
+        width:100%;
+        justify-content:center;
+    }
+    .term-settings-card{
+        padding:20px;
+        border-radius:18px;
+    }
+    .active-term-alert{
+        align-items:flex-start;
+    }
+    .term-save-btn{
+        width:100%;
+    }
+}
+@media(max-width:480px){
+    .term-settings-wrapper{
+        padding:10px;
+    }
+    .term-hero{
+        padding:19px;
+    }
+    .term-hero-icon{
+        width:50px;
+        height:50px;
+    }
+    .term-hero h2{
+        font-size:21px;
+    }
+    .term-settings-card{
+        padding:17px;
+    }
+    .active-term-alert{
+        padding:14px;
+    }
+}
 </style>
-
-<div class="container mt-4">
-    <h2 class="page-title">📅 Term Settings</h2>
-
-    {% if active_term %}
-    <div class="alert alert-success">
-        <i>✅</i>
-        <div>
-<strong>Active Term:</strong> {{ active_term.get_term_number_display }} - Academic Year: {{ active_term.academic_year }} |
-            <strong>Max CA:</strong> {{ active_term.ca_total }} | 
-            <strong>Max Exam:</strong> {{ active_term.exam_total }}
+<div class="term-settings-wrapper">
+<!-- =====================================================
+     HERO
+====================================================== -->
+<div class="term-hero">
+    <div class="term-hero-content">
+        <div class="term-hero-icon">
+            📅
         </div>
+        <h2>
+            Term Settings
+        </h2>
+        <p>
+            Create, manage and configure your school's academic terms.
+        </p>
+    </div>
+    <div class="term-hero-badge">
+        🎓 Academic Management
+    </div>
+</div>
+<!-- =====================================================
+     ACTIVE TERM
+====================================================== -->
+{% if active_term %}
+<div class="active-term-alert">
+    <div class="active-term-icon">
+        ✅
+    </div>
+    <div class="active-term-content">
+        <strong>Active Term:</strong>
+        {{ active_term.get_term_number_display }}
+        -
+        Academic Year:
+        <strong>{{ active_term.academic_year }}</strong>
+        &nbsp; | &nbsp;
+<strong>Max SBA:</strong>
+{{ active_term.sba_total }}
+&nbsp; | &nbsp;
+<strong>Max CA:</strong>
+{{ active_term.ca_total }}
+&nbsp; | &nbsp;
+<strong>Max Exam:</strong>
+{{ active_term.exam_total }}
+    </div>
+</div>
+{% endif %}
+<!-- =====================================================
+     CREATE NEW TERM
+====================================================== -->
+<div class="term-settings-card">
+    <h5 class="term-section-title">
+        ➕ Create New Term
+    </h5>
+    {% if form.non_field_errors %}
+    <div class="alert-error" id="error-box">
+        {{ form.non_field_errors }}
     </div>
     {% endif %}
-
-    <div class="settings-card">
-        <h5 class="section-title">Create New Term</h5>
-        {% if form.non_field_errors %}
-        <div class="alert-error" id="error-box">
-            {{ form.non_field_errors }}
-        </div>
-        {% endif %}
-        
-        <form method="POST">
-            {% csrf_token %}
-            <div class="row">
-                
-
-
-<div class="col-md-6 mb-3">
-    <label class="fw-semibold mb-1">Academic Year</label>
-    {{ form.new_academic_year }}
+    <form method="POST">
+        {% csrf_token %}
+        <div class="row g-4">
+            <div class="col-lg-6 col-md-6">
+                <label class="fw-semibold mb-2">
+                    Academic Year
+                </label>
+                {{ form.new_academic_year }}
+            </div>
+            <div class="col-lg-6 col-md-6">
+                <label class="fw-semibold mb-2">
+                    Term
+                </label>
+                {{ form.term_number }}
+            </div>
+            <div class="col-lg-4 col-md-6">
+    <label class="fw-semibold mb-2">
+        Maximum SBA
+    </label>
+    {{ form.sba_total }}
 </div>
-                <div class="col-md-6 mb-3">
-                    <label class="fw-semibold mb-1">Term</label>
-                    {{ form.term_number }}
-                </div>
+            <div class="col-lg-4 col-md-6">
+                <label class="fw-semibold mb-2">
+                    CA Total
+                </label>
+                {{ form.ca_total }}
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <label class="fw-semibold mb-2">
+                    Exam Total
+                </label>
+                {{ form.exam_total }}
+            </div>
+<div class="col-md-4 mb-3">
+    <label class="fw-semibold mb-1">Start Date</label>
+    {{ form.start_date }}
+</div>
 
-                <div class="col-md-6 mb-3">
-                    <label class="fw-semibold mb-1">CA Total</label>
-                    {{ form.ca_total }}
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="fw-semibold mb-1">Exam Total</label>
-                    {{ form.exam_total }}
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="fw-semibold mb-1">Start Date</label>
-                    {{ form.start_date }}
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="fw-semibold mb-1">End Date</label>
-                    {{ form.end_date }}
-                </div>
+<div class="col-md-4 mb-3">
+    <label class="fw-semibold mb-1">End Date</label>
+    {{ form.end_date }}
+</div>
 
-                <div class="col-md-6 mb-3">
-                    <label class="fw-semibold mb-1">Next Term Begins</label>
-                    {{ form.next_term_begins }}
-                </div>
-                <div class="col-md-12 mb-3">
+<div class="col-md-4 mb-3">
+    <label class="fw-semibold mb-1">Next Term Begins</label>
+    {{ form.next_term_begins }}
+</div>
+            <div class="col-12">
+                <div class="active-term-check">
                     <div class="form-check">
                         {{ form.is_active }}
-                        <label class="form-check-label fw-semibold">Set as Active Term</label>
+                        <label
+                            class="form-check-label fw-semibold">
+                            Set as Active Term
+                        </label>
                     </div>
-                    <small class="text-muted">Only one term can be active at a time</small>
+                    <small class="text-muted d-block mt-2">
+                        Only one term can be active at a time.
+                    </small>
                 </div>
             </div>
-            <button type="submit" class="btn btn-primary">💾 Save Term</button>
-        </form>
-    </div>
-
-    <div class="settings-card">
-        <h5 class="section-title">All Terms</h5>
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Academic Year</th>
-                        <th>Term</th>
-                        <th>CA</th>
-                        <th>Exam</th>
-                        <th>Start</th>
-                        <th>End</th>
-                        <th>Active</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for term in terms %}
-                    <tr>
-                        <td><strong>{{ term.academic_year }}</strong></td>
-                        <td>{{ term.get_term_number_display }}</td>
-                        <td>{{ term.ca_total }}</td>
-                        <td>{{ term.exam_total }}</td>
-                        <td>{{ term.start_date|date:"d M Y" }}</td>
-                        <td>{{ term.end_date|date:"d M Y" }}</td>
-                        <td>
-                            {% if term.is_active %}
-                            <span class="badge badge-success">Active</span>
-                            {% else %}
-                            <span class="badge badge-secondary">Inactive</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <a href="{% url 'accounts:edit_term' term.id %}" class="btn btn-primary btn-sm">Edit</a>
-                            <button type="button" class="btn btn-danger btn-sm"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#deleteModal{{ term.id }}">
-                                Delete
-                            </button>
-                        </td>
-                    </tr>
-                    
-                    <!-- Modal -->
-                    <div class="modal fade" id="deleteModal{{ term.id }}" tabindex="-1">
-                      <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                          <div class="modal-header bg-danger text-white">
-                            <h5 class="modal-title">Confirm Delete</h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                          </div>
-                          <div class="modal-body">
-                            <p>Are you sure you want to delete this term?</p>
-                            <!-- CHANGED THIS LINE TOO -->
-                            <p><strong>{{ term.academic_year }} - {{ term.name }}</strong></p>
-                            <p class="text-muted">CA Total: {{ term.ca_total }} | Exam Total: {{ term.exam_total }}</p>
-                          </div>
-                          <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <a href="{% url 'accounts:delete_term' term.id %}" class="btn btn-danger">Delete</a>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    {% empty %}
-                    <tr>
-                        <td colspan="8" class="text-center text-muted py-4">No terms created yet</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
         </div>
+        <button
+            type="submit"
+            class="btn term-save-btn mt-4">
+            💾 Save Term
+        </button>
+    </form>
+</div>
+<!-- =====================================================
+     ALL TERMS
+====================================================== -->
+<div class="term-settings-card">
+    <h5 class="term-section-title">
+        📚 All Terms
+    </h5>
+    <div class="term-table-wrapper">
+        <table class="term-table">
+            <thead>
+                <tr>
+                    <th>Academic Year</th>
+                    <th>Term</th>
+                    <th>SBA</th>
+                    <th>CA</th>
+                    <th>Exam</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Active</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for term in terms %}
+                <tr>
+                    <td>
+                        <strong class="term-year">
+                            {{ term.academic_year }}
+                        </strong>
+                    </td>
+                    <td>
+                        <span class="term-name">
+                            {{ term.get_term_number_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {{ term.sba_total }}
+                    </td>
+                    <td>
+                        {{ term.ca_total }}
+                    </td>
+                    <td>
+                        {{ term.exam_total }}
+                    </td>
+                    <td>
+                        {{ term.start_date|date:"d M Y" }}
+                    </td>
+                    <td>
+                        {{ term.end_date|date:"d M Y" }}
+                    </td>
+                    <td>
+                        {% if term.is_active %}
+                        <span class="term-badge term-badge-active">
+                            ● Active
+                        </span>
+                        {% else %}
+                        <span class="term-badge term-badge-inactive">
+                            ● Inactive
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="d-flex gap-2">
+                            <a
+                                href="{% url 'accounts:edit_term' term.id %}"
+                                class="term-edit-btn">
+                                ✏️ Edit
+                            </a>
+                            <button
+                                type="button"
+                                class="term-delete-btn"
+                                data-bs-toggle="modal"
+                                data-bs-target="#deleteModal{{ term.id }}">
+                                🗑️ Delete
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <!-- =================================================
+                     DELETE MODAL
+                ================================================== -->
+                <div
+                    class="modal fade"
+                    id="deleteModal{{ term.id }}"
+                    tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header bg-danger text-white">
+                                <h5 class="modal-title">
+                                    ⚠️ Confirm Delete
+                                </h5>
+                                <button
+                                    type="button"
+                                    class="btn-close btn-close-white"
+                                    data-bs-dismiss="modal">
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <p>
+                                    Are you sure you want to delete this term?
+                                </p>
+                                <p>
+                                    <strong>
+                                        {{ term.academic_year }} - {{ term.name }}
+                                    </strong>
+                                </p>
+                                <p class="text-muted">
+                                    CA Total:
+                                    {{ term.ca_total }}
+                                    |
+                                    Exam Total:
+                                    {{ term.exam_total }}
+                                </p>
+                            </div>
+                            <div class="modal-footer">
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    data-bs-dismiss="modal">
+                                    Cancel
+                                </button>
+                              <form method="POST" action="{% url 'accounts:delete_term' term.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger">
+                                    Delete
+                                </button>
+                            </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <tr>
+                    <td
+                        colspan="9"
+                        class="term-empty">
+                        No terms created yet
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
-
-<!-- Bootstrap CSS & JS -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</div>
+<!-- =========================================================
+     BOOTSTRAP
+========================================================= -->
+<link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet">
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
+</script>
 <script>
-    setTimeout(function () {
-        const box = document.getElementById("error-box");
-        if (box) {
-            box.style.transition = "opacity 0.5s ease";
-            box.style.opacity = "0";
-            setTimeout(() => box.remove(), 500);
-        }
-    }, 5000);
+setTimeout(function () {
+    const box = document.getElementById("error-box");
+    if (box) {
+        box.style.transition = "opacity 0.5s ease";
+        box.style.opacity = "0";
+        setTimeout(() => box.remove(), 500);
+    }
+}, 5000);
 </script>
 
 {% endblock %}

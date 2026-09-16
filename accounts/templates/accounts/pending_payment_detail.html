@@ -1,330 +1,1504 @@
 {% extends 'accounts/dashboard_base.html' %}
+
 {% block content %}
+
 <style>
-body{
-    background:#f8fafc;
+/* =========================================================
+   PREMIUM PENDING PAYMENT DETAIL
+========================================================= */
+
+.pending-detail-page {
+    --pd-primary: #2563eb;
+    --pd-primary-dark: #1d4ed8;
+    --pd-success: #16a34a;
+    --pd-danger: #dc2626;
+    --pd-warning: #f59e0b;
+    --pd-dark: #0f172a;
+    --pd-text: #334155;
+    --pd-muted: #64748b;
+    --pd-border: #e2e8f0;
+    --pd-light: #f8fafc;
+    --pd-radius: 22px;
+
+    width: 100%;
+    max-width: 1180px;
+    margin: 35px auto;
+    padding: 0 20px;
 }
-.verify-wrapper{
-    max-width:1100px;
-    margin:40px auto;
+
+.pending-detail-page,
+.pending-detail-page * {
+    box-sizing: border-box;
 }
-.verify-card{
-    background:#fff;
-    border-radius:24px;
-    overflow:hidden;
-    box-shadow:0 12px 35px rgba(0,0,0,.08);
+
+/* =========================================================
+   MAIN CARD
+========================================================= */
+
+.verify-card {
+    background: #fff;
+    border: 1px solid var(--pd-border);
+    border-radius: var(--pd-radius);
+    overflow: hidden;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, .09);
 }
-.verify-header{
-    background:linear-gradient(135deg,#2563eb,#4f46e5);
-    color:#fff;
-    padding:35px;
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.verify-header {
+    position: relative;
+    overflow: hidden;
+
+    background:
+        radial-gradient(
+            circle at 85% 15%,
+            rgba(96,165,250,.28),
+            transparent 30%
+        ),
+        linear-gradient(
+            135deg,
+            #0f172a 0%,
+            #1e3a8a 55%,
+            #2563eb 100%
+        );
+
+    color: #fff;
+    padding: 32px;
 }
-.verify-header h2{
-    margin:0;
-    font-size:28px;
-    font-weight:700;
+
+.verify-header::after {
+    content: "";
+    position: absolute;
+    width: 190px;
+    height: 190px;
+    right: -80px;
+    bottom: -110px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.07);
 }
-.verify-header p{
-    margin-top:8px;
-    opacity:.9;
+
+.verify-header-content {
+    position: relative;
+    z-index: 2;
 }
-.status-badge{
-    display:inline-block;
-    margin-top:15px;
-    padding:8px 18px;
-    border-radius:30px;
-    background:#facc15;
-    color:#111827;
-    font-weight:700;
+
+.verify-header h2 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -.4px;
 }
-.verify-body{
-    padding:35px;
+
+.verify-header p {
+    margin: 8px 0 0;
+    color: rgba(255,255,255,.82);
+    font-size: 14px;
 }
-.info-card{
-    background:#fff;
-    border:1px solid #e5e7eb;
-    border-radius:18px;
-    box-shadow:0 3px 12px rgba(0,0,0,.04);
-    margin-bottom:25px;
+
+.status-badge {
+    position: relative;
+    z-index: 2;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+
+    margin-top: 18px;
+    padding: 9px 17px;
+
+    border-radius: 999px;
+
+    background: rgba(250,204,21,.16);
+    border: 1px solid rgba(250,204,21,.3);
+
+    color: #fde68a;
+    font-size: 12px;
+    font-weight: 800;
 }
-.info-card-header{
-    padding:16px 22px;
-    border-bottom:1px solid #eef2f7;
-    background:#f8fafc;
-    font-weight:700;
-    color:#1e293b;
-    font-size:18px;
+
+/* =========================================================
+   BODY
+========================================================= */
+
+.verify-body {
+    padding: 30px;
 }
-.info-card-body{
-    padding:24px;
+
+.card-body {
+    cursor: default;
 }
-.info-row{
-    display:flex;
-    justify-content:space-between;
-    gap:30px;
-    margin-bottom:18px;
-    flex-wrap:wrap;
+
+/* =========================================================
+   INFORMATION CARDS
+========================================================= */
+
+.info-card {
+    background: #fff;
+    border: 1px solid #e5eaf1;
+    border-radius: 18px;
+    overflow: hidden;
+
+    margin-bottom: 22px;
+
+    box-shadow: 0 7px 22px rgba(15,23,42,.045);
 }
-.info-item{
-    flex:1;
-    min-width:250px;
+
+.info-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 16px 20px;
+
+    background: #f8fafc;
+    border-bottom: 1px solid #edf2f7;
+
+    color: var(--pd-dark);
+    font-size: 15px;
+    font-weight: 800;
 }
-.info-label{
-    display:block;
-    font-size:13px;
-    color:#64748b;
-    margin-bottom:6px;
-    text-transform:uppercase;
-    font-weight:600;
+
+.info-card-header i {
+    color: var(--pd-primary);
 }
-.info-value{
-    font-size:17px;
-    font-weight:700;
-    color:#0f172a;
+
+.info-card-body {
+    padding: 22px;
 }
-.amount-box{
-    font-size:30px;
-    color:#16a34a;
-    font-weight:800;
+
+/* =========================================================
+   INFORMATION ROWS
+========================================================= */
+
+.info-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 25px;
+
+    margin-bottom: 20px;
 }
-.card-body{
-    cursor:default;
+
+.info-row:last-child {
+    margin-bottom: 0;
+}
+
+.info-item {
+    min-width: 0;
+}
+
+.info-label {
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: var(--pd-muted);
+
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .65px;
+    text-transform: uppercase;
+}
+
+.info-value {
+    color: var(--pd-dark);
+    font-size: 16px;
+    font-weight: 750;
+
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+/* =========================================================
+   AMOUNT
+========================================================= */
+
+.amount-box {
+    display: inline-flex;
+    align-items: center;
+
+    color: var(--pd-success);
+
+    font-size: 28px;
+    font-weight: 850;
+
+    white-space: nowrap;
+}
+
+/* =========================================================
+   REFERENCE / ID VALUES
+========================================================= */
+
+.info-value.reference-value {
+    display: block;
+
+    max-width: 100%;
+
+    padding: 9px 12px;
+
+    background: #f8fafc;
+    border: 1px solid #e5eaf1;
+    border-radius: 10px;
+
+    font-size: 14px;
+
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+/* =========================================================
+   PAYMENT BREAKDOWN TABLE
+========================================================= */
+
+.breakdown-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+
+    border: 1px solid var(--pd-border);
+    border-radius: 14px;
+}
+
+.breakdown-table {
+    width: 100%;
+    min-width: 430px;
+
+    margin: 0 !important;
+
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.breakdown-table thead th {
+    padding: 13px 15px;
+
+    background: #f8fafc;
+    border-bottom: 1px solid var(--pd-border);
+
+    color: #475569;
+
+    font-size: 11px;
+    font-weight: 800;
+
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    white-space: nowrap;
+}
+
+.breakdown-table tbody td {
+    padding: 15px;
+
+    border-bottom: 1px solid #eef2f7;
+
+    color: var(--pd-text);
+    vertical-align: middle;
+}
+
+.breakdown-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.breakdown-table tbody tr:hover {
+    background: #f8fbff;
+}
+
+.breakdown-table tfoot th {
+    padding: 15px;
+
+    background: #eff6ff;
+    border-top: 1px solid #dbeafe;
+
+    color: #1e3a8a;
+
+    font-weight: 800;
+}
+
+/* =========================================================
+   PAYMENT PROOF
+========================================================= */
+
+.payment-proof-container {
+    width: 100%;
+    text-align: center;
+}
+
+.payment-proof-link {
+    display: block;
+
+    width: 100%;
+    max-width: 820px;
+
+    margin: 0 auto;
+
+    text-decoration: none;
+}
+
+.payment-proof-image {
+    display: block;
+
+    width: auto;
+    max-width: 100%;
+    height: auto;
+
+    max-height: 900px;
+
+    margin: 0 auto;
+
+    object-fit: contain;
+
+    border: 8px solid #f8fafc;
+    border-radius: 16px;
+
+    box-shadow: 0 12px 35px rgba(15,23,42,.10);
+
+    transition:
+        transform .25s ease,
+        box-shadow .25s ease;
+}
+
+.payment-proof-link:hover .payment-proof-image {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 40px rgba(15,23,42,.14);
+}
+
+.proof-caption {
+    margin: 13px 0 0;
+
+    color: var(--pd-muted);
+    font-size: 12px;
+}
+
+/* =========================================================
+   ACTION AREA
+========================================================= */
+
+.payment-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+
+    margin-top: 28px;
+    padding-top: 22px;
+
+    border-top: 1px solid #e5e7eb;
+}
+
+.payment-actions form {
+    margin: 0;
+}
+
+.payment-action-btn {
+    min-height: 46px;
+
+    border-radius: 12px !important;
+
+    padding: 10px 20px !important;
+
+    font-size: 13px !important;
+    font-weight: 800 !important;
+
+    white-space: nowrap;
+}
+
+/* =========================================================
+   ALERT
+========================================================= */
+
+.no-proof-alert {
+    margin: 0;
+
+    border-radius: 14px;
+}
+
+/* =========================================================
+   REJECTION MODAL
+========================================================= */
+
+.reject-modal {
+    display: none;
+
+    position: fixed;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    padding: 20px;
+
+    background: rgba(15,23,42,.68);
+
+    z-index: 9999;
+
+    align-items: center;
+    justify-content: center;
+
+    backdrop-filter: blur(4px);
+}
+
+.reject-modal-box {
+    width: 100%;
+    max-width: 500px;
+
+    max-height: calc(100vh - 40px);
+
+    overflow-y: auto;
+
+    padding: 28px;
+
+    background: #fff;
+
+    border-radius: 20px;
+
+    box-shadow: 0 25px 70px rgba(0,0,0,.25);
+}
+
+.reject-modal-title {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    margin: 0 0 20px;
+
+    color: var(--pd-danger);
+
+    font-size: 21px;
+    font-weight: 800;
+}
+
+.reject-modal-label {
+    display: block;
+
+    margin-bottom: 9px;
+
+    color: #374151;
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.reject-modal textarea {
+    width: 100%;
+
+    min-height: 120px;
+
+    padding: 13px;
+
+    border: 1px solid #dbe2ea;
+    border-radius: 12px;
+
+    outline: none;
+
+    font-family: inherit;
+    font-size: 14px;
+
+    resize: vertical;
+}
+
+.reject-modal textarea:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.10);
+}
+
+.reject-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+
+    margin-top: 20px;
+}
+
+.reject-modal-actions button {
+    min-height: 44px;
+
+    padding: 9px 18px;
+
+    border: 0;
+    border-radius: 11px;
+
+    font-size: 13px;
+    font-weight: 800;
+}
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 991px) {
+
+    .pending-detail-page {
+        max-width: 100%;
+        margin: 25px auto;
+        padding: 0 15px;
+    }
+
+    .verify-header {
+        padding: 27px;
+    }
+
+    .verify-header h2 {
+        font-size: 24px;
+    }
+
+    .verify-body {
+        padding: 24px;
+    }
+
+}
+
+/* =========================================================
+   MOBILE — PHONE ONLY
+   DESKTOP + TABLET UNCHANGED
+========================================================= */
+
+@media (max-width: 767px) {
+
+    .pending-detail-page {
+        width: 100%;
+        max-width: 100%;
+        margin: 12px auto;
+        padding: 0 7px;
+    }
+
+    .verify-card {
+        border-radius: 17px;
+    }
+
+    /* =====================================================
+       HEADER
+    ===================================================== */
+
+    .verify-header {
+        padding: 21px 17px;
+        border-radius: 17px 17px 0 0;
+    }
+
+    .verify-header h2 {
+        font-size: 22px;
+        line-height: 1.3;
+        font-weight: 900;
+    }
+
+    .verify-header p {
+        margin-top: 8px;
+        font-size: 14px;
+        line-height: 1.5;
+        font-weight: 600;
+    }
+
+    .status-badge {
+        margin-top: 13px;
+        padding: 9px 13px;
+        font-size: 12px;
+        font-weight: 900;
+    }
+
+    /* =====================================================
+       BODY
+    ===================================================== */
+
+    .verify-body {
+        padding: 14px;
+    }
+
+    /* =====================================================
+       INFORMATION CARDS
+    ===================================================== */
+
+    .info-card {
+        margin-bottom: 14px;
+        border-radius: 15px;
+    }
+
+    .info-card-header {
+        padding: 14px 15px;
+        font-size: 15px;
+        font-weight: 900;
+    }
+
+    .info-card-body {
+        padding: 15px;
+    }
+
+    /* =====================================================
+       INFORMATION
+       KEEP TWO ITEMS SIDE BY SIDE
+    ===================================================== */
+
+    .info-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 15px;
+
+        margin-bottom: 16px;
+    }
+
+    .info-row:last-child {
+        margin-bottom: 0;
+    }
+
+    .info-item {
+        min-width: 0;
+    }
+
+    .info-label {
+        margin-bottom: 6px;
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: .5px;
+        line-height: 1.3;
+    }
+
+    .info-value {
+        font-size: 15px;
+        font-weight: 800;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    /* =====================================================
+       AMOUNT
+    ===================================================== */
+
+    .amount-box {
+        font-size: 22px;
+        font-weight: 900;
+        line-height: 1.3;
+        white-space: nowrap;
+    }
+
+    /* =====================================================
+       REFERENCE / ID
+    ===================================================== */
+
+    .info-value.reference-value {
+        width: 100%;
+        padding: 8px 9px;
+
+        border-radius: 9px;
+
+        font-size: 13px;
+        font-weight: 800;
+        line-height: 1.35;
+
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+/* =====================================================
+   PAYMENT BREAKDOWN — MOBILE
+   FIT COMPLETELY ON PHONE
+===================================================== */
+
+.breakdown-table-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+
+    overflow-x: hidden !important;
+
+    border-radius: 12px;
+}
+
+.breakdown-table {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+
+    table-layout: fixed !important;
+}
+
+/* FEE ITEM */
+.breakdown-table th:first-child,
+.breakdown-table td:first-child {
+    width: 65% !important;
+
+    padding: 12px 10px !important;
+
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+}
+
+/* AMOUNT */
+.breakdown-table th:last-child,
+.breakdown-table td:last-child {
+    width: 35% !important;
+
+    padding: 12px 10px !important;
+
+    white-space: nowrap !important;
+
+    text-align: right !important;
+}
+
+/* HEADER */
+.breakdown-table thead th {
+    font-size: 14px !important;
+    font-weight: 900 !important;
+}
+
+/* BODY */
+.breakdown-table tbody td {
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+}
+
+/* FEE NAME */
+.breakdown-table tbody td strong {
+    display: block;
+
+    font-size: 14px !important;
+    font-weight: 800 !important;
+
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+}
+
+/* TOTAL */
+.breakdown-table tfoot th {
+    padding: 12px 10px !important;
+
+    font-size: 14px !important;
+    font-weight: 900 !important;
+
+    white-space: nowrap !important;
+}
+
+    /* =====================================================
+       PAYMENT PROOF
+    ===================================================== */
+
+    .payment-proof-container {
+        width: 100%;
+    }
+
+    .payment-proof-link {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .payment-proof-image {
+        display: block;
+
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+
+        max-height: none;
+
+        margin: 0 auto;
+
+        border-width: 4px;
+        border-radius: 11px;
+
+        object-fit: contain;
+    }
+
+    .proof-caption {
+        margin-top: 11px;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    /* =====================================================
+       APPROVE / REJECT
+       SIDE BY SIDE ON PHONE
+    ===================================================== */
+
+    .payment-actions {
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        justify-content: stretch;
+
+        gap: 9px;
+
+        margin-top: 18px;
+        padding-top: 17px;
+    }
+
+    .payment-actions form {
+        width: 50%;
+        margin: 0;
+    }
+
+    .payment-action-btn {
+        width: 100%;
+
+        min-height: 48px;
+
+        padding: 9px 8px !important;
+
+        border-radius: 11px !important;
+
+        font-size: 12px !important;
+        font-weight: 900 !important;
+
+        white-space: nowrap;
+    }
+
+    .payment-action-btn i {
+        margin-right: 3px !important;
+    }
+
+    /* =====================================================
+       REJECTION MODAL
+    ===================================================== */
+
+    .reject-modal {
+        padding: 10px;
+    }
+
+    .reject-modal-box {
+        width: 100%;
+        max-width: 100%;
+
+        max-height: calc(100vh - 20px);
+
+        padding: 19px;
+
+        border-radius: 16px;
+    }
+
+    .reject-modal-title {
+        margin-bottom: 17px;
+        font-size: 19px;
+        font-weight: 900;
+    }
+
+    .reject-modal-label {
+        margin-bottom: 8px;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .reject-modal textarea {
+        min-height: 115px;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .reject-modal-actions {
+        flex-direction: row;
+        justify-content: stretch;
+        gap: 9px;
+    }
+
+    .reject-modal-actions button {
+        width: 50%;
+        min-height: 45px;
+        padding: 9px 10px;
+        font-size: 12px;
+    }
+}
+
+
+/* =========================================================
+   VERY SMALL PHONES
+========================================================= */
+
+@media (max-width: 380px) {
+
+    .pending-detail-page {
+        padding: 0 5px;
+    }
+
+    .verify-header {
+        padding: 19px 14px;
+    }
+
+    .verify-header h2 {
+        font-size: 20px;
+    }
+
+    .verify-header p {
+        font-size: 13px;
+    }
+
+    .verify-body {
+        padding: 11px;
+    }
+
+    .info-card-body {
+        padding: 12px;
+    }
+
+    .info-row {
+        gap: 10px;
+    }
+
+    .info-label {
+        font-size: 9px;
+    }
+
+    .info-value {
+        font-size: 13px;
+    }
+
+    .amount-box {
+        font-size: 20px;
+    }
+
+    .info-value.reference-value {
+        font-size: 11px;
+        padding: 7px 8px;
+    }
+
+    .breakdown-table {
+        min-width: 360px;
+    }
+
+    .breakdown-table thead th {
+        font-size: 9px;
+        padding: 10px 8px;
+    }
+
+    .breakdown-table tbody td {
+        font-size: 12px;
+        padding: 11px 8px;
+    }
+
+    .breakdown-table tfoot th {
+        font-size: 12px;
+        padding: 11px 8px;
+    }
+
+    .payment-action-btn {
+        font-size: 11px !important;
+        padding: 8px 5px !important;
+    }
+
+    .reject-modal-actions button {
+        font-size: 11px;
+        padding: 8px 6px;
+    }
 }
 </style>
-<div class="verify-wrapper">
-<div class="verify-card">
-<div class="verify-header">
-<h2>
-<i class="fas fa-file-invoice-dollar"></i>
-Pending Payment Details
-</h2>
-<p>
-Review payment proof before approving or rejecting.
-</p>
-<span class="status-badge">
-Pending Review
-</span>
-</div>
-<div class="verify-body">
-<!-- STUDENT INFORMATION -->
-<div class="info-card">
-<div class="info-card-header">
-<i class="fas fa-user-graduate"></i>
-Student Information
-</div>
-<div class="info-card-body">
-<div class="info-row">
-<div class="info-item">
-<span class="info-label">
-Student Name
-</span>
-<div class="info-value">
-{{ payment.student.get_full_name }}
-</div>
-</div>
-<div class="info-item">
-<span class="info-label">
-Student ID
-</span>
-<div class="info-value">
-{{ payment.student.student_number }}
-</div>
-</div>
-</div>
-</div>
-</div>
-<!-- PAYMENT INFORMATION -->
-<div class="info-card">
-<div class="info-card-header">
-<i class="fas fa-money-check-alt"></i>
-Payment Information
-</div>
-<div class="info-card-body">
-<div class="info-row">
-<div class="info-item">
-<span class="info-label">
-Total Amount Submitted
-</span>
-<div class="amount-box">
-GH₵ {{ payment.amount|floatformat:2 }}
-</div>
-</div>
-<div class="info-item">
-<span class="info-label">
-Payment Method
-</span>
-<div class="info-value">
-{{ payment.get_payment_method_display }}
-</div>
-</div>
-</div>
-<div class="info-row">
-<div class="info-item">
-<span class="info-label">
-Transaction ID</span>
-<div class="info-value">
-{{ payment.reference_number }}
-</div>
-</div>
-<div class="info-item">
-<span class="info-label">
-Date Paid
-</span>
-<div class="info-value">
-{{ payment.paid_at }}
-</div>
-</div>
-</div>
-<div class="info-row">
-<div class="info-item">
-<span class="info-label">
-Submitted By
-</span>
-<div class="info-value">
-{{ payment.submitted_by.get_full_name }}
-</div>
-</div>
-</div>
-</div>
-</div>
-<!-- PAYMENT BREAKDOWN -->
-<div class="info-card">
-    <div class="info-card-header">
-        <i class="fas fa-list-check"></i>
-        Payment Breakdown
-    </div>
-    <div class="info-card-body">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Fee Item</th>
-                        <th class="text-end">Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for item in payment_items %}
-                    <tr>
-                        <td>
-                            <strong>{{ item.fee_name }}</strong>
-                        </td>
-                        <td class="text-end fw-bold text-success">
-                            GH₵ {{ item.amount|floatformat:2 }}
-                        </td>
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="2" class="text-center text-muted py-4">
-                            No payment breakdown available.
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-                <tfoot>
-                    <tr class="table-primary">
-                        <th>Total Submitted</th>
-                        <th class="text-end">
-                            GH₵ {{ payment.amount|floatformat:2 }}
-                        </th>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-    </div>
-</div>
-<!-- PAYMENT PROOF -->
-<div class="info-card">
-    <div class="info-card-header">
-        <i class="fas fa-image"></i>
-        Payment Proof
-    </div>
-    <div class="info-card-body text-center">
-        {% if payment.proof_image %}
-            <a href="{{ payment.proof_image.url }}" target="_blank">
-                <img src="{{ payment.proof_image.url }}"
-                     class="img-fluid rounded shadow"
-                     style="max-width:700px; border:8px solid #f8fafc;">
-            </a>
-            <p class="text-muted mt-3 mb-0">
-                Click the image to view full size.
-            </p>
-        {% else %}
-            <div class="alert alert-warning mb-0">
-                No payment proof uploaded.
+
+
+<div class="pending-detail-page">
+
+    <div class="verify-card">
+
+        <!-- =================================================
+             HEADER
+        ================================================== -->
+
+        <div class="verify-header">
+
+            <div class="verify-header-content">
+
+                <h2>
+                    <i class="fas fa-file-invoice-dollar me-2"></i>
+                    Pending Payment Details
+                </h2>
+
+                <p>
+                    Review payment proof before approving or rejecting.
+                </p>
+
+                <span class="status-badge">
+                    <i class="fas fa-clock"></i>
+                    Pending Review
+                </span>
+
             </div>
-        {% endif %}
+
+        </div>
+
+
+        <div class="verify-body">
+
+
+            <!-- =================================================
+                 STUDENT INFORMATION
+            ================================================== -->
+
+            <div class="info-card">
+
+                <div class="info-card-header">
+
+                    <i class="fas fa-user-graduate"></i>
+
+                    <span>Student Information</span>
+
+                </div>
+
+                <div class="info-card-body">
+
+                    <div class="info-row">
+
+                        <div class="info-item">
+
+                            <span class="info-label">
+                                Student Name
+                            </span>
+
+                            <div class="info-value">
+                                {{ payment.student.get_full_name }}
+                            </div>
+
+                        </div>
+
+
+                        <div class="info-item">
+
+                            <span class="info-label">
+                                Student ID
+                            </span>
+
+                            <div class="info-value reference-value">
+                                {{ payment.student.student_number }}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 PAYMENT INFORMATION
+            ================================================== -->
+
+            <div class="info-card">
+
+                <div class="info-card-header">
+
+                    <i class="fas fa-money-check-alt"></i>
+
+                    <span>Payment Information</span>
+
+                </div>
+
+
+                <div class="info-card-body">
+
+                    <div class="info-row">
+
+                        <!-- AMOUNT -->
+
+                        <div class="info-item">
+
+                            <span class="info-label">
+                                Total Paid
+                            </span>
+
+                            <div class="amount-box">
+                                GH₵ {{ payment.amount|floatformat:2 }}
+                            </div>
+
+                        </div>
+
+
+                        <!-- METHOD -->
+
+                        <div class="info-item">
+
+                            <span class="info-label">
+                                Payment Method
+                            </span>
+
+                            <div class="info-value">
+                                {{ payment.get_payment_method_display }}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="info-row">
+
+                        <!-- TRANSACTION ID -->
+
+                        <div class="info-item">
+
+                            <span class="info-label">
+                                Transaction ID
+                            </span>
+
+                            <div class="info-value reference-value">
+                                {{ payment.reference_number }}
+                            </div>
+
+                        </div>
+
+
+                        <!-- DATE -->
+
+                        <div class="info-item">
+
+                            <span class="info-label">
+                                Date Paid
+                            </span>
+
+                            <div class="info-value">
+                                {{ payment.paid_at }}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="info-row">
+
+                        <!-- SUBMITTED BY -->
+
+                        <div class="info-item">
+
+                            <span class="info-label">
+                                Submitted By
+                            </span>
+
+                            <div class="info-value">
+                                {{ payment.submitted_by.get_full_name }}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 PAYMENT BREAKDOWN
+            ================================================== -->
+
+            <div class="info-card">
+
+                <div class="info-card-header">
+
+                    <i class="fas fa-list-check"></i>
+
+                    <span>Payment Breakdown</span>
+
+                </div>
+
+
+                <div class="info-card-body">
+
+                    <div class="breakdown-table-wrapper">
+
+                        <table class="table breakdown-table align-middle">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Fee Item
+                                    </th>
+
+                                    <th class="text-end">
+                                        Amount
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody>
+
+                            {% for item in payment_items %}
+
+                                <tr>
+
+                                    <td>
+                                        <strong>
+                                            {{ item.fee_name }}
+                                        </strong>
+                                    </td>
+
+                                    <td class="text-end fw-bold text-success">
+
+                                        GH₵ {{ item.amount|floatformat:2 }}
+
+                                    </td>
+
+                                </tr>
+
+                            {% empty %}
+
+                                <tr>
+
+                                    <td
+                                        colspan="2"
+                                        class="text-center text-muted py-4">
+
+                                        No payment breakdown available.
+
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                            </tbody>
+
+
+                            <tfoot>
+
+                                <tr>
+
+                                    <th>
+                                        Total Submitted
+                                    </th>
+
+                                    <th class="text-end">
+
+                                        GH₵ {{ payment.amount|floatformat:2 }}
+
+                                    </th>
+
+                                </tr>
+
+                            </tfoot>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 PAYMENT PROOF
+            ================================================== -->
+
+            <div class="info-card">
+
+                <div class="info-card-header">
+
+                    <i class="fas fa-image"></i>
+
+                    <span>Payment Proof</span>
+
+                </div>
+
+
+                <div class="info-card-body">
+
+                    <div class="payment-proof-container">
+
+                        {% if payment.proof_image %}
+
+                            <a
+                                href="{{ payment.proof_image.url }}"
+                                target="_blank"
+                                class="payment-proof-link">
+
+                                <img
+                                    src="{{ payment.proof_image.url }}"
+                                    alt="Payment proof"
+                                    class="payment-proof-image">
+
+                            </a>
+
+                            <p class="proof-caption">
+
+                                <i class="fas fa-expand me-1"></i>
+
+                                Tap or click the receipt to view it in
+                                full size.
+
+                            </p>
+
+                        {% else %}
+
+                            <div class="alert alert-warning no-proof-alert">
+
+                                <i class="fas fa-triangle-exclamation me-2"></i>
+
+                                No payment proof uploaded.
+
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 APPROVE / REJECT
+            ================================================== -->
+
+            <div class="payment-actions">
+
+                <form
+                    method="POST"
+                    action="{% url 'accounts:approve_manual_payment' payment.id %}">
+
+                    {% csrf_token %}
+
+                    <button
+                        type="submit"
+                        class="btn btn-success payment-action-btn">
+
+                        <i class="fas fa-check-circle me-2"></i>
+
+                        Approve Payment
+
+                    </button>
+
+                </form>
+
+
+                <button
+                    type="button"
+                    onclick="openRejectModal()"
+                    class="btn btn-danger payment-action-btn">
+
+                    <i class="fas fa-times-circle me-2"></i>
+
+                    Reject Payment
+
+                </button>
+
+            </div>
+
+
+        </div>
+
     </div>
-</div>
-<!-- APPROVE / REJECT BUTTONS -->
-<div class="text-end mt-4">
-
-    <form method="POST"
-          action="{% url 'accounts:approve_manual_payment' payment.id %}"
-          style="display:inline;">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-success btn-lg">
-            <i class="fas fa-check-circle"></i>
-            Approve Payment
-        </button>
-    </form>
-
-    <button type="button"
-            onclick="openRejectModal()"
-            class="btn btn-danger btn-lg ms-2">
-        <i class="fas fa-times-circle"></i>
-        Reject Payment
-    </button>
 
 </div>
 
+
+<!-- =========================================================
+     REJECTION MODAL
+========================================================= -->
+
+<div
+    id="rejectModal"
+    class="reject-modal">
+
+    <div class="reject-modal-box">
+
+        <h3 class="reject-modal-title">
+
+            <i class="fas fa-times-circle"></i>
+
+            Reject Payment
+
+        </h3>
+
+
+        <form
+            method="POST"
+            action="{% url 'accounts:reject_manual_payment' payment.id %}">
+
+            {% csrf_token %}
+
+
+            <label class="reject-modal-label">
+
+                Reason for Rejection *
+
+            </label>
+
+
+            <textarea
+                name="rejection_reason"
+                required
+                placeholder="e.g. Invalid transaction ID, blurry receipt, amount mismatch..."></textarea>
+
+
+            <div class="reject-modal-actions">
+
+                <button
+                    type="button"
+                    onclick="closeRejectModal()"
+                    style="background:#f1f5f9;color:#334155;">
+
+                    Cancel
+
+                </button>
+
+
+                <button
+                    type="submit"
+                    style="background:#dc2626;color:#fff;">
+
+                    <i class="fas fa-times-circle me-1"></i>
+
+                    Confirm Reject
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
 </div>
-</div>
-</div>
-</div>
-<!-- Rejection Modal -->
-<div id="rejectModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center;">
-  <div style="background:white; padding:35px; border-radius:20px; max-width:500px; width:90%; box-shadow:0 15px 50px rgba(0,0,0,0.25);">
-    <h3 style="margin:0 0 20px 0; font-size:22px; font-weight:700; color:#dc2626;">
-      <i class="fas fa-times-circle"></i> Reject Payment
-    </h3>
-    
-    <form method="POST" action="{% url 'accounts:reject_manual_payment' payment.id %}">
-      {% csrf_token %}
-      
-      <label style="display:block; margin-bottom:10px; font-weight:600; color:#374151; font-size:14px;">
-        Reason for Rejection *
-      </label>
-      <textarea 
-        name="rejection_reason" 
-        required
-        rows="4"
-        placeholder="e.g. Invalid transaction ID, blurry receipt, amount mismatch..."
-        style="width:100%; padding:14px; border:2px solid #e5e7eb; border-radius:12px; font-size:15px; font-family:inherit; resize:vertical;"
-      ></textarea>
-      
-      <div style="display:flex; gap:12px; margin-top:25px; justify-content:flex-end;">
-        <button type="button" onclick="closeRejectModal()" 
-          style="padding:12px 24px; background:#f3f4f6; color:#374151; border:none; border-radius:12px; font-weight:600; cursor:pointer; font-size:15px;">
-          Cancel
-        </button>
-        <button type="submit" 
-          style="padding:12px 24px; background:#dc2626; color:white; border:none; border-radius:12px; font-weight:600; cursor:pointer; font-size:15px;">
-          Confirm Reject
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
+
 
 <script>
+
 function openRejectModal() {
-  document.getElementById('rejectModal').style.display = 'flex';
+
+    const modal = document.getElementById('rejectModal');
+
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+
 }
+
+
 function closeRejectModal() {
-  document.getElementById('rejectModal').style.display = 'none';
+
+    const modal = document.getElementById('rejectModal');
+
+    if (modal) {
+        modal.style.display = 'none';
+    }
+
 }
-document.getElementById('rejectModal').addEventListener('click', function(e) {
-  if(e.target === this) closeRejectModal();
+
+
+const rejectModal = document.getElementById('rejectModal');
+
+if (rejectModal) {
+
+    rejectModal.addEventListener('click', function(event) {
+
+        if (event.target === this) {
+            closeRejectModal();
+        }
+
+    });
+
+}
+
+
+document.addEventListener('keydown', function(event) {
+
+    if (event.key === 'Escape') {
+        closeRejectModal();
+    }
+
 });
+
 </script>
+
 {% endblock %}

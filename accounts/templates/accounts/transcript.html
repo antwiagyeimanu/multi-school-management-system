@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Official Academic Transcript - {{ student.get_full_name }}</title>
+<style>
+@page {
+    size: A4 portrait;
+    margin: 8mm;
+}
+* {
+    box-sizing: border-box;
+}
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
+body {
+    background: #eef2f7;
+    color: #1e293b;
+    font-family: "Poppins", "Segoe UI", Arial, sans-serif;
+    font-size: 11px;
+}
+/* =========================================================
+   MAIN TRANSCRIPT
+========================================================= */
+.transcript-wrapper {
+    width: 100%;
+    max-width: 1100px;
+    min-height: 850px;
+    margin: 25px auto;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+    background: #fff;
+    border: 2px solid #1e3a8a;
+    border-radius: 18px;
+    box-shadow: 0 18px 50px rgba(15, 23, 42, .12);
+}
+/* =========================================================
+   WATERMARK
+========================================================= */
+.watermark-img {
+    position: absolute;
+    top: 58%;
+    left: 50%;
+    width: 500px;
+    height: 500px;
+    transform: translate(-50%, -50%);
+    object-fit: contain;
+    opacity: .075;
+    z-index: 0;
+    pointer-events: none;
+}
+/* =========================================================
+   HEADER
+========================================================= */
+.header {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding-bottom: 14px;
+    border-bottom: 3px double #1e3a8a;
+}
+.header img.logo {
+    width: 82px;
+    height: 82px;
+    padding: 4px;
+    object-fit: contain;
+    border: 2px solid #1e3a8a;
+    border-radius: 50%;
+    background: #fff;
+}
+.header h2 {
+    margin: 8px 0 2px;
+    color: #172554;
+    font-size: 21px;
+    font-weight: 900;
+    letter-spacing: .2px;
+}
+.school-info {
+    margin-top: 5px;
+    color: #475569;
+    font-size: 10.5px;
+    line-height: 1.55;
+}
+.school-info .motto {
+    margin-top: 3px;
+    color: #334155;
+    font-style: italic;
+    font-weight: 600;
+}
+.document-title {
+    display: inline-block;
+    margin: 9px 0 0;
+    padding: 7px 18px;
+    color: #fff;
+    background: linear-gradient(135deg, #1e3a8a, #4338ca);
+    border-radius: 30px;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 1.2px;
+}
+/* =========================================================
+   STUDENT INFORMATION
+   KEEP AS IT IS
+========================================================= */
+.student-meta {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 16px;
+    overflow: hidden;
+    background: #f8faff;
+    border: 1px solid #dbe4f5;
+    border-radius: 14px;
+}
+.student-meta-item {
+    min-height: 43px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #e5eaf3;
+}
+.student-meta-item:nth-child(odd) {
+    border-right: 1px solid #e5eaf3;
+}
+.student-meta-item:nth-last-child(-n+2) {
+    border-bottom: 0;
+}
+.meta-label {
+    display: block;
+    margin-bottom: 2px;
+    color: #64748b;
+    font-size: 8.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .45px;
+}
+.meta-value {
+    color: #172033;
+    font-size: 10.5px;
+    font-weight: 700;
+}
+/* =========================================================
+   ACADEMIC YEAR
+========================================================= */
+.year-title {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 17px;
+    padding: 8px 13px;
+    color: #fff;
+    background: linear-gradient(135deg, #172554, #1e40af, #4338ca);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 850;
+    letter-spacing: .2px;
+}
+.term-title {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 10px 0 5px;
+    padding-left: 8px;
+    color: #3730a3;
+    border-left: 3px solid #4f46e5;
+    font-size: 10.5px;
+    font-weight: 850;
+    text-transform: uppercase;
+}
+/* =========================================================
+   RESULTS TABLE — IMPROVED READABILITY
+========================================================= */
+.results-table-wrapper {
+    width: 100%;
+    overflow: visible;
+}
+.results-table {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    margin-top: 5px;
+    border-collapse: collapse;
+    border: 1px solid #dbe2eb;
+    font-size: 11px;
+    table-layout: fixed;
+}
+.results-table th {
+    padding: 8px 8px;
+    color: #fff;
+    background: #1e3a8a;
+    border: 1px solid rgba(255,255,255,.2);
+    font-size: 9.5px;
+    font-weight: 800;
+    text-align: left;
+    text-transform: uppercase;
+}
+.results-table td {
+    padding: 7px 8px;
+    background: rgba(255,255,255,.96);
+    border: 1px solid #e5eaf0;
+    color: #334155;
+    vertical-align: middle;
+    word-wrap: break-word;
+}
+.results-table tbody tr:nth-child(even) td {
+    background: #f8fafc;
+}
+.results-table td strong {
+    color: #172554;
+    font-weight: 850;
+}
+/* =========================================================
+   SUMMARY — IMPROVED
+========================================================= */
+.transcript-summary {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 17px;
+}
+.summary-card {
+    min-width: 0;
+    padding: 11px 13px;
+    background: linear-gradient(135deg, #f8faff, #eef4ff);
+    border: 1px solid #dce6fa;
+    border-radius: 11px;
+}
+.summary-label {
+    margin-bottom: 4px;
+    color: #64748b;
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+.summary-value {
+    color: #1e3a8a;
+    font-size: 14px;
+    font-weight: 900;
+}
+/* =========================================================
+   REMARKS — IMPROVED
+========================================================= */
+.remarks-section {
+    position: relative;
+    z-index: 2;
+    margin-top: 15px;
+    padding: 12px 14px;
+    background: #fff;
+    border: 1px solid #dbe2eb;
+    border-radius: 11px;
+}
+.section-heading {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 8px;
+    color: #172554;
+    font-size: 11px;
+    font-weight: 900;
+}
+.section-heading::before {
+    content: "";
+    width: 4px;
+    height: 16px;
+    border-radius: 5px;
+    background: #4f46e5;
+}
+.remark-row {
+    padding: 6px 0;
+    border-bottom: 1px solid #edf1f5;
+    line-height: 1.5;
+    font-size: 10.5px;
+}
+.remark-row:last-child {
+    border-bottom: 0;
+}
+.remark-label {
+    color: #64748b;
+    font-weight: 800;
+}
+.remark-value {
+    color: #334155;
+}
+/* =========================================================
+   ATTENDANCE — IMPROVED
+========================================================= */
+.attendance-box {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 11px;
+    padding: 9px 13px;
+    background: #f8fafc;
+    border: 1px dashed #94a3b8;
+    border-radius: 9px;
+    font-size: 10px;
+}
+.attendance-label {
+    color: #64748b;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+.attendance-value {
+    color: #172554;
+    font-size: 12px;
+    font-weight: 900;
+}
+/* =========================================================
+   GRADING — IMPROVED
+========================================================= */
+.grading-box {
+    position: relative;
+    z-index: 2;
+    margin-top: 10px;
+    padding: 8px 10px;
+    color: #475569;
+    background: #f8fafc;
+    border: 1px solid #e5eaf0;
+    border-radius: 7px;
+    font-size: 9px;
+    line-height: 1.5;
+}
+/* =========================================================
+   CERTIFICATION — IMPROVED
+========================================================= */
+.certification {
+    position: relative;
+    z-index: 2;
+    margin-top: 10px;
+    padding-top: 8px;
+    color: #334155;
+    border-top: 1px solid #e2e8f0;
+    font-size: 10px;
+    font-style: italic;
+    line-height: 1.5;
+}
+/* =========================================================
+   SIGNATURE — IMPROVED
+========================================================= */
+.signature-section {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 15px;
+    align-items: end;
+    margin-top: 20px;
+    font-size: 10px;
+}
+.signature-date {
+    color: #334155;
+}
+.signature-line {
+    text-align: center;
+}
+.signature-line-space {
+    height: 22px;
+}
+.signature-line hr {
+    margin: 0 0 5px;
+    border: 0;
+    border-top: 1px solid #334155;
+}
+.signature-line strong {
+    font-size: 9.5px;
+}
+.official-note {
+    color: #64748b;
+    text-align: right;
+    line-height: 1.5;
+}
+.official-note strong {
+    display: block;
+    color: #334155;
+}
+/* =========================================================
+   ACTIONS
+========================================================= */
+.no-print {
+    position: relative;
+    z-index: 5;
+}
+.transcript-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 22px;
+}
+.transcript-btn {
+    min-width: 190px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 18px;
+    border: 0;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+}
+.print-btn {
+    color: #fff;
+    background: linear-gradient(135deg, #1e3a8a, #4338ca);
+}
+.back-btn {
+    color: #334155;
+    background: #e2e8f0;
+}
+/* =========================================================
+   MOBILE SCREEN
+========================================================= */
+@media screen and (max-width: 768px) {
+    body {
+        background: #f1f5f9;
+    }
+    .transcript-wrapper {
+        margin: 10px;
+        padding: 16px;
+        border-radius: 14px;
+    }
+    .header h2 {
+        font-size: 17px;
+    }
+    .header img.logo {
+        width: 68px;
+        height: 68px;
+    }
+    .school-info {
+        font-size: 9px;
+    }
+    .student-meta {
+        grid-template-columns: 1fr;
+    }
+    .student-meta-item {
+        border-right: 0 !important;
+        border-bottom: 1px solid #e5eaf3 !important;
+    }
+    .student-meta-item:last-child {
+        border-bottom: 0 !important;
+    }
+    .transcript-summary {
+        grid-template-columns: 1fr;
+    }
+    .results-table-wrapper {
+        overflow-x: auto;
+    }
+    .results-table {
+        min-width: 650px;
+    }
+    .signature-section {
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+    .official-note {
+        text-align: left;
+    }
+    .transcript-actions {
+        flex-direction: column;
+    }
+    .transcript-btn {
+        width: 100%;
+    }
+}
+/* =========================================================
+   PRINT VERSION
+   SAME READABLE SIZING AS SCREEN
+========================================================= */
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 8mm;
+    }
+    html,
+    body {
+        width: 100% !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+    }
+    body {
+        font-size: 10px !important;
+    }
+    .transcript-wrapper {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 12px !important;
+        min-height: 0 !important;
+        border: 2px solid #1e3a8a !important;
+        border-radius: 8px !important;
+        box-shadow: none !important;
+        overflow: hidden !important;
+    }
+    /* -----------------------------------------------------
+       STUDENT DETAILS — KEEP 2 COLUMNS
+    ----------------------------------------------------- */
+    .student-meta {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        width: 100% !important;
+        margin-top: 10px !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+    .student-meta-item {
+        min-height: 36px !important;
+        padding: 6px 8px !important;
+        border-bottom: 1px solid #e5eaf3 !important;
+    }
+    .student-meta-item:nth-child(odd) {
+        border-right: 1px solid #e5eaf3 !important;
+    }
+    .student-meta-item:nth-last-child(-n+2) {
+        border-bottom: 0 !important;
+    }
+    /* -----------------------------------------------------
+       HEADER
+    ----------------------------------------------------- */
+    .header {
+        display: block !important;
+        padding-bottom: 8px !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+    .header img.logo {
+        width: 58px !important;
+        height: 58px !important;
+    }
+    .header h2 {
+        margin: 5px 0 1px !important;
+        font-size: 16px !important;
+    }
+    .school-info {
+        font-size: 8px !important;
+        line-height: 1.35 !important;
+    }
+    .document-title {
+        margin-top: 5px !important;
+        padding: 5px 12px !important;
+        font-size: 8px !important;
+    }
+    /* -----------------------------------------------------
+       WATERMARK
+    ----------------------------------------------------- */
+    .watermark-img {
+        opacity: .09 !important;
+        width: 430px !important;
+        height: 430px !important;
+    }
+    /* -----------------------------------------------------
+       ACADEMIC YEAR
+    ----------------------------------------------------- */
+    .year-title {
+        display: flex !important;
+        margin-top: 10px !important;
+        padding: 7px 9px !important;
+        font-size: 10px !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        break-after: avoid !important;
+        page-break-after: avoid !important;
+    }
+    .term-title {
+        display: flex !important;
+        margin: 7px 0 4px !important;
+        font-size: 9px !important;
+        break-after: avoid !important;
+        page-break-after: avoid !important;
+    }
+    /* =====================================================
+       RESULTS TABLE — BIGGER PRINT FONT
+    ===================================================== */
+    .results-table-wrapper {
+        display: block !important;
+        width: 100% !important;
+        overflow: visible !important;
+        break-inside: auto !important;
+        page-break-inside: auto !important;
+    }
+    .results-table {
+        display: table !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        table-layout: fixed !important;
+        border-collapse: collapse !important;
+        /* WAS 8px — NOW 10px */
+        font-size: 10px !important;
+    }
+    .results-table thead {
+        display: table-header-group !important;
+    }
+    .results-table tbody {
+        display: table-row-group !important;
+    }
+    .results-table tr {
+        display: table-row !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+    .results-table th {
+        display: table-cell !important;
+        padding: 6px 6px !important;
+        /* WAS 7px — NOW 9px */
+        font-size: 9px !important;
+    }
+    .results-table td {
+        display: table-cell !important;
+        padding: 5px 6px !important;
+        /* WAS 7.8px — NOW 9.5px */
+        font-size: 9.5px !important;
+        line-height: 1.3 !important;
+        vertical-align: middle !important;
+    }
+    /* -----------------------------------------------------
+       SUMMARY — BIGGER
+    ----------------------------------------------------- */
+    .transcript-summary {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 7px !important;
+        width: 100% !important;
+        margin-top: 11px !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+    .summary-card {
+        min-width: 0 !important;
+        padding: 8px 9px !important;
+    }
+    .summary-label {
+        /* WAS 6.5px — NOW 8px */
+        font-size: 8px !important;
+        margin-bottom: 3px !important;
+    }
+    .summary-value {
+        /* WAS 10px — NOW 12px */
+        font-size: 12px !important;
+    }
+    /* -----------------------------------------------------
+       REMARKS — BIGGER
+    ----------------------------------------------------- */
+    .remarks-section {
+        display: block !important;
+        width: 100% !important;
+        margin-top: 10px !important;
+        padding: 9px 11px !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+    .section-heading {
+        margin-bottom: 6px !important;
+        font-size: 9.5px !important;
+    }
+    .remark-row {
+        padding: 4px 0 !important;
+        /* WAS 8px — NOW 9.5px */
+        font-size: 9.5px !important;
+        line-height: 1.4 !important;
+    }
+    /* -----------------------------------------------------
+       ATTENDANCE — BIGGER
+    ----------------------------------------------------- */
+    .attendance-box {
+        display: flex !important;
+        width: 100% !important;
+        margin-top: 8px !important;
+        padding: 7px 10px !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+    .attendance-label {
+        /* WAS 7px — NOW 8.5px */
+        font-size: 8.5px !important;
+    }
+    .attendance-value {
+        /* WAS 9px — NOW 11px */
+        font-size: 11px !important;
+    }
+    /* -----------------------------------------------------
+       GRADING — BIGGER
+    ----------------------------------------------------- */
+    .grading-box {
+        display: block !important;
+        width: 100% !important;
+        margin-top: 8px !important;
+        padding: 6px 8px !important;
+        /* WAS 6.7px — NOW 8.5px */
+        font-size: 8.5px !important;
+        line-height: 1.45 !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+    /* -----------------------------------------------------
+       CERTIFICATION — BIGGER
+    ----------------------------------------------------- */
+    .certification {
+        display: block !important;
+        width: 100% !important;
+        margin-top: 8px !important;
+        padding-top: 6px !important;
+        /* WAS 7.5px — NOW 9px */
+        font-size: 9px !important;
+        line-height: 1.4 !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+    /* -----------------------------------------------------
+       SIGNATURE — BIGGER
+    ----------------------------------------------------- */
+    .signature-section {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+        width: 100% !important;
+        margin-top: 15px !important;
+        /* WAS 7.5px — NOW 9px */
+        font-size: 9px !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+    .signature-line-space {
+        height: 17px !important;
+    }
+    .signature-line strong {
+        /* WAS 7px — NOW 8.5px */
+        font-size: 8.5px !important;
+    }
+    .official-note {
+        text-align: right !important;
+        font-size: 8.5px !important;
+        line-height: 1.4 !important;
+    }
+    /* -----------------------------------------------------
+       HIDE PRINT BUTTONS
+    ----------------------------------------------------- */
+    .no-print,
+    button,
+    a[href*="student"] {
+        display: none !important;
+    }
+    /* -----------------------------------------------------
+       PRESERVE COLOURS
+    ----------------------------------------------------- */
+    .year-title,
+    .document-title,
+    .results-table th {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    .summary-card,
+    .results-table tbody tr:nth-child(even) td {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}
+</style>
+</head>
+<body>
+<div class="transcript-wrapper">
+<!-- =====================================================
+     WATERMARK
+====================================================== -->
+{% if school.logo %}
+<img
+    src="{{ school.logo.url }}"
+    class="watermark-img"
+    alt="">
+{% endif %}
+<!-- =====================================================
+     SCHOOL HEADER
+====================================================== -->
+<div class="header">
+    {% if school.logo %}
+    <img
+        src="{{ school.logo.url }}"
+        class="logo"
+        alt="{{ school.name }}">
+    {% endif %}
+    <h2>{{ school.name|upper }}</h2>
+    <div class="school-info">
+        <div>
+            {% if school.address %}
+                {{ school.address }}
+            {% endif %}
+            {% if school.gps_address %}
+                | Digital Address: {{ school.gps_address }}
+            {% endif %}
+            {% if setting and setting.gps_address %}
+                | Digital Address: {{ setting.gps_address }}
+            {% endif %}
+        </div>
+        <div>
+            {% if school.phone %}
+                Tel: {{ school.phone }}
+            {% endif %}
+            {% if school.email %}
+                | Email: {{ school.email }}
+            {% endif %}
+            {% if setting and setting.email %}
+                | Email: {{ setting.email }}
+            {% endif %}
+        </div>
+        <div class="motto">
+            {% if school.motto %}
+                Motto: "{{ school.motto }}"
+            {% endif %}
+        </div>
+    </div>
+    <div class="document-title">
+        OFFICIAL ACADEMIC TRANSCRIPT
+    </div>
+</div>
+<!-- =====================================================
+     STUDENT INFORMATION
+====================================================== -->
+<div class="student-meta">
+    <div class="student-meta-item">
+        <span class="meta-label">Student Name</span>
+        <span class="meta-value">
+            {{ student.get_full_name }}
+        </span>
+    </div>
+    <div class="student-meta-item">
+        <span class="meta-label">Student Number</span>
+        <span class="meta-value">
+            {{ student.student_number }}
+        </span>
+    </div>
+    <div class="student-meta-item">
+        <span class="meta-label">Current Class</span>
+        <span class="meta-value">
+            {{ student.school_class.name }}
+        </span>
+    </div>
+    <div class="student-meta-item">
+        <span class="meta-label">Date of Birth</span>
+        <span class="meta-value">
+            {{ student.date_of_birth }}
+        </span>
+    </div>
+    <div class="student-meta-item">
+        <span class="meta-label">Admission Date</span>
+        <span class="meta-value">
+            {{ student.admission_date }}
+        </span>
+    </div>
+    <div class="student-meta-item">
+        <span class="meta-label">Academic Year Range</span>
+        <span class="meta-value">
+            {{ first_year }} to {{ last_year }}
+        </span>
+    </div>
+</div>
+<!-- =====================================================
+     TRANSCRIPT RESULTS
+====================================================== -->
+{% for block in transcript_data %}
+    {% ifchanged block.academic_year %}
+        <div class="year-title">
+            <span>
+                {{ block.academic_year }} Academic Year
+            </span>
+        </div>
+    {% endifchanged %}
+    <div class="term-title">
+        <span>
+            {{ block.term }}
+        </span>
+        <span>
+            Average: {{ block.average }}%
+            &nbsp; • &nbsp;
+            {{ block.results|length }} Subjects
+        </span>
+    </div>
+    <div class="results-table-wrapper">
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th>Subject</th>
+                    <th>Class ({{ block.ca_total }})</th>
+                    <th>Exam ({{ block.exam_total }})</th>
+                    <th>Total ({{ block.max_total }})</th>
+                    <th>Grade</th>
+                    <th>Remark</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in block.results %}
+                <tr>
+                    <td>
+                        {{ r.subject.name }}
+                    </td>
+                    <td>
+                        {{ r.class_score }}
+                    </td>
+                    <td>
+                        {{ r.exam_score }}
+                    </td>
+                    <td>
+                        <strong>
+                            {{ r.total_score }}
+                        </strong>
+                    </td>
+                    <td>
+                        <strong>
+                            {{ r.grade }}
+                        </strong>
+                    </td>
+                    <td>
+                        {{ r.remark }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endfor %}
+<!-- =====================================================
+     TRANSCRIPT SUMMARY
+====================================================== -->
+<div class="transcript-summary">
+    <div class="summary-card">
+        <div class="summary-label">
+            Total Subjects
+        </div>
+        <div class="summary-value">
+            {{ total_subjects }}
+        </div>
+    </div>
+    <div class="summary-card">
+        <div class="summary-label">
+            Cumulative Average
+        </div>
+        <div class="summary-value">
+            {{ cumulative_avg }}%
+        </div>
+    </div>
+    <div class="summary-card">
+        <div class="summary-label">
+            Academic Status
+        </div>
+        <div class="summary-value">
+            Transferred / Completed
+        </div>
+    </div>
+</div>
+<!-- =====================================================
+     REMARKS
+====================================================== -->
+<div class="remarks-section">
+    <div class="section-heading">
+        Academic & Conduct Remarks
+    </div>
+    <div class="remark-row">
+        <span class="remark-label">
+            Class Teacher's Remark:
+        </span>
+        <span class="remark-value">
+            {{ remarks.class_teacher_remark|default:"-" }}
+        </span>
+    </div>
+    <div class="remark-row">
+        <span class="remark-label">
+            Head Teacher's Remark:
+        </span>
+        <span class="remark-value">
+            {{ remarks.headmaster_remark|default:"-" }}
+        </span>
+    </div>
+    <div class="remark-row">
+        <span class="remark-label">
+            Conduct:
+        </span>
+        <span class="remark-value">
+            {{ student.conduct|default:"Very Good" }}
+        </span>
+    </div>
+</div>
+<!-- =====================================================
+     ATTENDANCE
+====================================================== -->
+<div class="attendance-box">
+    <span class="attendance-label">
+        Attendance Record
+    </span>
+    <span class="attendance-value">
+        {{ days_present }} / {{ total_school_days }} days
+    </span>
+</div>
+<!-- =====================================================
+     GRADING SCALE
+====================================================== -->
+<div class="grading-box">
+    <strong>Grading Scale:</strong>
+    A (80–100) Excellent
+    &nbsp; | &nbsp;
+    B (70–79) Very Good
+    &nbsp; | &nbsp;
+    C (60–69) Good
+    &nbsp; | &nbsp;
+    D (50–59) Pass
+    &nbsp; | &nbsp;
+    E (40–49) Weak
+    &nbsp; | &nbsp;
+    F (0–39) Fail
+</div>
+<!-- =====================================================
+     CERTIFICATION
+====================================================== -->
+<div class="certification">
+    <strong>
+        Certification:
+    </strong>
+    Certified true and correct as per school records of
+    {{ school.name }}.
+</div>
+<!-- =====================================================
+     SIGNATURE AREA
+====================================================== -->
+<div class="signature-section">
+    <div class="signature-date">
+        <strong>Date Issued:</strong>
+        {{ date_issued }}
+    </div>
+    <div class="signature-line">
+        <div class="signature-line-space"></div>
+        <hr>
+        <strong>
+            Headmaster Signature &amp; Stamp
+        </strong>
+    </div>
+    <div class="official-note">
+        <strong>
+            Official Transcript
+        </strong>
+        School Logo Watermark Applied
+        <br>
+        <span>
+            Official only with school stamp
+        </span>
+    </div>
+</div>
+<!-- =====================================================
+     SCREEN ACTIONS
+====================================================== -->
+<div class="no-print transcript-actions">
+    <button
+        onclick="window.print()"
+        class="transcript-btn print-btn">
+        🖨️
+        Print Transcript
+    </button>
+    <a
+        href="/students/view/{{ student.id }}/"
+        class="transcript-btn back-btn">
+        ←
+        Back
+    </a>
+</div>
+</div>
+</body>
+</html>

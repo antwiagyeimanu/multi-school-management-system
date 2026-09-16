@@ -845,7 +845,9 @@ class="dashboard-btn btn-grade">
 📊 View Grades
 </a>
 
-
+<a href="{% url 'accounts:student_transcript' student.id %}" class="btn btn-primary">
+  <i class="fas fa-file-alt"></i> Generate Transcript
+</a>
 </div>
 
 
@@ -918,11 +920,12 @@ onclick="openTab(event,'attendance')">
 </div>
 
 
+{% if not is_basic_school %}
 <div class="student-tab"
 onclick="openTab(event,'fees')">
 💰 Fees
 </div>
-
+{% endif %}
 
 <div class="student-tab"
 onclick="openTab(event,'results')">
@@ -1519,7 +1522,7 @@ font-weight:700;
 
 
 
-
+{% if not is_basic_school %}
 <div id="fees" class="tab-content">
 
 <div class="payment-history-card">
@@ -1528,55 +1531,42 @@ font-weight:700;
 💰 Fees Information
 </h3>
 
-
-{% for fee in student_fees %}
+{% for breakdown in fee_breakdowns %}
 
 <div class="info-grid">
 
 <div class="info-box">
 <span>Term</span>
-<strong>{{ fee.term }}</strong>
+<strong>{{ breakdown.fee.term }}</strong>
 </div>
-
 
 <div class="info-box">
 <span>Academic Year</span>
-<strong>{{ fee.academic_year }}</strong>
+<strong>{{ breakdown.fee.academic_year }}</strong>
 </div>
-
 
 <div class="info-box">
 <span>Total Fee</span>
-<strong>
-₵ {{ fee.total_amount }}
-</strong>
+<strong>₵ {{ breakdown.total_amount }}</strong>
 </div>
-
 
 <div class="info-box">
 <span>Amount Paid</span>
-<strong style="color:#16a34a;">
-₵ {{ fee.amount_paid }}
-</strong>
+<strong style="color:#16a34a;">₵ {{ breakdown.total_paid }}</strong>
 </div>
-
 
 <div class="info-box">
 <span>Balance</span>
-<strong style="color:#dc2626;">
-₵ {{ fee.balance }}
-</strong>
+<strong style="color:#dc2626;">₵ {{ breakdown.total_balance }}</strong>
 </div>
-
 
 <div class="info-box">
 <span>Due Date</span>
-<strong>
-{{ fee.due_date|default:"Not Set" }}
-</strong>
+<strong>{{ breakdown.fee.due_date|default:"Not Set" }}</strong>
 </div>
 
 </div>
+
 <div class="dashboard-card" style="margin-top:25px;">
 
 <h3 class="card-title">
@@ -1584,9 +1574,7 @@ font-weight:700;
 </h3>
 
 <div class="attendance-table-wrapper">
-
 <table class="payment-table">
-
 <thead>
 <tr>
     <th>Fee Type</th>
@@ -1595,59 +1583,33 @@ font-weight:700;
     <th>Balance</th>
 </tr>
 </thead>
-
-
 <tbody>
-
-{% for breakdown in fee_breakdowns %}
-
-{% if breakdown.fee.id == fee.id %}
-
 {% for item in breakdown.items %}
-
 <tr>
-
-<td>
-{{ item.name }}
-</td>
-
-<td>
-₵ {{ item.amount }}
-</td>
-
-<td style="color:#16a34a;font-weight:700;">
-₵ {{ item.paid }}
-</td>
-
-<td style="color:#dc2626;font-weight:700;">
-₵ {{ item.balance }}
-</td>
-
+<td>{{ item.name }}</td>
+<td>₵ {{ item.amount }}</td>
+<td style="color:#16a34a;font-weight:700;">₵ {{ item.paid }}</td>
+<td style="color:#dc2626;font-weight:700;">₵ {{ item.balance }}</td>
 </tr>
-
 {% endfor %}
-
-{% endif %}
-
-{% endfor %}
-
 </tbody>
 </table>
-
 </div>
 
 </div>
+
+{% empty %}
+<p class="empty-state">No fee record for this term/year.</p>
+{% endfor %}
+
 <div class="dashboard-card" style="margin-top:25px;">
 
 <h3 class="card-title">
 💳 Payment History
 </h3>
 
-
 <div class="attendance-table-wrapper">
-
 <table class="attendance-table">
-
 <thead>
 <tr>
     <th>Receipt</th>
@@ -1655,90 +1617,32 @@ font-weight:700;
     <th>Method</th>
     <th>Payment Items</th>
     <th>Total Amount</th>
-    
 </tr>
 </thead>
-
 <tbody>
-
 {% for payment in payment_history %}
-
 <tr>
-
+<td><span class="receipt-badge">{{ payment.receipt_number|default:"-" }}</span></td>
+<td>{{ payment.created_at|date:"d M Y" }}</td>
+<td>{{ payment.get_payment_method_display }}</td>
 <td>
-<span class="receipt-badge">
-{{ payment.receipt_number|default:"-" }}
-</span>
-</td>
-
-
-<td>
-{{ payment.created_at|date:"d M Y" }}
-</td>
-
-
-<td>
-{{ payment.get_payment_method_display }}
-</td>
-
-
-<td>
-
 {% for item in payment.items.all %}
-
-<div style="
-display:inline-flex;
-align-items:center;
-gap:6px;
-background:#f1f5f9;
-padding:6px 10px;
-border-radius:20px;
-margin:3px;
-font-size:13px;
-font-weight:600;
-color:#334155;
-">
-
-<span>
-{{ item.fee_name }}
-</span>
-
-<span style="color:#16a34a;">
-₵ {{ item.amount }}
-</span>
-
+<div style="display:inline-flex;align-items:center;gap:6px;background:#f1f5f9;padding:6px 10px;border-radius:20px;margin:3px;font-size:13px;font-weight:600;color:#334155;">
+<span>{{ item.fee_name }}</span>
+<span style="color:#16a34a;">₵ {{ item.amount }}</span>
+</div>
+{% empty %}-{% endfor %}
+</td>
+<td><span class="payment-amount">₵ {{ payment.total_amount }}</span></td>
+</tr>
+{% empty %}
+<tr><td colspan="5" class="text-center">No payment history found.</td></tr>
+{% endfor %}
+</tbody>
+</table>
 </div>
 
-{% empty %}
-
--
-{% endfor %}
-
-</td>
-
-
-<td>
-<span class="payment-amount">
-₵ {{ payment.total_amount }}
-</span>
-</td>
-
-
-</tr>
-
-{% empty %}
-
-<tr>
-<td colspan="5" class="text-center">
-No payment history found.
-</td>
-</tr>
-
-{% endfor %}
-
-</tbody>
-
-</table>
+</div>
 
 </div>
 
@@ -1796,17 +1700,13 @@ Next
 
 {% endif %}
 
-{% endfor %}
+
 
 
 </div>
 
 </div>
-
-
-
-
-
+{% endif %}
 <div id="results" class="tab-content">
 
 <div class="dashboard-card">

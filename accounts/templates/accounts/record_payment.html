@@ -2,750 +2,1010 @@
 {% block title %}Record Payment{% endblock %}
 
 {% block content %}
-{% block extra_css %}
+
 <style>
-    .form-label {
-        color: #212529 !important;
-    }
-    /* cursor fix */
-.settings-card, .card-body, label, p, div {
+/* =========================================================
+   PREMIUM RECORD PAYMENT PAGE
+========================================================= */
+
+.payment-page {
+    width: 100%;
+    padding: 8px 0 45px;
+    color: #0f172a;
+}
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.payment-hero {
+    position: relative;
+    overflow: hidden;
+    margin: 25px 0 24px;
+    padding: 30px;
+    border-radius: 28px;
+    color: #fff;
+    background:
+        radial-gradient(circle at 88% 15%, rgba(255,255,255,.14), transparent 27%),
+        radial-gradient(circle at 8% 100%, rgba(59,130,246,.25), transparent 32%),
+        linear-gradient(135deg, #0f172a 0%, #172554 55%, #2563eb 100%);
+    box-shadow: 0 18px 45px rgba(15,23,42,.14);
+}
+
+.payment-hero::before {
+    content: "";
+    position: absolute;
+    width: 250px;
+    height: 250px;
+    right: -100px;
+    top: -130px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.07);
+}
+
+.payment-hero::after {
+    content: "";
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    left: 40%;
+    bottom: -135px;
+    border-radius: 50%;
+    background: rgba(96,165,250,.08);
+}
+
+.payment-hero-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 25px;
+}
+
+.payment-title {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(27px, 3vw, 40px);
+    line-height: 1.1;
+    font-weight: 900;
+    letter-spacing: -1.3px;
+}
+
+.payment-subtitle {
+    margin: 8px 0 0;
+    color: rgba(255,255,255,.72);
+    font-size: 13px;
+}
+
+.payment-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 16px;
+    border: 1px solid rgba(255,255,255,.13);
+    border-radius: 30px;
+    background: rgba(255,255,255,.09);
+    color: rgba(255,255,255,.92);
+    font-size: 11px;
+    font-weight: 800;
+    backdrop-filter: blur(10px);
+    white-space: nowrap;
+}
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+.payment-search-card {
+    overflow: hidden;
+    border: 1px solid #e8edf5 !important;
+    border-radius: 24px !important;
+    background: #fff;
+    box-shadow: 0 12px 32px rgba(15,23,42,.07) !important;
+}
+
+.payment-search-header {
+    padding: 19px 23px;
+    color: #fff;
+    background: linear-gradient(135deg,#2563eb,#3b82f6);
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.payment-search-group {
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    background: #fff;
+}
+
+.payment-search-group .form-control {
+    height: 56px;
+    border: 0;
+    box-shadow: none !important;
+    color: #0f172a !important;
+    background: #fff !important;
+    font-size: 14px;
+}
+
+.payment-search-group .input-group-text {
+    border: 0;
+    background: #fff;
+}
+
+.payment-search-group .btn {
+    border-radius: 0;
+    padding-left: 22px;
+    padding-right: 22px;
+    font-weight: 800;
+}
+
+.payment-result {
+    margin-bottom: 9px !important;
+    border: 1px solid #edf1f6 !important;
+    border-radius: 16px !important;
+    transition: .25s ease;
+}
+
+.payment-result:hover {
+    transform: translateX(4px);
+    background: #f8fbff;
+    border-color: #bfdbfe !important;
+}
+
+/* =========================================================
+   STUDENT INFORMATION
+========================================================= */
+
+.student-profile-panel {
+    margin-bottom: 22px;
+    padding: 22px;
+    border: 1px solid #e7ebf2;
+    border-radius: 24px;
+    background: #fff;
+    box-shadow: 0 10px 30px rgba(15,23,42,.06);
+}
+
+.student-profile-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 18px;
+}
+
+.student-profile-heading h5 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 900;
+}
+
+.student-profile-heading small {
+    color: #94a3b8;
+    font-size: 10px;
+}
+
+.student-info-card {
+    height: 100%;
+    padding: 20px;
+    border: 1px solid #e8edf5;
+    border-radius: 19px;
+    background: #fff;
+    text-align: center;
+    transition: .3s ease;
+}
+
+.student-info-card:hover {
+    transform: translateY(-3px);
+    border-color: #dbeafe;
+    box-shadow: 0 12px 28px rgba(15,23,42,.08);
+}
+
+.student-info-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    color: #fff;
+    font-size: 17px;
+}
+
+.student-info-card small {
+    display: block;
+    margin-bottom: 5px;
+    color: #94a3b8;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+}
+
+.student-info-card h6 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 900;
+    word-break: break-word;
+}
+
+/* =========================================================
+   FINANCIAL OVERVIEW
+========================================================= */
+
+.payment-financial-overview {
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 24px;
+    padding: 23px;
+    border: 1px solid #e7ebf2;
+    border-radius: 24px;
+    background: #fff;
+    box-shadow: 0 10px 30px rgba(15,23,42,.06);
+}
+
+.payment-financial-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.payment-financial-heading h5 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 16px;
+    font-weight: 900;
+}
+
+.payment-financial-heading small {
+    color: #94a3b8;
+    font-size: 10px;
+}
+
+.financial-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 15px;
+}
+
+.financial-summary {
+    position: relative;
+    min-width: 0;
+    min-height: 145px;
+    overflow: hidden;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: 19px;
+    background: var(--background);
+}
+
+.financial-summary::after {
+    content: "";
+    position: absolute;
+    width: 130px;
+    height: 130px;
+    right: -55px;
+    bottom: -65px;
+    border-radius: 50%;
+    background: var(--soft);
+}
+
+.financial-summary-top {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.financial-summary-icon {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 13px;
+    background: var(--soft);
+    color: var(--accent);
+    font-size: 15px;
+}
+
+.financial-summary-label {
+    position: relative;
+    z-index: 2;
+    margin-top: 16px;
+    color: #64748b;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+}
+
+.financial-summary-amount {
+    position: relative;
+    z-index: 2;
+    margin-top: 5px;
+    color: #0f172a;
+    font-size: clamp(20px, 2.2vw, 29px);
+    line-height: 1.15;
+    font-weight: 900;
+    letter-spacing: -.8px;
+    white-space: nowrap;
+}
+
+.financial-summary-note {
+    position: absolute;
+    z-index: 3;
+    left: 20px;
+    right: 20px;
+    bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #94a3b8;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.summary-total {
+    --accent: #2563eb;
+    --soft: #dbeafe;
+    --border: #bfdbfe;
+    --background: #f8fbff;
+}
+
+.summary-paid {
+    --accent: #059669;
+    --soft: #d1fae5;
+    --border: #a7f3d0;
+    --background: #f7fffb;
+}
+
+.summary-balance {
+    --accent: #dc2626;
+    --soft: #fee2e2;
+    --border: #fecaca;
+    --background: #fffafa;
+}
+
+/* =========================================================
+   PAYMENT BREAKDOWN
+========================================================= */
+
+.payment-section {
+    margin-bottom: 22px;
+    padding: 24px;
+    border: 1px solid #e7ebf2;
+    border-radius: 24px;
+    background: #fff;
+    box-shadow: 0 10px 30px rgba(15,23,42,.06);
+}
+
+.payment-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding-bottom: 17px;
+    border-bottom: 1px solid #edf1f6;
+}
+
+.payment-section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.payment-section-icon {
+    width: 43px;
+    height: 43px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 13px;
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.payment-section-header h5 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 16px;
+    font-weight: 900;
+}
+
+.payment-section-header small {
+    display: block;
+    margin-top: 3px;
+    color: #94a3b8;
+    font-size: 10px;
+}
+
+.payment-section-badge {
+    padding: 7px 10px;
+    border-radius: 30px;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 9px;
+    font-weight: 800;
+}
+
+/* =========================================================
+   FEE ITEM
+========================================================= */
+
+.payment-item-card {
+    height: 100%;
+    padding: 18px;
+    border: 1px solid #e7ebf2;
+    border-radius: 19px;
+    background: #fff;
+    transition: .3s ease;
+}
+
+.payment-item-card:hover {
+    transform: translateY(-3px);
+    border-color: #bfdbfe;
+    box-shadow: 0 12px 28px rgba(15,23,42,.08);
+}
+
+.payment-item-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.payment-item-icon {
+    width: 43px;
+    height: 43px;
+    flex: 0 0 43px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 13px;
+    background: linear-gradient(135deg,#2563eb,#3b82f6);
+    color: #fff;
+    font-size: 15px;
+}
+
+.payment-item-title {
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 900;
+}
+
+.payment-item-meta {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 7px;
+    margin-top: 12px;
+}
+
+.payment-meta {
+    padding: 8px 7px;
+    border-radius: 10px;
+    background: #f8fafc;
+    text-align: center;
+}
+
+.payment-meta span {
+    display: block;
+    color: #94a3b8;
+    font-size: 7px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.payment-meta strong {
+    display: block;
+    margin-top: 3px;
+    color: #334155;
+    font-size: 9px;
+    font-weight: 900;
+}
+
+.payment-meta.paid strong {
+    color: #059669;
+}
+
+.payment-meta.balance strong {
+    color: #dc2626;
+}
+
+.payment-input-label {
+    display: block;
+    margin-bottom: 6px;
+    color: #64748b;
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.payment-input {
+    height: 49px;
+    border: 1px solid #dbe3ed !important;
+    border-radius: 12px !important;
+    color: #0f172a !important;
+    background: #fff !important;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.payment-input:focus {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 .18rem rgba(37,99,235,.12) !important;
+}
+
+.payment-input:disabled {
+    background: #f8fafc !important;
+    color: #94a3b8 !important;
+}
+
+/* =========================================================
+   ACTION BAR
+========================================================= */
+
+.payment-action-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 20px 22px;
+    border: 1px solid #e7ebf2;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 10px 28px rgba(15,23,42,.06);
+}
+
+.payment-action-info {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+}
+
+.payment-status-icon {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: #ecfdf5;
+    color: #059669;
+    font-size: 17px;
+}
+
+.payment-action-info h6 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 900;
+}
+
+.payment-action-info small {
+    color: #94a3b8;
+    font-size: 9px;
+}
+
+.payment-action-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.payment-save-btn {
+    min-width: 220px;
+    padding: 13px 22px;
+    border: 0;
+    border-radius: 13px;
+    background: linear-gradient(135deg,#059669,#10b981);
+    color: #fff;
+    font-weight: 900;
+    box-shadow: 0 8px 18px rgba(5,150,105,.18);
+    transition: .25s ease;
+}
+
+.payment-save-btn:hover {
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(5,150,105,.28);
+}
+
+/* =========================================================
+   INPUT FIX
+========================================================= */
+
+input[type="number"],
+input[type="text"],
+input[type="date"],
+select {
+    color: #000 !important;
+    background: #fff !important;
+}
+
+label,
+p,
+div {
     cursor: default;
 }
-select,  button, a, .btn {
+
+button,
+a,
+.btn,
+select {
     cursor: pointer !important;
 }
-/* ==========================================
-   PREMIUM PAYMENT HERO
-========================================== */
 
-.payment-hero{
+/* =========================================================
+   TABLET
+========================================================= */
 
-    background:linear-gradient(135deg,#0f172a,#2563eb);
+@media (max-width: 1100px) {
 
-    color:#fff;
-
-    border-radius:24px;
-
-    padding:26px 30px;
-    margin-top:26px;
-
-    box-shadow:0 14px 35px rgba(0,0,0,.12);
-
-}
-
-.payment-hero-content{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    gap:20px;
-
-    flex-wrap:wrap;
-
-}
-
-.payment-title{
-
-    margin:0;
-
-    font-size:2rem;
-
-    font-weight:800;
-
-}
-
-.payment-subtitle{
-
-    margin-top:8px;
-
-    color:rgba(255,255,255,.85);
-
-    font-size:15px;
-
-}
-
-.payment-pill{
-
-    background:rgba(255,255,255,.18);
-
-    padding:12px 20px;
-
-    border-radius:40px;
-
-    font-weight:700;
-
-    font-size:14px;
-
-}
-
-@media (max-width:768px){
-
-    .payment-hero{
-
-        padding:22px;
-
+    .financial-summary-grid {
+        grid-template-columns: repeat(3,1fr);
     }
 
-    .payment-hero-content{
+    .payment-item-meta {
+        grid-template-columns: repeat(3,1fr);
+    }
+}
 
-        flex-direction:column;
+/* =========================================================
+   MOBILE
+========================================================= */
 
-        align-items:flex-start;
+@media (max-width: 767px) {
 
+    .payment-page {
+        padding: 3px 0 25px;
     }
 
-    .payment-title{
-
-        font-size:1.6rem;
-
+    .payment-hero {
+        margin-top: 12px;
+        margin-bottom: 16px;
+        padding: 21px 17px;
+        border-radius: 22px;
     }
 
-    .payment-pill{
-
-        width:100%;
-
-        text-align:center;
-
+    .payment-hero-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
     }
 
-}
-/* ===============================
-   SEARCH CARD
-=============================== */
-
-.payment-search-card{
-
-    border-radius:24px;
-
-    overflow:hidden;
-
-}
-
-.payment-search-header{
-
-    background:linear-gradient(135deg,#2563eb,#3b82f6);
-
-    color:#fff;
-
-    padding:18px 24px;
-
-    font-size:1.1rem;
-
-    font-weight:700;
-
-}
-
-.payment-search-group{
-
-    border-radius:18px;
-
-    overflow:hidden;
-
-    box-shadow:0 6px 18px rgba(0,0,0,.08);
-
-}
-
-.payment-search-group .form-control{
-
-    height:56px;
-
-    font-size:16px;
-
-    border:none;
-
-    box-shadow:none;
-
-}
-
-.payment-search-group .input-group-text{
-
-    border:none;
-
-    padding-left:18px;
-
-}
-
-.payment-search-group .btn{
-
-    border-radius:0;
-
-    font-weight:700;
-
-}
-
-.payment-result{
-
-    border:none !important;
-
-    border-radius:16px !important;
-
-    margin-bottom:10px;
-
-    transition:.25s;
-
-}
-
-.payment-result:hover{
-
-    background:#f8fbff;
-
-    transform:translateX(5px);
-
-}
-/* =========================================
-   STUDENT INFORMATION
-========================================= */
-
-.student-info-card{
-
-    background:#fff;
-
-    border-radius:18px;
-
-    padding:22px;
-
-    box-shadow:0 8px 24px rgba(0,0,0,.06);
-
-    transition:.3s;
-
-    height:100%;
-
-}
-
-.student-info-card:hover{
-
-    transform:translateY(-4px);
-
-    box-shadow:0 15px 35px rgba(0,0,0,.12);
-
-}
-
-.student-info-icon{
-
-    width:56px;
-
-    height:56px;
-
-    border-radius:16px;
-
-    color:#fff;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    font-size:24px;
-
-    margin:0 auto 18px;
-
-}
-.student-info-card small{
-
-    display:block;
-
-    color:#6b7280;
-
-    font-size:13px;
-
-    margin-bottom:6px;
-
-    font-weight:600;
-
-}
-
-.student-info-card h6{
-
-    margin:0;
-
-    font-size:18px;
-
-    font-weight:700;
-
-    color:#111827;
-
-    word-break:break-word;
-
-}
-.student-info-card{
-
-    background:#fff;
-
-    border-radius:18px;
-
-    padding:22px;
-
-    box-shadow:0 8px 24px rgba(0,0,0,.06);
-
-    transition:.3s;
-
-    height:100%;
-
-    text-align:center;
-
-}
-/* ======================================
-   PAYMENT SUMMARY CARDS
-====================================== */
-
-.summary-card{
-
-    border-radius:20px;
-
-    padding:24px;
-
-    color:#fff;
-
-    position:relative;
-
-    overflow:hidden;
-
-    min-height:150px;
-
-    box-shadow:0 10px 25px rgba(0,0,0,.08);
-
-    transition:.3s ease;
-
-}
-
-.summary-card:hover{
-
-    transform:translateY(-5px);
-
-    box-shadow:0 18px 35px rgba(0,0,0,.15);
-
-}
-
-.summary-card::after{
-
-    content:"";
-
-    position:absolute;
-
-    width:120px;
-
-    height:120px;
-
-    right:-30px;
-
-    top:-30px;
-
-    border-radius:50%;
-
-    background:rgba(255,255,255,.12);
-
-}
-
-.summary-primary{
-
-    background:linear-gradient(135deg,#2563eb,#3b82f6);
-
-}
-
-.summary-success{
-
-    background:linear-gradient(135deg,#059669,#10b981);
-
-}
-
-.summary-danger{
-
-    background:linear-gradient(135deg,#dc2626,#ef4444);
-
-}
-
-.summary-icon{
-
-    font-size:28px;
-
-    margin-bottom:15px;
-
-    position:relative;
-
-    z-index:2;
-
-}
-
-.summary-label{
-
-    font-size:14px;
-
-    text-transform:uppercase;
-
-    letter-spacing:1px;
-
-    opacity:.9;
-
-    margin-bottom:10px;
-
-    position:relative;
-
-    z-index:2;
-
-}
-
-.summary-amount{
-
-    font-size:30px;
-
-    font-weight:800;
-
-    position:relative;
-
-    z-index:2;
-
-}
-
-@media(max-width:768px){
-
-    .summary-card{
-
-        min-height:auto;
-
+    .payment-title {
+        font-size: 25px;
+        font-weight: 900;
+        letter-spacing: -.8px;
     }
 
-    .summary-amount{
-
-        font-size:24px;
-
+    .payment-subtitle {
+        font-size: 12px;
+        font-weight: 700;
     }
 
-}
-/* ===============================
-   PAYMENT BREAKDOWN
-===============================*/
-
-.payment-section{
-
-    background:#fff;
-
-    border-radius:22px;
-
-    padding:25px;
-
-    box-shadow:0 10px 28px rgba(0,0,0,.06);
-
-}
-
-.payment-section-header{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    margin-bottom:20px;
-
-    padding-bottom:15px;
-
-    border-bottom:1px solid #edf2f7;
-
-}
-
-.payment-section-header h5{
-
-    font-weight:800;
-
-    color:#0f172a;
-
-}
-
-.payment-section-header small{
-
-    color:#6b7280;
-
-}
-
-.payment-item-card{
-
-    border:1px solid #e5e7eb;
-
-    border-radius:18px;
-
-    padding:18px;
-
-    transition:.3s;
-
-    background:#fff;
-
-    height:100%;
-
-}
-
-.payment-item-card:hover{
-
-    transform:translateY(-3px);
-
-    box-shadow:0 10px 24px rgba(0,0,0,.08);
-
-}
-
-.payment-item-header{
-
-    display:flex;
-
-    align-items:center;
-
-    gap:15px;
-
-    margin-bottom:15px;
-
-}
-
-.payment-item-icon{
-
-    width:50px;
-
-    height:50px;
-
-    border-radius:14px;
-
-    background:linear-gradient(135deg,#2563eb,#3b82f6);
-
-    color:#fff;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    font-size:20px;
-
-}
-
-.payment-item-title{
-
-    font-weight:700;
-
-    color:#111827;
-
-}
-
-.payment-input{
-
-    border-radius:12px;
-
-    height:50px;
-
-    font-weight:600;
-
-    font-size:17px;
-
-}
-
-.payment-input:focus{
-
-    border-color:#2563eb;
-
-    box-shadow:0 0 0 .2rem rgba(37,99,235,.15);
-
-}
-
-.payment-save-btn{
-
-    background:linear-gradient(135deg,#059669,#10b981);
-
-    color:#fff;
-
-    border:none;
-
-    border-radius:14px;
-
-    font-weight:700;
-
-    transition:.3s;
-
-}
-
-.payment-save-btn:hover{
-
-    color:#fff;
-
-    transform:translateY(-2px);
-
-    box-shadow:0 10px 24px rgba(16,185,129,.30);
-
-}
-/* ===============================
-   ACTION BAR
-===============================*/
-
-.payment-action-bar{
-
-    margin-top:35px;
-
-    background:#ffffff;
-
-    border-radius:18px;
-
-    padding:20px 24px;
-
-    border:1px solid #e5e7eb;
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    gap:20px;
-
-    box-shadow:0 8px 24px rgba(0,0,0,.06);
-
-}
-
-.payment-action-info{
-
-    display:flex;
-
-    align-items:center;
-
-    gap:15px;
-
+    .payment-pill {
+        width: 100%;
+        justify-content: center;
+        font-size: 15px;
+        font-weight: 900;
+    }
+
+    .payment-search-card {
+        border-radius: 19px !important;
+    }
+
+    .payment-search-header {
+        padding: 16px;
+        font-size: 15px;
+        font-weight: 900;
+    }
+
+    .payment-search-card .card-body {
+        padding: 17px !important;
+    }
+
+    .payment-search-group {
+        border-radius: 13px;
+    }
+
+    .payment-search-group .form-control {
+        height: 49px;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .payment-search-group .btn {
+        padding-left: 13px;
+        padding-right: 13px;
+        font-size: 12px;
+        font-weight: 900;
+    }
+
+    .student-profile-panel,
+    .payment-financial-overview,
+    .payment-section {
+        padding: 15px;
+        border-radius: 19px;
+    }
+
+    .student-profile-heading,
+    .payment-financial-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .student-info-card {
+        padding: 15px;
+        border-radius: 15px;
+    }
+
+    .student-info-icon {
+        width: 38px;
+        height: 38px;
+        margin-bottom: 9px;
+        border-radius: 11px;
+        font-size: 14px;
+        font-weight: 900;
+    }
+
+    .student-info-card small {
+        font-size: 10px;
+        font-weight: 800;
+    }
+
+    .student-info-card h6 {
+        font-size: 13px;
+        font-weight: 900;
+    }
+
+    .financial-summary-grid {
+        grid-template-columns: 1fr;
+        gap: 9px;
+    }
+
+    .financial-summary {
+        min-height: 125px;
+        padding: 15px;
+        border-radius: 16px;
+    }
+
+    .financial-summary-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 900;
+    }
+
+    .financial-summary-label {
+        margin-top: 11px;
+        font-size: 12px;
+    }
+
+    .financial-summary-amount {
+        font-size: 20px;
+    }
+
+    .financial-summary-note {
+        left: 15px;
+        right: 15px;
+        bottom: 7px;
+        font-size: 11px;
+    }
+
+    .payment-section-header {
+        margin-bottom: 14px;
+        padding-bottom: 13px;
+    }
+
+    .payment-section-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        font-size: 14px;
+    }
+
+    .payment-section-header h5 {
+        font-size: 15px;
+        font-weight: 900;
+    }
+
+    .payment-section-header small {
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+    .payment-section-badge {
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .payment-item-card {
+        padding: 14px;
+        border-radius: 16px;
+    }
+
+    .payment-item-icon {
+        width: 38px;
+        height: 38px;
+        flex-basis: 38px;
+        border-radius: 11px;
+        font-size: 12px;
+        font-weight: 900;
+    }
+
+    .payment-item-title {
+        font-size: 16px;
+    }
+
+    .payment-item-meta {
+        gap: 5px;
+    }
+
+    .payment-meta {
+        padding: 7px 4px;
+    }
+
+    .payment-meta span {
+        font-size: 14px;
+    }
+
+    .payment-meta strong {
+        font-size: 14px;
+        font-weight: 900;
+    }
+
+    .payment-action-bar {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 15px;
+        border-radius: 17px;
+    }
+
+    .payment-action-buttons {
+        width: 100%;
+    }
+
+    .payment-save-btn {
+        width: 100%;
+        min-width: 0;
+    }
 }
 
-.payment-status-icon{
+/* =========================================================
+   SMALL PHONES
+========================================================= */
 
-    width:55px;
+@media (max-width: 390px) {
 
-    height:55px;
+    .payment-title {
+        font-size: 22px;
+    }
 
-    border-radius:50%;
+    .financial-summary-amount {
+        font-size: 18px;
+    }
 
-    background:linear-gradient(135deg,#10b981,#059669);
-
-    color:#fff;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    font-size:22px;
-
+    .student-info-card {
+        padding: 12px;
+    }
 }
+/* =========================================================
+   MOBILE ONLY — SIDE-BY-SIDE CARDS
+   DESKTOP/LAPTOP UNCHANGED
+========================================================= */
 
-.payment-action-info h6{
+@media (max-width: 767px) {
 
-    font-weight:800;
+    /* -----------------------------------------------------
+       STUDENT PROFILE CARDS
+       2 cards per row
+    ----------------------------------------------------- */
 
-    margin:0;
+    .student-profile-panel .row > div {
+        width: 50%;
+    }
 
-    color:#111827;
+    .student-info-card {
+        padding: 14px 10px;
+        border-radius: 15px;
+    }
 
-}
+    .student-info-icon {
+        width: 38px;
+        height: 38px;
+        margin-bottom: 9px;
+        border-radius: 11px;
+        font-size: 14px;
+    }
 
-.payment-action-info small{
+    .student-info-card small {
+        font-size: 13px;
+    }
 
-    color:#6b7280;
+    .student-info-card h6 {
+        font-size: 14px;
+    }
 
-}
 
-.payment-action-buttons{
+    /* -----------------------------------------------------
+       FINANCIAL OVERVIEW
+       2 cards per row
+    ----------------------------------------------------- */
 
-    display:flex;
+    .financial-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+    }
 
-    gap:12px;
+    .financial-summary {
+        min-height: 125px;
+        padding: 14px;
+        border-radius: 16px;
+    }
 
-    flex-wrap:wrap;
+    .financial-summary-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        font-size: 14px;
+    }
 
-}
+    .financial-summary-label {
+        margin-top: 11px;
+        font-size: 10px;
+    }
 
-.action-btn{
+    .financial-summary-amount {
+        font-size: 18px;
+    }
 
-    min-width:220px;
+    .financial-summary-note {
+        left: 14px;
+        right: 14px;
+        bottom: 7px;
+        font-size: 10px;
+    }
 
-    border-radius:14px;
 
-    font-weight:700;
-
-}
-
-.payment-save-btn{
-
-    background:linear-gradient(135deg,#059669,#10b981);
-
-    border:none;
-
-    color:#fff;
-
-}
-
-.payment-save-btn:hover{
-
-    color:#fff;
-
-    transform:translateY(-2px);
-
-    box-shadow:0 10px 25px rgba(16,185,129,.30);
-
-}
-
-@media(max-width:768px){
-
-.payment-action-bar{
-
-    flex-direction:column;
-
-    align-items:stretch;
-
-}
-
-.payment-action-buttons{
-
-    width:100%;
-
-    flex-direction:column;
-
-}
-
-.action-btn{
-
-    width:100%;
-
-    min-width:100%;
-
-}
-
-.payment-action-info{
-
-    width:100%;
-
-}
-
-}
 </style>
-{% endblock %}
-<div class="container-fluid px-4">
 
-    <!-- PREMIUM HERO -->
-    <div class="payment-hero mb-4">
+
+<div class="payment-page">
+
+    <!-- =====================================================
+         PREMIUM HERO
+    ====================================================== -->
+
+    <div class="payment-hero">
 
         <div class="payment-hero-content">
 
             <div>
 
-                <h2 class="payment-title">
+                <h1 class="payment-title">
                     <i class="fas fa-money-check-alt me-2"></i>
                     Record Student Payment
-                </h2>
+                </h1>
 
-                <p class="payment-subtitle mb-0">
-                    Search for a student and record fee payments securely.
+                <p class="payment-subtitle">
+                    Search for a student and securely record their fee payment.
                 </p>
 
             </div>
 
             <div class="payment-pill">
 
-                <i class="fas fa-user-tie me-2"></i>
+                <i class="fas fa-user-tie"></i>
 
                 Accountant Portal
 
@@ -755,441 +1015,709 @@ select,  button, a, .btn {
 
     </div>
 
+
+    <!-- =====================================================
+         MESSAGES
+    ====================================================== -->
+
     {% if messages %}
+
         {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        {% endfor %}
-    {% endif %}
 
-    <!-- SEARCH FORM -->
-    {% if not student %}
-<div class="row justify-content-center">
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show rounded-4">
 
-    <div class="col-xl-7 col-lg-8 col-md-10">
+                {{ message }}
 
-        <div class="card payment-search-card shadow-lg border-0 mb-4">
-
-            <div class="payment-search-header">
-
-                <i class="fas fa-search me-2"></i>
-
-                Search Student
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+                </button>
 
             </div>
 
-            <div class="card-body p-4">
+        {% endfor %}
 
-                <form method="GET">
+    {% endif %}
 
-                    <div class="input-group payment-search-group">
 
-                        <span class="input-group-text bg-white border-end-0">
-                            <i class="fas fa-user-graduate text-primary"></i>
-                        </span>
+    <!-- =====================================================
+         SEARCH
+         LOGIC UNCHANGED
+    ====================================================== -->
 
-                        <input
-                            type="text"
-                            name="search"
-                            value="{{ search_query }}"
-                            class="form-control border-start-0"
-                            placeholder="Enter Student ID or Student Name..."
-                            autofocus
-                        >
+    {% if not student %}
 
-                        <button class="btn btn-primary px-4" type="submit">
+        <div class="row justify-content-center">
 
-                            <i class="fas fa-search me-2"></i>
+            <div class="col-xl-7 col-lg-8 col-md-10">
 
-                            Search
+                <div class="card payment-search-card mb-4">
 
-                        </button>
+                    <div class="payment-search-header">
+
+                        <i class="fas fa-search me-2"></i>
+
+                        Search Student
 
                     </div>
 
-                </form>
+                    <div class="card-body p-4">
 
-                {% if search_results %}
+                        <form method="GET">
 
-                <hr class="my-4">
+                            <div class="input-group payment-search-group">
 
-                <h6 class="fw-bold mb-3">
-                    Search Results
-                </h6>
+                                <span class="input-group-text">
 
-                <div class="list-group">
+                                    <i class="fas fa-user-graduate text-primary"></i>
 
-                    {% for result in search_results %}
+                                </span>
 
-                    <a href="?search={{ result.student_number }}"
-                       class="list-group-item list-group-item-action payment-result">
+                                <input
+                                    type="text"
+                                    name="search"
+                                    value="{{ search_query }}"
+                                    class="form-control"
+                                    placeholder="Enter Student ID or Student Name..."
+                                    autofocus
+                                >
 
-                        <div class="d-flex justify-content-between align-items-center">
+                                <button
+                                    class="btn btn-primary"
+                                    type="submit">
+
+                                    <i class="fas fa-search me-2"></i>
+
+                                    Search
+
+                                </button>
+
+                            </div>
+
+                        </form>
+
+
+                        {% if search_results %}
+
+                            <hr class="my-4">
+
+                            <h6 class="fw-bold mb-3">
+                                Search Results
+                            </h6>
+
+                            <div class="list-group">
+
+                                {% for result in search_results %}
+
+                                    <a
+                                        href="?search={{ result.student_number }}"
+                                        class="list-group-item list-group-item-action payment-result">
+
+                                        <div class="d-flex justify-content-between align-items-center">
+
+                                            <div>
+
+                                                <h6 class="mb-1 fw-bold">
+
+                                                    {{ result.get_full_name }}
+
+                                                </h6>
+
+                                                <small class="text-muted">
+
+                                                    <i class="fas fa-id-card me-1"></i>
+
+                                                    {{ result.student_number }}
+
+                                                    &nbsp;&nbsp;|&nbsp;&nbsp;
+
+                                                    <i class="fas fa-school me-1"></i>
+
+                                                    {{ result.school_class.name }}
+
+                                                </small>
+
+                                            </div>
+
+                                            <i class="fas fa-chevron-right text-primary"></i>
+
+                                        </div>
+
+                                    </a>
+
+                                {% endfor %}
+
+                            </div>
+
+
+                        {% elif search_query %}
+
+                            <div class="alert alert-warning mt-4 mb-0 rounded-4">
+
+                                <i class="fas fa-exclamation-circle me-2"></i>
+
+                                No students found for
+
+                                <strong>"{{ search_query }}"</strong>
+
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    {% endif %}
+
+
+    <!-- =====================================================
+         SELECTED STUDENT PAYMENT AREA
+    ====================================================== -->
+
+    {% if student and fee %}
+
+        <div class="row">
+
+            <div class="col-12 col-xxl-11 mx-auto">
+
+                <form method="POST" id="paymentForm">
+
+                    {% csrf_token %}
+
+
+                    <!-- =================================================
+                         STUDENT PROFILE
+                    ================================================== -->
+
+                    <div class="student-profile-panel">
+
+                        <div class="student-profile-heading">
 
                             <div>
 
-                                <h6 class="mb-1 fw-bold">
-                                    {{ result.get_full_name }}
-                                </h6>
+                                <h5>
+                                    <i class="fas fa-user-graduate text-primary me-2"></i>
+                                    Student Payment Profile
+                                </h5>
 
-                                <small class="text-muted">
-
-                                    <i class="fas fa-id-card me-1"></i>
-
-                                    {{ result.student_number }}
-
-                                    &nbsp;&nbsp;|&nbsp;&nbsp;
-
-                                    <i class="fas fa-school me-1"></i>
-
-                                    {{ result.school_class.name }}
-
+                                <small>
+                                    Current academic payment information
                                 </small>
 
                             </div>
 
-                            <i class="fas fa-chevron-right text-primary"></i>
+                            <span class="payment-section-badge">
+
+                                <i class="fas fa-circle-check text-success me-1"></i>
+
+                                Active Student
+
+                            </span>
 
                         </div>
 
-                    </a>
 
-                    {% endfor %}
+                        <div class="row g-3">
 
-                </div>
+                            <!-- STUDENT NAME -->
 
-                {% elif search_query %}
+                            <div class="col-xl-3 col-lg-6 col-md-6">
 
-                <div class="alert alert-warning mt-4 mb-0 rounded-4">
+                                <div class="student-info-card">
 
-                    <i class="fas fa-exclamation-circle me-2"></i>
+                                    <div class="student-info-icon bg-dark">
 
-                    No students found for
+                                        <i class="fas fa-user-graduate"></i>
 
-                    <strong>"{{ search_query }}"</strong>
+                                    </div>
 
-                </div>
+                                    <small>
+                                        Student Name
+                                    </small>
 
-                {% endif %}
+                                    <h6>
+                                        {{ student.get_full_name }}
+                                    </h6>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- STUDENT ID -->
+
+                            <div class="col-xl-3 col-lg-6 col-md-6">
+
+                                <div class="student-info-card">
+
+                                    <div class="student-info-icon bg-success">
+
+                                        <i class="fas fa-id-card"></i>
+
+                                    </div>
+
+                                    <small>
+                                        Student ID
+                                    </small>
+
+                                    <h6>
+                                        {{ student.student_number }}
+                                    </h6>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- CLASS -->
+
+                            <div class="col-xl-3 col-lg-6 col-md-6">
+
+                                <div class="student-info-card">
+
+                                    <div class="student-info-icon bg-warning">
+
+                                        <i class="fas fa-school"></i>
+
+                                    </div>
+
+                                    <small>
+                                        Class
+                                    </small>
+
+                                    <h6>
+                                        {{ student.school_class.name }}
+                                    </h6>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- TERM -->
+
+                            <div class="col-xl-3 col-lg-6 col-md-6">
+
+                                <div class="student-info-card">
+
+                                    <div
+                                        class="student-info-icon"
+                                        style="background:#7c3aed;">
+
+                                        <i class="fas fa-calendar-alt"></i>
+
+                                    </div>
+
+                                    <small>
+                                        Current Term
+                                    </small>
+
+                                    <h6>
+                                        {{ term }} - {{ academic_year }}
+                                    </h6>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         FINANCIAL OVERVIEW
+                    ================================================== -->
+
+                    <div class="payment-financial-overview">
+
+                        <div class="payment-financial-heading">
+
+                            <div>
+
+                                <h5>
+                                    <i class="fas fa-chart-pie text-primary me-2"></i>
+                                    Fee Account Overview
+                                </h5>
+
+                                <small>
+                                    Current financial position for this term
+                                </small>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="financial-summary-grid">
+
+
+                            <!-- TOTAL FEE -->
+
+                            <div class="financial-summary summary-total">
+
+                                <div class="financial-summary-top">
+
+                                    <div class="financial-summary-icon">
+
+                                        <i class="fas fa-file-invoice-dollar"></i>
+
+                                    </div>
+
+                                    <i class="fas fa-wallet text-primary"></i>
+
+                                </div>
+
+                                <div class="financial-summary-label">
+                                    Total Fee
+                                </div>
+
+                                <div class="financial-summary-amount">
+
+                                    GH₵ {{ fee.total_amount|floatformat:2 }}
+
+                                </div>
+
+                                <div class="financial-summary-note">
+
+                                    <span>
+                                        Full term fee
+                                    </span>
+
+                                    <span class="text-primary">
+                                        100%
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- PAID -->
+
+                            <div class="financial-summary summary-paid">
+
+                                <div class="financial-summary-top">
+
+                                    <div class="financial-summary-icon">
+
+                                        <i class="fas fa-check-circle"></i>
+
+                                    </div>
+
+                                    <i class="fas fa-arrow-trend-up text-success"></i>
+
+                                </div>
+
+                                <div class="financial-summary-label">
+                                    Amount Paid
+                                </div>
+
+                                <div class="financial-summary-amount">
+
+                                    GH₵ {{ total_paid|floatformat:2 }}
+
+                                </div>
+
+                                <div class="financial-summary-note">
+
+                                    <span>
+                                        Received
+                                    </span>
+
+                                    <span class="text-success">
+                                        Paid
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- BALANCE -->
+
+                            <div class="financial-summary summary-balance">
+
+                                <div class="financial-summary-top">
+
+                                    <div class="financial-summary-icon">
+
+                                        <i class="fas fa-exclamation-circle"></i>
+
+                                    </div>
+
+                                    <i class="fas fa-hourglass-half text-danger"></i>
+
+                                </div>
+
+                                <div class="financial-summary-label">
+                                    Balance Owing
+                                </div>
+
+                                <div class="financial-summary-amount">
+
+                                    GH₵ {{ balance|floatformat:2 }}
+
+                                </div>
+
+                                <div class="financial-summary-note">
+
+                                    <span>
+                                        Remaining
+                                    </span>
+
+                                    <span class="text-danger">
+                                        Due
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         PAYMENT BREAKDOWN
+                    ================================================== -->
+
+                    <div class="payment-section">
+
+                        <div class="payment-section-header">
+
+                            <div class="payment-section-title">
+
+                                <div class="payment-section-icon">
+
+                                    <i class="fas fa-coins"></i>
+
+                                </div>
+
+                                <div>
+
+                                    <h5>
+                                        Enter Payment Breakdown
+                                    </h5>
+
+                                    <small>
+                                        Record the amount being paid against each fee item.
+                                    </small>
+
+                                </div>
+
+                            </div>
+
+                            {% if fee_map %}
+
+                                <span class="payment-section-badge">
+
+                                    {{ fee_map|length }}
+                                    Fee Item{{ fee_map|length|pluralize }}
+
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <div class="row g-3">
+
+
+                            {% if fee_map %}
+
+                                {% for name, data in fee_map.items %}
+
+                                    <div class="col-xl-6 col-lg-6">
+
+                                        <div class="payment-item-card">
+
+                                            <div class="payment-item-header">
+
+                                                <div class="payment-item-icon">
+
+                                                    <i class="fas fa-money-bill-wave"></i>
+
+                                                </div>
+
+                                                <div>
+
+                                                    <div class="payment-item-title">
+
+                                                        {{ name }}
+
+                                                    </div>
+
+                                                    <small class="text-muted">
+
+                                                        Enter the amount received for this item.
+
+                                                    </small>
+
+                                                </div>
+
+                                            </div>
+
+
+                                            <!-- FEE STATUS -->
+
+                                            <div class="payment-item-meta">
+
+                                                <div class="payment-meta">
+
+                                                    <span>
+                                                        Due
+                                                    </span>
+
+                                                    <strong>
+                                                        GH₵ {{ data.due|floatformat:2 }}
+                                                    </strong>
+
+                                                </div>
+
+                                                <div class="payment-meta paid">
+
+                                                    <span>
+                                                        Paid
+                                                    </span>
+
+                                                    <strong>
+                                                        GH₵ {{ data.paid|floatformat:2 }}
+                                                    </strong>
+
+                                                </div>
+
+                                                <div class="payment-meta balance">
+
+                                                    <span>
+                                                        Balance
+                                                    </span>
+
+                                                    <strong>
+                                                        GH₵ {{ data.balance|floatformat:2 }}
+                                                    </strong>
+
+                                                </div>
+
+                                            </div>
+
+
+                                            <!-- PAYMENT INPUT -->
+
+                                            <div class="mt-3">
+
+                                                <label class="payment-input-label">
+
+                                                    Payment Amount
+
+                                                </label>
+
+                                                <input
+                                                    type="number"
+                                                    name="item_{{ data.id }}"
+                                                    class="form-control payment-input"
+                                                    placeholder="0.00"
+                                                    step="0.01"
+                                                    min="0"
+                                                    max="{{ data.balance }}"
+                                                    {% if data.balance <= 0 %}disabled{% endif %}
+                                                >
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                {% endfor %}
+
+
+                            {% else %}
+
+                                <div class="col-12">
+
+                                    <div class="alert alert-success rounded-4 mb-0">
+
+                                        <i class="fas fa-circle-check me-2"></i>
+
+                                        <strong>All fees paid.</strong>
+
+                                        All fees have been fully paid for this term.
+
+                                    </div>
+
+                                </div>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         SAVE PAYMENT
+                    ================================================== -->
+
+                    <div class="payment-action-bar">
+
+                        <div class="payment-action-info">
+
+                            <div class="payment-status-icon">
+
+                                <i class="fas fa-shield-check"></i>
+
+                            </div>
+
+                            <div>
+
+                                <h6>
+                                    Ready to Record Payment
+                                </h6>
+
+                                <small>
+                                    Review the amounts above before saving.
+                                </small>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="payment-action-buttons">
+
+                            <button
+                                type="submit"
+                                class="btn payment-save-btn">
+
+                                <i class="fas fa-save me-2"></i>
+
+                                Save Payment
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                </form>
 
             </div>
 
         </div>
 
-    </div>
-
-</div>
     {% endif %}
 
-    <!-- PAYMENT FORM: Show only when student is selected -->
-    {% if student and fee %}
-    <div class="row">
-       <div class="col-xl-10 mx-auto">
-            <div class="card mb-4">
-                <div class="card-header bg-success text-white d-flex justify-content-between">
-                    <span><i class=" fas fa-money-bill me-1"></i> Payment Details</span>
-              
-                </div>
-                <div class="card-body">
-                    
-                   <form method="POST" id="paymentForm">
-    {% csrf_token %}
-    
-    <!-- Student Info -->
-<div class="row g-3 mb-4">
-
-    <div class="col-xl-3 col-lg-6 col-md-6">
-
-        <div class="student-info-card">
-
-            <div class="student-info-icon bg-dark">
-                <i class="fas fa-user-graduate"></i>
-            </div>
-
-            <small>Student Name</small>
-
-            <h6>{{ student.get_full_name }}</h6>
-
-        </div>
-
-    </div>
-
-
-    <div class="col-xl-3 col-lg-6 col-md-6">
-
-        <div class="student-info-card">
-
-            <div class="student-info-icon bg-success">
-                <i class="fas fa-id-card"></i>
-            </div>
-
-            <small>Student ID</small>
-
-            <h6>{{ student.student_number }}</h6>
-
-        </div>
-
-    </div>
-
-
-    <div class="col-xl-3 col-lg-6 col-md-6">
-
-        <div class="student-info-card">
-
-            <div class="student-info-icon bg-warning">
-                <i class="fas fa-school"></i>
-            </div>
-
-            <small>Class</small>
-
-            <h6>{{ student.school_class.name }}</h6>
-
-        </div>
-
-    </div>
-
-
-    <div class="col-xl-3 col-lg-6 col-md-6">
-
-        <div class="student-info-card">
-
-            <div class="student-info-icon" style="background:#7c3aed;">
-                <i class="fas fa-calendar-alt"></i>
-            </div>
-
-            <small>Current Term</small>
-
-            <h6>{{ term }} - {{ academic_year }}</h6>
-
-        </div>
-
-    </div>
-
 </div>
 
-    <hr>
-
-<div class="row g-3 mb-4">
-
-    <!-- TOTAL FEE -->
-    <div class="col-xl-4 col-md-4">
-
-        <div class="summary-card summary-primary">
-
-            <div class="summary-icon">
-                <i class="fas fa-file-invoice-dollar"></i>
-            </div>
-
-            <div class="summary-label">
-                Total Fee
-            </div>
-
-            <div class="summary-amount">
-                GH₵ {{ fee.total_amount|floatformat:2 }}
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <!-- AMOUNT PAID -->
-    <div class="col-xl-4 col-md-4">
-
-        <div class="summary-card summary-success">
-
-            <div class="summary-icon">
-                <i class="fas fa-check-circle"></i>
-            </div>
-
-            <div class="summary-label">
-                Amount Paid
-            </div>
-
-            <div class="summary-amount">
-                GH₵ {{ total_paid|floatformat:2 }}
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <!-- BALANCE -->
-    <div class="col-xl-4 col-md-4">
-
-        <div class="summary-card summary-danger">
-
-            <div class="summary-icon">
-                <i class="fas fa-exclamation-circle"></i>
-            </div>
-
-            <div class="summary-label">
-                Balance Owing
-            </div>
-
-            <div class="summary-amount">
-                GH₵ {{ balance|floatformat:2 }}
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
-
-    <hr>
-
-<!-- Payment Input Section -->
-<div class="payment-section">
-
-    <div class="payment-section-header">
-
-        <div>
-
-            <h5 class="mb-1">
-                <i class="fas fa-coins me-2"></i>
-                Enter Payment Breakdown
-            </h5>
-
-            <small>
-                Record payment against each fee item below.
-            </small>
-
-        </div>
-
-    </div>
-
-    <div class="row g-4 mt-1">
-
-{% if fee_map %}
-    {% for name, amount in fee_map.items %}
-<div class="col-lg-6 col-md-6">
-
-    <div class="payment-item-card">
-
-        <div class="payment-item-header">
-
-            <div class="payment-item-icon">
-
-                <i class="fas fa-money-bill-wave"></i>
-
-            </div>
-
-            <div>
-
-                <div class="payment-item-title">
-
-                    {{ name }}
-
-                </div>
-
-                <small class="text-muted">
-
-                    Maximum: GH₵ {{ amount|floatformat:2 }}
-
-                </small>
-
-            </div>
-
-        </div>
-
-        <input
-               type="number"
-               name="{% if name == 'School Fees' %}school_fees_paid{% elif name == 'Feeding' %}canteen_paid{% elif name == 'Boarding' %}boarding_paid{% elif name == 'Hostel' %}hostel_paid{% elif name == 'Development' %}development_paid{% elif name == 'PTA' %}pta_paid{% elif name == 'Computer' %}computer_paid{% elif name == 'Exam' %}exam_paid{% elif name == 'Other' %}other_paid{% endif %}"
-               class="form-control payment-input"
-               placeholder="Enter amount..."
-               step="0.01"
-               min="0"
-               max="{{ amount }}">
-
-    </div>
-
-</div>
-    {% endfor %}
-{% else %}
-    <p class="text-success fw-bold">✓ All fees paid for this term</p>
-{% endif %}
-
-</div>
-</div>
-
-</div>
-<div class="payment-action-bar mt-4">
-
-    <div class="payment-action-info">
-
-        <div class="payment-status-icon">
-            <i class="fas fa-check-circle"></i>
-        </div>
-
-        <div>
-
-            <h6 class="mb-1">
-                Ready to Record Payment
-            </h6>
-
-            <small>
-                Review the payment details before saving.
-            </small>
-
-        </div>
-
-    </div>
-
-    <div class="payment-action-buttons">
-
-  
-
-        <button type="submit" class="btn btn-lg payment-save-btn action-btn">
-
-            <i class="fas fa-save me-2"></i>
-
-            Save Payment
-
-        </button>
-
-    </div>
-
-</div>
-</form>
-
-            
-        </div>
-      </div>
-    </div>
-    <!-- END MODAL -->
-
- 
-<script>
-function openModal() {
-    document.getElementById('paymentModal').style.display = 'block';
-}
-
-function closeModal() {
-    document.getElementById('paymentModal').style.display = 'none';
-}
-
-function confirmSelection() {
-    const checked = document.querySelectorAll('#paymentModal input[type="checkbox"]:checked');
-    let selectedNames = [];
-
-    checked.forEach(function(cb) {
-        const label = document.querySelector("label[for='" + cb.id + "']");
-        if (label) {
-            selectedNames.push(label.innerText);
-        }
-    });
-
-    document.getElementById('openPaymentModalBtn').innerText = selectedNames.length > 0 
-        ? selectedNames.join(", ") 
-        : "Select Fees to Pay";
-
-    closeModal();
-}
-</script>
-    {% endif %}
-</div>
 {% endblock %}

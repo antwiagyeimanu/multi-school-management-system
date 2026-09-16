@@ -4,7 +4,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'dev-secret-key'
 DEBUG = True
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    "192.168.8.175",
+]
+QR_BASE_URL = "http://127.0.0.1:8000"
 
 INSTALLED_APPS = [
     'django.contrib.admin',

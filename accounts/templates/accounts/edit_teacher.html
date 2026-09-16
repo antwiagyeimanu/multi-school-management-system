@@ -5,689 +5,569 @@
 {% block content %}
 
 <style>
-
-/* PAGE */
-.edit-teacher-wrapper{
-    background:#f4f6f9;
-    min-height:100vh;
-    padding:30px 15px 60px;
-}
-
-
-/* MAIN CARD */
-.edit-teacher-card{
+/* =========================================================
+   EDIT TEACHER PAGE
+========================================================= */
+.profile-page{
     max-width:1100px;
-    margin:auto;
-    background:white;
-    border-radius:22px;
-    overflow:hidden;
-    box-shadow:0 10px 30px rgba(0,0,0,.08);
+    margin:0 auto;
+    padding:30px 20px 50px;
 }
-
-
-/* HEADER */
-.teacher-edit-header{
-    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+/* =========================================================
+   PROFILE HERO
+========================================================= */
+.profile-hero{
+    background:linear-gradient(135deg,#2563eb,#1e3a8a);
+    border-radius:24px;
+    padding:30px 35px;
     color:white;
-    text-align:center;
-    padding:35px 20px;
+    display:flex;
+    align-items:center;
+    gap:25px;
+    margin-bottom:25px;
+    box-shadow:0 15px 35px rgba(37,99,235,.20);
 }
-
-
-.teacher-edit-header img{
-    width:120px;
-    height:120px;
+.profile-photo,
+.profile-placeholder{
+    width:125px;
+    height:125px;
     border-radius:50%;
-    object-fit:cover;
-    border:5px solid white;
-    box-shadow:0 8px 20px rgba(0,0,0,.25);
+    flex-shrink:0;
 }
-
-
-.teacher-edit-header h2{
-    margin-top:15px;
-    font-size:32px;
+.profile-photo{
+    object-fit:cover;
+    border:5px solid rgba(255,255,255,.35);
+    background:rgba(255,255,255,.12);
+}
+.profile-placeholder{
+    background:rgba(255,255,255,.15);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:52px;
+}
+.profile-hero h1{
+    margin:0 0 8px;
+    font-size:30px;
     font-weight:800;
 }
-
-
-/* BODY */
-
-.edit-body{
-    padding:35px;
+.profile-role{
+    display:inline-block;
+    padding:7px 14px;
+    border-radius:999px;
+    background:rgba(255,255,255,.15);
+    font-weight:700;
+    font-size:14px;
 }
-
-
-/* READ ONLY CARD */
-
+.profile-school{
+    margin-top:12px;
+    color:#dbeafe;
+    font-size:15px;
+}
+/* =========================================================
+   MESSAGES
+========================================================= */
+.message-box{
+    background:#ecfdf5;
+    color:#166534;
+    padding:14px 16px;
+    border-radius:12px;
+    margin-bottom:20px;
+    font-weight:600;
+    border:1px solid #bbf7d0;
+}
+/* =========================================================
+   READ ONLY INFORMATION
+========================================================= */
 .readonly-card{
-
     background:#fffbeb;
     border:1px solid #fbbf24;
-    border-radius:16px;
-    padding:20px;
-    margin-bottom:30px;
-
+    border-radius:18px;
+    padding:22px;
+    margin-bottom:22px;
 }
-
-
 .readonly-card h4{
-
+    margin:0 0 18px;
     color:#92400e;
     font-weight:800;
-    margin-bottom:20px;
-
+    font-size:17px;
 }
-
-
 .readonly-grid{
-
     display:grid;
     grid-template-columns:repeat(3,1fr);
-    gap:20px;
-
+    gap:15px;
 }
-
-
 .readonly-item label{
-
     display:block;
     font-size:12px;
     font-weight:700;
     color:#92400e;
-    margin-bottom:5px;
-
+    margin-bottom:6px;
 }
-
-
 .readonly-item input{
-
     width:100%;
-    padding:10px;
-    border-radius:8px;
+    box-sizing:border-box;
+    padding:11px 12px;
+    border-radius:10px;
     border:1px solid #fbbf24;
     background:#fff7d6;
     font-weight:700;
     color:#78350f;
-
 }
-
-
-
-/* FORM CARD */
-
+.readonly-note{
+    display:block;
+    margin-top:12px;
+    color:#78350f;
+    font-size:13px;
+}
+/* =========================================================
+   FORM CARD
+========================================================= */
 .form-section{
-
-    background:#f9fafb;
+    background:white;
+    border-radius:22px;
+    padding:28px;
     border:1px solid #e5e7eb;
-    border-radius:18px;
-    padding:25px;
-
+    box-shadow:0 8px 25px rgba(0,0,0,.06);
 }
-
-
 .form-section h3{
-
-    font-size:22px;
+    margin:0 0 20px;
+    font-size:20px;
     font-weight:800;
-    color:#1f2937;
-    border-bottom:3px solid #2563eb;
-    padding-bottom:10px;
-    margin-bottom:25px;
-
+    color:#111827;
 }
-
-
-/* MOBILE */
-
-@media(max-width:768px){
-
-.readonly-grid{
-    grid-template-columns:1fr;
+.form-section hr{
+    margin:35px 0;
+    border:0;
+    border-top:1px solid #e5e7eb;
 }
-
-.edit-body{
+/* =========================================================
+   FORM GROUPS
+========================================================= */
+.form-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:18px;
+}
+.form-group{
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+}
+.form-label,
+.form-group label{
+    font-size:13px;
+    font-weight:700;
+    color:#374151;
+    margin:0;
+}
+/* =========================================================
+   INPUTS
+========================================================= */
+.form-section .form-control,
+.form-section input,
+.form-section select,
+.form-section textarea{
+    width:100%;
+    box-sizing:border-box;
+    padding:11px 13px;
+    border:1px solid #d1d5db;
+    border-radius:12px;
+    font-size:15px;
+    background:white;
+}
+.form-section input,
+.form-section select{
+    height:45px;
+}
+.form-section textarea{
+    min-height:90px;
+    resize:vertical;
+}
+.form-section input:focus,
+.form-section select:focus,
+.form-section textarea:focus{
+    outline:none;
+    border-color:#2563eb;
+    box-shadow:0 0 0 4px rgba(37,99,235,.12);
+}
+/* =========================================================
+   PHOTO
+========================================================= */
+.photo-area{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    flex-wrap:wrap;
+}
+.current-photo{
+    width:90px;
+    height:90px;
+    border-radius:50%;
+    object-fit:cover;
+    border:3px solid #2563eb;
+}
+.photo-info{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+.photo-label{
+    color:#6b7280;
+    font-size:14px;
+    margin:0;
+}
+/* =========================================================
+   ACCOUNT STATUS
+========================================================= */
+.status-box{
+    background:#f8fafc;
+    border:1px solid #e5e7eb;
+    border-radius:14px;
     padding:15px;
+    display:flex;
+    align-items:center;
+    gap:10px;
 }
-
-.teacher-edit-header h2{
-    font-size:25px;
+.status-box input[type="checkbox"]{
+    width:18px;
+    height:18px;
+    margin:0;
+    accent-color:#2563eb;
 }
-
+.status-label{
+    margin:0;
+    font-weight:700;
+    color:#374151;
 }
-
+/* =========================================================
+   ERRORS
+========================================================= */
+.error-box{
+    background:#fee2e2;
+    color:#991b1b;
+    padding:15px;
+    border-radius:12px;
+    margin-top:25px;
+    border:1px solid #fecaca;
+}
+.error-box strong{
+    display:block;
+    margin-bottom:8px;
+}
+/* =========================================================
+   BUTTONS
+========================================================= */
+.form-actions{
+    margin-top:30px;
+    display:flex;
+    gap:12px;
+}
+.save-btn{
+    flex:1;
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:14px 25px;
+    border-radius:12px;
+    font-weight:700;
+    font-size:16px;
+    cursor:pointer;
+    transition:.2s ease;
+}
+.cancel-btn{
+    padding:14px 25px;
+    background:#6b7280;
+    color:white;
+    border-radius:12px;
+    font-weight:700;
+    text-decoration:none;
+    font-size:16px;
+    text-align:center;
+    transition:.2s ease;
+}
+.save-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 8px 18px rgba(37,99,235,.25);
+}
+.cancel-btn:hover{
+    opacity:.92;
+    color:white;
+}
+/* =========================================================
+   MOBILE
+========================================================= */
+@media(max-width:700px){
+    .profile-page{
+        padding:20px 12px 40px;
+    }
+    .profile-hero{
+        flex-direction:column;
+        text-align:center;
+        padding:25px 18px;
+    }
+    .profile-photo,
+    .profile-placeholder{
+        width:105px;
+        height:105px;
+    }
+    .profile-placeholder{
+        font-size:42px;
+    }
+    .profile-hero h1{
+        font-size:25px;
+    }
+    .profile-school{
+        font-size:14px;
+    }
+    .readonly-grid{
+        grid-template-columns:1fr;
+    }
+    .form-section{
+        padding:20px 16px;
+    }
+    .form-grid{
+        grid-template-columns:1fr;
+    }
+    .form-actions{
+        flex-direction:column;
+    }
+    .save-btn,
+    .cancel-btn{
+        width:100%;
+        box-sizing:border-box;
+    }
+}
 </style>
-
-
-<div class="edit-teacher-wrapper">
-
-
-<div class="edit-teacher-card">
-
-
-<!-- HEADER -->
-
-<div class="teacher-edit-header">
-
-{% if teacher.photo %}
-
-<img src="{{ teacher.photo.url }}">
-
-{% else %}
-
-<img src="https://ui-avatars.com/api/?name={{ teacher.first_name }}+{{ teacher.last_name }}&background=ffffff&color=2563eb&size=200">
-
-{% endif %}
-
-
-<h2>
-Edit Teacher Profile
-</h2>
-
-<p>
-{{ teacher.get_full_name }}
-</p>
-
-
+<div class="profile-page">
+<!-- =====================================================
+     PROFILE HERO
+====================================================== -->
+<div class="profile-hero">
+    {% if teacher.photo %}
+        <img
+            src="{{ teacher.photo.url }}"
+            alt="{{ teacher.get_full_name }}"
+            class="profile-photo"
+        >
+    {% else %}
+        <div class="profile-placeholder">
+            <i class="fas fa-user-tie"></i>
+        </div>
+    {% endif %}
+    <div>
+        <h1>Edit Teacher</h1>
+        <span class="profile-role">
+            {{ teacher.get_role_display }}
+        </span>
+        <div class="profile-school">
+            <i class="fas fa-school"></i>
+            {{ teacher.school.name }}
+        </div>
+    </div>
 </div>
-
-
-
-<div class="edit-body">
-
-
-
-<!-- MESSAGES -->
-
+<!-- =====================================================
+     MESSAGES
+====================================================== -->
 {% if messages %}
-
-{% for message in messages %}
-
-<div style="
-background:#dcfce7;
-color:#166534;
-padding:12px;
-border-radius:10px;
-margin-bottom:20px;
-font-weight:600;
-">
-
-{{ message }}
-
-</div>
-
-{% endfor %}
-
+    {% for message in messages %}
+        <div class="message-box">
+            {{ message }}
+        </div>
+    {% endfor %}
 {% endif %}
-
-
-
-
-
-<!-- READ ONLY INFORMATION -->
-
+<!-- =====================================================
+     READ ONLY INFORMATION
+====================================================== -->
 <div class="readonly-card">
-
-<h4>
-🔒 Read Only Information
-</h4>
-
-
-<div class="readonly-grid">
-
-
-<div class="readonly-item">
-
-<label>
-Staff ID
-</label>
-
-<input type="text"
-value="{{ teacher.staff_id|default:'Not set' }}"
-disabled>
-
+    <h4>
+        🔒 Read Only Information
+    </h4>
+    <div class="readonly-grid">
+        <div class="readonly-item">
+            <label>Staff ID</label>
+            <input
+                type="text"
+                value="{{ teacher.staff_id|default:'Not set' }}"
+                disabled
+            >
+        </div>
+        <div class="readonly-item">
+            <label>Ghana Card</label>
+            <input
+                type="text"
+                value="{{ teacher.national_id_card|default:'Not set' }}"
+                disabled
+            >
+        </div>
+        <div class="readonly-item">
+            <label>School</label>
+            <input
+                type="text"
+                value="{{ teacher.school.name|default:'Not assigned' }}"
+                disabled
+            >
+        </div>
+    </div>
+    <small class="readonly-note">
+        These fields cannot be changed here. Contact the system admin if a correction is needed.
+    </small>
 </div>
-
-
-
-<div class="readonly-item">
-
-<label>
-Ghana Card
-</label>
-
-<input type="text"
-value="{{ teacher.national_id_card|default:'Not set' }}"
-disabled>
-
-</div>
-
-
-
-
-<div class="readonly-item">
-
-<label>
-School
-</label>
-
-<input type="text"
-value="{{ teacher.school.name|default:'Not assigned' }}"
-disabled>
-
-</div>
-
-
-</div>
-
-
-</div>
-    
-    <small style="color: #78350f;">These fields cannot be changed here. Contact system admin if correction needed.</small>
-</div>
-
-<!-- FORM START -->
-
+<!-- =====================================================
+     FORM
+====================================================== -->
 <div class="form-section">
-
-<h3>
-👤 Personal Information
-</h3>
-
-
-<form method="POST" enctype="multipart/form-data">
-
-{% csrf_token %}
-
-
-
-<div class="row g-3">
-
-
-<div class="col-md-6">
-
-<label class="form-label">
-Title
-</label>
-
-{{ form.title }}
-
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <!-- PERSONAL INFORMATION -->
+        <h3>
+            👤 Personal Information
+        </h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Title</label>
+                {{ form.title }}
+            </div>
+            <div class="form-group">
+                <label>First Name *</label>
+                {{ form.first_name }}
+            </div>
+            <div class="form-group">
+                <label>Middle Name</label>
+                {{ form.middle_name }}
+            </div>
+            <div class="form-group">
+                <label>Last Name *</label>
+                {{ form.last_name }}
+            </div>
+            <div class="form-group">
+                <label>Gender</label>
+                {{ form.gender }}
+            </div>
+            <div class="form-group">
+                <label>Date of Birth</label>
+                {{ form.date_of_birth }}
+            </div>
+        </div>
+        <hr>
+        <!-- CONTACT INFORMATION -->
+        <h3>
+            📞 Contact Information
+        </h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Phone Number</label>
+                {{ form.phone }}
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                {{ form.email }}
+            </div>
+            <div class="form-group">
+                <label>Address</label>
+                {{ form.address }}
+            </div>
+        </div>
+        <hr>
+        <!-- PROFESSIONAL INFORMATION -->
+        <h3>
+            💼 Professional Information
+        </h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Nationality</label>
+                {{ form.nationality }}
+            </div>
+            <div class="form-group">
+                <label>Religion</label>
+                {{ form.religion }}
+            </div>
+            <div class="form-group">
+                <label>Qualification</label>
+                {{ form.qualification }}
+            </div>
+            <div class="form-group">
+                <label>Department</label>
+                {{ form.department }}
+            </div>
+        </div>
+        <hr>
+        <!-- EMERGENCY CONTACT -->
+        <h3>
+            🚨 Emergency Contact
+        </h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Emergency Contact Name</label>
+                {{ form.emergency_contact_name }}
+            </div>
+            <div class="form-group">
+                <label>Emergency Contact Phone</label>
+                {{ form.emergency_contact_phone }}
+            </div>
+            <div class="form-group">
+                <label>Relationship</label>
+                {{ form.emergency_contact_relationship }}
+            </div>
+        </div>
+        <hr>
+        <!-- PROFILE PHOTO -->
+        <h3>
+            📷 Profile Photo
+        </h3>
+        <div class="photo-area">
+            {% if teacher.photo %}
+                <div class="photo-info">
+                    <img
+                        src="{{ teacher.photo.url }}"
+                        alt="Current teacher photo"
+                        class="current-photo"
+                    >
+                    <p class="photo-label">
+                        Current photo
+                    </p>
+                </div>
+            {% endif %}
+            <div class="form-group">
+                {{ form.photo }}
+            </div>
+        </div>
+        <hr>
+        <!-- ACCOUNT STATUS -->
+        <h3>
+            ⚙ Account Status
+        </h3>
+        <div class="status-box">
+            {{ form.is_active }}
+            <label class="status-label">
+                Active Teacher
+            </label>
+        </div>
+        <!-- FORM ERRORS -->
+        {% if form.errors %}
+            <div class="error-box">
+                <strong>
+                    Please fix the following errors:
+                </strong>
+                <div>
+                    {{ form.errors }}
+                </div>
+            </div>
+        {% endif %}
+        <!-- BUTTONS -->
+        <div class="form-actions">
+            <button type="submit" class="save-btn">
+                💾 Save Changes
+            </button>
+            <a
+                href="{% url 'accounts:manage-teachers-grid' %}"
+                class="cancel-btn"
+            >
+                Cancel
+            </a>
+        </div>
+    </form>
 </div>
-
-
-
-<div class="col-md-6">
-
-<label class="form-label">
-First Name *
-</label>
-
-{{ form.first_name }}
-
 </div>
-
-
-
-
-<div class="col-md-6">
-
-<label class="form-label">
-Middle Name
-</label>
-
-{{ form.middle_name }}
-
-</div>
-
-
-
-
-<div class="col-md-6">
-
-<label class="form-label">
-Last Name *
-</label>
-
-{{ form.last_name }}
-
-</div>
-
-
-
-
-
-<div class="col-md-6">
-
-<label class="form-label">
-Gender
-</label>
-
-{{ form.gender }}
-
-</div>
-
-
-
-
-<div class="col-md-6">
-
-<label class="form-label">
-Date of Birth
-</label>
-
-{{ form.date_of_birth }}
-
-</div>
-
-
-
-
-<div class="col-md-6">
-
-<label class="form-label">
-Phone Number
-</label>
-
-{{ form.phone }}
-
-</div>
-
-
-
-
-
-<div class="col-md-6">
-
-<label class="form-label">
-Email
-</label>
-
-{{ form.email }}
-
-</div>
-
-
-
-</div>
-
-
-
-<hr style="margin:35px 0;">
-
-
-
-<h3>
-💼 Professional Information
-</h3>
-
-
-
-
-<div class="row g-3">
-
-
-<div class="col-md-6">
-
-<label class="form-label">
-Nationality
-</label>
-
-{{ form.nationality }}
-
-</div>
-
-
-
-<div class="col-md-6">
-
-<label class="form-label">
-Religion
-</label>
-
-{{ form.religion }}
-
-</div>
-
-
-
-
-<div class="col-md-6">
-
-<label class="form-label">
-Qualification
-</label>
-
-{{ form.qualification }}
-
-</div>
-
-
-
-
-<div class="col-md-6">
-
-<label class="form-label">
-Department
-</label>
-
-{{ form.department }}
-
-</div>
-
-
-</div>
-
-
-
-<hr style="margin:35px 0;">
-
-
-
-<h3>
-📷 Profile Photo
-</h3>
-
-
-<div style="margin-bottom:20px;">
-
-
-{% if teacher.photo %}
-
-<img src="{{ teacher.photo.url }}"
-style="
-width:90px;
-height:90px;
-border-radius:50%;
-object-fit:cover;
-border:3px solid #2563eb;
-">
-
-
-<p style="color:#6b7280;font-size:14px;">
-Current photo
-</p>
-
-
-{% endif %}
-
-
-</div>
-
-
-{{ form.photo }}
-
-
-
-<hr style="margin:35px 0;">
-
-
-
-<h3>
-⚙ Account Status
-</h3>
-
-
-
-<div style="
-display:flex;
-align-items:center;
-gap:10px;
-margin-top:15px;
-">
-
-{{ form.is_active }}
-
-<label style="font-weight:700;">
-Active Teacher
-</label>
-
-</div>
-<!-- FORM ERRORS -->
-
-{% if form.errors %}
-
-<div style="
-background:#fee2e2;
-color:#991b1b;
-padding:15px;
-border-radius:12px;
-margin-top:25px;
-">
-
-<strong>
-Please fix the following errors:
-</strong>
-
-<div style="margin-top:10px;">
-{{ form.errors }}
-</div>
-
-</div>
-
-{% endif %}
-
-
-
-<!-- BUTTONS -->
-
-<div style="
-margin-top:35px;
-display:flex;
-gap:15px;
-flex-wrap:wrap;
-">
-
-
-<button type="submit"
-style="
-background:#2563eb;
-color:white;
-border:none;
-padding:13px 30px;
-border-radius:10px;
-font-weight:700;
-font-size:16px;
-cursor:pointer;
-">
-
-💾 Save Changes
-
-</button>
-
-
-
-
-<a href="{% url 'accounts:manage-teachers-grid' %}"
-style="
-background:#6b7280;
-color:white;
-padding:13px 30px;
-border-radius:10px;
-font-weight:700;
-text-decoration:none;
-font-size:16px;
-">
-
-Cancel
-
-</a>
-
-
-</div>
-
-
-
-</form>
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
-
-<style>
-
-/* INPUT DESIGN */
-
-.form-control,
-input,
-select,
-textarea{
-
-width:100%;
-padding:11px 12px;
-border:1px solid #d1d5db;
-border-radius:10px;
-font-size:15px;
-box-sizing:border-box;
-
-}
-
-
-input:focus,
-select:focus,
-textarea:focus{
-
-outline:none;
-border-color:#2563eb;
-box-shadow:0 0 0 3px rgba(37,99,235,.15);
-
-}
-
-
-/* CHECKBOX */
-
-input[type="checkbox"]{
-
-width:18px;
-height:18px;
-
-}
-
-
-/* BUTTON HOVER */
-
-button:hover{
-
-transform:translateY(-2px);
-box-shadow:0 8px 15px rgba(37,99,235,.25);
-
-}
-
-
-a:hover{
-
-opacity:.9;
-
-}
-
-
-</style>
-
 
 {% endblock %}

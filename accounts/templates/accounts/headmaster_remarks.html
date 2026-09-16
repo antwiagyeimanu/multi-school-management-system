@@ -1,0 +1,854 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block content %}
+
+<style>
+/* =========================================================
+   PAGE
+========================================================= */
+.remarks-page {
+    padding: 24px;
+    max-width: 1500px;
+    margin: 0 auto;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+.remarks-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 22px;
+}
+
+.remarks-title-area {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+}
+
+.remarks-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1e3a8a, #4338ca);
+    color: #fff;
+    font-size: 21px;
+    box-shadow: 0 8px 20px rgba(30, 58, 138, .18);
+}
+
+.remarks-header h2 {
+    margin: 0;
+    color: #172554;
+    font-size: 24px;
+    font-weight: 850;
+    letter-spacing: -.3px;
+}
+
+.remarks-subtitle {
+    margin: 3px 0 0;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.term-badge {
+    padding: 9px 16px;
+    border-radius: 30px;
+    background: #eef2ff;
+    color: #3730a3;
+    border: 1px solid #c7d2fe;
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+/* =========================================================
+   CLASS SELECTOR
+========================================================= */
+.class-selector-card {
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 22px;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    box-shadow: 0 8px 25px rgba(15, 23, 42, .06);
+}
+
+.class-selector-card::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(
+        180deg,
+        #1e3a8a,
+        #4f46e5
+    );
+}
+
+.class-selector-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.class-selector-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.class-selector-title-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #eef2ff;
+    color: #3730a3;
+    font-size: 17px;
+}
+
+.class-selector-title h3 {
+    margin: 0;
+    color: #172554;
+    font-size: 15px;
+    font-weight: 850;
+}
+
+.class-selector-title p {
+    margin: 2px 0 0;
+    color: #64748b;
+    font-size: 11px;
+}
+
+/* =========================================================
+   CLASS BUTTONS
+========================================================= */
+.class-buttons {
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fill,
+        minmax(145px, 1fr)
+    );
+    gap: 10px;
+}
+
+.class-btn {
+    position: relative;
+    min-height: 52px;
+    padding: 10px 13px;
+    margin: 0;
+    border-radius: 12px;
+    border: 1px solid #dbe3ef;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 750;
+    transition: all .2s ease;
+    overflow: hidden;
+}
+
+.class-btn::after {
+    content: "›";
+    position: absolute;
+    right: 11px;
+    font-size: 17px;
+    opacity: 0;
+    transform: translateX(-5px);
+    transition: all .2s ease;
+}
+
+.class-btn:hover::after {
+    opacity: .8;
+    transform: translateX(0);
+}
+
+.class-btn:hover {
+    transform: translateY(-2px);
+    border-color: #a5b4fc;
+    box-shadow: 0 7px 18px rgba(79, 70, 229, .12);
+}
+
+.class-btn.active {
+    color: #fff;
+    background: linear-gradient(
+        135deg,
+        #1e3a8a,
+        #4338ca
+    );
+    border-color: #1e3a8a;
+    box-shadow: 0 8px 20px rgba(30, 58, 138, .2);
+}
+
+.class-btn.active::after {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.class-btn.inactive {
+    color: #334155;
+    background: #f8fafc;
+}
+
+/* =========================================================
+   REMARKS CARD
+========================================================= */
+.remarks-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, .07);
+}
+
+.remarks-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 17px 20px;
+    background: linear-gradient(
+        135deg,
+        #f8faff,
+        #eef2ff
+    );
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.remarks-card-header-left {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.remarks-card-header-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    color: #1e3a8a;
+    border: 1px solid #dbe4f5;
+    font-size: 16px;
+}
+
+.remarks-card-header h3 {
+    margin: 0;
+    color: #1e3a8a;
+    font-size: 15px;
+    font-weight: 850;
+}
+
+.remarks-card-header p {
+    margin: 3px 0 0;
+    color: #64748b;
+    font-size: 11px;
+}
+
+.student-count {
+    padding: 7px 11px;
+    background: #fff;
+    border: 1px solid #dbe4f5;
+    border-radius: 20px;
+    color: #3730a3;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+/* =========================================================
+   TABLE
+========================================================= */
+.remarks-table-wrapper {
+    overflow-x: auto;
+}
+
+.remarks-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.remarks-table th {
+    padding: 12px 15px;
+    color: #fff;
+    background: #1e3a8a;
+    border-right: 1px solid rgba(255,255,255,.15);
+    font-size: 10px;
+    font-weight: 800;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    white-space: nowrap;
+}
+
+.remarks-table th:last-child {
+    border-right: 0;
+}
+
+.remarks-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #e8edf3;
+    color: #475569;
+    font-size: 12.5px;
+    vertical-align: middle;
+}
+
+.remarks-table tbody tr {
+    transition: background .18s ease;
+}
+
+.remarks-table tbody tr:hover {
+    background: #f8faff;
+}
+
+.remarks-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.student-number {
+    color: #64748b;
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+.student-name {
+    color: #172554;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.row-number {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    background: #eef2ff;
+    color: #3730a3;
+    font-size: 11px;
+    font-weight: 850;
+}
+
+/* =========================================================
+   REMARK INPUT
+========================================================= */
+.remark-input {
+    width: 100%;
+    min-height: 66px;
+    padding: 10px 12px;
+    resize: vertical;
+    border: 1px solid #cbd5e1;
+    border-radius: 11px;
+    background: #fff;
+    color: #1e293b;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1.5;
+    outline: none;
+    transition: all .2s ease;
+}
+
+.remark-input::placeholder {
+    color: #94a3b8;
+}
+
+.remark-input:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79,70,229,.10);
+}
+
+/* =========================================================
+   SAVE FOOTER
+========================================================= */
+.remarks-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 15px 20px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+}
+
+.footer-hint {
+    color: #64748b;
+    font-size: 11px;
+}
+
+.footer-hint strong {
+    color: #334155;
+}
+
+.save-remarks-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 11px 20px;
+    border: 0;
+    border-radius: 10px;
+    color: #fff;
+    background: linear-gradient(
+        135deg,
+        #15803d,
+        #16a34a
+    );
+    box-shadow: 0 7px 16px rgba(22,163,74,.18);
+    font-size: 11px;
+    font-weight: 850;
+    cursor: pointer;
+    transition: all .2s ease;
+}
+
+.save-remarks-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(22,163,74,.24);
+}
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+.empty-remarks {
+    padding: 55px 20px;
+    text-align: center;
+}
+
+.empty-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: 25px;
+}
+
+.empty-remarks h4 {
+    margin: 0 0 5px;
+    color: #172554;
+    font-size: 15px;
+    font-weight: 850;
+}
+
+.empty-remarks p {
+    margin: 0;
+    color: #64748b;
+    font-size: 12px;
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+@media screen and (max-width: 768px) {
+
+    .remarks-page {
+        padding: 14px;
+    }
+
+    .remarks-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .remarks-header h2 {
+        font-size: 20px;
+    }
+
+    .term-badge {
+        align-self: flex-start;
+    }
+
+    .class-selector-card {
+        padding: 16px;
+        border-radius: 15px;
+    }
+
+    .class-selector-header {
+        align-items: flex-start;
+    }
+
+    .class-buttons {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .class-btn {
+        min-height: 48px;
+        padding: 9px;
+        font-size: 11px;
+    }
+
+    .remarks-card {
+        border-radius: 15px;
+    }
+
+    .remarks-card-header {
+        align-items: flex-start;
+    }
+
+    .student-count {
+        display: none;
+    }
+
+    .remarks-card-footer {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .save-remarks-btn {
+        width: 100%;
+    }
+}
+</style>
+
+<div class="remarks-page">
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+    <div class="remarks-header">
+
+        <div class="remarks-title-area">
+
+            <div class="remarks-icon">
+                📝
+            </div>
+
+            <div>
+                <h2>Head Teacher Remarks</h2>
+                <p class="remarks-subtitle">
+                    Enter and manage academic remarks for students
+                </p>
+            </div>
+
+        </div>
+
+        <div class="term-badge">
+            {{ current_term }}
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         CLASS SELECTOR
+    ====================================================== -->
+    <div class="class-selector-card">
+
+        <div class="class-selector-header">
+
+            <div class="class-selector-title">
+
+                <div class="class-selector-title-icon">
+                    🏫
+                </div>
+
+                <div>
+                    <h3>Select Class</h3>
+                    <p>
+                        Choose a class to enter head teacher remarks
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="class-buttons">
+
+            {% for c in all_classes %}
+
+                <a
+                    href="?class_id={{ c.id }}"
+                    class="class-btn
+                    {% if c.id|stringformat:'s' == selected_class_id %}
+                        active
+                    {% else %}
+                        inactive
+                    {% endif %}"
+                >
+                    {{ c.name }}
+                </a>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         REMARKS CARD
+    ====================================================== -->
+    <div class="remarks-card">
+
+        <div class="remarks-card-header">
+
+            <div class="remarks-card-header-left">
+
+                <div class="remarks-card-header-icon">
+                    ✍️
+                </div>
+
+                <div>
+
+                    <h3>
+                        {% if selected_class_id %}
+                            Enter Remarks
+                        {% else %}
+                            Student Remarks
+                        {% endif %}
+                    </h3>
+
+                    <p>
+                        {% if selected_class_id %}
+                            Review and update remarks for students in this class.
+                        {% else %}
+                            Select a class above to begin.
+                        {% endif %}
+                    </p>
+
+                </div>
+
+            </div>
+
+            {% if selected_class_id %}
+                <div class="student-count">
+                    {{ students|length }} Students
+                </div>
+            {% endif %}
+
+        </div>
+
+
+        {% if students %}
+
+            <form method="POST">
+
+                {% csrf_token %}
+
+                <input
+                    type="hidden"
+                    name="class_id"
+                    value="{{ selected_class_id }}"
+                >
+
+                <div class="remarks-table-wrapper">
+
+                    <table class="remarks-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th style="width:60px;">
+                                    #
+                                </th>
+
+                                <th style="width:25%;">
+                                    Student Name
+                                </th>
+
+                                <th style="width:17%;">
+                                    Student ID
+                                </th>
+
+                                <th>
+                                    Head Teacher Remark
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {% for s in students %}
+
+                            <tr>
+
+                                <td>
+                                    <span class="row-number">
+                                        {{ forloop.counter }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <div class="student-name">
+                                        {{ s.first_name }} {{ s.last_name }}
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div class="student-number">
+                                        {{ s.student_number }}
+                                    </div>
+                                </td>
+
+                            <td>
+<textarea name="head_{{ s.id }}" class="remark-input" placeholder="Promoted to..." style="{% if s.head_remark %}border:2px solid green; background:#f0fff4;{% endif %}">{{ s.head_remark }}</textarea>
+{% if s.head_remark %}<small style="color:green; font-weight:700;">✓ Saved</small>{% else %}<small style="color:orange;">Not yet</small>{% endif %}
+</td>
+
+                            </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+                    
+
+                </div>
+                {% if page_obj %}
+
+<div style="
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:15px;
+    padding:16px 20px;
+    border-top:1px solid #e2e8f0;
+    background:#f8fafc;
+    flex-wrap:wrap;
+">
+
+    <div style="
+        color:#64748b;
+        font-size:11px;
+        font-weight:700;
+    ">
+        Showing
+        {{ page_obj.start_index }}
+        –
+        {{ page_obj.end_index }}
+        of
+        {{ page_obj.paginator.count }}
+        students
+    </div>
+
+    <div style="
+        display:flex;
+        align-items:center;
+        gap:6px;
+    ">
+
+        {% if page_obj.has_previous %}
+            <a href="?class_id={{ selected_class_id }}&page={{ page_obj.previous_page_number }}"
+               style="
+                    padding:7px 11px;
+                    border:1px solid #dbe3ef;
+                    border-radius:8px;
+                    background:#fff;
+                    color:#334155;
+                    text-decoration:none;
+                    font-size:11px;
+                    font-weight:800;
+               ">
+                ← Previous
+            </a>
+        {% endif %}
+
+        <span style="
+            padding:7px 11px;
+            border-radius:8px;
+            background:#eef2ff;
+            color:#3730a3;
+            font-size:11px;
+            font-weight:800;
+        ">
+            Page {{ page_obj.number }}
+            of {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?class_id={{ selected_class_id }}&page={{ page_obj.next_page_number }}"
+               style="
+                    padding:7px 11px;
+                    border:1px solid #dbe3ef;
+                    border-radius:8px;
+                    background:#fff;
+                    color:#334155;
+                    text-decoration:none;
+                    font-size:11px;
+                    font-weight:800;
+               ">
+                Next →
+            </a>
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endif %}
+
+
+                <!-- =================================================
+                     FOOTER
+                ================================================== -->
+                <div class="remarks-card-footer">
+
+                    <div class="footer-hint">
+                        <strong>Tip:</strong>
+                        Review all remarks before saving.
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="save-remarks-btn"
+                    >
+                        💾
+                        SAVE THIS CLASS
+                    </button>
+
+                </div>
+
+            </form>
+
+        {% else %}
+
+            <div class="empty-remarks">
+
+                <div class="empty-icon">
+                    🏫
+                </div>
+
+                <h4>
+                    Select a Class
+                </h4>
+
+                <p>
+                    Choose a class above to view students and enter their remarks.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,6 +1,7 @@
 {% extends 'accounts/dashboard_base.html' %}
-{% block title %}My Children{% endblock %}
-
+{% block title %}
+    {% if children_count == 1 %}My Child{% else %}My Children{% endif %}
+{% endblock %}
 {% block content %}
 
 <style>
@@ -402,8 +403,12 @@ font-size:22px;
 <div class="children-hero">
 
 <h2>
-<i class="fas fa-users me-2"></i>
-My Children
+    <i class="fas fa-users me-2"></i>
+    {% if children|length == 1 %}
+        My Child
+    {% else %}
+        My Children
+    {% endif %}
 </h2>
 
 <p>

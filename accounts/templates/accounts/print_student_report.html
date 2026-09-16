@@ -7,42 +7,57 @@
 <style>
 body { font-family: Arial, sans-serif; padding: 20px; color: #000; position:relative; }
 
-/* WATERMARK - DYNAMIC SCHOOL NAME */
+/* FIXED WATERMARK - Now inside each card, middle of TABLE */
 .watermark{
-    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-28deg);
-    font-size:60px; font-weight:900; color:rgba(79,70,229,0.05); 
-    z-index:0; width:85%; text-align:center; line-height:1.1;
+    position:absolute; /* WAS fixed - change to absolute */
+    top:380px; /* Middle of table, not middle of page */
+    left:50%; 
+    transform:translate(-50%,-50%) rotate(-28deg);
+    font-size:70px; font-weight:900; 
+    color:rgba(79,70,229,0.07); /* Slightly darker so visible */
+    z-index:0; width:90%; text-align:center; line-height:1.1;
     letter-spacing:2px; text-transform:uppercase; pointer-events:none;
     word-break:break-word; white-space:normal;
 }
 
+/* EACH STUDENT = 1 PAGE EXACT */
+.report-card { 
+  page-break-inside:avoid; 
+  page-break-after:always; 
+  position:relative;
+  min-height: 95vh; /* Fit in one page */
+  padding-bottom: 10px;
+}
+.report-card:last-child{ page-break-after:avoid; }
+
+/* Make table fit one page - reduce padding a bit for print */
+@media print {
+    body { margin:0; padding:8mm !important; }
+    .no-print, textarea, button, input, form { display:none !important; }
+    .remark-text { display:block !important; }
+    p, td, th { font-size:9.5pt !important; } /* WAS 10pt - make smaller to fit */
+    th, td { padding:5px !important; } /* Reduce padding to fit one page */
+    @page { margin:10mm; size:A4; }
+    .report-card { min-height:auto; } /* In print, auto height */
+}
 .school-header {
     display:flex; align-items:center;
-    border-bottom:4px solid #4f46e5; padding-bottom:15px;
-    margin-bottom:15px; margin-top:-20px;
+    border-bottom:4px solid #4f46e5; padding-bottom:10px;
+    margin-bottom:10px; margin-top:-0px;
     position:relative; z-index:1;
 }
-.logo-wrap{ width:110px; height:110px; flex-shrink:0; }
+.logo-wrap{ width:90px; height:110px; flex-shrink:0; }
 .logo-wrap img{ width:100%; height:100%; object-fit:contain; border-radius:12px; }
 .school-info{ flex:1; text-align:center; padding:0 15px; }
 .school-info h1{ margin:0; font-size:24px; font-weight:800; text-transform:uppercase; }
-.school-info p{ margin:2px 0; font-size:12px; color:#555; }
+.school-info p{ margin:1px 0; font-size:10px; color:#555; }
 h3 { text-align: center; margin: 0; text-transform: uppercase; }
 
 table { width:100%; border-collapse:collapse; margin-top:15px; position:relative; z-index:1; }
 th, td { border:1px solid #000; padding:8px; text-align:center; }
 th { background:#f3f4f6 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
 
-.report-card { page-break-inside:avoid; page-break-after:always; position:relative; }
-.report-card:last-child{ page-break-after:auto; }
 
-@media print {
-    body { margin:0; padding:8mm !important; }
-    .no-print, textarea, button, input, form { display:none !important; }
-    .remark-text { display:block !important; }
-    p, td, th { font-size:10pt !important; }
-    @page { margin:10mm; size:A4; }
-}
 </style>
 </head>
 <body>
@@ -99,10 +114,10 @@ th { background:#f3f4f6 !important; -webkit-print-color-adjust:exact; print-colo
     </tr>
     {% endfor %}
     <tr style="background:#e8e8e8; font-weight:bold;">
-        <td style="text-align:left;">GRAND TOTAL</td><td></td><td></td><td>{{ student_data.grand_total }}</td><td></td></td><td>
+        <td style="text-align:left;">GRAND TOTAL</td><td></td><td></td><td>{{ student_data.grand_total|floatformat:0 }}</td><td></td></td><td>
     </tr>
     <tr style="font-weight:bold;">
-        <td style="text-align:left;">AVERAGE</td><td>{{ student_data.average }}%<td></td><td></td><td></td></td><td></td></td></td></td>
+        <td style="text-align:left;">AVERAGE</td><td>{{ student_data.average|floatformat:0 }}%<td></td><td></td><td></td></td><td></td></td></td></td>
     </tr>
     <tr style="background:#e8e8e8; font-weight:bold;">
         <td style="text-align:left;">OVERALL GRADE</td><td></td><td></td><td></td><td>{{ student_data.grade }}</td><td>{{ student_data.overall_remark }}</td>
@@ -119,10 +134,8 @@ th { background:#f3f4f6 !important; -webkit-print-color-adjust:exact; print-colo
 
 <div style="margin-top:20px" class="no-print">
 <form method="POST" action="{% url 'accounts:save_student_remark' student_data.student.id %}">{% csrf_token %}
-    {% if request.user.is_class_teacher or request.user.role == 'admin' %}
-    <p><strong>Class Teacher's Remark:</strong></p><textarea name="class_teacher_remark" rows="2" style="width:100%;">{{ student_data.class_teacher_remark }}</textarea>{% endif %}
-    {% if request.user.role == 'headteacher' or request.user.role == 'admin' %}
-    <p><strong>Head Teacher's Remark:</strong></p><textarea name="headteacher_remark" rows="2" style="width:100%;">{{ student_data.headteacher_remark }}</textarea>{% endif %}
+{% if request.user.is_class_teacher or request.user.role == 'admin' or request.user.role == 'proprietor' or request.user.role == 'proprietress' %}    <p><strong>Class Teacher's Remark:</strong></p><textarea name="class_teacher_remark" rows="2" style="width:100%;">{{ student_data.class_teacher_remark }}</textarea>{% endif %}
+{% if request.user.role == 'headmaster' or request.user.role == 'headmistress' or request.user.role == 'admin' or request.user.role == 'proprietor' or request.user.role == 'proprietress' %}    <p><strong>Head Teacher's Remark:</strong></p><textarea name="headmaster_remark" rows="2" style="width:100%;">{{ student_data.headmaster_remark }}</textarea>{% endif %}
     <button type="submit" style="margin-top:10px; padding:8px 20px; background:#2563eb; color:white; border:none; border-radius:6px;">Save Remarks</button>
 </form>
 </div>
@@ -130,7 +143,7 @@ th { background:#f3f4f6 !important; -webkit-print-color-adjust:exact; print-colo
 <div style="margin-top:20px" class="print-only">
   <div style="display:flex; gap:20px; width:100%;">
     <div style="flex:1;"><p><strong>Class Teacher's Remark:</strong></p><div style="min-height:40px; border:1px solid #000; padding:10px;">{{ student_data.class_teacher_remark|default:""|linebreaksbr }}</div></div>
-    <div style="flex:1;"><p><strong>Head Teacher's Remark:</strong></p><div style="min-height:40px; border:1px solid #000; padding:10px;">{{ student_data.headteacher_remark|default:""|linebreaksbr }}</div></div>
+    <div style="flex:1;"><p><strong>Head Teacher's Remark:</strong></p><div style="min-height:40px; border:1px solid #000; padding:10px;">{{ student_data.headmaster_remark|default:""|linebreaksbr }}</div></div>
   </div>
   <div style="margin-top:20px; font-size:11pt">
     <div style="display:flex; justify-content:space-between;"><div>Class Teacher: ____________________</div><div>Head Teacher: ____________________</div></div>

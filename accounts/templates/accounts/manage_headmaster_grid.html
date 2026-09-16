@@ -1,0 +1,793 @@
+{% extends "accounts/base.html" %}
+{% load static %}
+
+{% block content %}
+{% if messages %}
+    {% for message in messages %}
+    <p id="msg">{{ message }}</p>
+    {% endfor %}
+{% endif %}
+{% if credentials %}
+<div style="background:#ecfdf5; border:2px solid #10b981; padding:15px; border-radius:10px; margin-bottom:20px;">
+    <h3 style="margin:0 0 10px 0; color:#065f46;">
+        {{ credentials.title }}
+    </h3>
+
+    <p><strong>Username:</strong> {{ credentials.username }}</p>
+    <p><strong>Staff ID:</strong> {{ credentials.staff_id }}</p>
+    <p><strong>Password:</strong> {{ credentials.password }}</p>
+
+    <p style="color:#065f46; font-size:13px;">
+        Save these details — they will not be shown again.
+    </p>
+</div>
+{% endif %}
+
+<style>
+.info-row-split {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.info-row-split .info-left,
+.info-row-split .info-right {
+    display: flex;
+    gap: 6px;
+    align-items: baseline;
+}
+
+.info-row-split .info-right .label {
+    color: #6b7280;
+}
+
+.info-row-split .info-right .value strong {
+    color: #1f2937;
+    font-size: 16px;
+}
+
+.pagination-wrapper {
+    text-align: center;
+    margin: 50px 0 30px 0;
+    padding: 20px;
+    clear: both;
+    display: block;
+}
+
+.page-info {
+    font-size: 18px;
+    margin: 0 15px;
+    color: #1f2937;
+    font-weight: 600;
+}
+
+a.page-btn {
+    display: inline-block;
+    padding: 12px 24px;
+    margin: 0 5px;
+    background: #3b82f6;
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+a.page-btn:hover {
+    background: #2563eb;
+    transform: scale(1.05);
+}
+
+header h1 {
+    text-transform: uppercase;
+    font-size: 50px;
+    font-weight: bold;
+}
+
+header a {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    cursor: default;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+a, button { cursor: pointer; }
+input[type="text"], textarea { cursor: text; }
+select { cursor: pointer; }
+
+/* headmaster CARDS */
+.headmaster-grid-big {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap: 25px;
+}
+
+
+@media(max-width:900px){
+
+.headmaster-grid-big{
+    grid-template-columns:1fr;
+}
+
+}
+
+
+.headmaster-card-big{
+
+background:white;
+border-radius:22px;
+overflow:hidden;
+border:1px solid #e5e7eb;
+box-shadow:0 8px 25px rgba(0,0,0,.06);
+transition:.3s;
+display:flex;
+flex-direction:column;
+
+}
+
+
+.headmaster-card-big:hover{
+
+transform:translateY(-5px);
+box-shadow:0 15px 35px rgba(37,99,235,.15);
+
+}
+
+
+.card-photo-section{
+
+background:linear-gradient(135deg,#2563eb,#1e40af);
+padding:30px;
+text-align:center;
+
+}
+
+
+.card-photo-section img{
+
+width:110px;
+height:110px;
+border-radius:50%;
+object-fit:cover;
+border:5px solid white;
+box-shadow:0 10px 25px rgba(0,0,0,.25);
+
+}
+
+
+.card-info-section{
+
+padding:25px;
+
+}
+
+
+.headmaster-name{
+
+font-size:25px;
+font-weight:800;
+color:#111827;
+margin-bottom:20px;
+
+}
+
+
+.info-row{
+
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:12px 0;
+border-bottom:1px solid #f1f5f9;
+font-size:15px;
+
+}
+
+
+.info-row:last-child{
+
+border-bottom:none;
+
+}
+
+
+.info-left,
+.info-right{
+
+display:flex;
+gap:6px;
+
+}
+
+
+.label{
+
+font-weight:700;
+color:#6b7280;
+
+}
+
+
+.value{
+
+font-weight:600;
+color:#111827;
+
+}
+
+
+.card-buttons-section{
+
+padding:0 25px 25px;
+display:flex;
+gap:10px;
+
+}
+
+
+.btn-big{
+
+flex:1;
+padding:12px;
+border-radius:12px;
+font-weight:700;
+text-align:center;
+text-decoration:none;
+transition:.3s;
+
+}
+
+
+.btn-view{
+
+background:#2563eb;
+color:white;
+
+}
+
+
+.btn-edit{
+
+background:#f97316;
+color:white;
+
+}
+
+
+.btn-big:hover{
+
+transform:translateY(-2px);
+
+}
+
+
+
+@media(max-width:600px){
+
+.card-buttons-section{
+
+flex-direction:column;
+
+}
+
+}
+
+/* headmaster HERO */
+
+.headmaster-hero{
+    background:white;
+    border-radius:22px;
+    padding:30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:25px;
+    box-shadow:0 8px 25px rgba(0,0,0,.06);
+    border:1px solid #e5e7eb;
+}
+
+
+.hero-left h1{
+    margin:0;
+    font-size:34px;
+    font-weight:800;
+    color:#111827;
+}
+
+
+.hero-left p{
+    margin-top:8px;
+    color:#6b7280;
+    font-size:16px;
+}
+
+
+.hero-stat{
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:white;
+    padding:20px 35px;
+    border-radius:18px;
+    text-align:center;
+}
+
+
+.hero-number{
+    display:block;
+    font-size:36px;
+    font-weight:800;
+}
+
+
+.hero-label{
+    font-size:14px;
+}
+
+
+
+/* TOOLBAR */
+
+.headmaster-toolbar{
+
+background:white;
+padding:20px;
+border-radius:18px;
+margin-bottom:30px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:15px;
+box-shadow:0 6px 20px rgba(0,0,0,.05);
+
+}
+
+
+.search-area{
+
+display:flex;
+gap:10px;
+flex:1;
+
+}
+
+
+.search-box{
+
+flex:1;
+padding:13px 15px;
+border-radius:12px;
+border:1px solid #d1d5db;
+font-size:15px;
+
+}
+
+
+.search-btn{
+
+background:#2563eb;
+color:white;
+border:none;
+padding:12px 20px;
+border-radius:10px;
+font-weight:700;
+
+}
+
+
+.reset-btn{
+
+background:#f3f4f6;
+color:#111827;
+padding:12px 20px;
+border-radius:10px;
+text-decoration:none;
+font-weight:700;
+
+}
+
+
+.inactive-btn{
+
+background:#dc2626;
+color:white;
+padding:12px 20px;
+border-radius:10px;
+text-decoration:none;
+font-weight:700;
+
+}
+
+
+
+@media(max-width:768px){
+
+.headmaster-hero{
+
+flex-direction:column;
+gap:20px;
+text-align:center;
+
+}
+
+
+.hero-stat{
+
+width:100%;
+
+}
+
+
+.headmaster-toolbar{
+
+flex-direction:column;
+
+}
+
+
+.search-area{
+
+width:100%;
+flex-direction:column;
+
+}
+
+
+}
+.info-grid{
+
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:12px;
+margin-top:15px;
+
+}
+
+
+.info-card{
+
+background:#f8fafc;
+border:1px solid #e5e7eb;
+padding:14px;
+border-radius:14px;
+
+}
+
+
+.info-card.full{
+
+grid-column:1/-1;
+
+}
+
+
+.info-label{
+
+display:block;
+font-size:13px;
+color:#6b7280;
+margin-bottom:5px;
+font-weight:600;
+
+}
+
+
+.info-value{
+
+font-size:15px;
+font-weight:700;
+color:#111827;
+
+}
+
+
+.status-active{
+
+color:#16a34a;
+
+}
+
+
+
+@media(max-width:600px){
+
+.info-grid{
+
+grid-template-columns:1fr;
+
+}
+
+}
+.btn-delete{
+
+background:#dc2626;
+color:white;
+border:none;
+cursor:pointer;
+
+}
+
+
+.btn-view:hover{
+
+background:#1d4ed8;
+
+}
+
+
+.btn-edit:hover{
+
+background:#ea580c;
+
+}
+
+
+.btn-delete:hover{
+
+background:#b91c1c;
+
+}
+
+
+.card-buttons-section button{
+
+font-family:inherit;
+
+}
+</style>
+
+<!-- Title and total headmasters -->
+<!-- HERO HEADER -->
+
+<div class="headmaster-hero">
+
+    <div class="hero-left">
+        <h1>
+            👨‍💼 Manage Head Teachers
+        </h1>
+
+        <p>
+            Manage Head Teacher profiles, accounts and access permissions.
+        </p>
+    </div>
+
+
+    <div class="hero-stat">
+
+        <span class="hero-number">
+            {{ headmasters.paginator.count }}
+        </span>
+
+        <span class="hero-label">
+            Total Head Teachers
+        </span>
+
+    </div>
+
+</div>
+
+
+
+<!-- SEARCH TOOLBAR -->
+
+<div class="headmaster-toolbar">
+
+
+<form method="get" class="search-area">
+
+<input 
+type="text"
+name="q"
+value="{{ search_query }}"
+placeholder="Search by name or username"
+class="search-box">
+
+
+<button type="submit" class="search-btn">
+🔍 Search
+</button>
+
+
+<a href="{% url 'accounts:manage_headmaster_grid' %}" 
+class="reset-btn">
+Reset
+</a>
+
+
+</form>
+
+
+
+<div class="toolbar-actions">
+
+<a href="{% url 'accounts:deactivated_headmasters' %}"
+class="inactive-btn">
+🚫 Deactivated
+</a>
+
+
+</div>
+
+
+</div>
+
+<div class="headmaster-grid-big">
+    {% for headmaster in headmasters %}
+    <div class="headmaster-card-big {% if highlight_headmaster_id and headmaster.id|stringformat:'s' == highlight_headmaster_id %}highlight{% endif %}">
+        
+        <div class="card-photo-section">
+            {% if headmaster.photo %}
+                <img src="{{ headmaster.photo.url }}" alt="{{ headmaster.get_full_name }}">
+            {% else %}
+                <img src="https://ui-avatars.com/api/?name={{ headmaster.first_name }}+{{ headmaster.last_name }}&background=3b82f6&color=fff&size=200&bold=true" alt="Default">
+            {% endif %}
+        </div>
+        
+        <div class="card-info-section">
+         <h2 class="headmaster-name">
+    {{headmaster.get_title_display}} {{ headmaster.first_name|default:"" }}
+    {{ headmaster.middle_name|default:"" }}
+    {{ headmaster.last_name|default:"" }}
+</h2>
+
+
+<div class="info-grid">
+
+    <div class="info-card">
+        <span class="info-label">Staff ID</span>
+        <span class="info-value">
+            {{ headmaster.staff_id|default:"N/A" }}
+        </span>
+    </div>
+    <div class="info-card">
+    <span class="info-label">Role</span>
+    <span class="info-value">
+        {{ headmaster.get_role_display }}
+    </span>
+</div>
+
+
+    <div class="info-card">
+        <span class="info-label">Status</span>
+        <span class="info-value status-active">
+            {% if headmaster.is_active %}
+                Active
+            {% else %}
+                Inactive
+            {% endif %}
+        </span>
+    </div>
+
+
+    <div class="info-card">
+        <span class="info-label">Username</span>
+        <span class="info-value">
+            {{ headmaster.username|default:"N/A" }}
+        </span>
+    </div>
+
+
+    <div class="info-card">
+        <span class="info-label">Phone</span>
+        <span class="info-value">
+            {{ headmaster.phone|default:"N/A" }}
+        </span>
+    </div>
+
+
+    <div class="info-card full">
+        <span class="info-label">Email</span>
+        <span class="info-value">
+            {{ headmaster.email|default:"N/A" }}
+        </span>
+    </div>
+
+
+    <div class="info-card full">
+        <span class="info-label">Date Joined</span>
+        <span class="info-value">
+            {{ headmaster.date_joined|date:"M d, Y" }}
+        </span>
+    </div>
+
+
+</div>
+</div>
+        
+<div class="card-buttons-section">
+
+    <a href="{% url 'accounts:view_headmaster' headmaster.id %}" 
+       class="btn-big btn-view">
+        👁 View
+    </a>
+
+{% if request.user.role == 'admin' or request.user.role == 'proprietor' or request.user.role == 'proprietress' %}
+    <a href="{% url 'accounts:manage_headmaster_permissions' headmaster.school.id %}" 
+       class="btn-big" style="background:#10b981; color:white;">
+        ⚙️ Permissions
+    </a>
+
+    <a href="{% url 'accounts:edit_headmaster' headmaster.id %}" 
+       class="btn-big btn-edit">
+        ✏️ Edit
+    </a>
+
+    <button type="button"
+        onclick="openDeleteModal('{% url 'accounts:delete_headmaster' headmaster.id %}', '{{ headmaster.get_full_name }}', 'headmaster')"
+        class="btn-big btn-delete">
+        🚫 Deactivate
+    </button>
+
+    {% endif %}
+
+</div>
+    </div>
+    {% empty %}
+    <div style="grid-column:1/-1; text-align:center; padding:80px 20px; background:white; border-radius:20px;">
+        <p style="font-size:28px; color:#6b7280; margin:0 0 20px 0; font-weight:600;">No headmasters found</p>
+        <a href="{% url 'accounts:add_headmaster' %}" 
+           style="display:inline-block; padding:18px 36px; background:#3b82f6; color:white; text-decoration:none; border-radius:12px; font-weight:700; font-size:20px;">
+            + Add First headmaster
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- PAGINATION -->
+<div class="pagination-wrapper">
+   {% if headmasters.has_previous %}
+    <a class="page-btn" href="?page={{ headmasters.previous_page_number }}&q={{ search_query }}">← Previous</a>
+   {% endif %}
+   
+   <span class="page-info">
+       Page {{ headmasters.number }} of {{ headmasters.paginator.num_pages }}
+   </span>
+   
+   {% if headmasters.has_next %}
+    <a class="page-btn" href="?page={{ headmasters.next_page_number }}&q={{ search_query }}">Next →</a>
+   {% endif %}
+</div>
+
+<script>
+    setTimeout(function() {
+        var msg = document.getElementById("msg");
+        if (msg) {
+            msg.style.display = "none";
+        }
+    }, 10000);
+</script>
+
+<!-- Custom Delete Modal -->
+<div id="deleteModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:white; padding:30px; border-radius:12px; width:400px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+        <h3 style="margin-bottom:15px; font-size:22px; color:#dc3545;">Deactivate headmasters</h3>
+        <p style="margin-bottom:25px; color:#555; font-size:16px;" id="deleteModalText">
+            Are you sure?
+        </p>
+        <form id="deleteForm" method="POST">
+    {% csrf_token %}
+    <button type="submit" style="background:#dc3545; color:white; padding:10px 20px; border:none; border-radius:6px;">Yes, Deactivate</button>
+    <button type="button" onclick="closeDeleteModal()" style="background:#6c757d; color:white; padding:10px 20px; border:none; border-radius:6px;">Cancel</button>
+</form>
+    </div>
+</div>
+
+<script>
+function openDeleteModal(url, name, type) {
+    document.getElementById('deleteForm').action = url;
+    document.getElementById('deleteModalText').innerHTML = 
+        `Deactivate <strong>${name}</strong>? They will not be able to log in. Past records will be kept.`;
+    document.getElementById('deleteModal').style.display = 'flex';
+}
+function closeDeleteModal() {
+    document.getElementById('deleteModal').style.display = 'none';
+}
+</script>
+
+{% endblock %}

@@ -1,75 +1,226 @@
 {% extends 'accounts/dashboard_base.html' %}
-
 {% block content %}
-<div class="container mt-5">
-
-  <div class="card shadow-lg border-0 rounded-4">
-    
-    <!-- Header -->
-    <div class="card-header bg-primary text-white rounded-top-4 d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">Edit Expense</h5>
-      <i class="fas fa-receipt"></i>
-    </div>
-
-    <div class="card-body p-4">
-
-      <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-
-        <div class="row g-4">
-
-          <div class="col-md-6">
-            <label class="form-label text-dark">Category</label>
-            {{ form.category }}
-            <div class="text-danger small">{{ form.category.errors }}</div>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label  text-dark">Amount</label>
-            {{ form.amount }}
-            <div class="text-danger small">{{ form.amount.errors }}</div>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label  text-dark">Description</label>
-            {{ form.description }}
-            <div class="text-danger small">{{ form.description.errors }}</div>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label  text-dark">Expense Date</label>
-            {{ form.expense_date }}
-            <div class="text-danger small">{{ form.expense_date.errors }}</div>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label  text-dark">Receipt Number</label>
-            {{ form.receipt_number }}
-            <div class="text-danger small">{{ form.receipt_number.errors }}</div>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label  text-dark">Upload Receipt</label>
-            {{ form.receipt_file }}
-            <div class="text-danger small">{{ form.receipt_file.errors }}</div>
-          </div>
-
+<style>
+/* =========================================================
+   EDIT EXPENSE
+========================================================= */
+.edit-expense-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 25px 15px 50px;
+}
+.edit-expense-card {
+    border: none;
+    border-radius: 22px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, .08);
+}
+/* HEADER */
+.edit-expense-header {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #fff;
+    padding: 20px 25px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.edit-expense-header h5 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 800;
+}
+.edit-expense-header i {
+    font-size: 20px;
+    opacity: .9;
+}
+/* BODY */
+.edit-expense-body {
+    padding: 30px;
+}
+/* LABELS */
+.edit-expense-body .form-label {
+    color: #334155 !important;
+    font-size: 13px;
+    font-weight: 800;
+    margin-bottom: 7px;
+}
+/* FORM CONTROLS */
+.edit-expense-body input,
+.edit-expense-body select,
+.edit-expense-body textarea {
+    width: 100%;
+    border: 1px solid #dbe2ea;
+    border-radius: 12px;
+    padding: 11px 13px;
+    font-size: 14px;
+    color: #0f172a;
+    background: #fff;
+    box-shadow: none;
+    transition: .2s ease;
+}
+.edit-expense-body input,
+.edit-expense-body select {
+    min-height: 45px;
+}
+.edit-expense-body textarea {
+    min-height: 110px;
+    resize: vertical;
+}
+.edit-expense-body input:focus,
+.edit-expense-body select:focus,
+.edit-expense-body textarea:focus {
+    outline: none;
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .08);
+}
+/* ERRORS */
+.edit-expense-error {
+    margin-top: 5px;
+    font-size: 12px;
+}
+/* BUTTONS */
+.edit-expense-actions {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #eef2f7;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+}
+.edit-expense-actions .btn {
+    min-height: 44px;
+    border-radius: 11px;
+    padding: 9px 20px;
+    font-size: 13px;
+    font-weight: 800;
+}
+/* MOBILE */
+@media (max-width: 767px) {
+    .edit-expense-page {
+        margin-top: 10px;
+        padding: 10px 10px 35px;
+    }
+    .edit-expense-card {
+        border-radius: 18px;
+    }
+    .edit-expense-header {
+        padding: 17px 18px;
+    }
+    .edit-expense-header h5 {
+        font-size: 16px;
+    }
+    .edit-expense-body {
+        padding: 20px 16px;
+    }
+    .edit-expense-body .row {
+        --bs-gutter-x: 0;
+        --bs-gutter-y: 18px;
+    }
+    .edit-expense-actions {
+        margin-top: 22px;
+        padding-top: 18px;
+    }
+    .edit-expense-actions .btn {
+        flex: 1;
+        padding: 9px 12px;
+    }
+}
+</style>
+<div class="edit-expense-page">
+    <div class="edit-expense-card">
+        <!-- HEADER -->
+        <div class="edit-expense-header">
+            <h5>
+                <i class="fas fa-edit me-2"></i>
+                Edit Expense
+            </h5>
+            <i class="fas fa-receipt"></i>
         </div>
-
-        <!-- Buttons -->
-        <div class="mt-4 d-flex justify-content-between">
-          <a href="{% url 'accounts:expense_list' %}" class="btn btn-outline-secondary px-4">
-            Cancel
-          </a>
-          <button type="submit" class="btn btn-primary px-4 shadow-sm">
-            <i class="fas fa-save me-1"></i> Save
-          </button>
+        <!-- BODY -->
+        <div class="edit-expense-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row g-4">
+                    <!-- CATEGORY -->
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Category
+                        </label>
+                        {{ form.category }}
+                        <div class="text-danger edit-expense-error">
+                            {{ form.category.errors }}
+                        </div>
+                    </div>
+                    <!-- AMOUNT -->
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Amount
+                        </label>
+                        {{ form.amount }}
+                        <div class="text-danger edit-expense-error">
+                            {{ form.amount.errors }}
+                        </div>
+                    </div>
+                    <!-- DESCRIPTION -->
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Description
+                        </label>
+                        {{ form.description }}
+                        <div class="text-danger edit-expense-error">
+                            {{ form.description.errors }}
+                        </div>
+                    </div>
+                    <!-- EXPENSE DATE -->
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Expense Date
+                        </label>
+                        {{ form.expense_date }}
+                        <div class="text-danger edit-expense-error">
+                            {{ form.expense_date.errors }}
+                        </div>
+                    </div>
+                    <!-- RECEIPT NUMBER -->
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Receipt Number
+                        </label>
+                        {{ form.receipt_number }}
+                        <div class="text-danger edit-expense-error">
+                            {{ form.receipt_number.errors }}
+                        </div>
+                    </div>
+                    <!-- RECEIPT -->
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Upload Receipt
+                        </label>
+                        {{ form.receipt_file }}
+                        <div class="text-danger edit-expense-error">
+                            {{ form.receipt_file.errors }}
+                        </div>
+                    </div>
+                </div>
+                <!-- BUTTONS -->
+                <div class="edit-expense-actions">
+                    <a
+                        href="{% url 'accounts:expense_list' %}"
+                        class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>
+                        Cancel
+                    </a>
+                    <button
+                        type="submit"
+                        class="btn btn-primary shadow-sm">
+                        <i class="fas fa-save me-1"></i>
+                        Save Changes
+                    </button>
+                </div>
+            </form>
         </div>
-
-      </form>
-
     </div>
-  </div>
-
 </div>
 {% endblock %}

@@ -1,296 +1,697 @@
 {% extends "accounts/dashboard_base.html" %}
 
 {% block content %}
-<style>
-/* MATCH TEACHER CARD STYLE */
-.teacher-profile-wrapper {
-    background: #f4f6f9;
-    padding: 40px 15px 60px 15px;
-    min-height: 100vh;
-}
-.teacher-profile-card {
-    max-width: 1200px;
-    margin: 0 auto;
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    overflow: hidden;
-    border: 2px solid #e5e7eb;
-}
-.profile-header {
-    padding: 30px 40px;
-    text-align: center;
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    color: white;
-}
-.profile-header img {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 5px solid white;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-    margin-bottom: 16px;
-}
-.profile-header h1 {
-    margin: 0;
-    font-size: 36px;
-    font-weight: 800;
-}
-.profile-header p {
-    margin: 8px 0 0 0;
-    font-size: 20px;
-    opacity: 0.9;
-}
-.profile-body {
-    padding: 40px;
-}
-.info-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 30px;
-    margin-bottom: 40px;
-}
-@media (max-width: 768px) {
-    .info-grid { grid-template-columns: 1fr; }
-}
-.info-section {
-    background: #f9fafb;
-    padding: 24px;
-    border-radius: 16px;
-    border: 1px solid #e5e7eb;
-}
-.info-section h3 {
-    margin: 0 0 20px 0;
-    font-size: 22px;
-    font-weight: 700;
-    color: #1f2937;
-    border-bottom: 2px solid #3b82f6;
-    padding-bottom: 10px;
-}
-.info-row {
-    display: flex;
-    margin-bottom: 14px;
-    font-size: 17px;
-}
-.info-row {
-    display: grid;
-    grid-template-columns: auto 1fr; /* ← auto = only as wide as label needs */
-    column-gap: 12px; /* ← Small gap instead of 20px */
-    margin-bottom: 16px;
-    font-size: 17px;
-    align-items: baseline;
-}
-.info-row .label {
-    font-weight: 700;
-    color: #4b5563;
-    white-space: nowrap;
-    text-align: left;
-}
-.info-row .value {
-    font-weight: 600;
-    color: #1f2937;
-    word-wrap: break-word;
-    overflow-wrap: anywhere;
 
+<style>
+/* =========================================================
+   TEACHER MY PROFILE
+========================================================= */
+.profile-page{
+    max-width:1100px;
+    margin:0 auto;
+    padding:30px 20px 50px;
 }
-.assignments-title {
-    text-align: center;
-    margin: 40px 0 30px 0;
-    font-size: 28px;
-    font-weight: 800;
-    color: #1f2937;
-    border-bottom: 3px solid #3b82f6;
-    padding-bottom: 12px;
+/* =========================================================
+   PROFILE HERO
+========================================================= */
+.profile-hero{
+    background:linear-gradient(135deg,#2563eb,#1e3a8a);
+    border-radius:24px;
+    padding:30px 35px;
+    color:white;
+    display:flex;
+    align-items:center;
+    gap:22px;
+    margin-bottom:25px;
+    box-shadow:0 15px 35px rgba(37,99,235,.20);
 }
-.assignment-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 20px;
+.profile-photo{
+    width:115px;
+    height:115px;
+    border-radius:50%;
+    object-fit:cover;
+    border:5px solid rgba(255,255,255,.95);
+    box-shadow:0 8px 20px rgba(0,0,0,.20);
+    flex-shrink:0;
 }
-.assignment-card {
-    border: 2px solid #e5e7eb;
-    padding: 20px;
-    border-radius: 16px;
-    background: white;
-    transition: all 0.3s;
+.profile-photo-placeholder{
+    width:115px;
+    height:115px;
+    border-radius:50%;
+    background:rgba(255,255,255,.15);
+    border:5px solid rgba(255,255,255,.95);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:50px;
+    flex-shrink:0;
 }
-.assignment-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.15);
-    border-color: #3b82f6;
+.profile-hero-content{
+    min-width:0;
 }
-.class-name {
-    font-size: 20px;
-    font-weight: 800;
-    color: #1d4ed8;
-    margin-bottom: 16px;
-    display: block;
+.profile-hero h2{
+    margin:0;
+    font-size:32px;
+    font-weight:800;
+    line-height:1.2;
+    overflow-wrap:anywhere;
 }
-.subject-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-    padding: 10px;
-    background: #f9fafb;
-    border-radius: 8px;
+.profile-hero p{
+    margin:8px 0 0;
+    font-size:16px;
+    opacity:.9;
 }
-.subject-name {
-    font-weight: 600;
-    color: #1f2937;
-    font-size: 16px;
+.profile-role{
+    display:inline-block;
+    margin-top:12px;
+    padding:6px 13px;
+    border-radius:999px;
+    background:rgba(255,255,255,.16);
+    border:1px solid rgba(255,255,255,.25);
+    font-size:13px;
+    font-weight:700;
 }
-.btn-small {
-    padding: 6px 12px;
-    text-decoration: none;
-    border-radius: 6px;
-    font-weight: 700;
-    font-size: 14px;
-    transition: all 0.2s;
+/* =========================================================
+   PROFILE CARDS
+========================================================= */
+.profile-card{
+    background:#ffffff;
+    border:1px solid #e5e7eb;
+    border-radius:18px;
+    padding:22px;
+    margin-bottom:20px;
+    box-shadow:0 5px 16px rgba(15,23,42,.05);
 }
-.btn-edit-small { background: #f97316; color: white; margin-right: 8px; }
-.btn-edit-small:hover { background: #ea580c; }
-.btn-delete-small { background: #dc2626; color: white; }
-.btn-delete-small:hover { background: #b91c1c; }
-.back-btn {
-    display: inline-block;
-    margin-top: 40px;
-    padding: 14px 28px;
-    background: #1f2937;
-    color: white;
-    text-decoration: none;
-    border-radius: 10px;
-    font-weight: 700;
-    font-size: 18px;
-    transition: all 0.3s;
+.profile-card h3{
+    margin:0 0 18px;
+    padding-bottom:10px;
+    border-bottom:2px solid #3b82f6;
+    color:#1f2937;
+    font-size:19px;
+    font-weight:800;
 }
-.back-btn:hover {
-    background: #111827;
-    transform: scale(1.05);
+/* =========================================================
+   INFORMATION GRID
+   3 COLUMNS ON LAPTOP/DESKTOP
+========================================================= */
+.info-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:14px;
+}
+.info-item{
+    min-width:0;
+    padding:13px 12px;
+    background:#f8fafc;
+    border:1px solid #eef2f7;
+    border-radius:12px;
+}
+.info-label{
+    display:block;
+    margin-bottom:5px;
+    color:#64748b;
+    font-size:11px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.3px;
+}
+.info-value{
+    display:block;
+    color:#1f2937;
+    font-size:14px;
+    font-weight:700;
+    line-height:1.45;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+}
+/* =========================================================
+   STATUS
+========================================================= */
+.status-active{
+    color:#16a34a !important;
+}
+.status-inactive{
+    color:#dc2626 !important;
+}
+/* =========================================================
+   TEACHING SUMMARY
+========================================================= */
+.summary-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:14px;
+}
+.summary-item{
+    padding:20px 15px;
+    background:#f8fafc;
+    border:1px solid #e5e7eb;
+    border-radius:14px;
+    text-align:center;
+}
+.summary-number{
+    display:block;
+    color:#1d4ed8;
+    font-size:28px;
+    font-weight:800;
+    line-height:1.2;
+    margin-bottom:6px;
+}
+.summary-label{
+    display:block;
+    color:#64748b;
+    font-size:12px;
+    font-weight:700;
+}
+/* =========================================================
+   TEACHING ASSIGNMENTS — VIEW ONLY
+========================================================= */
+.assignment-list{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:14px;
+}
+.assignment-card{
+    background:#f8fafc;
+    border:1px solid #e5e7eb;
+    border-radius:14px;
+    padding:16px;
+}
+.assignment-class{
+    display:block;
+    margin-bottom:10px;
+    color:#1d4ed8;
+    font-size:15px;
+    font-weight:800;
+}
+.assignment-subject{
+    display:block;
+    color:#1f2937;
+    font-size:14px;
+    font-weight:700;
+    margin-bottom:4px;
+    overflow-wrap:anywhere;
+}
+.assignment-slots{
+    display:block;
+    color:#64748b;
+    font-size:12px;
+    font-weight:600;
+}
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+.empty-state{
+    padding:22px;
+    background:#f8fafc;
+    border:1px dashed #cbd5e1;
+    border-radius:14px;
+    text-align:center;
+    color:#64748b;
+    font-size:14px;
+    font-weight:600;
+}
+/* =========================================================
+   BACK TO DASHBOARD
+========================================================= */
+.profile-footer{
+    margin-top:25px;
+}
+.dashboard-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:12px 20px;
+    border-radius:10px;
+    background:#1f2937;
+    color:white;
+    text-decoration:none;
+    font-size:14px;
+    font-weight:700;
+    transition:.2s;
+}
+.dashboard-btn:hover{
+    background:#111827;
+    color:white;
+    transform:translateY(-1px);
+}
+/* =========================================================
+   MOBILE
+   2 COLUMNS
+========================================================= */
+@media(max-width:768px){
+    .profile-page{
+        width:100%;
+        max-width:100%;
+        padding:16px 10px 35px;
+        box-sizing:border-box;
+        overflow:hidden;
+    }
+    .profile-hero{
+        width:100%;
+        padding:25px 15px;
+        border-radius:18px;
+        box-sizing:border-box;
+        flex-direction:column;
+        text-align:center;
+    }
+    .profile-photo,
+    .profile-photo-placeholder{
+        width:90px;
+        height:90px;
+    }
+    .profile-photo-placeholder{
+        font-size:38px;
+    }
+    .profile-hero h2{
+        font-size:23px;
+        line-height:1.3;
+    }
+    .profile-hero p{
+        font-size:14px;
+    }
+    .profile-role{
+        font-size:12px;
+    }
+    .profile-card{
+        width:100%;
+        box-sizing:border-box;
+        padding:17px 14px;
+        margin-bottom:16px;
+        border-radius:15px;
+        overflow:hidden;
+    }
+    .profile-card h3{
+        font-size:18px;
+        margin-bottom:16px;
+        padding-bottom:8px;
+    }
+    /* TWO COLUMNS ON MOBILE */
+    .info-grid{
+        grid-template-columns:1fr 1fr;
+        gap:10px;
+    }
+    .info-item{
+        min-width:0;
+        padding:12px 10px;
+        border-radius:12px;
+    }
+    .info-label{
+        font-size:11px;
+        margin-bottom:4px;
+        line-height:1.3;
+        white-space:normal;
+    }
+    .info-value{
+        font-size:13px;
+        line-height:1.4;
+    }
+    .summary-grid{
+        grid-template-columns:1fr 1fr;
+        gap:10px;
+    }
+    .summary-item{
+        padding:15px 10px;
+        border-radius:12px;
+    }
+    .summary-number{
+        font-size:23px;
+    }
+    .summary-label{
+        font-size:11px;
+    }
+    .assignment-list{
+        grid-template-columns:1fr 1fr;
+        gap:10px;
+    }
+    .assignment-card{
+        padding:13px 10px;
+        border-radius:12px;
+    }
+    .assignment-class{
+        font-size:13px;
+    }
+    .assignment-subject{
+        font-size:13px;
+    }
+    .assignment-slots{
+        font-size:11px;
+    }
+    .dashboard-btn{
+        width:100%;
+        justify-content:center;
+        box-sizing:border-box;
+    }
+}
+/* =========================================================
+   SMALL PHONES
+========================================================= */
+@media(max-width:430px){
+    .profile-page{
+        padding:12px 7px 30px;
+    }
+    .profile-hero{
+        padding:22px 12px;
+        border-radius:16px;
+    }
+    .profile-photo,
+    .profile-photo-placeholder{
+        width:82px;
+        height:82px;
+    }
+    .profile-photo-placeholder{
+        font-size:34px;
+    }
+    .profile-hero h2{
+        font-size:20px;
+    }
+    .profile-card{
+        padding:15px 11px;
+    }
+    .profile-card h3{
+        font-size:17px;
+    }
+    .info-grid{
+        gap:9px;
+    }
+    .info-item{
+        padding:11px 9px;
+    }
+    .info-label{
+        font-size:10px;
+    }
+    .info-value{
+        font-size:13px;
+    }
+    .summary-grid{
+        gap:8px;
+    }
+    .summary-item{
+        padding:14px 8px;
+    }
+    .summary-number{
+        font-size:21px;
+    }
+    .assignment-list{
+        gap:8px;
+    }
+    .assignment-card{
+        padding:12px 9px;
+    }
 }
 </style>
-
-<div class="profile-wrapper">
-    <h1 style="margin-bottom: 24px; font-size: 28px; color: #111827;">Teacher Profile</h1>
-    
-    <div class="profile-header">
-    {% if teacher.photo %}
-        <img src="{{ teacher.photo.url }}" alt="{{ teacher.username }}">
+<div class="profile-page">
+<!-- =====================================================
+     PROFILE HERO
+====================================================== -->
+<div class="profile-hero">
+    {% if request.user.photo %}
+        <img
+            src="{{ request.user.photo.url }}"
+            alt="{{ request.user.username }}"
+            class="profile-photo"
+        >
     {% else %}
-        <img src="https://ui-avatars.com/api/?name={{ teacher.first_name|default:teacher.username }}+{{ teacher.last_name }}&background=ffffff&color=3b82f6&size=200&bold=true" alt="Default">
+        <div class="profile-photo-placeholder">
+            👨‍🏫
+        </div>
     {% endif %}
-    
-    <h1>
-        {% if teacher.title and teacher.title != " " %}{{ teacher.title }} {% endif %}
-        {{ teacher.first_name|default:"" }} {{ teacher.last_name|default:teacher.username }}
-    </h1>
-    
-</div>
-    <div class="info-section" style="margin-bottom: 25px;">
-        <h3>School Details</h3>
-        <div class="info-grid">
-            <div class="info-row">
-                <span class="label">School:</span>
-                <span class="value">{{ teacher.school.name|default:"No school assigned" }}</span>
-            </div>
-            <div class="info-row">
-                <span class="label">Department:</span>
-                <span class="value">{{ teacher.department|default:"N/A" }}</span>
-            </div>
-            <div class="info-row">
-                <span class="label">Date Joined:</span>
-                <span class="value">{{ teacher.date_joined|date:"M d, Y"|default:"-" }}</span>
-            </div>
-            <div class="info-row">
-                <span class="label">Status:</span>
-                <span class="value" style="color:{% if teacher.is_active %}#16a34a{% else %}#dc2626{% endif %}; font-weight:800;">
-                    {% if teacher.is_active %}Active{% else %}Inactive{% endif %}
-                </span>
-            </div>
-        </div>
-    </div>
-
-    <!-- BODY -->
-    <div class="profile-body">
-        
-        <!-- Teaching Summary -->
-        <div class="info-section">
-            <h3>Teaching Summary</h3>
-            <div class="info-grid">
-                <div class="info-item">
-                    <span class="label">Total Classes:</span>
-                    <span class="value">{{ total_classes }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Total Students:</span>
-                    <span class="value">{{ total_students }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Subjects Taught:</span>
-                    <span class="value">{{ assignments.count }}</span>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- Personal Information -->
-        <div class="info-section">
-            <h3>Personal Information</h3>
-            <div class="info-grid">
-                <div class="info-item">
-                    <span class="label">Teacher ID:</span>
-                    <span class="value">{{ teacher.staff_id|default:"N/A" }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Username:</span>
-                    <span class="value">{{ teacher.username }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Email:</span>
-                    <span class="value">{{ teacher.email|default:"Not provided" }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Phone:</span>
-                    <span class="value">{{ teacher.phone|default:"Not provided" }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Gender:</span>
-                    <span class="value">{{ teacher.get_gender_display|default:"Not set" }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Date of Birth:</span>
-                    <span class="value">{{ teacher.date_of_birth|date:"M d, Y"|default:"Not set" }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Ghana Card:</span>
-                    <span class="value">{{ teacher.national_id_card|default:"Not provided" }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Nationality:</span>
-                    <span class="value">{{ teacher.nationality|default:"Not set" }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Religion:</span>
-                    <span class="value">{{ teacher.get_religion_display|default:"Not set" }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Qualification:</span>
-                    <span class="value">{{ teacher.qualification|default:"Not provided" }}</span>
-                </div>
-         
-                <div class="info-item">
-                    <span class="label">Role:</span>
-                    <span class="value">{{ teacher.display_role }}</span>
-                </div>
-                
-                 
-                </div>
-            </div>
-        </div>
-
-
-
+    <div class="profile-hero-content">
+        <h2>
+            {% if request.user.title and request.user.title != " " %}
+                {{ request.user.get_title_display }}
+            {% endif %}
+            {{ request.user.first_name|default:"" }}
+            {% if request.user.middle_name %}
+                {{ request.user.middle_name }}
+            {% endif %}
+            {{ request.user.last_name|default:request.user.username }}
+        </h2>
+        <p>
+            {{ request.user.school.name|default:"No school assigned" }}
+        </p>
+        <span class="profile-role">
+            {{ request.user.display_role }}
+        </span>
     </div>
 </div>
+<!-- =====================================================
+     SCHOOL INFORMATION
+====================================================== -->
+<div class="profile-card">
+    <h3>School Information</h3>
+    <div class="info-grid">
+        <div class="info-item">
+            <span class="info-label">School</span>
+            <span class="info-value">
+                {{ request.user.school.name|default:"No school assigned" }}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Teacher ID</span>
+            <span class="info-value">
+                {{ request.user.staff_id|default:"N/A" }}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Role</span>
+            <span class="info-value">
+                {{ request.user.display_role }}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Department</span>
+            <span class="info-value">
+                {{ request.user.department|default:"Not provided" }}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Date Joined</span>
+            <span class="info-value">
+                {{ request.user.date_joined|date:"M d, Y"|default:"-" }}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Status</span>
+            <span class="info-value {% if request.user.is_active %}status-active{% else %}status-inactive{% endif %}">
+                {% if request.user.is_active %}
+                    Active
+                {% else %}
+                    Inactive
+                {% endif %}
+            </span>
+        </div>
+    </div>
+</div>
+<!-- =====================================================
+     TEACHING SUMMARY
+====================================================== -->
+<div class="profile-card">
+    <h3>Teaching Summary</h3>
+    <div class="summary-grid">
+        <div class="summary-item">
+            <span class="summary-number">
+                {{ total_classes }}
+            </span>
+            <span class="summary-label">
+                Total Classes
+            </span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-number">
+                {{ total_students }}
+            </span>
+            <span class="summary-label">
+                Total Students
+            </span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-number">
+                {{ assignments.count }}
+            </span>
+            <span class="summary-label">
+                Subjects Taught
+            </span>
+        </div>
+    </div>
+</div>
+<!-- =====================================================
+     PERSONAL INFORMATION
+====================================================== -->
+<div class="profile-card">
+    <h3>Personal Information</h3>
+    <div class="info-grid">
+        <div class="info-item">
+            <span class="info-label">Title</span>
+            <span class="info-value">
+                {{ request.user.get_title_display|default:"Not set" }}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">First Name</span>
+            <span class="info-value">
+                {{ request.user.first_name|default:"Not provided" }}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Middle Name</span>
+            <span class="info-value">
+                {{ request.user.middle_name|default:"Not provided" }}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Last Name</span>
+            <span class="info-value">
+                {{ request.user.last_name|default:"Not provided" }}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Gender</span>
+            <span class="info-value">
+                {{ request.user.get_gender_display|default:"Not set" }}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Date of Birth</span>
+            <span class="info-value">
+                {{ request.user.date_of_birth|date:"M d, Y"|default:"Not set" }}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Ghana Card</span>
+            <span class="info-value">
+                {{ request.user.national_id_card|default:"Not provided" }}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Nationality</span>
+            <span class="info-value">
+                {{ request.user.nationality|default:"Not set" }}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Religion</span>
+            <span class="info-value">
+                {{ request.user.get_religion_display|default:"Not set" }}
+            </span>
+        </div>
+    </div>
+</div>
+<!-- =====================================================
+     CONTACT INFORMATION
+====================================================== -->
+<div class="profile-card">
+    <h3>Contact Information</h3>
+    <div class="info-grid">
+        <div class="info-item">
+            <span class="info-label">Username</span>
+            <span class="info-value">
+                {{ request.user.username }}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Email</span>
+            <span class="info-value">
+                {{ request.user.email|default:"Not provided" }}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Phone</span>
+            <span class="info-value">
+                {{ request.user.phone|default:"Not provided" }}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Address</span>
+            <span class="info-value">
+                {{ request.user.address|default:"Not provided" }}
+            </span>
+        </div>
+    </div>
+</div>
+<!-- =====================================================
+     PROFESSIONAL INFORMATION
+====================================================== -->
+<div class="profile-card">
+    <h3>Professional Information</h3>
+    <div class="info-grid">
+        <div class="info-item">
+            <span class="info-label">Qualification</span>
+            <span class="info-value">
+                {{ request.user.qualification|default:"Not provided" }}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Department</span>
+            <span class="info-value">
+                {{ request.user.department|default:"Not provided" }}
+            </span>
+        </div>
+    </div>
+</div>
+<!-- =====================================================
+     EMERGENCY CONTACT
+====================================================== -->
+<div class="profile-card">
+    <h3>Emergency Contact</h3>
+    <div class="info-grid">
+        <div class="info-item">
+            <span class="info-label">Name</span>
+            <span class="info-value">
+                {{ request.user.emergency_contact_name|default:"Not provided" }}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Phone</span>
+            <span class="info-value">
+                {{ request.user.emergency_contact_phone|default:"Not provided" }}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Relationship</span>
+            <span class="info-value">
+                {{ request.user.emergency_contact_relationship|default:"Not provided" }}
+            </span>
+        </div>
+    </div>
+</div>
+<!-- =====================================================
+     TEACHING ASSIGNMENTS — VIEW ONLY
+====================================================== -->
+<div class="profile-card">
+    <h3>Teaching Assignments</h3>
+    {% if assignments %}
+        <div class="assignment-list">
+            {% for item in assignments %}
+                <div class="assignment-card">
+                    <span class="assignment-class">
+                        {{ item.school_class.name }}
+                    </span>
+                    <span class="assignment-subject">
+                        {{ item.subject_name }}
+                    </span>
+                    <span class="assignment-slots">
+                        Timetable Slots: {{ item.slot_count }}
+                    </span>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            No teaching assignments have been added yet.
+        </div>
+    {% endif %}
+</div>
+<!-- =====================================================
+     DASHBOARD
+====================================================== -->
+<div class="profile-footer">
+    <a
+        href="{% url 'accounts:dashboard' %}"
+        class="dashboard-btn"
+    >
+        ← Back to Dashboard
+    </a>
+</div>
+</div>
+
 {% endblock %}

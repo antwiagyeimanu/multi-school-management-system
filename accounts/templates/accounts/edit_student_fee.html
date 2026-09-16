@@ -4,324 +4,936 @@
 {% block content %}
 
 <style>
-/* ================================
-   PREMIUM EDIT FEE PAGE
-================================ */
+/* =========================================================
+   EDIT FEE PAGE
+========================================================= */
+
 .edit-fee-page {
-    padding: 24px 0 40px;
+    padding: 10px 4px 40px;
 }
-.edit-fee-card {
-    border: 0;
-    border-radius: 22px;
-    overflow: hidden;
-    background: #fff;
-    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
-}
-/* HEADER */
-.edit-fee-header {
-    padding: 24px 28px;
-    background: linear-gradient(135deg, #0f172a, #1e40af);
-    color: #fff;
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.edit-fee-hero {
     position: relative;
     overflow: hidden;
+    border-radius: 24px;
+    padding: 28px 30px;
+    margin-bottom: 22px;
+    color: #fff;
+    background:
+        radial-gradient(circle at 88% 15%, rgba(255,255,255,.16), transparent 28%),
+        linear-gradient(135deg, #0f172a, #1e40af 58%, #2563eb);
+    box-shadow: 0 18px 40px rgba(15,23,42,.18);
 }
-.edit-fee-header::after {
+
+.edit-fee-hero::before {
     content: "";
     position: absolute;
-    width: 180px;
-    height: 180px;
-    border-radius: 50%;
+    width: 190px;
+    height: 190px;
     right: -70px;
-    top: -90px;
-    background: rgba(255,255,255,.08);
+    bottom: -110px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.07);
 }
-.edit-fee-header h4 {
-    margin: 0;
-    font-size: 22px;
+
+.edit-fee-hero-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.edit-fee-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 12px;
+    margin-bottom: 10px;
+    border-radius: 30px;
+    background: rgba(255,255,255,.13);
+    border: 1px solid rgba(255,255,255,.12);
+    font-size: 11px;
     font-weight: 800;
-    position: relative;
-    z-index: 1;
 }
-.edit-fee-header small {
-    display: block;
-    margin-top: 8px;
-    color: rgba(255,255,255,.78) !important;
+
+.edit-fee-hero h2 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 850;
+    letter-spacing: -.6px;
+}
+
+.edit-fee-hero p {
+    margin: 7px 0 0;
+    color: rgba(255,255,255,.75);
     font-size: 13px;
-    position: relative;
-    z-index: 1;
 }
-/* BODY */
+
+.edit-fee-hero-icon {
+    width: 78px;
+    height: 78px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 22px;
+    background: rgba(255,255,255,.11);
+    border: 1px solid rgba(255,255,255,.12);
+    font-size: 34px;
+}
+
+/* =========================================================
+   MAIN CARD
+========================================================= */
+
+.edit-fee-card {
+    border: 0;
+    border-radius: 24px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 15px 40px rgba(15,23,42,.08);
+}
+
+.edit-fee-header {
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    color: #fff;
+    background: linear-gradient(135deg,#2563eb,#1d4ed8);
+}
+
+.edit-fee-header-icon {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    background: rgba(255,255,255,.15);
+    font-size: 16px;
+}
+
+.edit-fee-header-text h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 850;
+}
+
+.edit-fee-header-text small {
+    display: block;
+    margin-top: 3px;
+    color: rgba(255,255,255,.75);
+    font-size: 11px;
+}
+
 .edit-fee-body {
-    padding: 28px;
+    padding: 27px;
 }
-/* SECTION */
+
+/* =========================================================
+   SECTION HEADING
+========================================================= */
+
 .fee-section-title {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     margin-bottom: 20px;
-    font-size: 16px;
-    font-weight: 800;
-    color: #0f172a;
 }
-.fee-section-title i {
-    width: 36px;
-    height: 36px;
-    display: inline-flex;
+
+.fee-section-icon {
+    width: 45px;
+    height: 45px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 13px;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 18px;
+}
+
+.fee-section-title h5 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 15px;
+    font-weight: 850;
+}
+
+.fee-section-title small {
+    display: block;
+    margin-top: 3px;
+    color: #64748b;
+    font-size: 11px;
+}
+
+/* =========================================================
+   DETAILS BOX
+========================================================= */
+
+.fee-details-box {
+    padding: 20px;
+    margin-bottom: 22px;
+    border: 1px solid #e5eaf0;
+    border-radius: 19px;
+    background: #f8fafc;
+}
+
+/* =========================================================
+   FIELDS
+========================================================= */
+
+.fee-field {
+    margin-bottom: 18px;
+}
+
+.fee-field:last-child {
+    margin-bottom: 0;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 7px;
+    color: #0f172a !important;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.fee-input-wrap {
+    position: relative;
+}
+
+.fee-input-wrap > i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    z-index: 2;
+    transform: translateY(-50%);
+    color: #64748b;
+    pointer-events: none;
+}
+
+.fee-input {
+    width: 100%;
+    min-height: 49px;
+    padding: 10px 13px 10px 41px;
+    border: 1px solid #dbe3ec;
+    border-radius: 13px;
+    background: #fff;
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 650;
+    outline: none;
+    transition: .2s ease;
+}
+
+.fee-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37,99,235,.09);
+}
+
+.fee-input::placeholder {
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+/* =========================================================
+   FEE ITEM CARD
+========================================================= */
+
+.fee-item-card {
+    height: 100%;
+    padding: 18px;
+    border: 1px solid #e5eaf0;
+    border-radius: 18px;
+    background: #fff;
+    transition: .2s ease;
+}
+
+.fee-item-card:hover {
+    border-color: #bfdbfe;
+    box-shadow: 0 10px 25px rgba(15,23,42,.06);
+    transform: translateY(-2px);
+}
+
+.fee-item-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 13px;
+}
+
+.fee-item-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.fee-item-icon {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 10px;
     background: #eff6ff;
     color: #2563eb;
 }
-/* FIELD */
-.fee-field {
-    margin-bottom: 18px;
-}
-.form-label {
-    color: #0f172a !important;
+
+.fee-item-name span {
+    color: #111827;
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 800;
+}
+
+.fee-amount-label {
     margin-bottom: 7px;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 750;
 }
-.fee-field input,
-.fee-field select,
-.fee-field textarea {
-    width: 100%;
-    min-height: 46px;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
+
+.amount-input-wrap {
+    position: relative;
+}
+
+.amount-currency {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    z-index: 2;
+    transform: translateY(-50%);
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 850;
+}
+
+.amount-input {
+    padding-left: 32px !important;
+}
+
+/* =========================================================
+   PAID / BALANCE
+========================================================= */
+
+.fee-status-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.fee-status {
+    padding: 9px 10px;
+    border-radius: 10px;
     background: #f8fafc;
-    padding: 10px 13px;
-    color: #0f172a;
-    transition: all .2s ease;
 }
-.fee-field input:focus,
-.fee-field select:focus,
-.fee-field textarea:focus {
-    background: #fff;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 4px rgba(37,99,235,.10);
-    outline: none;
+
+.fee-status-label {
+    display: block;
+    margin-bottom: 2px;
+    color: #64748b;
+    font-size: 9px;
+    font-weight: 700;
 }
-/* PAYMENT NOTICE */
+
+.fee-status-value {
+    color: #111827;
+    font-size: 11px;
+    font-weight: 850;
+}
+
+.fee-status.balance {
+    background: #fff7ed;
+}
+
+.fee-status.balance .fee-status-value {
+    color: #c2410c;
+}
+
+/* =========================================================
+   PAYMENT NOTICE
+========================================================= */
+
 .payment-notice {
-    margin-top: 8px;
+    position: relative;
+    overflow: hidden;
+    margin-top: 22px;
     padding: 18px 20px;
     border: 1px solid #bfdbfe;
-    border-radius: 15px;
-    background: #eff6ff;
-    color: #1e3a8a;
+    border-radius: 17px;
+    background: linear-gradient(135deg,#eff6ff,#f8fbff);
 }
+
+.payment-notice::after {
+    content: "";
+    position: absolute;
+    width: 90px;
+    height: 90px;
+    right: -35px;
+    bottom: -45px;
+    border-radius: 50%;
+    background: rgba(37,99,235,.05);
+}
+
+.payment-notice-main {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.payment-notice-icon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: #dbeafe;
+    color: #2563eb;
+}
+
 .payment-notice strong {
-    font-size: 15px;
-}
-.payment-notice small {
-    color: #475569 !important;
     display: block;
-    margin-top: 5px;
+    color: #1e3a8a;
+    font-size: 13px;
 }
-/* ERROR */
-.alert-danger {
-    border: 0;
-    border-radius: 14px;
+
+.payment-notice small {
+    display: block;
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 10px;
+    line-height: 1.5;
 }
-/* ACTIONS */
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
 .fee-actions {
     display: flex;
+    align-items: center;
+    justify-content: flex-end;
     gap: 10px;
     margin-top: 25px;
     padding-top: 22px;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid #e5e7eb;
 }
+
 .save-fee-btn,
 .cancel-fee-btn {
-    min-height: 46px;
+    min-height: 47px;
+    padding: 10px 20px;
     border-radius: 12px;
-    padding: 10px 22px;
-    font-weight: 700;
-    transition: all .2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 800;
+    transition: .2s ease;
 }
+
 .save-fee-btn {
     border: 0;
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
     color: #fff;
-    box-shadow: 0 7px 18px rgba(37,99,235,.22);
+    background: linear-gradient(135deg,#2563eb,#1d4ed8);
+    box-shadow: 0 9px 20px rgba(37,99,235,.20);
 }
+
 .save-fee-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 22px rgba(37,99,235,.28);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 13px 25px rgba(37,99,235,.27);
 }
+
 .cancel-fee-btn {
-    border: 1px solid #cbd5e1;
+    border: 1px solid #dbe2ea;
+    color: #475569;
     background: #fff;
-    color: #334155;
+    text-decoration: none;
 }
+
 .cancel-fee-btn:hover {
+    color: #0f172a;
+    border-color: #94a3b8;
     background: #f8fafc;
 }
-/* MOBILE */
-@media (max-width: 768px) {
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 991px) {
+
+    .edit-fee-body {
+        padding: 22px;
+    }
+
+    .edit-fee-hero {
+        padding: 24px;
+    }
+
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 767px) {
+
     .edit-fee-page {
-        padding: 12px 0 30px;
+        padding: 5px 2px 25px;
     }
+
+    .edit-fee-hero {
+        padding: 20px 18px;
+        border-radius: 19px;
+        margin-bottom: 17px;
+    }
+
+    .edit-fee-hero h2 {
+        font-size: 22px;
+    }
+
+    .edit-fee-hero p {
+        font-size: 10px;
+        line-height: 1.5;
+    }
+
+    .edit-fee-hero-icon {
+        display: none;
+    }
+
+    .edit-fee-card {
+        border-radius: 19px;
+    }
+
     .edit-fee-header {
-        padding: 20px;
+        padding: 15px 17px;
     }
-    .edit-fee-header h4 {
-        font-size: 18px;
+
+    .edit-fee-header-icon {
+        width: 34px;
+        height: 34px;
+    }
+
+    .edit-fee-header-text h4 {
+        font-size: 13px;
+    }
+
+    .edit-fee-header-text small {
+        font-size: 9px;
         line-height: 1.4;
     }
+
     .edit-fee-body {
-        padding: 20px 16px;
+        padding: 15px;
     }
+
+    .fee-details-box {
+        padding: 15px;
+        border-radius: 16px;
+    }
+
     .fee-section-title {
-        font-size: 15px;
+        align-items: flex-start;
     }
-    .fee-field {
-        margin-bottom: 15px;
+
+    .fee-section-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
     }
+
+    .fee-section-title h5 {
+        font-size: 14px;
+    }
+
+    .fee-section-title small {
+        font-size: 9px;
+        line-height: 1.45;
+    }
+
+    .fee-item-card {
+        padding: 15px;
+    }
+
+    .fee-status-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .payment-notice {
+        padding: 15px;
+    }
+
+    .payment-notice-main {
+        align-items: flex-start;
+    }
+
+    .payment-notice strong {
+        font-size: 11px;
+        line-height: 1.5;
+    }
+
     .fee-actions {
-        flex-direction: column;
+        flex-direction: column-reverse;
+        align-items: stretch;
     }
+
     .save-fee-btn,
     .cancel-fee-btn {
         width: 100%;
+        min-height: 48px;
     }
+
 }
-/* SMALL PHONES */
-@media (max-width: 480px) {
-    .edit-fee-header {
-        padding: 18px 16px;
-    }
+
+/* =========================================================
+   VERY SMALL PHONES
+========================================================= */
+
+@media (max-width: 400px) {
+
     .edit-fee-body {
-        padding: 18px 14px;
+        padding: 11px;
     }
-    .edit-fee-header h4 {
-        font-size: 17px;
+
+    .fee-details-box {
+        padding: 12px;
     }
-    .edit-fee-header small {
-        font-size: 12px;
-        line-height: 1.6;
+
+    .edit-fee-hero {
+        padding: 18px 15px;
     }
+
+    .edit-fee-hero h2 {
+        font-size: 20px;
+    }
+
+    .fee-item-card {
+        padding: 13px;
+    }
+
 }
 </style>
+
+
 <div class="container-fluid edit-fee-page">
-<div class="edit-fee-card">
-    <!-- HEADER -->
-    <div class="edit-fee-header">
-        <h4>
-            <i class="fas fa-file-invoice-dollar me-2"></i>
-            Edit Fees for {{ fee.student.get_full_name }}
-        </h4>
-        <small>
-            {{ fee.student.student_number }} |
-            {{ fee.term }} |
-            {{ fee.academic_year }}
-        </small>
+
+    <!-- =====================================================
+         HERO
+    ====================================================== -->
+
+    <div class="edit-fee-hero">
+
+        <div class="edit-fee-hero-content">
+
+            <div>
+
+                <div class="edit-fee-badge">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    Fee Management
+                </div>
+
+                <h2>Edit Student Fee</h2>
+
+                <p>
+                    Update the fee details and due date for
+                    <strong>{{ fee.student.get_full_name }}</strong>.
+                </p>
+
+            </div>
+
+            <div class="edit-fee-hero-icon">
+                <i class="fas fa-wallet"></i>
+            </div>
+
+        </div>
+
     </div>
-    <!-- BODY -->
-    <div class="edit-fee-body">
-        <form method="post">
-            {% csrf_token %}
-            {% if form.errors %}
-            <div class="alert alert-danger">
-                <strong>Please fix the errors below:</strong>
-                {{ form.errors }}
+
+
+    <!-- =====================================================
+         MAIN CARD
+    ====================================================== -->
+
+    <div class="edit-fee-card">
+
+        <div class="edit-fee-header">
+
+            <div class="edit-fee-header-icon">
+                <i class="fas fa-file-invoice"></i>
             </div>
-            {% endif %}
-            <div class="fee-section-title">
-                <i class="fas fa-coins"></i>
-                Fee Breakdown
-            </div>
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <div class="fee-field">
-                        <label class="form-label">School Fees</label>
-                        {{ form.school_fees }}
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="fee-field">
-                        <label class="form-label">Boarding Fees</label>
-                        {{ form.boarding_fee }}
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="fee-field">
-                        <label class="form-label">Hostel Fees</label>
-                        {{ form.hostel_fee }}
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="fee-field">
-                        <label class="form-label">Exam Fees</label>
-                        {{ form.exam_fees }}
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="fee-field">
-                        <label class="form-label">Feeding Type</label>
-                        {{ form.canteen_type }}
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="fee-field">
-                        <label class="form-label">Feeding Fee</label>
-                        {{ form.canteen_amount }}
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="fee-field">
-                        <label class="form-label">PTA Dues</label>
-                        {{ form.pta_dues }}
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="fee-field">
-                        <label class="form-label">Development Fees</label>
-                        {{ form.development_fee }}
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="fee-field">
-                        <label class="form-label">Computer Fees</label>
-                        {{ form.computer_levy }}
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="fee-field">
-                        <label class="form-label">Other Fees</label>
-                        {{ form.other_fees }}
-                    </div>
-                </div>
-            </div>
-            <!-- PAYMENT INFO -->
-            <div class="payment-notice">
-                <strong>
-                    <i class="fas fa-wallet me-2"></i>
-                    Amount Paid: GHS {{ fee.amount_paid|floatformat:2 }}
-                </strong>
+
+            <div class="edit-fee-header-text">
+
+                <h4>
+                    Edit Fees for {{ fee.student.get_full_name }}
+                </h4>
+
                 <small>
-                    Amount paid cannot be edited here.
-                    Use the "Pay" button for payments.
+                    {{ fee.student.school_class }}
+                    &nbsp;•&nbsp;
+                    {{ fee.term }}
+                    &nbsp;•&nbsp;
+                    {{ fee.academic_year }}
+                    &nbsp;•&nbsp;
+                    Total: GH₵ {{ fee.total_amount }}
                 </small>
+
             </div>
-            <!-- ACTIONS -->
-            <div class="fee-actions">
-                <button type="submit" class="save-fee-btn">
-                    <i class="fas fa-save me-2"></i>
-                    Save Changes
-                </button>
-                <a href="{% url 'accounts:student_fees_list' %}?term={{ fee.term.id }}"
-                   class="cancel-fee-btn">
-                    <i class="fas fa-arrow-left me-2"></i>
-                    Cancel
-                </a>
-            </div>
-        </form>
+
+        </div>
+
+
+        <div class="edit-fee-body">
+
+            <form method="post">
+
+                {% csrf_token %}
+
+
+                <!-- =================================================
+                     FEE BREAKDOWN
+                ================================================== -->
+
+                <div class="fee-section-title">
+
+                    <div class="fee-section-icon">
+                        <i class="fas fa-coins"></i>
+                    </div>
+
+                    <div>
+                        <h5>Fee Breakdown</h5>
+                        <small>
+                            Review and update the individual fee amounts.
+                        </small>
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     DUE DATE
+                ================================================== -->
+
+                <div class="fee-details-box">
+
+                    <div class="fee-field">
+
+                        <label class="form-label">
+                            Due Date
+                        </label>
+
+                        <div class="fee-input-wrap">
+
+                            <i class="fas fa-calendar-check"></i>
+
+                            <input
+                                type="date"
+                                name="due_date"
+                                value="{{ fee.due_date|date:'Y-m-d' }}"
+                                class="fee-input"
+                            >
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     DYNAMIC FEE ITEMS
+                ================================================== -->
+
+                <div class="row g-3">
+
+                    {% for it in items %}
+
+                    <div class="col-lg-6">
+
+                        <div class="fee-item-card">
+
+                            <div class="fee-item-top">
+
+                                <div class="fee-item-name">
+
+                                    <div class="fee-item-icon">
+                                        <i class="fas fa-tag"></i>
+                                    </div>
+
+                                    <span>
+                                        {{ it.name }}
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="fee-field mb-0">
+
+                                <label class="fee-amount-label">
+                                    AMOUNT DUE
+                                </label>
+
+                                <div class="amount-input-wrap">
+
+                                    <span class="amount-currency">
+                                        GH₵
+                                    </span>
+
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        name="item_{{ it.id }}"
+                                        value="{{ it.amount_due }}"
+                                        class="fee-input amount-input"
+                                    >
+
+                                </div>
+
+
+                                <div class="fee-status-row">
+
+                                    <div class="fee-status">
+
+                                        <span class="fee-status-label">
+                                            PAID
+                                        </span>
+
+                                        <span class="fee-status-value">
+                                            GH₵ {{ it.amount_paid }}
+                                        </span>
+
+                                    </div>
+
+
+                                    <div class="fee-status balance">
+
+                                        <span class="fee-status-label">
+                                            BALANCE
+                                        </span>
+
+                                        <span class="fee-status-value">
+                                            GH₵ {{ it.balance }}
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+
+                                <input
+                                    type="hidden"
+                                    name="paid_{{ it.id }}"
+                                    value="{{ it.amount_paid }}"
+                                >
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    {% empty %}
+
+                    <div class="col-12">
+
+                        <div class="alert alert-light border rounded-4 mb-0">
+                            <i class="fas fa-info-circle me-2 text-primary"></i>
+                            No dynamic fee items found for this student.
+                        </div>
+
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- =================================================
+                     PAYMENT NOTICE
+                ================================================== -->
+
+                <div class="payment-notice">
+
+                    <div class="payment-notice-main">
+
+                        <div class="payment-notice-icon">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                Total Paid:
+                                GHS {{ fee.amount_paid|floatformat:2 }}
+                                &nbsp;•&nbsp;
+                                Balance:
+                                GHS {{ fee.balance|floatformat:2 }}
+                            </strong>
+
+                            <small>
+                                Amount paid cannot be edited here.
+                                Use the "Pay" button to record payments.
+                            </small>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     ACTIONS
+                ================================================== -->
+
+                <div class="fee-actions">
+
+                    <a
+                        href="{% url 'accounts:student_fees_list' %}?term={{ fee.term.id }}"
+                        class="cancel-fee-btn"
+                    >
+                        <i class="fas fa-arrow-left"></i>
+                        Cancel
+                    </a>
+
+
+                    <button
+                        type="submit"
+                        class="save-fee-btn"
+                    >
+                        <i class="fas fa-check-circle"></i>
+                        Save Changes
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
     </div>
-</div>
+
 </div>
 
 {% endblock %}

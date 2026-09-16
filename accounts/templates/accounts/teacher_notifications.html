@@ -1,148 +1,164 @@
-{% extends 'accounts/dashboard_base.html' %}
+{% extends "accounts/dashboard_base.html" %}
 {% block content %}
 
 <style>
-
-/* PAGE */
+/* =========================================================
+   PREMIUM TEACHER NOTIFICATION PAGE
+========================================================= */
 .notification-page{
-    padding:20px;
+    padding:24px 20px 40px;
     background:#f8fafc;
     min-height:100vh;
 }
-
-
-/* HERO */
-
-.notification-hero{
-    background:white;
-    border-radius:24px;
-    padding:25px;
-    box-shadow:0 10px 30px rgba(15,23,42,.08);
-    margin-bottom:25px;
+/* =========================================================
+   MAIN CONTAINER
+========================================================= */
+.notification-page .container{
+    width:100%;
 }
-
-
+/* =========================================================
+   HERO
+========================================================= */
+.notification-hero{
+    position:relative;
+    background:#fff;
+    border-radius:24px;
+    padding:28px;
+    box-shadow:0 12px 35px rgba(15,23,42,.07);
+    margin-bottom:25px;
+    border:1px solid rgba(226,232,240,.8);
+    overflow:hidden;
+}
+.notification-hero::before{
+    content:"";
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    height:4px;
+    background:linear-gradient(90deg,#4f46e5,#2563eb,#16a34a);
+}
 .notification-hero h3{
     font-weight:800;
     color:#0f172a;
+    letter-spacing:-.4px;
 }
-
-
 .notification-hero p{
     color:#64748b;
+    font-size:14px;
 }
-
-
-
-/* FILTER BUTTONS */
-
+/* =========================================================
+   HERO ICON
+========================================================= */
+.notification-hero .notification-icon{
+    flex:0 0 65px;
+    width:65px;
+    height:65px;
+    border-radius:18px;
+    background:linear-gradient(135deg,#2563eb,#16a34a);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:30px;
+    color:#fff;
+    box-shadow:0 10px 20px rgba(37,99,235,.18);
+}
+/* =========================================================
+   FILTER AREA
+========================================================= */
+.notification-count{
+    color:#334155;
+    font-size:14px;
+}
 .filter-box{
     display:flex;
     gap:10px;
     flex-wrap:wrap;
 }
-
-
 .filter-btn{
     border-radius:50px!important;
     padding:8px 18px!important;
     font-weight:600;
-    transition:.3s;
+    transition:.25s;
+    min-height:40px;
 }
-
-
 .filter-btn:hover{
     transform:translateY(-2px);
 }
-
-
-
-/* NOTIFICATION CARD */
-
+.filter-btn.btn-dark{
+    background:#111827;
+    border-color:#111827;
+}
+/* =========================================================
+   NOTIFICATION CARD
+========================================================= */
 .notif-card{
-
-    background:white;
+    position:relative;
+    background:#fff;
     border-radius:22px;
     overflow:hidden;
-    box-shadow:0 10px 28px rgba(15,23,42,.08);
+    box-shadow:0 10px 28px rgba(15,23,42,.07);
     margin-bottom:20px;
-    transition:.3s;
-
+    transition:.25s;
+    border:1px solid rgba(226,232,240,.75);
 }
-
-
 .notif-card:hover{
-
-    transform:translateY(-4px);
-    box-shadow:0 15px 35px rgba(15,23,42,.13);
-
+    transform:translateY(-3px);
+    box-shadow:0 16px 38px rgba(15,23,42,.11);
 }
-
-
-
+/* =========================================================
+   NOTIFICATION TOP LINE
+========================================================= */
 .notif-top{
-
-    height:6px;
-    background:linear-gradient(
-        90deg,
-        #2563eb,
-        #16a34a
-    );
-
+    height:5px;
+    background:linear-gradient(90deg,#2563eb,#4f46e5,#16a34a);
 }
-
-
-
+/* =========================================================
+   NOTIFICATION BODY
+========================================================= */
 .notif-body{
-
     padding:25px;
-
 }
-
-
-
+/* =========================================================
+   LABELS
+========================================================= */
 .title-label{
-
-    font-size:12px;
-    font-weight:700;
+    font-size:11px;
+    font-weight:800;
     color:#64748b;
     text-transform:uppercase;
-
+    letter-spacing:.6px;
+    margin-bottom:5px;
 }
-
-
-
+/* =========================================================
+   TITLE
+========================================================= */
 .notification-title{
-
-    font-size:22px;
+    font-size:21px;
     font-weight:800;
     color:#0f172a;
-
+    line-height:1.35;
+    overflow-wrap:anywhere;
+    word-break:break-word;
 }
-
-
-
-/* MESSAGE */
-
+/* =========================================================
+   MESSAGE
+========================================================= */
 .message-box{
-
-    margin-top:12px;
+    margin-top:10px;
     background:#f8fafc;
     border-radius:16px;
     padding:18px;
     line-height:1.7;
     color:#334155;
     border-left:4px solid #2563eb;
-
+    overflow-wrap:anywhere;
+    word-break:break-word;
 }
-
-
-
-/* FOOTER */
-
-
+/* =========================================================
+   FOOTER
+========================================================= */
 .notif-footer{
-
     display:flex;
     justify-content:space-between;
     align-items:center;
@@ -151,348 +167,405 @@
     border-top:1px solid #e5e7eb;
     padding-top:15px;
     margin-top:20px;
-
 }
-
-
-
+.notification-meta{
+    line-height:1.6;
+    color:#64748b;
+}
 .sender-badge{
-
     background:#dcfce7;
     color:#15803d;
     padding:8px 15px;
     border-radius:50px;
     font-size:12px;
     font-weight:700;
-
+    max-width:100%;
+    overflow-wrap:anywhere;
 }
-
-
-
-/* EMPTY */
-
+/* =========================================================
+   EMPTY STATE
+========================================================= */
 .empty-card{
-
-    background:white;
-    border-radius:20px;
-    padding:60px 20px;
+    background:#fff;
+    border-radius:22px;
+    padding:65px 20px;
     text-align:center;
-    box-shadow:0 10px 25px rgba(0,0,0,.06);
-
+    box-shadow:0 10px 28px rgba(15,23,42,.06);
+    border:1px solid #e2e8f0;
 }
-
-
-
-/* PAGINATION */
-
+.empty-card .empty-icon{
+    width:75px;
+    height:75px;
+    margin:0 auto;
+    border-radius:22px;
+    background:#f1f5f9;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:42px;
+}
+/* =========================================================
+   PAGINATION
+========================================================= */
 .pagination-btn{
-
     border-radius:50px!important;
     padding:8px 18px!important;
-
+    font-weight:600;
+    min-height:40px;
 }
-
-
-
-/* MOBILE */
-
+/* =========================================================
+   MOBILE
+========================================================= */
 @media(max-width:768px){
+    .notification-page{
+        padding:12px 10px 30px;
+    }
+    .notification-page .container{
+        max-width:100%!important;
+        padding-left:2px;
+        padding-right:2px;
+    }
+    /* HERO */
+    .notification-hero{
+        padding:20px;
+        border-radius:19px;
+        margin-bottom:18px;
+    }
+    .notification-hero .d-flex{
+        align-items:flex-start!important;
+    }
+    .notification-hero .notification-icon{
+        flex:0 0 52px;
+        width:52px;
+        height:52px;
+        border-radius:15px;
+        font-size:28px;
+    }
+    .notification-hero h3{
+        font-size:28px;
+        line-height:1.25;
+    }
+    .notification-hero p{
+        font-size:15px;
+        line-height:1.5;
+    }
+    /* FILTER */
+    .notification-hero .mt-4{
+        margin-top:20px!important;
+    }
+    .notification-count{
+        font-size:15px;
+    }
+    @media(max-width:768px){
 
-.notification-page{
-    padding:12px;
+    .filter-box{
+        display:flex;
+        flex-wrap:nowrap;
+        gap:8px;
+        overflow-x:auto;
+        width:100%;
+        padding-bottom:4px;
+        -webkit-overflow-scrolling:touch;
+        scrollbar-width:none;
+    }
+
+    .filter-box::-webkit-scrollbar{
+        display:none;
+    }
+
+    .filter-btn{
+        flex:0 0 auto;
+        white-space:nowrap;
+        padding:8px 14px!important;
+        font-size:15px;
+    }
+
 }
-
-
-.notification-title{
-
-    font-size:18px;
-
+    /* NOTIFICATION CARD */
+    .notif-card{
+        border-radius:18px;
+        margin-bottom:15px;
+    }
+    .notif-top{
+        height:4px;
+    }
+    .notif-body{
+        padding:18px;
+    }
+    .title-label{
+        font-size:15px;
+        letter-spacing:.5px;
+    }
+    .notification-title{
+        font-size:17px;
+        line-height:1.4;
+        margin-bottom:16px!important;
+    }
+    .message-box{
+        padding:14px;
+        border-radius:13px;
+        font-size:16px;
+        line-height:1.65;
+        margin-top:8px;
+    }
+    /* FOOTER */
+    .notif-footer{
+        display:flex;
+        flex-direction:column;
+        align-items:stretch;
+        gap:12px;
+        margin-top:16px;
+        padding-top:14px;
+    }
+    .notification-meta{
+        font-size:15px;
+    }
+    .sender-badge{
+        display:block;
+        width:100%;
+        text-align:center;
+        padding:8px 10px;
+        font-size:14px;
+        border-radius:12px;
+    }
+    /* EMPTY */
+    .empty-card{
+        border-radius:18px;
+        padding:50px 18px;
+    }
+    .empty-card .empty-icon{
+        width:65px;
+        height:65px;
+        font-size:35px;
+        border-radius:18px;
+    }
+    /* PAGINATION */
+    .pagination-btn{
+        padding:8px 14px!important;
+        font-size:12px;
+    }
 }
-
-
-.notif-body{
-
-    padding:18px;
-
+/* =========================================================
+   SMALL PHONES
+========================================================= */
+@media(max-width:420px){
+    .notification-page{
+        padding:9px 7px 25px;
+    }
+    .notification-hero{
+        padding:17px;
+        border-radius:17px;
+    }
+    .notification-hero .notification-icon{
+        flex:0 0 46px;
+        width:46px;
+        height:46px;
+        font-size:28px;
+        border-radius:13px;
+    }
+    .notification-hero h3{
+        font-size:25px;
+    }
+    .notification-hero p{
+        font-size:13px;
+    }
+    .filter-box{
+        grid-template-columns:1fr;
+    }
+    .filter-btn{
+        min-height:40px;
+    }
+    .notif-body{
+        padding:16px;
+    }
+    .notification-title{
+        font-size:16px;
+    }
+    .message-box{
+        font-size:17px;
+        padding:16px;
+    }
+    .sender-badge{
+        font-size:14px;
+    }
+    .pagination-btn{
+        font-size:14px;
+        padding:7px 12px!important;
+    }
 }
-
-
-.notif-footer{
-
-    align-items:flex-start;
-
+/* =========================================================
+   VERY SMALL PHONES
+========================================================= */
+@media(max-width:360px){
+    .notification-hero h3{
+        font-size:17px;
+    }
+    .notification-hero p{
+        font-size:10px;
+    }
+    .notification-title{
+        font-size:15px;
+    }
+    .message-box{
+        font-size:14px;
+    }
 }
-
+/* =========================================================
+   PRINT
+========================================================= */
+@media print{
+    .filter-box,
+    .pagination-btn{
+        display:none!important;
+    }
+    .notification-page{
+        background:#fff!important;
+    }
+    .notif-card,
+    .notification-hero,
+    .empty-card{
+        box-shadow:none!important;
+    }
 }
-
 </style>
-
-
-
 <div class="notification-page">
-
-
 <div class="container" style="max-width:900px;">
-
-
-<!-- HEADER -->
-
+<!-- =====================================================
+     HEADER
+====================================================== -->
 <div class="notification-hero">
-
-
 <div class="d-flex align-items-center gap-3">
-
-
-<div style="
-width:65px;
-height:65px;
-border-radius:18px;
-background:linear-gradient(135deg,#2563eb,#16a34a);
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:30px;
-color:white;
-">
-
-🔔
-
+    <div class="notification-icon">
+        🔔
+    </div>
+    <div>
+        <h3 class="mb-1">
+            Teacher Notifications
+        </h3>
+        <p class="mb-0">
+            Stay updated with school announcements and important messages.
+        </p>
+    </div>
 </div>
-
-
-<div>
-
-<h3 class="mb-1">
-Teacher Notifications
-</h3>
-
-<p class="mb-0">
-Stay updated with school announcements and important messages.
-</p>
-
-</div>
-
-
-</div>
-
-
-
 <div class="mt-4">
-
-<h6 class="fw-bold mb-3">
-Showing {{ announcements|length }} notifications
-</h6>
-
-
-<div class="filter-box">
-
-
-<a href="?filter=all"
-class="btn filter-btn 
-{% if filter == 'all' %}
-btn-dark
-{% else %}
-btn-outline-secondary
-{% endif %}">
-All ({{ total }})
-</a>
-
-
-
-<a href="?filter=today"
-class="btn filter-btn
-{% if filter == 'today' %}
-btn-dark
-{% else %}
-btn-outline-secondary
-{% endif %}">
-Today
-</a>
-
-
-
-
-<a href="?filter=week"
-class="btn filter-btn
-{% if filter == 'week' %}
-btn-dark
-{% else %}
-btn-outline-secondary
-{% endif %}">
-This Week
-</a>
-
-
-
+    <h6 class="fw-bold mb-3 notification-count">
+        Showing {{ announcements|length }} notifications
+    </h6>
+    <div class="filter-box">
+        <a
+            href="?filter=all"
+            class="btn filter-btn
+            {% if filter == 'all' %}
+                btn-dark
+            {% else %}
+                btn-outline-secondary
+            {% endif %}">
+            All ({{ total }})
+        </a>
+        <a
+            href="?filter=today"
+            class="btn filter-btn
+            {% if filter == 'today' %}
+                btn-dark
+            {% else %}
+                btn-outline-secondary
+            {% endif %}">
+            Today
+        </a>
+        <a
+            href="?filter=week"
+            class="btn filter-btn
+            {% if filter == 'week' %}
+                btn-dark
+            {% else %}
+                btn-outline-secondary
+            {% endif %}">
+            This Week
+        </a>
+    </div>
 </div>
-
-
 </div>
-
-
-</div>
-
-
-
+<!-- =====================================================
+     NOTIFICATIONS
+====================================================== -->
 
 {% for ann in announcements %}
 
-
-
 <div class="notif-card">
-
-
 <div class="notif-top"></div>
-
-
 <div class="notif-body">
-
-
-
-<div class="title-label">
-📌 Announcement Title
+    <div class="title-label">
+        📌 Announcement Title
+    </div>
+    <div class="notification-title mb-3">
+        {{ ann.title }}
+    </div>
+    <div class="title-label">
+        💬 Message
+    </div>
+    <div class="message-box">
+        {{ ann.message }}
+    </div>
+    <div class="notif-footer">
+        <small class="text-muted notification-meta">
+            🕒 {{ ann.created_at|date:"M d, Y h:i A" }}
+            <br>
+            {{ ann.created_at|timesince }} ago
+        </small>
+        <span class="sender-badge">
+            By {{ ann.created_by.get_full_name|default:ann.created_by.username }}
+            ({{ ann.created_by.role|title }})
+        </span>
+    </div>
 </div>
-
-
-<div class="notification-title mb-3">
-
-{{ ann.title }}
-
 </div>
-
-
-
-
-<div class="title-label">
-💬 Message
-</div>
-
-
-<div class="message-box">
-
-{{ ann.message }}
-
-</div>
-
-
-
-
-<div class="notif-footer">
-
-
-<small class="text-muted">
-
-🕒 {{ ann.created_at|date:"M d, Y h:i A" }}
-
-<br>
-
-{{ ann.created_at|timesince }} ago
-
-</small>
-
-
-
-<span class="sender-badge">
-
-By {{ ann.created_by.get_full_name|default:ann.created_by.username }}
-
-({{ ann.created_by.role|title }})
-
-</span>
-
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
 
 {% empty %}
 
-
-
 <div class="empty-card">
-
-<div style="font-size:50px;">
-🔕
+<div class="empty-icon">
+    🔕
 </div>
-
-
 <h5 class="fw-bold mt-3">
-No Notifications
+    No Notifications
 </h5>
-
-
 <p class="text-muted mb-0">
-You don't have any announcements yet.
+    You don't have any announcements yet.
 </p>
-
-
 </div>
-
-
 
 {% endfor %}
 
-
-
+<!-- =====================================================
+     PAGINATION
+====================================================== -->
 
 {% if page_obj.has_other_pages %}
 
-
 <div class="d-flex justify-content-center mt-4 gap-2 flex-wrap">
-
-
 {% if page_obj.has_previous %}
-
-<a href="?filter={{ filter }}&page={{ page_obj.previous_page_number }}"
-class="btn btn-outline-secondary pagination-btn">
-
-Previous
-
+<a
+    href="?filter={{ filter }}&page={{ page_obj.previous_page_number }}"
+    class="btn btn-outline-secondary pagination-btn">
+    Previous
 </a>
-
 {% endif %}
-
-
-
 <span class="btn btn-dark pagination-btn">
-
-{{ page_obj.number }} /
-{{ page_obj.paginator.num_pages }}
-
+    {{ page_obj.number }} /
+    {{ page_obj.paginator.num_pages }}
 </span>
-
-
-
 {% if page_obj.has_next %}
-
-<a href="?filter={{ filter }}&page={{ page_obj.next_page_number }}"
-class="btn btn-outline-secondary pagination-btn">
-
-Next
-
+<a
+    href="?filter={{ filter }}&page={{ page_obj.next_page_number }}"
+    class="btn btn-outline-secondary pagination-btn">
+    Next
 </a>
+{% endif %}
+</div>
 
 {% endif %}
 
-
-
 </div>
-
-
-{% endif %}
-
-
-
 </div>
-
-</div>
-
 
 {% endblock %}

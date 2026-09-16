@@ -1,38 +1,20 @@
 {% extends 'accounts/dashboard_base.html' %}
-
 {% block title %}My Fees{% endblock %}
-
 {% block content %}
 
 <style>
-
-/* ===============================
-   PREMIUM FEES PAGE
-================================ */
-
+/* =========================================================
+   FEES PAGE
+========================================================= */
 .fees-page {
-
     max-width:1200px;
     margin:auto;
     padding:25px 18px;
-    font-family:
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
     background:#f8fafc;
     min-height:100vh;
-
 }
-
-
-
-/* SUCCESS MESSAGE */
-
 .payment-success {
-
     background:#dcfce7;
     border:2px solid #16a34a;
     color:#166534;
@@ -41,1307 +23,1966 @@
     margin-bottom:25px;
     text-align:center;
     font-weight:800;
-
 }
-
-
-
-/* HEADER */
-
 .fees-header {
-
-    background:
-    linear-gradient(
-        135deg,
-        #0f172a,
-        #1e3a8a
-    );
-
+    background:linear-gradient(135deg,#0f172a,#1e3a8a);
     color:white;
-
     border-radius:28px;
-
     padding:35px;
-
     margin-bottom:25px;
-
-    box-shadow:
-    0 15px 35px rgba(15,23,42,.18);
-
+    box-shadow:0 15px 35px rgba(15,23,42,.18);
 }
-
-
 .fees-header h1 {
-
     margin:0;
-
     font-size:32px;
-
     font-weight:900;
-
 }
-
-
 .fees-header p {
-
     margin-top:10px;
-
     opacity:.85;
-
     font-size:16px;
-
 }
-
-
-
-
-
-/* TERM CARD */
-
-.term-card {
-
+.premium-section {
     background:white;
-
-    border-radius:22px;
-
+    border-radius:24px;
     padding:25px;
-
-    margin-bottom:25px;
-
-    box-shadow:
-    0 10px 30px rgba(0,0,0,.06);
-
+    margin-top:25px;
+    box-shadow:0 10px 30px rgba(0,0,0,.06);
 }
-
-
-.term-title {
-
-    font-size:20px;
-
+.section-title {
+    font-size:22px;
     font-weight:900;
-
-    color:#111827;
-
-    margin-bottom:20px;
-
-}
-
-
-
-
-
-/* SUMMARY GRID */
-
-
-.fee-summary-grid {
-
-
-    display:grid;
-
-    grid-template-columns:
-    repeat(3,1fr);
-
-    gap:20px;
-
-}
-
-
-
-
-
-.fee-summary-card {
-
-
-    border-radius:22px;
-
-    padding:25px;
-
-    color:white;
-
-    min-height:150px;
-
-    display:flex;
-
-    flex-direction:column;
-
-    justify-content:center;
-
-    box-shadow:
-    0 12px 25px rgba(0,0,0,.12);
-
-    transition:.3s ease;
-
-}
-
-
-
-.fee-summary-card:hover {
-
-    transform:
-    translateY(-5px);
-
-}
-
-
-
-
-.fee-label {
-
-    font-size:13px;
-
-    font-weight:800;
-
-    text-transform:uppercase;
-
-    opacity:.85;
-
-}
-
-
-
-.fee-value {
-
-    font-size:30px;
-
-    font-weight:900;
-
-    margin-top:10px;
-
-}
-
-
-
-
-
-.total-fee {
-
-    background:
-    linear-gradient(
-    135deg,
-    #111827,
-    #334155);
-
-}
-
-
-
-.paid-fee {
-
-    background:
-    linear-gradient(
-    135deg,
-    #059669,
-    #047857);
-
-}
-
-
-
-
-.balance-fee {
-
-
-    {% if balance > 0 %}
-
-    background:
-    linear-gradient(
-    135deg,
-    #dc2626,
-    #991b1b);
-
-    {% else %}
-
-    background:
-    linear-gradient(
-    135deg,
-    #16a34a,
-    #15803d);
-
-    {% endif %}
-
-}
-
-
-
-
-
-
-.due-date {
-
-
-    margin-top:20px;
-
-    background:#f1f5f9;
-
-    border-radius:14px;
-
-    padding:14px;
-
     text-align:center;
-
+    margin-bottom:20px;
+}
+.payment-card {
+    border-radius:20px;
+    padding:20px;
+    margin-top:15px;
+    background:#f8fafc;
+    border:1px solid #e5e7eb;
+}
+.payment-header {
+    font-size:18px;
+    font-weight:900;
+    margin-bottom:15px;
+}
+.online-fee {
+    display:flex;
+    align-items:center;
+    gap:15px;
+    background:white;
+    padding:15px;
+    border-radius:15px;
+    margin-bottom:12px;
+}
+.online-fee label {
+    flex:1;
+}
+.online-fee small {
+    display:block;
+    color:#64748b;
+}
+.total-pay-box {
+    margin-top:15px;
+    background:#dcfce7;
+    padding:18px;
+    border-radius:15px;
+    font-size:18px;
+}
+.pay-btn {
+    width:100%;
+    margin-top:15px;
+    padding:16px;
+    border:none;
+    border-radius:15px;
+    background:#047857;
+    color:white;
+    font-weight:900;
+    font-size:17px;
+    cursor:pointer;
+}
+.pay-btn:disabled {
+    opacity:0.5;
+    cursor:not-allowed;
+}
+.upload-area {
+    text-align:center;
+    margin-top:20px;
+    padding-top:20px;
+    border-top:1px solid #e5e7eb;
+}
+.upload-btn {
+    display:inline-block;
+    background:#16a34a;
+    color:white;
+    padding:14px 25px;
+    border-radius:14px;
     font-weight:800;
-
-    color:#334155;
-
+    text-decoration:none;
+}
+/* =========================================================
+   REPORT CARD
+========================================================= */
+.report-card {
+    background:#ffffff;
+    padding:25px;
+    border-radius:22px;
+    box-shadow:0 10px 30px rgba(0,0,0,.06);
+    margin-bottom:25px;
+    position:relative;
+}
+.watermark {
+    display:none;
+}
+.print-header {
+    display:none;
+}
+/* =========================================================
+   FEE TABLE
+========================================================= */
+/*
+   IMPORTANT:
+   The table itself remains a normal table.
+   On mobile it sits inside .fee-table-scroll,
+   allowing horizontal swipe without changing
+   the table into cards.
+*/
+.fee-table-scroll {
+    width:100%;
+    overflow-x:auto;
+    overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:auto;
+}
+.fee-table {
+    width:100%;
+    min-width:760px;
+    border-collapse:collapse;
+    font-size:14px;
+}
+.fee-table th {
+    background:#f8fafc !important;
+    color:#111827 !important;
+    font-weight:700;
+    font-size:12px;
+    text-transform:uppercase;
+    padding:12px 8px !important;
+    border:1px solid #e5e7eb !important;
+    white-space:nowrap;
+}
+.fee-table td {
+    padding:10px 8px !important;
+    border:1px solid #e5e7eb !important;
+    white-space:nowrap;
+}
+.fee-paid {
+    color:#16a34a;
+    font-weight:700;
+}
+.fee-unpaid {
+    color:#dc2626;
+    font-weight:700;
+}
+/* =========================================================
+   MOBILE FEE TABLE
+========================================================= */
+@media(max-width:768px) {
+    .fees-page {
+        padding:18px 12px;
+    }
+    /*
+       Do not shrink the fee table.
+       Let the user swipe horizontally.
+    */
+    .fee-table-scroll {
+        width:100%;
+        max-width:100%;
+        overflow-x:auto;
+        overflow-y:hidden;
+        -webkit-overflow-scrolling:touch;
+        border-radius:8px;
+    }
+    .fee-table {
+        min-width:760px;
+        width:760px;
+        font-size:14px;
+    }
+    .fee-table th {
+        font-size:14px;
+        padding:10px 8px !important;
+    }
+    .fee-table td {
+        padding:9px 8px !important;
+    }
+    /*
+       Keep the report card itself from creating
+       an unwanted horizontal page overflow.
+    */
+    .report-card {
+        width:100%;
+        box-sizing:border-box;
+        overflow:hidden;
+        padding:18px;
+    }
+    /*
+       The table's scroll area is allowed to scroll
+       independently.
+    */
+    .fee-table-scroll {
+        overscroll-behavior-x:contain;
+    }
+}
+/* =========================================================
+   VERY SMALL PHONES
+========================================================= */
+@media(max-width:390px) {
+    .fees-page {
+        padding:15px 10px;
+    }
+    .report-card {
+        padding:15px;
+    }
+    .fee-table {
+        min-width:760px;
+        width:760px;
+    }
+}
+/* =========================================================
+   PRINT
+========================================================= */
+@media print {
+    .fees-header,
+    form,
+    .no-print,
+    .payment-card,
+    .online-card,
+    .manual-card,
+    .upload-area,
+    .premium-section {
+        display:none !important;
+    }
+    .watermark {
+        display:block !important;
+        position:fixed;
+        top:50%;
+        left:50%;
+        transform:translate(-50%,-50%) rotate(-28deg);
+        font-size:60px;
+        font-weight:900;
+        color:rgba(79,70,229,0.06);
+        width:85%;
+        text-align:center;
+        text-transform:uppercase;
+        pointer-events:none;
+        z-index:0;
+    }
+    .print-header {
+        display:flex !important;
+        flex-direction:row !important;
+        align-items:center !important;
+        justify-content:space-between !important;
+        border-bottom:4px solid #4f46e5;
+        padding-bottom:15px;
+        margin-bottom:20px;
+    }
+    .print-header .logo-wrap {
+        width:100px !important;
+        height:100px !important;
+    }
+    .print-header .logo-wrap img {
+        width:100px !important;
+        height:100px !important;
+        object-fit:contain !important;
+    }
+    .print-header .school-info {
+        flex:1;
+        text-align:center;
+        padding:0 15px;
+    }
+    .print-header .school-info h1 {
+        font-size:22px !important;
+        font-weight:800 !important;
+        white-space:nowrap !important;
+        margin:0 !important;
+    }
+    .fees-page {
+        background:white !important;
+        padding:0 !important;
+    }
+    .report-card {
+        background:#fff !important;
+        box-shadow:none !important;
+        border-radius:0 !important;
+        padding:8mm !important;
+        margin:0 !important;
+        width:100% !important;
+        overflow:visible !important;
+    }
+    .fee-table-scroll {
+        overflow:visible !important;
+        width:100% !important;
+    }
+    .fee-table {
+        width:100% !important;
+        min-width:0 !important;
+        border-collapse:collapse !important;
+    }
+    .fee-table th {
+        background:#111827 !important;
+        color:#fff !important;
+        -webkit-print-color-adjust:exact !important;
+        print-color-adjust:exact !important;
+    }
+    #parent-breakdown-row {
+        display:table-row !important;
+    }
+    #parent-breakdown-row td {
+        display:table-cell !important;
+    }
+    #parent-breakdown-row div[style*="grid"] {
+        display:grid !important;
+    }
+    * {
+        -webkit-print-color-adjust:exact !important;
+        print-color-adjust:exact !important;
+    }
+    @page {
+        size:A4;
+        margin:6mm;
+    }
+}
+.fees-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
 }
 
-
-
-
-/* MOBILE */
-
-@media(max-width:900px){
-
-
-.fee-summary-grid {
-
-grid-template-columns:
-1fr;
-
+.fees-title-row h1 {
+    margin: 0;
 }
 
-
-.fees-header {
-
-padding:25px;
-
+.fee-student-row {
+    display: flex;
+    gap: 25px;
+    margin-top: 10px;
+    font-size: 14px;
+    font-weight: 600;
 }
 
-
-.fees-header h1 {
-
-font-size:25px;
-
+.fee-print-btn {
+    background: white;
+    color: #0f172a;
+    border: none;
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-weight: 800;
+    cursor: pointer;
+    white-space: nowrap;
 }
 
+/* MOBILE ONLY */
+@media (max-width: 768px) {
 
+    .fees-header {
+        padding: 18px !important;
+    }
+
+    .fees-title-row {
+        width: 100%;
+    }
+
+    .fees-title-row h1 {
+        font-size: 22px !important;
+        white-space: nowrap;
+    }
+
+    .fee-student-row {
+        display: flex;
+        gap: 15px;
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    .fee-student-row span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .fee-print-btn {
+        font-size: 11px;
+        padding: 6px 9px;
+    }
+}
+/* =========================================================
+   STUDENT FEE FILTER
+========================================================= */
+.student-fee-filter-form {
+    display:flex;
+    gap:10px;
+    align-items:center;
+    margin-bottom:20px;
 }
 
-
-@media(max-width:600px){
-
-
-.fees-page {
-
-padding:15px 10px;
-
+.student-fee-filter-group {
+    flex:1;
 }
 
-
-.term-card {
-
-padding:18px;
-
+.student-fee-filter-button {
+    width:120px;
 }
 
-
-.fee-summary-card {
-
-padding:20px;
-
-}
-
-
-.fee-value {
-
-font-size:25px;
-
-}
-
-
-}
-/* ======================
-   PREMIUM FEE SECTIONS
-====================== */
-
-
-.premium-section{
-
-background:white;
-border-radius:24px;
-padding:25px;
-margin-top:25px;
-box-shadow:
-0 10px 30px rgba(0,0,0,.06);
-
-}
-
-
-
-.section-title{
-
-font-size:22px;
-font-weight:900;
-text-align:center;
-margin-bottom:20px;
-
-}
-
-
-
-
-
-.breakdown-toggle{
-
-width:100%;
-border:none;
-background:#111827;
-color:white;
-padding:16px;
-border-radius:15px;
-font-weight:800;
-font-size:16px;
-display:flex;
-justify-content:space-between;
-
-}
-
-
-
-.breakdown-content{
-
-display:none;
-margin-top:15px;
-
-}
-
-
-
-.breakdown-content.show{
-
-display:block;
-
-}
-
-
-
-.breakdown-table{
-
-width:100%;
-border-collapse:collapse;
-
-}
-
-
-
-.breakdown-table td{
-
-padding:12px;
-border-bottom:1px solid #e5e7eb;
-
-}
-
-
-
-.breakdown-total{
-
-background:#f1f5f9;
-font-weight:900;
-
-}
-
-
-
-
-.payment-card{
-
-border-radius:20px;
-padding:20px;
-margin-top:15px;
-background:#f8fafc;
-border:1px solid #e5e7eb;
-
-}
-
-
-
-.payment-header{
-
-font-size:18px;
-font-weight:900;
-margin-bottom:15px;
-
-}
-
-
-
-.cash-card{
-
-display:flex;
-gap:15px;
-align-items:center;
-
-}
-
-
-
-.payment-icon{
-
-font-size:35px;
-
-}
-
-
-
-
-.account-box{
-
-background:white;
-border-radius:18px;
-padding:20px;
-margin-top:15px;
-position:relative;
-
-}
-
-
-
-.account-title{
-
-font-weight:800;
-color:#64748b;
-text-transform:uppercase;
-
-}
-
-
-
-.account-number{
-
-font-size:24px;
-font-weight:900;
-margin:10px 0;
-
-}
-
-
-
-.reference{
-
-color:#64748b;
-
-}
-
-
-
-.student-ref{
-
-background:#2563eb;
-color:white;
-padding:5px 10px;
-border-radius:20px;
-
-}
-
-
-
-.copy-btn{
-
-position:absolute;
-right:15px;
-top:15px;
-border:none;
-padding:8px 15px;
-border-radius:10px;
-background:#e2e8f0;
-font-weight:700;
-
-}
-
-
-
-
-.upload-area{
-
-text-align:center;
-margin-top:20px;
-padding-top:20px;
-border-top:1px solid #e5e7eb;
-
-}
-
-
-
-.upload-btn{
-
-display:inline-block;
-background:#16a34a;
-color:white;
-padding:14px 25px;
-border-radius:14px;
-font-weight:800;
-text-decoration:none;
-
-}
-
-
-
-
-.online-fee{
-
-display:flex;
-align-items:center;
-gap:15px;
-background:white;
-padding:15px;
-border-radius:15px;
-margin-bottom:12px;
-
-}
-
-
-
-.online-fee label{
-
-flex:1;
-
-}
-
-
-
-.online-fee small{
-
-display:block;
-color:#64748b;
-
-}
-
-
-
-.total-pay-box{
-
-margin-top:15px;
-background:#dcfce7;
-padding:18px;
-border-radius:15px;
-font-size:18px;
-
-}
-
-
-
-.pay-btn{
-
-width:100%;
-margin-top:15px;
-padding:16px;
-border:none;
-border-radius:15px;
-background:#047857;
-color:white;
-font-weight:900;
-font-size:17px;
-
-}
-
-
-
-
-@media(max-width:600px){
-
-.premium-section{
-
-padding:18px;
-border-radius:18px;
-
-}
-
-
-.account-number{
-
-font-size:20px;
-
-}
-
-
-.copy-btn{
-
-position:static;
-margin-top:10px;
-
-}
-
+/* =========================================================
+   MOBILE FEE FILTER
+========================================================= */
+@media(max-width:768px) {
+
+    .student-fee-filter-form {
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:10px;
+        width:100%;
+    }
+
+    .student-fee-filter-group {
+        width:100%;
+    }
+
+    .student-fee-filter-button {
+        width:100%;
+        grid-column:1 / -1;
+    }
+
+    .student-fee-filter-form select {
+        width:100%;
+        min-height:44px;
+        font-size:13px;
+        border-radius:10px;
+    }
+
+    .student-fee-filter-button button {
+        min-height:44px;
+        border-radius:10px;
+        font-weight:700;
+    }
 }
 </style>
-
-
-
 <div class="fees-page">
-
-
 
 {% if request.GET.paid %}
 
 <div class="payment-success">
+    ✓ Payment Successful! Your receipt has been saved.
+</div>
+{% endif %}
+<!-- =====================================================
+     HEADER
+===================================================== -->
+<div class="fees-header">
 
-✓ Payment Successful! Your receipt has been saved.
+    <div class="fees-title-row">
+        <h1>💰 School Fees</h1>
+
+        <button
+            onclick="printWithBreakdown()"
+            class="no-print fee-print-btn">
+            🖨️ Print
+        </button>
+    </div>
+
+    <div class="fee-student-row">
+        <span>
+            {{ request.user.first_name }} {{ request.user.last_name }}
+        </span>
+
+        <span>
+            ID: {{ request.user.student_number }}
+        </span>
+    </div>
 
 </div>
+<!-- =====================================================
+     FILTERS
+===================================================== -->
+<form method="get" class="student-fee-filter-form">
 
-{% endif %}
+    <div class="student-fee-filter-group">
+        <select name="year" class="form-select">
+            <option value="">All Years</option>
 
+            {% for y in years %}
+            <option
+                value="{{ y.id }}"
+                {% if selected_year == y.id|stringformat:"s" %}
+                    selected
+                {% endif %}
+            >
+                {{ y.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
 
+    <div class="student-fee-filter-group">
+        <select name="term" class="form-select">
+            <option value="">All Terms</option>
 
+            <option
+                value="1"
+                {% if selected_term == "1" %}
+                    selected
+                {% endif %}
+            >
+                First Term
+            </option>
 
+            <option
+                value="2"
+                {% if selected_term == "2" %}
+                    selected
+                {% endif %}
+            >
+                Second Term
+            </option>
+
+            <option
+                value="3"
+                {% if selected_term == "3" %}
+                    selected
+                {% endif %}
+            >
+                Third Term
+            </option>
+        </select>
+    </div>
+
+    <div class="student-fee-filter-button">
+        <button class="btn btn-primary w-100">
+            Filter
+        </button>
+    </div>
+
+</form>
 
 {% if latest_fee %}
 
-
-
-
-
-<!-- HEADER -->
-
-<div class="fees-header">
-
-<h1>
-💰 School Fees
-</h1>
-
-
-<p>
-
-{{ request.user.first_name }}
-{{ request.user.last_name }}
-
-</p>
-
-
+<!-- =====================================================
+     FEE REPORT CARD
+===================================================== -->
+<div class="report-card">
+<div class="watermark">
+    {{ school.name|upper }}
 </div>
-
-
-
-<form method="get" class="row g-2 mb-3">
-  <div class="col-md-3">
-    <select name="year" class="form-select">
-      <option value="">All Years</option>
-      {% for y in years %}
-      <option value="{{ y.id }}" {% if selected_year == y.id|stringformat:"s" %}selected{% endif %}>{{ y.name }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="col-md-3">
-    <select name="term" class="form-select">
-      <option value="">All Terms</option>
-      <option value="1" {% if selected_term == "1" %}selected{% endif %}>First Term</option>
-      <option value="2" {% if selected_term == "2" %}selected{% endif %}>Second Term</option>
-      <option value="3" {% if selected_term == "3" %}selected{% endif %}>Third Term</option>
-    </select>
-  </div>
-  <div class="col-md-2">
-    <button class="btn btn-primary w-100">Filter</button>
-  </div>
-</form>
-
-<!-- TERM INFORMATION -->
-
-<div class="term-card">
-
-
-<div class="term-title">
-
-📚 Academic Fee Information
-
+<!-- =================================================
+     PRINT HEADER
+================================================= -->
+<div class="print-header">
+    <div
+        class="logo-wrap"
+        style="
+            width:110px;
+            height:110px;
+            flex:0 0 110px;
+        "
+    >
+        {% if school.logo %}
+        <img
+            src="{{ school.logo.url }}"
+            style="
+                width:100%;
+                height:100%;
+                object-fit:contain;
+            "
+        >
+        {% else %}
+        <div
+            style="
+                width:110px;
+                height:110px;
+                background:linear-gradient(135deg,#4f46e5,#2563eb);
+                color:#fff;
+                border-radius:18px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                font-size:35px;
+                font-weight:800;
+            "
+        >
+            {{ school.name|slice:":2"|upper }}
+        </div>
+        {% endif %}
+    </div>
+    <div
+        class="school-info"
+        style="
+            flex:1;
+            text-align:center;
+            padding:0 15px;
+        "
+    >
+        <h1
+            style="
+                margin:0;
+                font-size:26px;
+                font-weight:800;
+                text-transform:uppercase;
+                white-space:nowrap;
+            "
+        >
+            {{ school.name|upper }}
+        </h1>
+        <p
+            style="
+                font-size:13px;
+                font-weight:600;
+                margin:3px 0;
+            "
+        >
+            {{ school.address }}
+            {% if school.gps_address %}
+                | GPS: {{ school.gps_address }}
+            {% endif %}
+        </p>
+        <p
+            style="
+                font-size:11px;
+                margin:3px 0;
+            "
+        >
+            {% if school.phone %}
+                Tel: {{ school.phone }}
+            {% endif %}
+            {% if school.email %}
+                | Email: {{ school.email }}
+            {% endif %}
+        </p>
+    </div>
+    <div
+        style="
+            width:110px;
+            flex:0 0 110px;
+        "
+    ></div>
 </div>
-
-
-
-<div style="font-size:17px;font-weight:700;color:#475569;">
-
-
-Academic Year:
-
-<strong>
-{{ latest_fee.academic_year }}
-</strong>
-
-
-<br><br>
-
-
-Current Term:
-
-<strong>
-
-{% if latest_fee.term.term_number == 1 %}
-First Term
-
-{% elif latest_fee.term.term_number == 2 %}
-Second Term
-
-{% elif latest_fee.term.term_number == 3 %}
-Third Term
-
-{% endif %}
-
-
-</strong>
-
-
-
+<!-- =================================================
+     STATEMENT TITLE
+================================================= -->
+<div
+    style="
+        text-align:center;
+        margin-bottom:20px;
+    "
+>
+    <h3
+        style="
+            margin:0;
+            font-size:16px;
+            font-weight:800;
+            background:#111827;
+            color:#fff;
+            display:inline-block;
+            padding:7px 24px;
+            border-radius:20px;
+        "
+    >
+        FEES STATEMENT FOR {{ request.user.school_class}}
+    </h3>
 </div>
-
-
+<!-- =================================================
+     STUDENT INFORMATION
+================================================= -->
+<div
+    style="
+        text-align:center;
+        margin-bottom:20px;
+    "
+>
+    <h4
+        style="
+            margin:0;
+            font-size:16px;
+            font-weight:800;
+            background:#111827;
+            color:#fff;
+            display:inline-block;
+            padding:7px 24px;
+            border-radius:20px;
+        "
+    >
+        {{ request.user.first_name }}
+        {{ request.user.last_name }}
+        -
+        {{ request.user.student_number }}
+    </h4>
 </div>
-
-
-
-
-
-<!-- SUMMARY CARDS -->
-
-
-<div class="fee-summary-grid">
-
-
-
-<div class="fee-summary-card total-fee">
-
-
-<div class="fee-label">
-
-💰 Total Amount
-
+<!-- =================================================
+     FEE TABLE
+     
+     IMPORTANT:
+     This remains a TABLE.
+     On mobile the user can swipe left/right.
+================================================= -->
+<div class="fee-table-scroll">
+    <table class="fee-table">
+        <thead>
+            <tr>
+                <th>
+                    Term
+                </th>
+                <th>
+                    Year
+                </th>
+                <th>
+                    Total Due
+                </th>
+                <th>
+                    Paid
+                </th>
+                <th>
+                    Balance
+                </th>
+                <th>
+                    Status
+                </th>
+                <th class="no-print">
+                    Details
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td
+                    style="
+                        font-weight:600;
+                        text-align:center;
+                    "
+                >
+                    {% if latest_fee.term.term_number == 1 %}
+                        First Term
+                    {% elif latest_fee.term.term_number == 2 %}
+                        Second Term
+                    {% elif latest_fee.term.term_number == 3 %}
+                        Third Term
+                    {% else %}
+                        {{ latest_fee.term }}
+                    {% endif %}
+                </td>
+                <td style="text-align:center;">
+                    {{ latest_fee.academic_year }}
+                </td>
+                <td style="text-align:center;">
+                    GH₵{{ total_fee|floatformat:2 }}
+                </td>
+                <td style="text-align:center;">
+                    GH₵{{ amount_paid|floatformat:2 }}
+                </td>
+                <td
+                    style="
+                        text-align:center;
+                        font-weight:800;
+                    "
+                >
+                    GH₵{{ balance|floatformat:2 }}
+                </td>
+                <td style="text-align:center;">
+                    {% if balance == 0 %}
+                        <span class="fee-paid">
+                            PAID
+                        </span>
+                    {% else %}
+                        <span class="fee-unpaid">
+                            UNPAID
+                        </span>
+                    {% endif %}
+                </td>
+                <td
+                    class="no-print"
+                    style="text-align:center;"
+                >
+                    <button
+                        onclick="toggleParentBreakdown()"
+                        id="detailBtn"
+                        style="
+                            background:#2563eb;
+                            color:white;
+                            border:none;
+                            padding:6px 12px;
+                            border-radius:5px;
+                            cursor:pointer;
+                            white-space:nowrap;
+                        "
+                    >
+                        View Details
+                    </button>
+                </td>
+            </tr>
+            <!-- =================================================
+                 FEE BREAKDOWN
+            ================================================= -->
+            <tr
+                id="parent-breakdown-row"
+                style="
+                    display:none;
+                    background:#f9fafb;
+                "
+            >
+                <td
+                    colspan="7"
+                    style="padding:15px;"
+                >
+                    <strong>
+                        FEE BREAKDOWN -
+                        {{ latest_fee.term }}-
+                        {{ latest_fee.academic_year }}
+                    </strong>
+                    <div
+                        style="
+                            display:grid;
+                            grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+                            gap:10px;
+                            margin-top:12px;
+                        "
+                    >
+                        {% for item in latest_fee.breakdown_items %}
+                        <div
+                            style="
+                                background:white;
+                                border:1px solid #e5e7eb;
+                                border-radius:12px;
+                                padding:12px;
+                                text-align:center;
+                            "
+                        >
+                            <div
+                                style="
+                                    font-weight:800;
+                                    font-size:13px;
+                                "
+                            >
+                                {{ item.label }}
+                            </div>
+                            <div
+                                style="
+                                    font-size:12px;
+                                    margin-top:5px;
+                                "
+                            >
+                                Due:
+                                <b>
+                                    GH₵{{ item.value|floatformat:2 }}
+                                </b>
+                            </div>
+                            <div
+                                style="
+                                    font-size:12px;
+                                    color:#16a34a;
+                                "
+                            >
+                                Paid:
+                                GH₵{{ item.paid|default:0|floatformat:2 }}
+                            </div>
+                            <div
+                                style="
+                                    font-size:12px;
+                                    color:#dc2626;
+                                    font-weight:800;
+                                "
+                            >
+                                Bal:
+                                GH₵{{ item.balance|floatformat:2 }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </td>
+            </tr>
+            <!-- =================================================
+                 TOTAL
+            ================================================= -->
+            <tr
+                style="
+                    background:#e5e7eb !important;
+                    font-weight:800;
+                "
+            >
+                <td
+                    colspan="2"
+                    style="text-align:center;"
+                >
+                    TOTAL
+                </td>
+                <td style="text-align:center;">
+                    GH₵{{ total_fee|floatformat:2 }}
+                </td>
+                <td style="text-align:center;">
+                    GH₵{{ amount_paid|floatformat:2 }}
+                </td>
+                <td style="text-align:center;">
+                    GH₵{{ balance|floatformat:2 }}
+                </td>
+                <td></td>
+                <td class="no-print"></td>
+            </tr>
+        </tbody>
+    </table>
 </div>
-
-
-<div class="fee-value">
-
-GH₵{{ total_fee }}
-
 </div>
-
-
-</div>
-
-
-
-
-<div class="fee-summary-card paid-fee">
-
-
-<div class="fee-label">
-
-✅ Amount Paid
-
-</div>
-
-
-<div class="fee-value">
-
-GH₵{{ amount_paid }}
-
-</div>
-
-
-</div>
-
-
-
-
-
-<div class="fee-summary-card balance-fee">
-
-
-<div class="fee-label">
-
-⚠️ Balance Due
-
-</div>
-
-
-<div class="fee-value">
-
-GH₵{{ balance }}
-
-</div>
-
-
-</div>
-
-
-
-</div>
-
-
-
-
-
-<div class="due-date">
-
-📅 Due Date: {{ latest_fee.due_date }}
-
-</div>
-
-<!-- ==========================
-     FEE BREAKDOWN
-=========================== -->
-
-
-{% if latest_fee.breakdown_items %}
-
-<div class="premium-section">
-
-
-<button class="breakdown-toggle"
-        onclick="this.nextElementSibling.classList.toggle('show')">
-
-    📋 View Fee Breakdown
-
-    <span>⌄</span>
-
-</button>
-
-
-
-<div class="breakdown-content">
-
-
-<table class="breakdown-table">
-
-
-{% for item in latest_fee.breakdown_items %}
-
-
-<tr>
-
-<td>
-{{ item.label }}
-</td>
-
-
-<td>
-₵{{ item.value|floatformat:2 }}
-</td>
-
-
-</tr>
-
-
-{% endfor %}
-
-
-
-<tr class="breakdown-total">
-
-<td>
-TOTAL
-</td>
-
-
-<td>
-₵{{ total_fee|floatformat:2 }}
-</td>
-
-</tr>
-
-
-
-</table>
-
-
-</div>
-
-
-</div>
-
-
-{% endif %}
-
-
-
-
-
-
-
-<!-- ==========================
+<!-- =====================================================
      PAYMENT OPTIONS
-=========================== -->
-
+===================================================== -->
 
 {% if school %}
 
-
 <div class="premium-section">
-
-
 <h3 class="section-title">
-
-💳 Payment Options
-
+    💳 Payment Options
 </h3>
-
-
-
-
-
-<!-- CASH -->
-
 {% if school.accept_cash %}
-
-<div class="payment-card cash-card">
-
-
-<div class="payment-icon">
-🏫
+<div class="payment-card">
+    <h4>
+        🏫 Cash Payment
+    </h4>
+    <p>
+        Visit the school accounts office with your student ID
+    </p>
 </div>
-
-
-<div>
-
-<h4>
-Cash Payment
-</h4>
-
-
-<p>
-Visit the school office with your student ID.
-</p>
-
-
-</div>
-
-
-</div>
-
 {% endif %}
-
-
-
-
-
-
-
-<!-- MANUAL PAYMENT -->
 {% if school.accept_manual %}
-<div class="payment-card manual-card">
-<div class="payment-header">📱 Manual Transfer</div>
-
-<div style="display:flex; gap:15px;">
-
-{% if school.accept_momo and school.momo_number %}
-<div class="account-box" style="flex:1;">
-<div class="account-title">Mobile Money</div>
-
-<!-- NUMBER + COPY SAME LINE -->
-<div style="display:flex; align-items:center; gap:10px; margin:10px 0;">
-  <div class="account-number" style="margin:0;">{{ school.momo_number }}</div>
-  <button class="copy-btn" style="position:static;" onclick="navigator.clipboard.writeText('{{ school.momo_number }}');this.innerText='Copied ✓';setTimeout(()=>this.innerText='Copy',1500)">Copy</button>
-</div>
-
-{% if school.momo_name %}<p>Account Name: <strong>{{ school.momo_name }}</strong></p>{% endif %}
-<p class="reference">Reference: <strong>{{ request.user.student_number }}</strong></p>
+<div
+    style="
+        background:#fffbeb;
+        border:1px solid #fde68a;
+        border-radius:18px;
+        padding:22px;
+        margin-bottom:15px;
+    "
+>
+    <div
+        style="
+            font-weight:800;
+            margin-bottom:15px;
+        "
+    >
+        📱 Manual Transfer
+    </div>
+    <div
+        style="
+            display:flex;
+            gap:15px;
+            flex-wrap:wrap;
+        "
+    >
+        {% if school.accept_momo and school.momo_number %}
+        <div
+            style="
+                flex:1;
+                min-width:280px;
+                background:white;
+                border-radius:14px;
+                padding:18px;
+                border:1px solid #fde68a;
+            "
+        >
+            <div
+                style="
+                    font-size:11px;
+                    color:#92400e;
+                    font-weight:700;
+                    text-transform:uppercase;
+                    letter-spacing:0.5px;
+                "
+            >
+                MOMO NUMBER
+            </div>
+            <div
+                style="
+                    display:flex;
+                    align-items:center;
+                    gap:10px;
+                    margin:6px 0 12px 0;
+                "
+            >
+                <div
+                    style="
+                        font-size:22px;
+                        font-weight:900;
+                        color:#0f172a;
+                    "
+                >
+                    {{ school.momo_number }}
+                </div>
+                <button
+                    onclick="
+                        navigator.clipboard.writeText('{{ school.momo_number }}');
+                        this.innerText='✓ Copied';
+                        setTimeout(()=>this.innerText='Copy',1500)
+                    "
+                    style="
+                        background:#0f172a;
+                        color:white;
+                        border:none;
+                        padding:6px 14px;
+                        border-radius:7px;
+                        font-weight:700;
+                        font-size:12px;
+                        cursor:pointer;
+                    "
+                >
+                    Copy
+                </button>
+            </div>
+            <div
+                style="
+                    font-size:11px;
+                    color:#92400e;
+                    font-weight:700;
+                    text-transform:uppercase;
+                    margin-top:10px;
+                "
+            >
+                ACCOUNT NAME
+            </div>
+            <div
+                style="
+                    font-size:15px;
+                    font-weight:800;
+                    color:#1e40af;
+                    margin-top:3px;
+                "
+            >
+                {{ school.momo_name }}
+            </div>
+            <div
+                style="
+                    margin-top:12px;
+                    font-size:12px;
+                "
+            >
+                Ref:
+                <span
+                    style="
+                        background:#2563eb;
+                        color:white;
+                        padding:3px 8px;
+                        border-radius:5px;
+                        font-weight:700;
+                    "
+                >
+                    {{ request.user.student_number }}
+                </span>
+            </div>
+        </div>
+        {% endif %}
+        {% if school.accept_bank and school.bank_name %}
+        <div
+            style="
+                flex:1;
+                min-width:280px;
+                background:white;
+                border-radius:14px;
+                padding:18px;
+                border:1px solid #fde68a;
+            "
+        >
+            <div
+                style="
+                    font-size:11px;
+                    color:#92400e;
+                    font-weight:700;
+                    text-transform:uppercase;
+                    letter-spacing:0.5px;
+                "
+            >
+                BANK ACCOUNT NUMBER
+            </div>
+            <div
+                style="
+                    display:flex;
+                    align-items:center;
+                    gap:10px;
+                    margin:6px 0 12px 0;
+                "
+            >
+                <div
+                    style="
+                        font-size:22px;
+                        font-weight:900;
+                        color:#0f172a;
+                    "
+                >
+                    {{ school.account_number }}
+                </div>
+                <button
+                    onclick="
+                        navigator.clipboard.writeText('{{ school.account_number }}');
+                        this.innerText='✓ Copied';
+                        setTimeout(()=>this.innerText='Copy',1500)
+                    "
+                    style="
+                        background:#0f172a;
+                        color:white;
+                        border:none;
+                        padding:6px 14px;
+                        border-radius:7px;
+                        font-weight:700;
+                        font-size:12px;
+                        cursor:pointer;
+                    "
+                >
+                    Copy
+                </button>
+            </div>
+            <div
+                style="
+                    font-size:11px;
+                    color:#92400e;
+                    font-weight:700;
+                    text-transform:uppercase;
+                "
+            >
+                BANK NAME
+            </div>
+            <div
+                style="
+                    font-size:15px;
+                    font-weight:800;
+                    color:#1e40af;
+                    margin:3px 0 10px 0;
+                "
+            >
+                {{ school.bank_name }}
+            </div>
+            <div
+                style="
+                    font-size:11px;
+                    color:#92400e;
+                    font-weight:700;
+                    text-transform:uppercase;
+                "
+            >
+                ACCOUNT NAME
+            </div>
+            <div
+                style="
+                    font-size:15px;
+                    font-weight:700;
+                    color:#0f172a;
+                    margin-top:3px;
+                "
+            >
+                {{ school.account_name }}
+            </div>
+            <div
+                style="
+                    margin-top:12px;
+                    font-size:12px;
+                "
+            >
+                Ref:
+                <span
+                    style="
+                        background:#2563eb;
+                        color:white;
+                        padding:3px 8px;
+                        border-radius:5px;
+                        font-weight:700;
+                    "
+                >
+                    {{ request.user.student_number }}
+                </span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% if latest_fee and balance > 0 %}
+    <div class="upload-area">
+        <a
+            href="{% url 'accounts:submit_manual_payment' latest_fee.id %}"
+            class="upload-btn"
+        >
+            I Have Paid - Upload Proof
+        </a>
+        <p>
+            Upload payment evidence after MoMo or Bank payment.
+        </p>
+    </div>
+    {% endif %}
 </div>
 {% endif %}
-
-{% if school.accept_bank and school.bank_name %}
-<div class="account-box" style="flex:1;">
-<div class="account-title">Bank Transfer</div>
-
-<!-- NUMBER + COPY SAME LINE -->
-<div style="display:flex; align-items:center; gap:10px; margin:10px 0;">
-  <div class="account-number" style="margin:0;">{{ school.account_number }}</div>
-  <button class="copy-btn" style="position:static;" onclick="navigator.clipboard.writeText('{{ school.account_number }}');this.innerText='Copied ✓';setTimeout(()=>this.innerText='Copy',1500)">Copy</button>
-</div>
-
-<p>Bank: <strong>{{ school.bank_name }}</strong></p>
-<p>Account Name: <strong>{{ school.account_name }}</strong></p>
-<p class="reference">Use student number: <span class="student-ref">{{ request.user.student_number }}</span></p>
-</div>
-{% endif %}
-
-</div>
-
-{% if latest_fee and balance > 0 %}
-<div class="upload-area">
-<a href="{% url 'accounts:submit_manual_payment' latest_fee.id %}" class="upload-btn">I Have Paid - Upload Proof</a>
-<p>Upload payment evidence after MoMo or Bank payment.</p>
-</div>
-{% endif %}
-
-</div>
-{% endif %}
-
-
-
-
-
-
-<!-- ==========================
-     ONLINE PAYMENT
-=========================== -->
-
-
-{% if school.accept_automatic and school.payment_gateway == 'paystack' and school.paystack_public_key %}
-
-
-
+{# --- ONLINE PAYMENT - FIXED TO SHOW ALL GATEWAYS LIKE PARENT --- #}
+{% if school.accept_automatic and balance > 0 %}
 <div class="payment-card online-card">
-
-
-<div class="payment-header">
-
-💳 Pay Online
-
+    <div
+        id="pay-success"
+        style="
+            display:none;
+            background:#dcfce7;
+            border:2px solid #16a34a;
+            color:#166534;
+            padding:14px;
+            border-radius:12px;
+            margin-bottom:12px;
+            text-align:center;
+            font-weight:800;
+        "
+    >
+        ✓
+        <span id="pay-success-text">
+            Payment Successful!
+        </span>
+        <span
+            id="pay-receipt-text"
+            style="
+                display:block;
+                font-size:12px;
+                margin-top:4px;
+            "
+        ></span>
+    </div>
+    <div
+        id="pay-error"
+        style="
+            display:none;
+            background:#fef2f2;
+            border:2px solid #dc2626;
+            color:#991b1b;
+            padding:12px;
+            border-radius:12px;
+            margin-bottom:12px;
+            text-align:center;
+            font-weight:700;
+        "
+    ></div>
+    <div class="payment-header">
+        💳 Pay Online
+    </div>
+    {% for option in latest_fee.payment_options %}
+    <div class="online-fee">
+        <input
+            type="checkbox"
+            class="fee-checkbox"
+            data-fee-name="{{ option.label }}"
+            data-item-id="{{ option.dynamic_item_id }}"
+            data-fee-id="{{ latest_fee.id }}"
+            data-balance="{{ option.balance }}"
+        >
+        <label>
+            <strong>
+                {{ option.label }}
+            </strong>
+            <small>
+                Balance:
+                GH₵{{ option.balance|floatformat:2 }}
+            </small>
+        </label>
+        <input
+            type="number"
+            class="fee-amount-input"
+            data-item-id="{{ option.dynamic_item_id }}"
+            placeholder="Amount"
+            max="{{ option.balance }}"
+            step="0.01"
+            disabled
+            style="
+                width:120px;
+                padding:8px;
+                border-radius:8px;
+                border:1px solid #cbd5e1;
+                text-align:right;
+                font-weight:700;
+            "
+        >
+    </div>
+    {% endfor %}
+    <div class="total-pay-box">
+        Total:
+        <strong>
+            GH₵<span id="total-amount">0.00</span>
+        </strong>
+    </div>
+    <!-- =================================================
+         PAYMENT BUTTONS
+    ================================================= -->
+    <div
+        style="
+            display:grid;
+            gap:10px;
+            margin-top:15px;
+        "
+    >
+        {% if school.accept_paystack and school.paystack_public_key %}
+        <button
+            id="paystack-btn"
+            class="pay-btn"
+            style="background:#02422c;"
+        >
+            💳 Pay GH₵<span class="pay-total">0.00</span>
+            with Paystack
+        </button>
+        {% endif %}
+        {% if school.accept_hubtel %}
+        <button
+            id="hubtel-btn"
+            class="pay-btn"
+            style="background:#2563eb;"
+        >
+            💳 Pay GH₵<span class="pay-total">0.00</span>
+            with Hubtel
+        </button>
+        {% endif %}
+        {% if school.accept_flutterwave %}
+        <button
+            id="flutterwave-btn"
+            class="pay-btn"
+            style="
+                background:#f59e0b;
+                color:#111827;
+            "
+        >
+            💳 Pay GH₵<span class="pay-total">0.00</span>
+            with Flutterwave
+        </button>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
 </div>
 
-
-
-{% if latest_fee.payment_options %}
-
-
-{% for option in latest_fee.payment_options %}
-
-
-
-<div class="online-fee">
-
-
-<input 
-type="checkbox"
-class="fee-checkbox"
-id="fee_{{ forloop.counter }}"
-data-fee-name="{{ option.label }}"
-data-paid-field="{{ option.paid_field }}"
-data-balance="{{ option.balance }}">
-
-
-
-<label for="fee_{{ forloop.counter }}">
-
-
-<strong>
-
-{{ option.label }}
-
-</strong>
-
-
-<small>
-
-Balance:
-₵{{ option.balance|floatformat:2 }}
-
-</small>
-
-
-</label>
-
-
-
-
-<input
-
-type="number"
-
-class="fee-amount-input"
-
-data-paid-field="{{ option.paid_field }}"
-
-placeholder="Amount"
-
-max="{{ option.balance }}"
-
-step="0.01"
-
-disabled>
-
-
-
-</div>
-
-
-
-{% empty %}
-
-<p class="paid-message">
-
-✓ All fees paid for this term
-
-</p>
-
-
-{% endfor %}
-
-
-
-
-
-
-<div class="total-pay-box">
-
-Total To Pay:
-
-<strong>
-
-₵<span id="total-amount">0.00</span>
-
-</strong>
-
-</div>
-
-
-
-
-
-<button id="paystack-btn"
-class="pay-btn">
-
-Pay with Paystack
-
-</button>
-
+{% endif %}
 
 {% else %}
 
-    <p class="paid-message">
-        ✓ All fees paid for this term
-    </p>
-
-{% endif %}
-
-
+<!-- =====================================================
+     NO FEE
+===================================================== -->
+<div
+    style="
+        background:white;
+        border-radius:28px;
+        padding:60px 30px;
+        text-align:center;
+    "
+>
+    <h2>
+        📭 No Fee Found
+    </h2>
 </div>
 
-
-
 {% endif %}
 
-{% endif %}
-
-{% endif %}
-
+</div>
+<!-- =====================================================
+     SCRIPTS
+===================================================== -->
 <script src="https://js.paystack.co/v1/inline.js"></script>
+<script src="https://checkout.flutterwave.com/v3.js"></script>
 <script>
-function getCookie(name) {
-  let v = null;
-  document.cookie.split(';').forEach(c => {
-    c = c.trim();
-    if (c.startsWith(name+'=')) v = decodeURIComponent(c.slice(name.length+1));
-  });
-  return v;
-}
-
-// Enable/disable amount input when checkbox is toggled
-document.querySelectorAll('.fee-checkbox').forEach(checkbox => {
-    checkbox.addEventListener('change', function() {
-        const amountInput = this.closest('div').querySelector('.fee-amount-input');
-        const balance = parseFloat(this.dataset.balance);
-        
-        if (this.checked) {
-            amountInput.disabled = false;
-            amountInput.value = balance.toFixed(2);
-        } else {
-            amountInput.disabled = true;
-            amountInput.value = '';
-        }
-        updateTotal();
-    });
-});
-
-// Update total when amount changes
-document.querySelectorAll('.fee-amount-input').forEach(input => {
-    input.addEventListener('input', updateTotal);
-});
-
-function updateTotal() {
-    let total = 0;
-    document.querySelectorAll('.fee-checkbox:checked').forEach(checkbox => {
-        const amountInput = checkbox.closest('div').querySelector('.fee-amount-input');
-        const amount = parseFloat(amountInput.value) || 0;
-        total += amount;
-    });
-    document.getElementById('total-amount').textContent = total.toFixed(2);
-}
-
-// Pay button
-document.getElementById('paystack-btn')?.addEventListener('click', function(e){
-    e.preventDefault();
-    
-    let selectedFees = [];
-    let totalAmount = 0;
-    let hasError = false;
-    
-    document.querySelectorAll('.fee-checkbox:checked').forEach(checkbox => {
-        const amountInput = checkbox.closest('div').querySelector('.fee-amount-input');
-        const amount = parseFloat(amountInput.value) || 0;
-        const balance = parseFloat(checkbox.dataset.balance);
-        const feeName = checkbox.dataset.feeName;
-        
-        if (amount <= 0) {
-            alert(`Please enter amount for ${feeName}`);
-            hasError = true;
-            return;
-        }
-        if (amount > balance) {
-            alert(`Amount for ${feeName} cannot exceed balance ₵${balance.toFixed(2)}`);
-            hasError = true;
-            return;
-        }
-        
-        selectedFees.push({
-            fee_name: feeName,
-            paid_field: checkbox.dataset.paidField,
-            amount: amount
-        });
-        totalAmount += amount;
-    });
-    
-    if (hasError) return;
-    
-    // CUSTOM ERROR - No checkbox selected
-    if (selectedFees.length === 0) {
-        let errorDiv = document.getElementById('payment-error');
-        if (!errorDiv) {
-            errorDiv = document.createElement('div');
-            errorDiv.id = 'payment-error';
-            errorDiv.style.cssText = 'background:#fee2e2; border:1px solid #fecaca; color:#991b1b; padding:12px; border-radius:8px; margin:12px 0; font-weight:600; text-align:center;';
-            document.getElementById('paystack-btn').parentNode.insertBefore(errorDiv, document.getElementById('paystack-btn'));
-        }
-        errorDiv.innerText = 'Please tick at least one fee item before paying.';
-        errorDiv.style.display = 'block';
-        setTimeout(() => { errorDiv.style.display = 'none'; }, 3000);
-        return;
+function toggleParentBreakdown(){
+    var r = document.getElementById('parent-breakdown-row');
+    var b = document.getElementById('detailBtn');
+    if(r.style.display == 'none'){
+        r.style.display = 'table-row';
+        b.innerText = 'Hide Details';
+    }else{
+        r.style.display = 'none';
+        b.innerText = 'View Details';
     }
-
-    var handler = PaystackPop.setup({
-        key: '{{ school.paystack_public_key }}',
-        email: '{{ request.user.email|default:school.email|default:"accounts@yourschool.com" }}',  // STUDENT EMAIL
-        amount: totalAmount * 100,
-        currency: 'GHS',
-        ref: 'STUDENT-{{ request.user.id }}-' + Date.now(),
-        metadata: {
-            student_id: '{{ request.user.student_number }}',
-            student_name: '{{ request.user.get_full_name|escapejs }}',
-            payer_type: 'student'
-        },
-        callback: function(response){
-            fetch("{% url 'accounts:verify_paystack_payment' %}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({
-                    reference: response.reference,
-                    fee_id: {{ latest_fee.id }},
-                    total_amount: totalAmount,
-                    items: selectedFees,
-                    paid_by: 'student'
-                })
-            })
-            .then(r => r.json())
-            .then(d => {
-                if(d.status){
-                    window.location.href = window.location.pathname + "?paid=1";
-                } else {
-                    alert('Verification failed: ' + (d.message || ''));
-                }
-            });
-        },
-        onClose: function(){}
+}
+function printWithBreakdown(){
+    document.getElementById('parent-breakdown-row').style.display = 'table-row';
+    setTimeout(function(){
+        window.print();
+        setTimeout(function(){
+            document.getElementById('parent-breakdown-row').style.display = 'none';
+        },500);
+    },200);
+}
+function getCookie(name){
+    let v = null;
+    document.cookie.split(';').forEach(function(c){
+        c = c.trim();
+        if(c.startsWith(name + '=')){
+            v = decodeURIComponent(
+                c.slice(name.length + 1)
+            );
+        }
     });
-    handler.openIframe();
+    return v;
+}
+function showError(msg){
+    const el = document.getElementById('pay-error');
+    if(el){
+        el.innerText = msg;
+        el.style.display = 'block';
+        el.scrollIntoView({
+            behavior:'smooth',
+            block:'center'
+        });
+        setTimeout(function(){
+            el.style.display = 'none';
+        },4000);
+    }
+}
+function showSuccess(title, receipt){
+    const box = document.getElementById('pay-success');
+    document.getElementById('pay-success-text').innerText = title;
+    document.getElementById('pay-receipt-text').innerText =
+        "Receipt: " + receipt;
+    document.getElementById('pay-error').style.display = 'none';
+    box.style.display = 'block';
+    box.scrollIntoView({
+        behavior:'smooth',
+        block:'center'
+    });
+}
+document.addEventListener('DOMContentLoaded', function(){
+    function updateTotal(){
+        let t = 0;
+        document
+            .querySelectorAll('.fee-checkbox:checked')
+            .forEach(function(c){
+                const inp =
+                    document.querySelector(
+                        '.fee-amount-input[data-item-id="' +
+                        c.dataset.itemId +
+                        '"]'
+                    )
+                    ||
+                    c.closest('div').querySelector(
+                        '.fee-amount-input'
+                    );
+                t += parseFloat(inp.value) || 0;
+            });
+        const totalEl =
+            document.getElementById('total-amount');
+        if(totalEl){
+            totalEl.textContent =
+                t.toFixed(2);
+        }
+        document
+            .querySelectorAll('.pay-total')
+            .forEach(function(s){
+                s.textContent =
+                    t.toFixed(2);
+            });
+        const hasTotal = t > 0;
+        [
+            'paystack-btn',
+            'hubtel-btn',
+            'flutterwave-btn'
+        ].forEach(function(id){
+            const b =
+                document.getElementById(id);
+            if(b){
+                b.disabled = !hasTotal;
+                b.style.opacity =
+                    hasTotal ? '1' : '0.5';
+                b.style.cursor =
+                    hasTotal
+                        ? 'pointer'
+                        : 'not-allowed';
+            }
+        });
+    }
+    document
+        .querySelectorAll('.fee-checkbox')
+        .forEach(function(cb){
+            cb.addEventListener('change', function(){
+                const inp =
+                    document.querySelector(
+                        '.fee-amount-input[data-item-id="' +
+                        this.dataset.itemId +
+                        '"]'
+                    )
+                    ||
+                    this.closest('div').querySelector(
+                        '.fee-amount-input'
+                    );
+                const bal =
+                    parseFloat(this.dataset.balance);
+                if(this.checked){
+                    inp.disabled = false;
+                    inp.value =
+                        bal.toFixed(2);
+                }else{
+                    inp.disabled = true;
+                    inp.value = '';
+                }
+                updateTotal();
+            });
+        });
+    document
+        .querySelectorAll('.fee-amount-input')
+        .forEach(function(inp){
+            inp.addEventListener(
+                'input',
+                updateTotal
+            );
+        });
+    updateTotal();
+    /* =====================================================
+       PAYSTACK
+    ===================================================== */
+    const payBtn =
+        document.getElementById('paystack-btn');
+    if(payBtn){
+        payBtn.addEventListener(
+            'click',
+            async function(){
+                const checked =
+                    document.querySelectorAll(
+                        '.fee-checkbox:checked'
+                    );
+                if(checked.length === 0){
+                    showError(
+                        "⚠️ Select at least one fee"
+                    );
+                    return;
+                }
+                let total = 0;
+                let items = [];
+                checked.forEach(function(cb){
+                    const inp =
+                        document.querySelector(
+                            '.fee-amount-input[data-item-id="' +
+                            cb.dataset.itemId +
+                            '"]'
+                        )
+                        ||
+                        cb.closest('div').querySelector(
+                            '.fee-amount-input'
+                        );
+                    const amt =
+                        parseFloat(inp.value) || 0;
+                    if(amt > 0){
+                        total += amt;
+                        items.push({
+                            fee_name:
+                                cb.dataset.feeName,
+                            dynamic_item_id:
+                                cb.dataset.itemId,
+                            fee_id:
+                                cb.dataset.feeId,
+                            amount:
+                                amt
+                        });
+                    }
+                });
+                if(total <= 0){
+                    showError(
+                        "⚠️ Enter valid amount"
+                    );
+                    return;
+                }
+                const publicKey =
+                    "{{ school.paystack_public_key|default:'' }}"
+                    .trim();
+                if(!publicKey.startsWith("pk_")){
+                    payBtn.innerText =
+                        "Processing Paystack Test...";
+                    payBtn.disabled = true;
+                    const res =
+                        await fetch(
+                            "{% url 'accounts:verify_paystack_payment' %}",
+                            {
+                                method:"POST",
+                                headers:{
+                                    "Content-Type":
+                                        "application/json",
+                                    "X-CSRFToken":
+                                        getCookie('csrftoken')
+                                },
+                                body:JSON.stringify({
+                                    reference:
+                                        'PSK-TEST-' +
+                                        Date.now(),
+                                    items:items,
+                                    is_test:true
+                                })
+                            }
+                        );
+                    const data =
+                        await res.json();
+                    if(data.status){
+                        showSuccess(
+                            "Paystack Test Payment Successful!",
+                            data.receipt
+                        );
+                        payBtn.innerText =
+                            "✓ Paid";
+                        setTimeout(function(){
+                            window.location.href =
+                                window.location.pathname +
+                                "?paid=1";
+                        },2500);
+                    }else{
+                        showError(
+                            data.message
+                        );
+                        payBtn.innerText =
+                            "Pay GH₵" +
+                            total.toFixed(2) +
+                            " with Paystack";
+                        payBtn.disabled = false;
+                    }
+                    return;
+                }
+                let handler =
+                    PaystackPop.setup({
+                        key:publicKey,
+                        email:
+                            "{{ request.user.email|default:'student@school.com' }}",
+                        amount:
+                            Math.round(total * 100),
+                        currency:"GHS",
+                        ref:
+                            'PSK_' + Date.now(),
+                        callback:function(response){
+                            fetch(
+                                "{% url 'accounts:verify_paystack_payment' %}",
+                                {
+                                    method:"POST",
+                                    headers:{
+                                        "Content-Type":
+                                            "application/json",
+                                        "X-CSRFToken":
+                                            getCookie('csrftoken')
+                                    },
+                                    body:JSON.stringify({
+                                        reference:
+                                            response.reference,
+                                        items:items
+                                    })
+                                }
+                            )
+                            .then(function(r){
+                                return r.json();
+                            })
+                            .then(function(data){
+                                if(data.status){
+                                    showSuccess(
+                                        "Paystack Payment Successful!",
+                                        data.receipt
+                                    );
+                                    payBtn.innerText =
+                                        "✓ Paid";
+                                    setTimeout(function(){
+                                        window.location.href =
+                                            window.location.pathname +
+                                            "?paid=1";
+                                    },2500);
+                                }else{
+                                    showError(
+                                        data.message
+                                    );
+                                }
+                            });
+                        },
+                        onClose:function(){}
+                    });
+                handler.openIframe();
+            }
+        );
+    }
+    /* =====================================================
+       HUBTEL
+    ===================================================== */
+    const hubtelBtn =
+        document.getElementById('hubtel-btn');
+    if(hubtelBtn){
+        hubtelBtn.addEventListener(
+            'click',
+            async function(){
+                const checked =
+                    document.querySelectorAll(
+                        '.fee-checkbox:checked'
+                    );
+                if(checked.length === 0){
+                    showError(
+                        "⚠️ Select at least one fee"
+                    );
+                    return;
+                }
+                let total = 0;
+                let items = [];
+                checked.forEach(function(cb){
+                    const inp =
+                        document.querySelector(
+                            '.fee-amount-input[data-item-id="' +
+                            cb.dataset.itemId +
+                            '"]'
+                        )
+                        ||
+                        cb.closest('div').querySelector(
+                            '.fee-amount-input'
+                        );
+                    const amt =
+                        parseFloat(inp.value) || 0;
+                    if(amt > 0){
+                        total += amt;
+                        items.push({
+                            fee_name:
+                                cb.dataset.feeName,
+                            dynamic_item_id:
+                                cb.dataset.itemId,
+                            fee_id:
+                                cb.dataset.feeId,
+                            amount:
+                                amt
+                        });
+                    }
+                });
+                if(total <= 0){
+                    showError(
+                        "⚠️ Enter valid amount"
+                    );
+                    return;
+                }
+                hubtelBtn.innerText =
+                    "Processing Hubtel Test...";
+                hubtelBtn.disabled = true;
+                const res =
+                    await fetch(
+                        "{% url 'accounts:verify_hubtel_payment' %}",
+                        {
+                            method:"POST",
+                            headers:{
+                                "Content-Type":
+                                    "application/json",
+                                "X-CSRFToken":
+                                    getCookie('csrftoken')
+                            },
+                            body:JSON.stringify({
+                                reference:
+                                    'HUBTEL-TEST-' +
+                                    Date.now(),
+                                items:items,
+                                is_test:true
+                            })
+                        }
+                    );
+                const data =
+                    await res.json();
+                if(data.status){
+                    showSuccess(
+                        "Hubtel Test Payment Successful!",
+                        data.receipt
+                    );
+                    hubtelBtn.innerText =
+                        "✓ Paid";
+                    setTimeout(function(){
+                        window.location.href =
+                            window.location.pathname +
+                            "?paid=1";
+                    },2500);
+                }else{
+                    showError(
+                        data.message
+                    );
+                    hubtelBtn.innerText =
+                        "Pay GH₵" +
+                        total.toFixed(2) +
+                        " with Hubtel";
+                    hubtelBtn.disabled = false;
+                }
+            }
+        );
+    }
+    /* =====================================================
+       FLUTTERWAVE
+    ===================================================== */
+    const fwBtn =
+        document.getElementById('flutterwave-btn');
+    if(fwBtn){
+        fwBtn.addEventListener(
+            'click',
+            async function(){
+                const checked =
+                    document.querySelectorAll(
+                        '.fee-checkbox:checked'
+                    );
+                if(checked.length === 0){
+                    showError(
+                        "⚠️ Select at least one fee"
+                    );
+                    return;
+                }
+                let total = 0;
+                let items = [];
+                checked.forEach(function(cb){
+                    const inp =
+                        document.querySelector(
+                            '.fee-amount-input[data-item-id="' +
+                            cb.dataset.itemId +
+                            '"]'
+                        )
+                        ||
+                        cb.closest('div').querySelector(
+                            '.fee-amount-input'
+                        );
+                    const amt =
+                        parseFloat(inp.value) || 0;
+                    if(amt > 0){
+                        total += amt;
+                        items.push({
+                            fee_name:
+                                cb.dataset.feeName,
+                            dynamic_item_id:
+                                cb.dataset.itemId,
+                            fee_id:
+                                cb.dataset.feeId,
+                            amount:
+                                amt
+                        });
+                    }
+                });
+                if(total <= 0){
+                    showError(
+                        "⚠️ Enter valid amount"
+                    );
+                    return;
+                }
+                const pubKey =
+                    "{{ school.flutterwave_public_key|default:'' }}"
+                    .trim();
+                if(!pubKey.startsWith("FLWPUBK")){
+                    fwBtn.innerText =
+                        "Processing Flutterwave Test...";
+                    fwBtn.disabled = true;
+                    const res =
+                        await fetch(
+                            "{% url 'accounts:verify_flutterwave_payment' %}",
+                            {
+                                method:"POST",
+                                headers:{
+                                    "Content-Type":
+                                        "application/json",
+                                    "X-CSRFToken":
+                                        getCookie('csrftoken')
+                                },
+                                body:JSON.stringify({
+                                    reference:
+                                        'FLW-TEST-' +
+                                        Date.now(),
+                                    items:items,
+                                    is_test:true
+                                })
+                            }
+                        );
+                    const data =
+                        await res.json();
+                    if(data.status){
+                        showSuccess(
+                            "Flutterwave Test Payment Successful!",
+                            data.receipt
+                        );
+                        fwBtn.innerText =
+                            "✓ Paid";
+                        setTimeout(function(){
+                            window.location.href =
+                                window.location.pathname +
+                                "?paid=1";
+                        },2500);
+                    }else{
+                        showError(
+                            data.message
+                        );
+                        fwBtn.innerText =
+                            "Pay GH₵" +
+                            total.toFixed(2) +
+                            " with Flutterwave";
+                        fwBtn.disabled = false;
+                    }
+                    return;
+                }
+                fwBtn.innerText =
+                    "Opening Flutterwave...";
+                fwBtn.disabled = true;
+                FlutterwaveCheckout({
+                    public_key:pubKey,
+                    tx_ref:
+                        "FLW-" + Date.now(),
+                    amount:total,
+                    currency:"GHS",
+                    customer:{
+                        email:
+                            "{{ request.user.email|default:'student@school.com' }}",
+                        name:
+                            "{{ request.user.get_full_name|default:request.user.username }}"
+                    },
+                    customizations:{
+                        title:
+                            "{{ school.name }} Fees",
+                        description:
+                            "Payment of " +
+                            items.map(
+                                function(i){
+                                    return i.fee_name;
+                                }
+                            ).join(", ")
+                    },
+                    callback:function(data){
+                        fetch(
+                            "{% url 'accounts:verify_flutterwave_payment' %}",
+                            {
+                                method:"POST",
+                                headers:{
+                                    "Content-Type":
+                                        "application/json",
+                                    "X-CSRFToken":
+                                        getCookie('csrftoken')
+                                },
+                                body:JSON.stringify({
+                                    transaction_id:
+                                        data.transaction_id,
+                                    tx_ref:
+                                        data.tx_ref,
+                                    items:items
+                                })
+                            }
+                        )
+                        .then(function(r){
+                            return r.json();
+                        })
+                        .then(function(r){
+                            if(r.status){
+                                showSuccess(
+                                    "Flutterwave Payment Successful!",
+                                    r.receipt
+                                );
+                                fwBtn.innerText =
+                                    "✓ Paid";
+                                setTimeout(function(){
+                                    window.location.href =
+                                        window.location.pathname +
+                                        "?paid=1";
+                                },2500);
+                            }else{
+                                showError(
+                                    r.message
+                                );
+                                fwBtn.innerText =
+                                    "Pay GH₵" +
+                                    total.toFixed(2) +
+                                    " with Flutterwave";
+                                fwBtn.disabled = false;
+                            }
+                        });
+                    },
+                    onclose:function(){
+                        fwBtn.innerText =
+                            "Pay GH₵" +
+                            total.toFixed(2) +
+                            " with Flutterwave";
+                        fwBtn.disabled = false;
+                    }
+                });
+            }
+        );
+    }
 });
 </script>
 

@@ -2,145 +2,885 @@
 {% load static %}
 
 {% block content %}
+
 <style>
-.payment-container { max-width: 900px; margin: 0 auto; }
-.payment-card { border: none; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); padding: 30px; background: #fff; margin-bottom: 24px; }
-.section-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; color: #1a1a1a; }
-.section-desc { font-size: 14px; color: #6b7280; margin-bottom: 20px; }
-.form-check-card { border: 2px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 12px; cursor: default; height: 100%; transition: all 0.2s ease; }
-.form-check-card:hover { border-color: #4e73df; background: #f8faff; }
-.form-check-card:has(input:checked) { border-color: #4e73df; background: #f0f4ff; box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.1); }
-.form-check-input { width: 20px; height: 20px; border: 2px solid #6b7280; cursor: pointer; margin-top: 2px; }
-.form-check-input:checked { background-color: #4e73df; border-color: #4e73df; }
-.form-check-input:focus { box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.25); border-color: #4e73df; }
-.form-check-label { cursor: default; padding-left: 8px; }
-select.form-control { cursor: pointer; }
-input[type="text"], input[type="password"] { cursor: text; }
-.gateway-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 12px; }
-.badge-paystack { background: #e6f7ee; color: #0aa572; }
-.badge-hubtel { background: #e0e7ff; color: #4338ca; }
-.badge-flutter { background: #fef3c7; color: #d97706; }
+
+/* =========================================================
+   PREMIUM PAYMENT SETTINGS
+========================================================= */
+
+.payment-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px 15px 45px;
+}
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.payment-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    padding: 30px 32px;
+    margin-bottom: 24px;
+    color: #fff;
+    background:
+        radial-gradient(circle at 85% 15%, rgba(255,255,255,.16), transparent 28%),
+        radial-gradient(circle at 10% 100%, rgba(255,255,255,.10), transparent 30%),
+        linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #4f46e5 100%);
+    box-shadow: 0 18px 45px rgba(15,23,42,.20);
+}
+
+.payment-hero::before {
+    content: "";
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 50%;
+    right: -60px;
+    top: -70px;
+}
+
+.payment-hero::after {
+    content: "";
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 50%;
+    right: 70px;
+    bottom: -75px;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.hero-icon {
+    width: 68px;
+    height: 68px;
+    flex: 0 0 68px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    background: rgba(255,255,255,.14);
+    border: 1px solid rgba(255,255,255,.20);
+    backdrop-filter: blur(10px);
+    font-size: 31px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.15);
+}
+
+.hero-text {
+    flex: 1;
+}
+
+.hero-text h2 {
+    margin: 0 0 5px;
+    font-size: 30px;
+    font-weight: 850;
+    letter-spacing: -.5px;
+}
+
+.hero-text p {
+    margin: 0;
+    color: rgba(255,255,255,.78);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.school-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 12px;
+    padding: 7px 13px;
+    border-radius: 30px;
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.16);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* =========================================================
+   CARDS
+========================================================= */
+
+.payment-card {
+    position: relative;
+    border: 1px solid #e8edf5;
+    border-radius: 20px;
+    padding: 25px;
+    background: #fff;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 28px rgba(15,23,42,.07);
+    transition: transform .25s ease, box-shadow .25s ease;
+}
+
+.payment-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 35px rgba(15,23,42,.10);
+}
+
+/* =========================================================
+   SECTION HEADER
+========================================================= */
+
+.section-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+    margin-bottom: 20px;
+}
+
+.section-number {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 13px;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.section-heading-content {
+    flex: 1;
+}
+
+.section-title {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -.2px;
+}
+
+.section-desc {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+/* =========================================================
+   PAYMENT METHOD CARDS
+========================================================= */
+
+.form-check-card {
+    position: relative;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 17px;
+    margin-bottom: 12px;
+    cursor: default;
+    height: 100%;
+    background: #fff;
+    transition:
+        border-color .2s ease,
+        background .2s ease,
+        box-shadow .2s ease,
+        transform .2s ease;
+}
+
+.form-check-card:hover {
+    border-color: #818cf8;
+    background: #fafaff;
+    transform: translateY(-2px);
+    box-shadow: 0 7px 20px rgba(79,70,229,.08);
+}
+
+.form-check-card:has(input:checked) {
+    border-color: #4f46e5;
+    background: linear-gradient(145deg,#f5f7ff,#eef2ff);
+    box-shadow:
+        0 0 0 3px rgba(79,70,229,.08),
+        0 8px 22px rgba(79,70,229,.08);
+}
+
+.form-check-input {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #94a3b8;
+    cursor: pointer;
+    margin-top: 2px;
+    vertical-align: top;
+}
+
+.form-check-input:checked {
+    background-color: #4f46e5;
+    border-color: #4f46e5;
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 3px rgba(79,70,229,.18);
+    border-color: #4f46e5;
+}
+
+.form-check-label {
+    cursor: default;
+    padding-left: 8px;
+    color: #1f2937;
+    font-weight: 750;
+}
+
+.form-check-label small {
+    display: inline-block;
+    margin-top: 5px;
+    font-weight: 500;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+/* =========================================================
+   FORM ELEMENTS
+========================================================= */
+
+.form-label {
+    color: #374151;
+    font-size: 13px;
+    font-weight: 750;
+    margin-bottom: 7px;
+}
+
+.form-control,
+.form-select {
+    width: 100%;
+    min-height: 45px;
+    padding: 10px 13px;
+    border: 1px solid #d8dee9;
+    border-radius: 11px;
+    background: #fff;
+    color: #1f2937;
+    font-size: 13px;
+    transition: all .2s ease;
+}
+
+.form-control:hover,
+.form-select:hover {
+    border-color: #aeb8c8;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,.12);
+    outline: none;
+}
+
+select.form-control {
+    cursor: pointer;
+}
+
+input[type="text"],
+input[type="password"] {
+    cursor: text;
+}
+
+/* =========================================================
+   SUB-SECTIONS
+========================================================= */
+
+#manual_section,
+#automatic_section {
+    background:
+        linear-gradient(180deg,#ffffff 0%,#fbfcff 100%);
+}
+
+#manual_section .section-heading,
+#automatic_section .section-heading {
+    margin-bottom: 22px;
+}
+
+#manual_section h6,
+#bank_fields h6,
+#momo_fields h6 {
+    color: #1f2937;
+    font-size: 14px;
+    font-weight: 800;
+    margin-bottom: 13px;
+}
+
+#momo_fields,
+#bank_fields,
+#hubtel_fields,
+#paystack_fields,
+#flutterwave_fields {
+    padding-top: 4px;
+}
+
+/* =========================================================
+   GATEWAY BADGES
+========================================================= */
+
+.gateway-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 13px;
+    border-radius: 30px;
+    font-size: 11px;
+    font-weight: 800;
+    margin-bottom: 10px;
+}
+
+.badge-paystack {
+    background: #e8f8f1;
+    color: #087f5b;
+    border: 1px solid #c7efdd;
+}
+
+.badge-hubtel {
+    background: #eef2ff;
+    color: #4338ca;
+    border: 1px solid #dbe2ff;
+}
+
+.badge-flutter {
+    background: #fff7df;
+    color: #b45309;
+    border: 1px solid #f8e7af;
+}
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.alert-danger {
+    border: 0;
+    border-left: 4px solid #dc2626;
+    border-radius: 12px;
+    background: #fff1f2;
+    color: #991b1b;
+    padding: 13px 15px;
+    font-size: 13px;
+    margin-bottom: 20px;
+}
+
+/* =========================================================
+   SAVE BUTTON
+========================================================= */
+
+.save-payment-btn {
+    width: 100%;
+    min-height: 54px;
+    border: 0;
+    border-radius: 15px;
+    background: linear-gradient(135deg,#2563eb,#4f46e5);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: .1px;
+    box-shadow: 0 10px 24px rgba(37,99,235,.20);
+    transition: all .25s ease;
+}
+
+.save-payment-btn:hover {
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(37,99,235,.28);
+}
+
+.save-payment-btn:active {
+    transform: translateY(0);
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 768px) {
+
+    .payment-page {
+        padding: 12px 10px 35px;
+    }
+
+    .payment-hero {
+        padding: 23px 20px;
+        border-radius: 20px;
+        margin-bottom: 18px;
+    }
+
+    .hero-content {
+        align-items: flex-start;
+        gap: 14px;
+    }
+
+    .hero-icon {
+        width: 54px;
+        height: 54px;
+        flex-basis: 54px;
+        border-radius: 16px;
+        font-size: 25px;
+    }
+
+    .hero-text h2 {
+        font-size: 23px;
+    }
+
+    .hero-text p {
+        font-size: 12px;
+    }
+
+    .school-pill {
+        font-size: 10px;
+        margin-top: 9px;
+    }
+
+    .payment-card {
+        padding: 18px 15px;
+        border-radius: 17px;
+        margin-bottom: 15px;
+    }
+
+    .section-heading {
+        gap: 10px;
+    }
+
+    .section-number {
+        width: 36px;
+        height: 36px;
+        flex-basis: 36px;
+        border-radius: 11px;
+        font-size: 15px;
+    }
+
+    .section-title {
+        font-size: 17px;
+    }
+
+    .section-desc {
+        font-size: 12px;
+    }
+
+    .form-check-card {
+        padding: 15px;
+    }
+
+    .form-label {
+        font-size: 12px;
+    }
+
+    .form-control,
+    .form-select {
+        min-height: 44px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .payment-page {
+        padding: 8px 7px 30px;
+    }
+
+    .payment-hero {
+        padding: 20px 16px;
+    }
+
+    .hero-icon {
+        width: 48px;
+        height: 48px;
+        flex-basis: 48px;
+        font-size: 22px;
+    }
+
+    .hero-text h2 {
+        font-size: 20px;
+    }
+
+    .hero-text p {
+        font-size: 11px;
+    }
+
+    .school-pill {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .payment-card {
+        padding: 16px 13px;
+    }
+
+    .section-title {
+        font-size: 16px;
+    }
+
+    .save-payment-btn {
+        min-height: 50px;
+    }
+}
+
 </style>
 
-<div class="payment-container">
-    <h2 class="page-title mb-1">💳 Payment Settings</h2>
-    <p class="text-muted mb-4">Configure how parents/guardians pay school fees for <strong>{{ form.instance.name }}</strong></p>
+
+<div class="payment-page">
+
+    <!-- =====================================================
+         HERO
+    ====================================================== -->
+
+    <div class="payment-hero">
+
+        <div class="hero-content">
+
+            <div class="hero-icon">
+                💳
+            </div>
+
+            <div class="hero-text">
+
+                <h2>Payment Settings</h2>
+
+                <p>
+                    Configure how parents and guardians can securely
+                    pay school fees.
+                </p>
+
+                <div class="school-pill">
+                    🏫 {{ form.instance.name }}
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
 
 <form method="post" novalidate>
+
     {% csrf_token %}
 
     {% if form.non_field_errors %}
-        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        <div class="alert alert-danger">
+            {{ form.non_field_errors }}
+        </div>
     {% endif %}
 
-  <!-- 1. Select Payment Methods -->
-    <div class="payment-card">
-        <h5 class="section-title">1️⃣ Select Payment Methods</h5>
-        <p class="section-desc">Tick all methods you want to accept.</p>
 
-        <div class="row mb-2">
-            <div class="col-md-4 mb-3">
-                <div class="form-check-card">
-                    {{ form.accept_cash }}
-                    <label class="form-check-label w-100" for="{{ form.accept_cash.id_for_label }}">
-                        💵 Cash Only<br><small class="text-muted">Pay at school office</small>
-                    </label>
-                </div>
+    <!-- =====================================================
+         1. PAYMENT METHODS
+    ====================================================== -->
+
+    <div class="payment-card">
+
+        <div class="section-heading">
+
+            <div class="section-number">
+                1
             </div>
-            <div class="col-md-4 mb-3">
-                <div class="form-check-card">
-                    {{ form.accept_manual }}
-                    <label class="form-check-label w-100" for="{{ form.accept_manual.id_for_label }}">
-                        📱 Manual Transfer<br><small class="text-muted">MoMo/Bank + upload proof</small>
-                    </label>
-                </div>
+
+            <div class="section-heading-content">
+
+                <h5 class="section-title">
+                    Select Payment Methods
+                </h5>
+
+                <p class="section-desc">
+                    Choose all payment methods your school accepts.
+                </p>
+
             </div>
-            <div class="col-md-4 mb-3">
-                <div class="form-check-card">
-                    {{ form.accept_automatic }}
-                    <label class="form-check-label w-100" for="{{ form.accept_automatic.id_for_label }}">
-                        ⚡ Online Gateway<br><small class="text-muted">Hubtel, Paystack, Flutterwave</small>
-                    </label>
-                </div>
-            </div>
+
         </div>
+
+
+        <div class="row mb-0">
+
+            <div class="col-md-4 mb-3 mb-md-0">
+
+                <div class="form-check-card">
+
+                    {{ form.accept_cash }}
+
+                    <label
+                        class="form-check-label w-100"
+                        for="{{ form.accept_cash.id_for_label }}"
+                    >
+                        💵 Cash Only
+                        <br>
+                        <small class="text-muted">
+                            Pay directly at the school office
+                        </small>
+                    </label>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-md-4 mb-3 mb-md-0">
+
+                <div class="form-check-card">
+
+                    {{ form.accept_manual }}
+
+                    <label
+                        class="form-check-label w-100"
+                        for="{{ form.accept_manual.id_for_label }}"
+                    >
+                        📱 Manual Transfer
+                        <br>
+                        <small class="text-muted">
+                            MoMo/Bank transfer + proof
+                        </small>
+                    </label>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-md-4">
+
+                <div class="form-check-card">
+
+                    {{ form.accept_automatic }}
+
+                    <label
+                        class="form-check-label w-100"
+                        for="{{ form.accept_automatic.id_for_label }}"
+                    >
+                        ⚡ Online Gateway
+                        <br>
+                        <small class="text-muted">
+                            Hubtel, Paystack or Flutterwave
+                        </small>
+                    </label>
+
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
 
-    <!-- 2. Manual Payment Details -->
-    <div class="payment-card" id="manual_section" style="display:none;">
-        <h5 class="section-title">2️⃣ Manual Payment Details</h5>
-        <p class="section-desc">Choose how you want to receive payments</p>
 
-        <!-- MoMo / Bank selector - NOW USING REAL FORM FIELDS -->
+    <!-- =====================================================
+         2. MANUAL PAYMENT
+    ====================================================== -->
+
+    <div class="payment-card" id="manual_section" style="display:none;">
+
+        <div class="section-heading">
+
+            <div class="section-number">
+                2
+            </div>
+
+            <div class="section-heading-content">
+
+                <h5 class="section-title">
+                    Manual Payment Details
+                </h5>
+
+                <p class="section-desc">
+                    Choose how you want to receive manual payments.
+                </p>
+
+            </div>
+
+        </div>
+
+
         <div class="mb-4">
-            <label class="form-label fw-bold">Select Payment Method</label>
+
+            <label class="form-label">
+                Select Payment Method
+            </label>
+
             <div class="row">
+
                 <div class="col-md-6 mb-2">
+
                     <div class="form-check-card">
+
                         {{ form.accept_momo }}
-                        <label class="form-check-label w-100" for="{{ form.accept_momo.id_for_label }}">
+
+                        <label
+                            class="form-check-label w-100"
+                            for="{{ form.accept_momo.id_for_label }}"
+                        >
                             📱 MoMo
                         </label>
+
                     </div>
+
                 </div>
+
+
                 <div class="col-md-6 mb-2">
+
                     <div class="form-check-card">
+
                         {{ form.accept_bank }}
-                        <label class="form-check-label w-100" for="{{ form.accept_bank.id_for_label }}">
+
+                        <label
+                            class="form-check-label w-100"
+                            for="{{ form.accept_bank.id_for_label }}"
+                        >
                             🏦 Bank Transfer
                         </label>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- MOMO -->
+
+        <div id="momo_fields" style="display:none;">
+
+            <h6>MoMo Details</h6>
+
+            <div class="row">
+
+                <div class="col-md-6 mb-3">
+
+                    <label class="form-label">
+                        Momo Number
+                    </label>
+
+                    {{ form.momo_number }}
+
+                </div>
+
+
+                <div class="col-md-6 mb-3">
+
+                    <label class="form-label">
+                        Momo Name
+                    </label>
+
+                    {{ form.momo_name }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- BANK -->
+
+        <div id="bank_fields" style="display:none;">
+
+            <h6>Bank Details</h6>
+
+            <div class="row">
+
+                <div class="col-md-4 mb-3">
+
+                    <label class="form-label">
+                        Bank Name
+                    </label>
+
+                    {{ form.bank_name }}
+
+                </div>
+
+
+                <div class="col-md-4 mb-3">
+
+                    <label class="form-label">
+                        Account Number
+                    </label>
+
+                    {{ form.account_number }}
+
+                </div>
+
+
+                <div class="col-md-4 mb-3">
+
+                    <label class="form-label">
+                        Account Name
+                    </label>
+
+                    {{ form.account_name }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         3. AUTOMATIC PAYMENT
+    ====================================================== -->
+
+    <div class="payment-card" id="automatic_section" style="display:none;">
+
+        <div class="section-heading">
+
+            <div class="section-number">
+                3
+            </div>
+
+            <div class="section-heading-content">
+
+                <h5 class="section-title">
+                    Automatic Payment Gateway
+                </h5>
+
+                <p class="section-desc">
+                    Select your payment provider and enter the required API credentials.
+                </p>
+
+            </div>
+
+        </div>
+
+
+<div class="mb-4">
+            <label class="form-label">Select Gateways You Want (can pick many)</label>
+            <div class="row">
+                <div class="col-md-4 mb-2">
+                    <div class="form-check-card">
+                        <input type="checkbox" name="accept_hubtel" id="id_accept_hubtel" {% if form.instance.accept_hubtel %}checked{% endif %} class="form-check-input">
+                        <label class="form-check-label w-100" for="id_accept_hubtel">🔵 Hubtel</label>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <div class="form-check-card">
+                        <input type="checkbox" name="accept_paystack" id="id_accept_paystack" {% if form.instance.accept_paystack %}checked{% endif %} class="form-check-input">
+                        <label class="form-check-label w-100" for="id_accept_paystack">🟢 Paystack</label>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <div class="form-check-card">
+                        <input type="checkbox" name="accept_flutterwave" id="id_accept_flutterwave" {% if form.instance.accept_flutterwave %}checked{% endif %} class="form-check-input">
+                        <label class="form-check-label w-100" for="id_accept_flutterwave">🟠 Flutterwave</label>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- MoMo Fields -->
-        <div id="momo_fields" style="display:none;">
-            <h6 class="mb-3">MoMo Details</h6>
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Momo Number</label>
-                    {{ form.momo_number }}
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Momo Name</label>
-                    {{ form.momo_name }}
-                </div>
-            </div>
-        </div>
-
-        <!-- Bank Fields -->
-        <div id="bank_fields" style="display:none;">
-            <h6 class="mb-3">Bank Details</h6>
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Bank Name</label>
-                    {{ form.bank_name }}
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Account Number</label>
-                    {{ form.account_number }}
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Account Name</label>
-                    {{ form.account_name }}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 3. Automatic Payment -->
-    <div class="payment-card" id="automatic_section" style="display:none;">
-        <h5 class="section-title">3️⃣ Automatic Payment Gateway</h5>
-        <p class="section-desc">Select your payment provider and enter API keys</p>
-
-        <div class="mb-4">
-            <label class="form-label fw-bold">Select Gateway</label>
-            {{ form.payment_gateway }}
-        </div>
-
-        <div id="hubtel_fields" style="display:none;">
-            <span class="gateway-badge badge-hubtel">Hubtel</span>
+        <!-- HUBTEL - show only if checked -->
+        <div id="hubtel_fields">
+            <span class="gateway-badge badge-hubtel">🔵 Hubtel</span>
             <div class="row mt-3">
                 <div class="col-md-4 mb-3"><label class="form-label">Hubtel Client ID</label>{{ form.hubtel_client_id }}</div>
                 <div class="col-md-4 mb-3"><label class="form-label">Hubtel Client Secret</label>{{ form.hubtel_client_secret }}</div>
@@ -148,26 +888,43 @@ input[type="text"], input[type="password"] { cursor: text; }
             </div>
         </div>
 
-        <div id="paystack_fields" style="display:none;">
-            <span class="gateway-badge badge-paystack">Paystack</span>
+        <!-- PAYSTACK -->
+        <div id="paystack_fields">
+            <span class="gateway-badge badge-paystack">🟢 Paystack</span>
             <div class="row mt-3">
                 <div class="col-md-6 mb-3"><label class="form-label">Paystack Public Key</label>{{ form.paystack_public_key }}</div>
                 <div class="col-md-6 mb-3"><label class="form-label">Paystack Secret Key</label>{{ form.paystack_secret_key }}</div>
             </div>
         </div>
 
-        <div id="flutterwave_fields" style="display:none;">
-            <span class="gateway-badge badge-flutter">Flutterwave</span>
+        <!-- FLUTTERWAVE -->
+        <div id="flutterwave_fields">
+            <span class="gateway-badge badge-flutter">🟠 Flutterwave</span>
             <div class="row mt-3">
                 <div class="col-md-6 mb-3"><label class="form-label">Flutterwave Public Key</label>{{ form.flutterwave_public_key }}</div>
                 <div class="col-md-6 mb-3"><label class="form-label">Flutterwave Secret Key</label>{{ form.flutterwave_secret_key }}</div>
             </div>
         </div>
+        </div>
+
     </div>
 
-    <button type="submit" class="btn btn-primary btn-lg w-100">💾 Save Payment Settings</button>
+
+    <!-- =====================================================
+         SAVE
+    ====================================================== -->
+
+    <button
+        type="submit"
+        class="btn save-payment-btn"
+    >
+        💾 Save Payment Settings
+    </button>
+
 </form>
+
 </div>
+
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -251,16 +1008,19 @@ document.addEventListener('DOMContentLoaded', function() {
         if (bankFields) bankFields.style.display = bankOn? 'block' : 'none';
     }
 
+    const hubtelCheck = document.getElementById('id_accept_hubtel');
+    const paystackCheck = document.getElementById('id_accept_paystack');
+    const flutterCheck = document.getElementById('id_accept_flutterwave');
+
     function toggleGatewayFields() {
-        if (!gatewaySelect) return;
-        const selectedGateway = gatewaySelect.value;
-        if (hubtelFields) hubtelFields.style.display = 'none';
-        if (paystackFields) paystackFields.style.display = 'none';
-        if (flutterwaveFields) flutterwaveFields.style.display = 'none';
-        if (selectedGateway === 'hubtel' && hubtelFields) hubtelFields.style.display = 'block';
-        else if (selectedGateway === 'paystack' && paystackFields) paystackFields.style.display = 'block';
-        else if (selectedGateway === 'flutterwave' && flutterwaveFields) flutterwaveFields.style.display = 'block';
+        if (hubtelFields) hubtelFields.style.display = (automaticCheck && automaticCheck.checked && hubtelCheck && hubtelCheck.checked) ? 'block' : 'none';
+        if (paystackFields) paystackFields.style.display = (automaticCheck && automaticCheck.checked && paystackCheck && paystackCheck.checked) ? 'block' : 'none';
+        if (flutterwaveFields) flutterwaveFields.style.display = (automaticCheck && automaticCheck.checked && flutterCheck && flutterCheck.checked) ? 'block' : 'none';
     }
+
+    if (hubtelCheck) hubtelCheck.addEventListener('change', toggleGatewayFields);
+    if (paystackCheck) paystackCheck.addEventListener('change', toggleGatewayFields);
+    if (flutterCheck) flutterCheck.addEventListener('change', toggleGatewayFields);
 
     if (manualCheck) manualCheck.addEventListener('change', toggleSections);
     if (automaticCheck) automaticCheck.addEventListener('change', toggleSections);

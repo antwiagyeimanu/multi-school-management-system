@@ -3,858 +3,1569 @@
 
 <style>
 
+/* =========================================================
+   PAGE
+========================================================= */
+
 .attendance-page{
-    padding:20px;
-    background:#f8fafc;
+    max-width:1450px;
+    margin:0 auto;
+    padding:25px 15px 50px;
 }
 
-/* HERO */
+
+/* =========================================================
+   HERO
+========================================================= */
+
 .attendance-hero{
-    background:white;
-    border-radius:20px;
-    padding:25px;
-    box-shadow:0 10px 30px rgba(15,23,42,.08);
-    margin-bottom:25px;
+    position:relative;
+    overflow:hidden;
+
+    background:linear-gradient(135deg,#0f172a 0%,#1d4ed8 100%);
+
+    border-radius:26px;
+    padding:30px;
+
+    color:white;
+
+    box-shadow:0 18px 45px rgba(15,23,42,.18);
+
+    margin-bottom:28px;
+}
+
+.attendance-hero::before{
+    content:"";
+
+    position:absolute;
+
+    width:260px;
+    height:260px;
+
+    border-radius:50%;
+
+    background:rgba(255,255,255,.06);
+
+    right:-90px;
+    top:-130px;
+}
+
+.attendance-hero::after{
+    content:"";
+
+    position:absolute;
+
+    width:180px;
+    height:180px;
+
+    border-radius:50%;
+
+    background:rgba(96,165,250,.08);
+
+    left:-90px;
+    bottom:-120px;
+}
+
+.hero-content{
+    position:relative;
+    z-index:2;
+}
+
+
+/* =========================================================
+   HERO TOP
+========================================================= */
+
+.hero-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:25px;
 }
 
 .attendance-title{
-    font-size:24px;
+    margin:0;
+
+    font-size:32px;
+    font-weight:850;
+
+    color:#fff;
+
+    letter-spacing:-.5px;
+}
+
+.attendance-description{
+    margin:9px 0 0;
+
+    color:#dbeafe;
+
+    font-size:14px;
+    line-height:1.6;
+}
+
+
+/* =========================================================
+   DATE
+========================================================= */
+
+.attendance-date-box{
+    min-width:180px;
+
+    padding:18px 22px;
+
+    border-radius:18px;
+
+    text-align:center;
+
+    background:rgba(255,255,255,.13);
+
+    border:1px solid rgba(255,255,255,.12);
+
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+
+    flex-shrink:0;
+}
+
+.attendance-date-box span{
+    display:block;
+
+    font-size:10px;
     font-weight:800;
-    color:#0f172a;
-    text-align:center;
+
+    letter-spacing:1.5px;
+
+    color:#bfdbfe;
+
+    margin-bottom:5px;
 }
 
-.attendance-subtitle{
-    text-align:center;
-    color:#64748b;
-    margin-top:8px;
+.attendance-date-box strong{
+    display:block;
+
+    color:#fff;
+
+    font-size:22px;
+    font-weight:850;
+}
+
+.attendance-date-box small{
+    display:block;
+
+    margin-top:3px;
+
+    color:#dbeafe;
+
+    font-size:12px;
 }
 
 
-/* SUMMARY CARDS */
+/* =========================================================
+   HERO INFORMATION
+========================================================= */
+
+.attendance-info-grid{
+    display:grid;
+
+    grid-template-columns:repeat(4,1fr);
+
+    gap:14px;
+
+    margin-top:26px;
+}
+
+.attendance-info-card{
+    min-width:0;
+
+    background:rgba(255,255,255,.11);
+
+    border:1px solid rgba(255,255,255,.09);
+
+    border-radius:17px;
+
+    padding:16px 17px;
+
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+
+    transition:.2s ease;
+}
+
+.attendance-info-card:hover{
+    background:rgba(255,255,255,.15);
+
+    transform:translateY(-1px);
+}
+
+.attendance-info-card span{
+    display:block;
+
+    color:#bfdbfe;
+
+    font-size:11px;
+    font-weight:750;
+
+    margin-bottom:7px;
+
+    text-transform:uppercase;
+
+    letter-spacing:.4px;
+}
+
+.attendance-info-card strong{
+    display:block;
+
+    color:#fff;
+
+    font-size:15px;
+    font-weight:800;
+
+    word-break:break-word;
+}
+
+
+/* =========================================================
+   SUMMARY
+========================================================= */
 
 .summary-grid{
     display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:15px;
-    margin:25px 0;
-}
 
+    grid-template-columns:repeat(4,1fr);
+
+    gap:16px;
+
+    margin-bottom:25px;
+}
 
 .summary-card{
-    background:white;
-    padding:20px;
-    border-radius:18px;
+    background:#fff;
+
+    padding:19px;
+
+    border-radius:19px;
+
     display:flex;
     align-items:center;
+
     gap:15px;
-    box-shadow:0 8px 20px rgba(0,0,0,.06);
+
+    border:1px solid #e5e7eb;
+
+    box-shadow:0 8px 24px rgba(15,23,42,.06);
+
+    transition:.2s ease;
 }
 
+.summary-card:hover{
+    transform:translateY(-2px);
+
+    box-shadow:0 12px 28px rgba(15,23,42,.09);
+}
 
 .summary-icon{
-    width:55px;
-    height:55px;
+    width:54px;
+    height:54px;
+
+    flex:0 0 54px;
+
     border-radius:15px;
+
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:25px;
-}
 
+    font-size:23px;
+}
 
 .present-icon{
     background:#dcfce7;
 }
 
-
 .absent-icon{
     background:#fee2e2;
 }
-
 
 .total-icon{
     background:#dbeafe;
 }
 
-
 .rate-icon{
     background:#ede9fe;
 }
 
-
-
 .summary-label{
-    font-size:13px;
-    color:#64748b;
-}
+    font-size:12px;
 
+    color:#64748b;
+
+    font-weight:650;
+
+    margin-bottom:3px;
+}
 
 .summary-value{
-    font-size:24px;
-    font-weight:800;
+    font-size:23px;
+
+    font-weight:850;
+
+    color:#0f172a;
 }
 
 
-/* TABLE */
+/* =========================================================
+   ACTION BAR
+========================================================= */
 
-.table-card{
-
-    background:white;
-    border-radius:20px;
-    padding:20px;
-    box-shadow:0 8px 25px rgba(0,0,0,.07);
-
-}
-
-
-.table thead th{
-
-    background:linear-gradient(135deg,#052342,#1d4ed8);
-    color:white;
-    padding:14px;
-    text-align:center;
-    font-size:13px;
-
-}
-
-
-.table tbody td{
-
-    padding:14px;
-    text-align:center;
-    vertical-align:middle;
-
-}
-
-
-.table tbody tr:hover{
-
-    background:#f8fafc;
-
-}
-
-
-
-/* STATUS */
-
-.status-present{
-
-    background:#dcfce7;
-    color:#15803d;
-    padding:8px 14px;
-    border-radius:50px;
-    font-weight:700;
-
-}
-
-
-.status-absent{
-
-    background:#fee2e2;
-    color:#b91c1c;
-    padding:8px 14px;
-    border-radius:50px;
-    font-weight:700;
-
-}
-
-
-.edit-status{
-
-    margin-left:8px;
-
-}
-
-
-/* PAGINATION */
-
-.pagination .page-link{
-
-    border-radius:10px;
-    margin:3px;
-}
-
-
-/* MOBILE */
-
-@media(max-width:768px){
-
-.summary-grid{
-
-grid-template-columns:repeat(2,1fr);
-
-}
-
-
-.attendance-title{
-
-font-size:20px;
-
-}
-
-}
-
-
-@media(max-width:500px){
-
-.summary-grid{
-
-grid-template-columns:1fr;
-
-}
-
-}
-
-.attendance-hero{
-
-    background:linear-gradient(135deg,#0f172a,#1d4ed8);
-
-    border-radius:24px;
-
-    padding:30px;
-
-    color:white;
-
-    box-shadow:0 15px 40px rgba(15,23,42,.18);
-
-    margin-bottom:30px;
-    margin-top:30px;
-
-}
-
-
-
-.hero-top{
-
+.attendance-actions{
     display:flex;
 
     justify-content:space-between;
+    align-items:center;
+
+    gap:12px;
+
+    margin-bottom:18px;
+}
+
+.action-left{
+    display:flex;
 
     align-items:center;
 
-    gap:25px;
+    gap:10px;
 
+    flex-wrap:wrap;
+}
+
+.attendance-action-btn{
+    border-radius:13px!important;
+
+    padding:9px 18px!important;
+
+    font-weight:750;
+
+    border-width:1px;
 }
 
 
+/* =========================================================
+   TABLE CARD
+========================================================= */
 
-.attendance-title{
+.table-card{
+    background:#fff;
 
-    font-size:32px;
+    border-radius:22px;
 
-    font-weight:800;
-      color:#dbeafe;
+    padding:20px;
 
-    margin:0;
+    border:1px solid #e5e7eb;
 
+    box-shadow:0 9px 28px rgba(15,23,42,.07);
+
+    overflow:hidden;
 }
 
+.table-card-header{
+    display:flex;
 
-
-.attendance-description{
-
-    margin-top:8px;
-
-    color:#dbeafe;
-
-    font-size:15px;
-
-}
-
-
-
-.attendance-date-box{
-
-    background:rgba(255,255,255,.15);
-
-    padding:18px 28px;
-
-    border-radius:18px;
-
-    text-align:center;
-
-}
-
-
-
-.attendance-date-box span{
-
-    display:block;
-
-    font-size:11px;
-
-    opacity:.8;
-
-    letter-spacing:1px;
-
-}
-
-
-
-.attendance-date-box strong{
-
-    display:block;
-
-    font-size:24px;
-
-}
-
-
-
-.attendance-date-box small{
-
-    color:#dbeafe;
-
-}
-
-
-
-.attendance-info-grid{
-
-    display:grid;
-
-    grid-template-columns:repeat(4,1fr);
+    justify-content:space-between;
+    align-items:center;
 
     gap:15px;
 
-    margin-top:30px;
+    margin-bottom:18px;
+}
 
+.table-card-title{
+    margin:0;
+
+    font-size:18px;
+
+    font-weight:800;
+
+    color:#0f172a;
+}
+
+.table-card-subtitle{
+    margin:4px 0 0;
+
+    color:#64748b;
+
+    font-size:12px;
+}
+
+.student-count-badge{
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:6px;
+
+    background:#eff6ff;
+
+    color:#1d4ed8;
+
+    padding:7px 13px;
+
+    border-radius:30px;
+
+    font-size:12px;
+
+    font-weight:800;
+
+    white-space:nowrap;
 }
 
 
+/* =========================================================
+   TABLE
+========================================================= */
 
-.attendance-info-card{
+.table-wrapper{
+    width:100%;
 
-    background:rgba(255,255,255,.12);
+    overflow-x:auto;
 
-    border-radius:16px;
-
-    padding:16px;
-
-    backdrop-filter:blur(10px);
-
+    -webkit-overflow-scrolling:touch;
 }
 
+.attendance-table{
+    width:100%;
 
+    border-collapse:separate;
 
-.attendance-info-card span{
+    border-spacing:0;
 
-    display:block;
+    min-width:650px;
+}
 
-    color:#bfdbfe;
+.attendance-table thead th{
+    background:linear-gradient(135deg,#052342,#1d4ed8);
+
+    color:#fff;
+
+    padding:14px 13px;
+
+    text-align:center;
+
+    font-size:12px;
+
+    font-weight:800;
+
+    border:none;
+
+    white-space:nowrap;
+}
+
+.attendance-table thead th:first-child{
+    border-radius:12px 0 0 0;
+}
+
+.attendance-table thead th:last-child{
+    border-radius:0 12px 0 0;
+}
+
+.attendance-table tbody td{
+    padding:14px 13px;
+
+    text-align:center;
+
+    vertical-align:middle;
+
+    border-bottom:1px solid #eef2f7;
+
+    color:#334155;
 
     font-size:13px;
+}
 
-    margin-bottom:6px;
+.attendance-table tbody tr:last-child td{
+    border-bottom:none;
+}
+
+.attendance-table tbody tr{
+    transition:.15s ease;
+}
+
+.attendance-table tbody tr:hover{
+    background:#f8fafc;
+}
+
+.student-name-cell{
+    text-align:left!important;
+
+    font-weight:700;
+
+    color:#0f172a!important;
+}
+
+.student-number{
+    color:#64748b;
+
+    font-weight:600;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.status-present,
+.status-absent{
+    display:inline-flex;
+
+    align-items:center;
+    justify-content:center;
+
+    gap:5px;
+
+    padding:7px 13px;
+
+    border-radius:50px;
+
+    font-weight:800;
+
+    font-size:12px;
+
+    white-space:nowrap;
+}
+
+.status-present{
+    background:#dcfce7;
+
+    color:#15803d;
+}
+
+.status-absent{
+    background:#fee2e2;
+
+    color:#b91c1c;
+}
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.empty-attendance{
+    padding:45px 20px!important;
+
+    text-align:center!important;
+
+    color:#64748b!important;
+}
+
+.empty-attendance i{
+    color:#94a3b8;
+
+    margin-bottom:10px;
+}
+
+
+/* =========================================================
+   PAGINATION
+========================================================= */
+
+.pagination{
+    margin-bottom:0;
+}
+
+.pagination .page-link{
+    border-radius:10px;
+
+    margin:3px;
+
+    border:1px solid #e2e8f0;
+
+    color:#334155;
+
+    font-weight:650;
+}
+
+.pagination .page-item.active .page-link{
+    background:#2563eb;
+
+    border-color:#2563eb;
+
+    color:#fff;
+}
+
+
+/* =========================================================
+   BACK BUTTON
+========================================================= */
+
+.back-button{
+    margin-top:18px;
+
+    border-radius:13px!important;
+
+    font-weight:700;
+
+    padding:9px 18px!important;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media(max-width:1024px) and (min-width:769px){
+
+    .attendance-page{
+        padding:20px 12px 40px;
+    }
+
+    .attendance-hero{
+        padding:25px;
+    }
+
+    .attendance-title{
+        font-size:28px;
+    }
+
+    .attendance-info-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .summary-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .attendance-table{
+        min-width:620px;
+    }
+}
+
+
+/* =========================================================
+   MOBILE
+   SAME TABLE — NO CARDS
+========================================================= */
+
+@media(max-width:768px){
+
+    .attendance-page{
+        padding:8px 7px 35px;
+    }
+
+
+    /* HERO */
+
+    .attendance-hero{
+        margin-top:12px;
+
+        padding:21px 16px;
+
+        border-radius:21px;
+
+        margin-bottom:18px;
+    }
+
+    .hero-top{
+        display:block;
+
+        text-align:center;
+    }
+
+    .attendance-title{
+        font-size:23px;
+
+        letter-spacing:-.3px;
+    }
+
+    .attendance-description{
+        font-size:12px;
+
+        line-height:1.55;
+
+        margin-top:7px;
+    }
+
+
+    /* DATE */
+
+    .attendance-date-box{
+        width:100%;
+
+        min-width:0;
+
+        margin-top:16px;
+
+        padding:13px 15px;
+
+        border-radius:15px;
+    }
+
+    .attendance-date-box strong{
+        font-size:20px;
+    }
+
+    .attendance-date-box span{
+        font-size:12px;
+    }
+
+    .attendance-date-box small{
+        font-size:13px;
+    }
+
+
+    /* HERO INFORMATION */
+
+    .attendance-info-grid{
+        grid-template-columns:1fr;
+
+        gap:9px;
+
+        margin-top:15px;
+    }
+
+    .attendance-info-card{
+        padding:12px 13px;
+
+        border-radius:14px;
+
+        display:flex;
+
+        justify-content:space-between;
+
+        align-items:center;
+
+        gap:15px;
+    }
+
+    .attendance-info-card span{
+        margin:0;
+
+        font-size:13px;
+
+        flex:0 0 auto;
+    }
+
+    .attendance-info-card strong{
+        font-size:15px;
+
+        text-align:right;
+    }
+
+
+    /* SUMMARY */
+
+    .summary-grid{
+        grid-template-columns:repeat(2,1fr);
+
+        gap:9px;
+
+        margin-bottom:17px;
+    }
+
+    .summary-card{
+        padding:13px 10px;
+
+        border-radius:15px;
+
+        gap:9px;
+    }
+
+    .summary-icon{
+        width:40px;
+        height:40px;
+
+        flex:0 0 40px;
+
+        border-radius:11px;
+
+        font-size:25px;
+    }
+
+    .summary-label{
+        font-size:13px;
+    }
+
+    .summary-value{
+        font-size:22px;
+    }
+
+
+    /* ACTIONS */
+
+    .attendance-actions{
+        display:flex;
+
+        flex-direction:column;
+
+        align-items:stretch;
+
+        gap:8px;
+
+        margin-bottom:14px;
+    }
+
+    .action-left{
+        width:100%;
+
+        display:flex;
+    }
+
+    .attendance-action-btn{
+        flex:1;
+
+        padding:8px 10px!important;
+
+        font-size:15px;
+
+        text-align:center;
+    }
+
+
+    /* TABLE */
+
+    .table-card{
+        padding:10px;
+
+        border-radius:18px;
+
+        overflow:hidden;
+    }
+
+    .table-card-header{
+        margin-bottom:12px;
+
+        gap:8px;
+    }
+
+    .table-card-title{
+        font-size:16px;
+    }
+
+    .table-card-subtitle{
+        font-size:13px;
+    }
+
+    .student-count-badge{
+        padding:6px 9px;
+
+        font-size:15px;
+    }
+
+    .table-wrapper{
+        width:100%;
+
+        overflow-x:auto;
+
+        -webkit-overflow-scrolling:touch;
+    }
+
+    .attendance-table{
+        display:table!important;
+
+        width:100%!important;
+
+        min-width:560px;
+
+        table-layout:auto;
+
+        border-collapse:separate;
+    }
+
+    .attendance-table thead{
+        display:table-header-group!important;
+    }
+
+    .attendance-table tbody{
+        display:table-row-group!important;
+    }
+
+    .attendance-table tr{
+        display:table-row!important;
+    }
+
+    .attendance-table th,
+    .attendance-table td{
+        display:table-cell!important;
+
+        white-space:nowrap!important;
+
+        vertical-align:middle!important;
+    }
+
+    .attendance-table thead th{
+        padding:10px 8px!important;
+
+        font-size:14px!important;
+    }
+
+    .attendance-table tbody td{
+        padding:10px 8px!important;
+
+        font-size:14px!important;
+    }
+
+
+    /* MOBILE COLUMN WIDTHS */
+
+    .attendance-table th:nth-child(1),
+    .attendance-table td:nth-child(1){
+        width:8%;
+
+        text-align:center;
+    }
+
+    .attendance-table th:nth-child(2),
+    .attendance-table td:nth-child(2){
+        width:42%;
+
+        text-align:left;
+    }
+
+    .attendance-table th:nth-child(3),
+    .attendance-table td:nth-child(3){
+        width:25%;
+
+        text-align:center;
+    }
+
+    .attendance-table th:nth-child(4),
+    .attendance-table td:nth-child(4){
+        width:25%;
+
+        text-align:center;
+    }
+
+
+    /* STATUS BADGES */
+
+    .status-present,
+    .status-absent{
+        display:inline-flex;
+
+        align-items:center;
+        justify-content:center;
+
+        padding:6px 9px;
+
+        font-size:14px;
+
+        white-space:nowrap;
+    }
+
+
+    /* PAGINATION */
+
+    .pagination{
+        flex-wrap:wrap;
+
+        justify-content:center;
+    }
+
+    .pagination .page-link{
+        font-size:11px;
+
+        padding:7px 10px;
+    }
+
+
+    /* BACK */
+
+    .back-button{
+        width:100%;
+
+        margin-top:12px;
+
+        font-size:14px;
+    }
 
 }
 
 
+/* =========================================================
+   VERY SMALL PHONES
+========================================================= */
 
-.attendance-info-card strong{
-    font-size:16px;
-    color:white;
+@media(max-width:380px){
+
+    .attendance-page{
+        padding-left:5px;
+        padding-right:5px;
+    }
+
+    .attendance-hero{
+        padding:18px 12px;
+    }
+
+    .attendance-title{
+        font-size:21px;
+    }
+
+    .attendance-description{
+        font-size:11px;
+    }
+
+    .attendance-info-card{
+        padding:11px;
+    }
+
+    .attendance-info-card strong{
+        font-size:12px;
+    }
+
+    .summary-grid{
+        gap:7px;
+    }
+
+    .summary-card{
+        padding:11px 8px;
+    }
+
+    .summary-icon{
+        width:36px;
+        height:36px;
+
+        flex-basis:36px;
+
+        font-size:16px;
+    }
+
+    .summary-value{
+        font-size:17px;
+    }
+
+    .summary-label{
+        font-size:9px;
+    }
+
+    .table-card{
+        padding:8px;
+    }
+
+    .attendance-table{
+        min-width:540px;
+    }
+
 }
 
-.attendance-info-card span{
-    display:block;
-    color:#ffff;
-    font-size:13px;
-    margin-bottom:6px;
-}
-.attendance-date-box strong{
-    color:white;
-}
 
+/* =========================================================
+   HIDE OLD MOBILE CARD SYSTEM
+========================================================= */
 
-
-@media(max-width:900px){
-
-.hero-top{
-
-    flex-direction:column;
-
-    align-items:flex-start;
-
+.mobile-student-list,
+.mobile-student-card,
+.mobile-student-top,
+.mobile-student-number,
+.mobile-student-info,
+.mobile-student-name,
+.mobile-student-id,
+.mobile-status-row,
+.mobile-status-label{
+    display:none!important;
 }
 
-
-.attendance-info-grid{
-
-    grid-template-columns:1fr 1fr;
-
-}
-
-
-}
-
-
-
-@media(max-width:600px){
-
-.attendance-info-grid{
-
-    grid-template-columns:1fr;
-
-}
-
-
-.attendance-title{
-
-    font-size:24px;
-
-}
-
-}
 </style>
 
 
+<div class="attendance-page">
+
+
+<!-- =========================================================
+     HERO
+========================================================= -->
+
 <div class="attendance-hero">
 
-    <div class="hero-top">
+    <div class="hero-content">
 
-        <div>
-            <h2 class="attendance-title">
-                📋 Attendance Details
-            </h2>
+        <div class="hero-top">
 
-            <p class="attendance-description">
-                Review attendance records and student participation details.
-            </p>
-        </div>
+            <div>
 
+                <h2 class="attendance-title">
+                    📋 Attendance Details
+                </h2>
 
+                <p class="attendance-description">
+                    Review attendance records and student participation details.
+                </p>
 
-    </div>
-
-
-    <div class="attendance-info-grid">
-
-
-        <div class="attendance-info-card">
-
-            <span>
-                🏫 Class
-            </span>
-
-            <strong>
-                {{ session.school_class.name }}
-            </strong>
-
-        </div>
-
-
-
-        {% if attendance_mode != "class_teacher" %}
-
-        <div class="attendance-info-card">
-
-            <span>
-                📘 Subject
-            </span>
-
-            <strong>
-                {{ session.subject.name }}
-            </strong>
-
-        </div>
-
-        {% endif %}
-
-
-
-        <div class="attendance-info-card">
-
-            <span>
-                👨‍🏫 Marked By
-            </span>
-
-            <strong>
-                {{ session.teacher.get_full_name }}
-            </strong>
             </div>
-                    <div class="attendance-date-box">
-                    
 
-            <span>
-                DATE
-            </span>
 
-            <strong>
-                {{ session.date|date:"d M Y" }}
-            </strong>
+            <!-- DATE -->
 
-            <small>
-                {{ session.date|date:"l" }}
-            </small>
+            <div class="attendance-date-box">
 
-        </div>
-                <div class="attendance-info-card">
+                <span>
+                    DATE
+                </span>
 
-            <span>
-                📅 Week
-            </span>
+                <strong>
+                    {{ session.date|date:"d M Y" }}
+                </strong>
 
-            <strong>
-               Week {{ attendance_week}}
-            </strong>
+                <small>
+                    {{ session.date|date:"l" }}
+                </small>
+
+            </div>
 
         </div>
 
-        
+
+        <!-- =================================================
+             INFORMATION
+        ================================================= -->
+
+        <div class="attendance-info-grid">
+
+
+            <!-- CLASS -->
+
+            <div class="attendance-info-card">
+
+                <span>
+                    🏫 Class
+                </span>
+
+                <strong>
+                    {{ session.school_class.name }}
+                </strong>
+
+            </div>
+
+
+            <!-- SUBJECT -->
+
+            {% if attendance_mode != "class_teacher" %}
+
+            <div class="attendance-info-card">
+
+                <span>
+                    📘 Subject
+                </span>
+
+                <strong>
+                    {{ session.subject.name }}
+                </strong>
+
+            </div>
+
+            {% endif %}
+
+
+            <!-- MARKED BY -->
+
+            {% if is_school_admin %}
+
+            <div class="attendance-info-card">
+
+                <span>
+                    👨‍🏫 Marked By
+                </span>
+
+                <strong>
+                    {{ session.teacher.get_full_name|default:session.teacher.username }}
+                </strong>
+
+            </div>
+
+            {% endif %}
+
+
+            <!-- WEEK -->
+
+            <div class="attendance-info-card">
+
+                <span>
+                    📅 Week
+                </span>
+
+                <strong>
+                    {% if attendance_week %}
+                        Week {{ attendance_week }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </strong>
+
+            </div>
+
 
         </div>
-
 
     </div>
 
+</div>
 
 
-
-
+<!-- =========================================================
+     SUMMARY
+========================================================= -->
 
 <div class="summary-grid">
 
 
-<div class="summary-card">
+    <div class="summary-card">
 
-<div class="summary-icon present-icon">
-🟢
-</div>
+        <div class="summary-icon present-icon">
+            🟢
+        </div>
 
-<div>
+        <div>
 
-<div class="summary-label">
-Present
-</div>
+            <div class="summary-label">
+                Present
+            </div>
 
-<div class="summary-value text-success">
-{{ present_count }}
-</div>
+            <div class="summary-value text-success">
+                {{ present_count }}
+            </div>
 
-</div>
+        </div>
 
-</div>
-
-
-
-<div class="summary-card">
-
-<div class="summary-icon absent-icon">
-🔴
-</div>
-
-<div>
-
-<div class="summary-label">
-Absent
-</div>
-
-<div class="summary-value text-danger">
-{{ absent_count }}
-</div>
-
-</div>
-
-</div>
+    </div>
 
 
+    <div class="summary-card">
+
+        <div class="summary-icon absent-icon">
+            🔴
+        </div>
+
+        <div>
+
+            <div class="summary-label">
+                Absent
+            </div>
+
+            <div class="summary-value text-danger">
+                {{ absent_count }}
+            </div>
+
+        </div>
+
+    </div>
 
 
-<div class="summary-card">
+    <div class="summary-card">
 
-<div class="summary-icon total-icon">
-👨‍🎓
-</div>
+        <div class="summary-icon total-icon">
+            👨‍🎓
+        </div>
 
-<div>
+        <div>
 
-<div class="summary-label">
-Total Students
-</div>
+            <div class="summary-label">
+                Total Students
+            </div>
 
-<div class="summary-value">
-{{ total_count }}
-</div>
+            <div class="summary-value">
+                {{ total_count }}
+            </div>
 
-</div>
+        </div>
 
-</div>
+    </div>
 
 
+    <div class="summary-card">
 
-<div class="summary-card">
+        <div class="summary-icon rate-icon">
+            📊
+        </div>
 
-<div class="summary-icon rate-icon">
-📊
-</div>
+        <div>
 
-<div>
+            <div class="summary-label">
+                Attendance Rate
+            </div>
 
-<div class="summary-label">
-Attendance Rate
-</div>
+            <div class="summary-value">
+                {{ attendance_rate }}%
+            </div>
 
-<div class="summary-value">
-{{ attendance_rate }}%
-</div>
+        </div>
 
-</div>
-
-</div>
-
+    </div>
 
 
 </div>
 
 
+<!-- =========================================================
+     ACTIONS
+========================================================= -->
+
+<div class="attendance-actions">
+
+    <div class="action-left">
+
+        <a href="{% url 'accounts:export_attendance' session.id %}"
+           class="btn btn-success attendance-action-btn">
+
+            <i class="fas fa-file-excel me-1"></i>
+
+            Export
+
+        </a>
 
 
+        {% if tsc_obj and request.user == session.teacher %}
 
-<div class="d-flex justify-content-between mb-3">
+        <a href="{% url 'accounts:mark_attendance' %}?tsc={{ tsc_obj.id }}&date={{ session.date|date:'Y-m-d' }}"
+           class="btn btn-warning attendance-action-btn">
 
-<a href="{% url 'accounts:export_attendance' session.id %}"
-class="btn btn-success rounded-pill px-4">
+            <i class="fas fa-edit me-1"></i>
 
-<i class="fas fa-file-excel"></i>
-Export
+            Edit Attendance
 
-</a>
+        </a>
 
+        {% endif %}
 
-{% if tsc_obj and request.user == session.teacher %}
-
-<a href="{% url 'accounts:mark_attendance' %}?tsc={{ tsc_obj.id }}&date={{ session.date|date:'Y-m-d' }}"
-class="btn btn-warning rounded-pill px-4">
-
-<i class="fas fa-edit"></i>
-Edit Attendance
-
-</a>
-
-{% endif %}
-
+    </div>
 
 </div>
 
 
-
+<!-- =========================================================
+     TABLE CARD
+========================================================= -->
 
 <div class="table-card">
 
 
-<div class="table-responsive">
+    <div class="table-card-header">
 
+        <div>
 
-<table class="table table-bordered">
+            <h3 class="table-card-title">
+                Student Attendance
+            </h3>
 
+            <p class="table-card-subtitle">
+                Attendance status for this session
+            </p>
 
-<thead>
+        </div>
 
-<tr>
 
-<th>#</th>
+        <span class="student-count-badge">
 
-<th>Student Name</th>
+            <i class="fas fa-users"></i>
 
-<th>Student ID</th>
+            {{ total_count }} Students
 
-<th>Status</th>
+        </span>
 
-</tr>
+    </div>
 
-</thead>
 
+    <!-- =====================================================
+         SAME TABLE ON LAPTOP, TABLET AND MOBILE
+    ===================================================== -->
 
+    <div class="table-wrapper">
 
-<tbody>
+        <table class="attendance-table">
 
+            <thead>
 
-{% for record in page_obj %}
+                <tr>
 
+                    <th style="width:7%;">
+                        #
+                    </th>
 
-<tr>
+                    <th style="width:43%;">
+                        Student Name
+                    </th>
 
+                    <th style="width:20%;">
+                        Student ID
+                    </th>
 
-<td>
-{{ page_obj.start_index|add:forloop.counter0 }}
-</td>
+                    <th style="width:30%;">
+                        Status
+                    </th>
 
+                </tr>
 
+            </thead>
 
-<td class="fw-bold">
 
-{{ record.student.get_full_name }}
+            <tbody>
 
-</td>
 
+            {% for record in page_obj %}
 
+            <tr>
 
-<td>
 
-{{ record.student.student_number }}
+                <td>
 
-</td>
+                    {{ page_obj.start_index|add:forloop.counter0 }}
 
+                </td>
 
 
-<td>
+                <td class="student-name-cell">
 
+                    {{ record.student.get_full_name|default:record.student.username }}
 
-{% if record.status == 'P' %}
+                </td>
 
 
-<span class="status-present">
+                <td class="student-number">
 
-✓ Present
+                    {{ record.student.student_number }}
 
-</span>
+                </td>
 
 
-{% else %}
+                <td>
 
 
-<span class="status-absent">
+                    {% if record.status == 'P' %}
 
-✕ Absent
+                    <span class="status-present">
 
-</span>
+                        <i class="fas fa-check"></i>
 
+                        Present
 
-{% endif %}
+                    </span>
 
+                    {% else %}
 
+                    <span class="status-absent">
 
-{% if tsc_obj and request.user == session.teacher %}
+                        <i class="fas fa-times"></i>
 
+                        Absent
 
-<a href="{% url 'accounts:mark_attendance' %}?tsc={{ tsc_obj.id }}&date={{ session.date|date:'Y-m-d' }}"
-class="btn btn-sm btn-outline-primary rounded-pill edit-status">
+                    </span>
 
-<i class="fas fa-edit"></i>
-Edit
+                    {% endif %}
 
-</a>
+                </td>
 
 
-{% endif %}
+            </tr>
 
+            {% empty %}
 
 
-</td>
+            <tr>
 
+                <td colspan="4" class="empty-attendance">
 
-</tr>
+                    <i class="fas fa-calendar-times fa-2x d-block"></i>
 
+                    No attendance records for this session.
 
+                </td>
 
-{% empty %}
+            </tr>
 
 
-<tr>
+            {% endfor %}
 
-<td colspan="4" class="text-center">
 
-No attendance records for this session.
+            </tbody>
 
-</td>
+        </table>
 
-</tr>
-
-
-{% endfor %}
-
-
-
-</tbody>
-
-
-</table>
+    </div>
 
 
 </div>
 
 
-</div>
-
-
-
-
+<!-- =========================================================
+     PAGINATION
+========================================================= -->
 
 {% if page_obj.has_other_pages %}
 
 <nav class="mt-4">
 
-<ul class="pagination justify-content-center">
+    <ul class="pagination justify-content-center">
 
 
-{% if page_obj.has_previous %}
+        {% if page_obj.has_previous %}
 
-<li class="page-item">
+        <li class="page-item">
 
-<a class="page-link"
-href="?page={{ page_obj.previous_page_number }}">
+            <a class="page-link"
+               href="?page={{ page_obj.previous_page_number }}">
 
-Previous
+                <i class="fas fa-chevron-left me-1"></i>
 
-</a>
+                Previous
 
-</li>
+            </a>
 
-{% endif %}
+        </li>
 
-
-
-<li class="page-item active">
-
-<span class="page-link">
-
-Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-
-</span>
-
-</li>
+        {% endif %}
 
 
+        <li class="page-item active">
 
-{% if page_obj.has_next %}
+            <span class="page-link">
 
-<li class="page-item">
+                Page {{ page_obj.number }}
 
-<a class="page-link"
-href="?page={{ page_obj.next_page_number }}">
+                of
 
-Next
+                {{ page_obj.paginator.num_pages }}
 
-</a>
+            </span>
 
-</li>
-
-{% endif %}
+        </li>
 
 
+        {% if page_obj.has_next %}
 
-</ul>
+        <li class="page-item">
+
+            <a class="page-link"
+               href="?page={{ page_obj.next_page_number }}">
+
+                Next
+
+                <i class="fas fa-chevron-right ms-1"></i>
+
+            </a>
+
+        </li>
+
+        {% endif %}
+
+
+    </ul>
 
 </nav>
 
-
 {% endif %}
 
 
-
+<!-- =========================================================
+     BACK
+========================================================= -->
 
 <a href="{% url 'accounts:attendance_report' %}"
-class="btn btn-secondary rounded-pill mt-3">
+   class="btn btn-secondary back-button">
 
-← Back to Report
+    <i class="fas fa-arrow-left me-1"></i>
+
+    Back to Report
 
 </a>
 
 
-
 </div>
-
 
 {% endblock %}

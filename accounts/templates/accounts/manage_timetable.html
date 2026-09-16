@@ -130,6 +130,33 @@
 .lesson-edit-btn:hover{
     background:#dbeafe;
 }
+.copy-term-box {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-left: 5px solid #28a745;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 15px 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.copy-term-box h4 { margin:0; font-size:16px; color:#333; }
+.copy-term-box p { margin:6px 0 12px 0; color:#666; font-size:14px; line-height:1.4; }
+.copy-form { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.copy-form select { 
+  flex:1; min-width:180px; padding:12px; border:1px solid #ccc; 
+  border-radius:10px; font-size:15px; background:white;
+}
+.copy-form button {
+  background:#28a745; color:white; border:none; padding:12px 18px; 
+  border-radius:10px; font-weight:bold; font-size:14px; cursor:pointer;
+  white-space:nowrap;
+}
+.copy-from { font-size:13px; color:#888; }
+
+@media (max-width: 600px) {
+  .copy-form { flex-direction:column; align-items:stretch; }
+  .copy-form select, .copy-form button { width:100%; }
+}
 </style>
 <div class="card border-0 shadow-lg rounded-4 mb-4 overflow-hidden">
 
@@ -510,6 +537,23 @@
 
 </div>
 
+</div>
+<div class="copy-term-box">
+  <h4>📋 Copy Timetable to Another Term</h4>
+  <p>Duplicate this term's timetable to another term — all classes at once.</p>
+  <form method="get" action="{% url 'accounts:copy_timetable_to_term' %}" class="copy-form">
+    <input type="hidden" name="from_term" value="{{ active_term.id }}">
+    <span style="font-size:13px;color:#888;">From: <b>{{ active_term }}</b> →</span>
+    <select name="to_term" required>
+      <option value="">Select Target Term</option>
+      {% for t in all_terms %}
+        {% if t.id != active_term.id %}
+          <option value="{{ t.id }}">{{ t }}</option>
+        {% endif %}
+      {% endfor %}
+    </select>
+    <button onclick="return confirm('Copy timetable from {{ active_term }} to selected term?')">Copy Now</button>
+  </form>
 </div>
 
 {% if messages %}

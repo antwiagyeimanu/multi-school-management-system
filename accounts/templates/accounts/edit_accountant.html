@@ -5,349 +5,343 @@
 {% block content %}
 
 <style>
+/* ==========================
+   EDIT STAFF PAGE
+========================== */
 
-.edit-accountant-wrapper{
-    background:#f8fafc;
-    min-height:100vh;
-    padding:35px 15px;
-}
-
-
-.edit-accountant-card{
+.profile-page{
     max-width:1100px;
-    margin:auto;
-    background:white;
+    margin:0 auto;
+    padding:30px 20px 50px;
+}
+
+/* ==========================
+   PAGE HERO
+========================== */
+
+.profile-hero{
+    background:linear-gradient(135deg,#2563eb,#1e3a8a);
     border-radius:24px;
-    overflow:hidden;
-    box-shadow:0 15px 40px rgba(0,0,0,.08);
-    border:1px solid #e5e7eb;
-}
-
-
-
-/* HEADER */
-
-.edit-header{
-
-    background:linear-gradient(135deg,#2563eb,#1e40af);
-    padding:35px;
+    padding:30px 35px;
     color:white;
-    text-align:center;
-
+    display:flex;
+    align-items:center;
+    gap:20px;
+    margin-bottom:25px;
+    box-shadow:0 15px 35px rgba(37,99,235,.20);
 }
 
+.profile-hero-icon{
+    width:72px;
+    height:72px;
+    border-radius:18px;
+    background:rgba(255,255,255,.15);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:34px;
+}
 
-.edit-header h1{
-
-    margin:0;
-    font-size:32px;
+.profile-hero h1{
+    margin:0 0 6px;
+    font-size:30px;
     font-weight:800;
-
 }
 
-
-.edit-header p{
-
-    margin-top:8px;
-    opacity:.9;
-    font-size:16px;
-
+.profile-hero p{
+    margin:0;
+    color:#dbeafe;
+    font-size:15px;
 }
 
-
-
-/* BODY */
-
-.edit-body{
-
-    padding:35px;
-
-}
-
-
-
-/* ALERT */
-
-.alert{
-
-    padding:14px;
-    border-radius:12px;
-    margin-bottom:20px;
-    font-weight:600;
-
-}
-
-
-.alert-success{
-
-    background:#dcfce7;
-    color:#166534;
-
-}
-
-
-.alert-error{
-
-    background:#fee2e2;
-    color:#991b1b;
-
-}
-
-
-
-/* READ ONLY CARD */
+/* ==========================
+   READ ONLY INFORMATION
+========================== */
 
 .readonly-card{
-
     background:#fffbeb;
     border:1px solid #fbbf24;
-    border-radius:16px;
-    padding:20px;
-    margin-bottom:30px;
-
+    border-radius:20px;
+    padding:25px;
+    margin-bottom:25px;
 }
-
 
 .readonly-card h3{
-
-    margin:0 0 15px;
+    margin:0 0 20px;
     color:#92400e;
-    font-size:18px;
+    font-size:19px;
     font-weight:800;
-
 }
 
-
 .readonly-grid{
-
     display:grid;
     grid-template-columns:repeat(3,1fr);
     gap:15px;
-
 }
 
+.readonly-item{
+    background:#fffdf5;
+    border:1px solid #fde68a;
+    border-radius:14px;
+    padding:15px;
+}
 
 .readonly-item label{
-
     display:block;
     font-size:12px;
     color:#92400e;
     font-weight:700;
-    margin-bottom:5px;
-
+    margin-bottom:6px;
+    text-transform:uppercase;
+    letter-spacing:.4px;
 }
 
-
 .readonly-item input{
-
     width:100%;
-    padding:10px;
-    border-radius:8px;
+    padding:10px 12px;
+    border-radius:10px;
     border:1px solid #fbbf24;
     background:#fffbeb;
     font-weight:700;
     color:#92400e;
-
+    box-sizing:border-box;
 }
 
+/* ==========================
+   FORM CARD
+========================== */
 
-
-/* FORM */
+.form-card{
+    background:white;
+    border-radius:22px;
+    padding:28px;
+    border:1px solid #e5e7eb;
+    box-shadow:0 8px 25px rgba(0,0,0,.06);
+}
 
 .form-grid{
-
     display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:20px;
-
+    grid-template-columns:repeat(3,1fr);
+    gap:18px;
 }
-
 
 .form-group{
-
-    margin-bottom:5px;
-
+    margin-bottom:3px;
 }
-
 
 .form-group label{
-
     display:block;
+    font-size:13px;
     font-weight:700;
     color:#374151;
-    font-size:14px;
     margin-bottom:7px;
-
 }
-
 
 .form-control,
+.form-group input,
+.form-group select,
+.form-group textarea,
 input,
-select{
-
+select,
+textarea{
     width:100%;
-    padding:11px 13px;
-    border-radius:10px;
+    padding:12px 14px;
+    border-radius:12px;
     border:1px solid #d1d5db;
+    background:#fff;
     font-size:15px;
     box-sizing:border-box;
-
 }
 
+.form-group textarea,
+textarea{
+    min-height:90px;
+    resize:vertical;
+}
 
+.form-control:focus,
 input:focus,
-select:focus{
-
+select:focus,
+textarea:focus{
     outline:none;
     border-color:#2563eb;
     box-shadow:0 0 0 3px rgba(37,99,235,.15);
-
 }
 
-
-
-/* PHOTO */
+/* ==========================
+   PHOTO
+========================== */
 
 .photo-box{
-
     margin-top:25px;
     padding:20px;
     background:#f8fafc;
     border-radius:16px;
     border:1px solid #e5e7eb;
-
 }
 
-
 .photo-box img{
-
     width:90px;
     height:90px;
     object-fit:cover;
     border-radius:50%;
     border:4px solid white;
     box-shadow:0 5px 15px rgba(0,0,0,.15);
-
 }
-
 
 .photo-text{
-
     color:#6b7280;
     font-size:13px;
-
 }
 
+/* ==========================
+   STATUS
+========================== */
 
+.status-box{
+    margin-top:20px;
+    background:#f8fafc;
+    padding:15px;
+    border-radius:12px;
+    border:1px solid #e5e7eb;
+}
 
-/* BUTTONS */
+.status-label{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-weight:700;
+    cursor:pointer;
+}
+
+/* ==========================
+   ALERTS
+========================== */
+
+.alert{
+    padding:14px 16px;
+    border-radius:12px;
+    margin-bottom:20px;
+    font-weight:600;
+}
+
+.alert-success{
+    background:#ecfdf5;
+    border:1px solid #10b981;
+    color:#065f46;
+}
+
+.alert-error{
+    background:#fef2f2;
+    border:1px solid #ef4444;
+    color:#991b1b;
+}
+
+/* ==========================
+   BUTTONS
+========================== */
 
 .action-buttons{
-
     display:flex;
     gap:12px;
     margin-top:30px;
-
 }
 
-
 .save-btn{
-
     background:#2563eb;
     color:white;
-    padding:13px 30px;
+    padding:14px 28px;
     border:none;
     border-radius:12px;
     font-weight:700;
+    font-size:15px;
     cursor:pointer;
-
+    transition:.2s ease;
 }
-
 
 .save-btn:hover{
-
     background:#1d4ed8;
-
+    transform:translateY(-1px);
 }
 
-
 .cancel-btn{
-
-    background:#e5e7eb;
-    color:#374151;
-    padding:13px 30px;
+    background:#6b7280;
+    color:white;
+    padding:14px 28px;
     border-radius:12px;
     text-decoration:none;
     font-weight:700;
-
 }
 
+.cancel-btn:hover{
+    background:#4b5563;
+}
 
+/* ==========================
+   MOBILE
+========================== */
 
 @media(max-width:768px){
 
-.edit-body{
+    .profile-page{
+        padding:20px 12px 40px;
+    }
 
-    padding:20px;
+    .profile-hero{
+        flex-direction:column;
+        text-align:center;
+        padding:25px 18px;
+    }
 
+    .profile-hero h1{
+        font-size:26px;
+    }
+
+    .form-card{
+        padding:20px 16px;
+    }
+
+    .form-grid{
+        grid-template-columns:1fr;
+    }
+
+    .readonly-grid{
+        grid-template-columns:1fr;
+    }
+
+    .action-buttons{
+        flex-direction:column;
+    }
+
+    .save-btn,
+    .cancel-btn{
+        width:100%;
+        text-align:center;
+        box-sizing:border-box;
+    }
 }
-
-
-.form-grid{
-
-    grid-template-columns:1fr;
-
-}
-
-
-.readonly-grid{
-
-    grid-template-columns:1fr;
-
-}
-
-
-.action-buttons{
-
-    flex-direction:column;
-
-}
-
-
-.save-btn,
-.cancel-btn{
-
-    text-align:center;
-    width:100%;
-
-}
-
-}
-
-
 </style>
 
 
-<div class="edit-accountant-wrapper">
+
+<div class="profile-page">
 
 
-<div class="edit-accountant-card">
+<div class="profile-hero">
 
+    <div class="profile-hero-icon">
+        💼
+    </div>
 
-<div class="edit-header">
-
-<h1>
-✏️ Edit Accountant
-</h1>
-
-<p>
-Update accountant profile information
-</p>
+    <div>
+        <h1>Edit Accountant</h1>
+        <p>Update accountant profile information.</p>
+    </div>
 
 </div>
 
 
-<div class="edit-body">
+<div class="form-card">
 
 
 {% if messages %}
@@ -447,16 +441,16 @@ disabled>
 
 
 <div class="form-group">
-<label>Email</label>
-{{ form.email }}
+<label>Phone Number *</label>
+{{ form.phone }}
 </div>
-
 
 
 <div class="form-group">
-<label>Phone Number</label>
-{{ form.phone }}
+<label>Email *</label>
+{{ form.email }}
 </div>
+
 
 
 
@@ -500,7 +494,25 @@ disabled>
 {{ form.department }}
 </div>
 
+<div class="form-group">
+<label>Address</label>
+{{ form.address }}
+</div>
 
+<div class="form-group">
+<label>Emergency Contact Name</label>
+{{ form.emergency_contact_name }}
+</div>
+
+<div class="form-group">
+<label>Emergency Contact Phone</label>
+{{ form.emergency_contact_phone }}
+</div>
+
+<div class="form-group">
+<label>Emergency Contact Relationship</label>
+{{ form.emergency_contact_relationship }}
+</div>
 
 </div>
 
@@ -544,22 +556,11 @@ Current profile photo
 
 <!-- STATUS -->
 
-<div style="
-margin-top:20px;
-background:#f8fafc;
-padding:15px;
-border-radius:12px;
-border:1px solid #e5e7eb;
-">
+<div class="status-box">
 
 
-<label style="
-display:flex;
-align-items:center;
-gap:10px;
-font-weight:700;
-cursor:pointer;
-">
+<label class="status-label">
+
 
 {{ form.is_active }}
 
@@ -618,7 +619,6 @@ Cancel
 
 
 
-</div>
 
 </div>
 

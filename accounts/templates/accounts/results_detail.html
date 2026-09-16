@@ -54,22 +54,24 @@
                     <td style="padding:16px; font-weight:600; color:#0f172a;">{{ r.student.first_name }} {{ r.student.last_name }}</td>
                     <td style="padding:16px; font-weight:600; color:#0f172a;">{{ r.student.student_number }}</td>
 
-                    <td style="padding:16px; text-align:center;">
-                        {{ r.class_score|floatformat:0 }}
-                    </td>
-                    <td style="padding:16px; text-align:center;">
-                        {{ r.exam_score|floatformat:0 }}
-                    </td>
-                    <td style="padding:16px; text-align:center;">
-                        <span style="font-weight:800; font-size:16px; 
-                            {% if r.percentage >= 80 %}color:#059669;
-                            {% elif r.percentage >= 70 %}color:#2563eb;
-                            {% elif r.percentage >= 50 %}color:#d97706;
-                            {% elif r.percentage >= 40 %}color:#d97706;
-                            {% else %}color:#dc2626;{% endif %}">
-                            {{ r.total }}%
-                        </span>
-                    </td>
+<td style="padding:16px; text-align:center;">
+    {{ r.class_score|floatformat:0 }}
+</td>
+
+<td style="padding:16px; text-align:center;">
+    {{ r.review_exam|floatformat:0 }}
+</td>
+
+<td style="padding:16px; text-align:center;">
+    <span style="font-weight:800; font-size:16px; 
+        {% if r.percentage >= 80 %}color:#059669;
+        {% elif r.percentage >= 70 %}color:#2563eb;
+        {% elif r.percentage >= 50 %}color:#d97706;
+        {% elif r.percentage >= 40 %}color:#d97706;
+        {% else %}color:#dc2626;{% endif %}">
+        {{ r.total|floatformat:0 }}%
+    </span>
+</td>
                     <td style="padding:16px; text-align:center; font-weight:700;">{{ r.grade }}</td>
                     <td style="padding:16px; text-align:center; color:#64748b;">{{ r.remark }}</td>
                 </tr>

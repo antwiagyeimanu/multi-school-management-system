@@ -1,0 +1,51 @@
+{% load i18n admin_urls static admin_modify %}
+
+<fieldset class="module {{ inline_admin_formset.classes }}">
+    <h2>{{ inline_admin_formset.opts.verbose_name_plural|capfirst }}</h2>
+
+    {{ inline_admin_formset.formset.management_form }}
+
+    <table>
+        <thead>
+            <tr>
+                <th>Stage</th>
+                <th>Term</th>
+                <th>Academic Year</th>
+                <th>Amount</th>
+                <th>Due Date</th>
+                <th>Published</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for form in inline_admin_formset.formset.forms %}
+                {% if form.instance.pk %}
+                <tr>
+                    <td>{{ form.instance.get_stage_display }}</td>
+                    <td>{{ form.instance.term }}</td>
+                    <td>{{ form.instance.academic_year }}</td>
+                    <td>
+                        GHS {{ form.instance.total_amount|floatformat:2 }}
+                        —
+                        <a href="{% url 'admin:accounts_dynamicfeestructure_change' form.instance.pk %}">
+                            Change
+                        </a>
+                    </td>
+                    <td>{{ form.instance.due_date }}</td>
+                    <td>
+                        {% if form.instance.is_published %}
+                            ✓
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ form.DELETE }}
+                    </td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+</fieldset>

@@ -2,53 +2,781 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>{% block title %}My School Management System{% endblock %}</title>
+
     {% load static %}
-    <!-- CSS files - ORDER MATTERS -->
+
     <link rel="stylesheet" href="{% static 'fontawesome/css/bootstrap.min.css' %}">
     <link href="{% static 'fontawesome/css/dashboard.css' %}" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'fontawesome/css/all.min.css' %}">
+
+<style>
+
+/* =========================================================
+   PREMIUM SCHOOL MANAGEMENT SYSTEM
+   BASE TEMPLATE
+========================================================= */
+
+:root {
+    --sms-primary: #1e3a8a;
+    --sms-primary-dark: #172554;
+    --sms-primary-light: #eef2ff;
+    --sms-accent: #4f46e5;
+
+    --sms-text: #172033;
+    --sms-muted: #64748b;
+
+    --sms-border: #e2e8f0;
+    --sms-surface: #ffffff;
+    --sms-background: #f5f7fb;
+
+    --sms-danger: #dc2626;
+
+    --sms-radius: 14px;
+    --sms-shadow: 0 8px 25px rgba(15, 23, 42, .07);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+
+    color: var(--sms-text);
+
+    background:
+        radial-gradient(
+            circle at top right,
+            rgba(79, 70, 229, .055),
+            transparent 28%
+        ),
+        radial-gradient(
+            circle at bottom left,
+            rgba(30, 58, 138, .035),
+            transparent 25%
+        ),
+        var(--sms-background);
+
+    font-family:
+        "Poppins",
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    -webkit-font-smoothing: antialiased;
+}
+
+
+/* =========================================================
+   TOP HEADER
+========================================================= */
+
+body > header {
+    position: relative;
+    z-index: 1000;
+
+    min-height: 76px;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    padding: 0 32px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #111c3b 0%,
+            #172554 45%,
+            #1e3a8a 72%,
+            #312e81 100%
+        );
+
+    border-bottom: 1px solid rgba(255,255,255,.08);
+
+    box-shadow:
+        0 8px 28px rgba(15, 23, 42, .16);
+
+    flex-shrink: 0;
+}
+
+/* subtle header glow */
+
+body > header::before {
+    content: "";
+
+    position: absolute;
+
+    width: 260px;
+    height: 260px;
+
+    right: -80px;
+    top: -150px;
+
+    background: rgba(255,255,255,.06);
+
+    border-radius: 50%;
+
+    pointer-events: none;
+}
+
+
+/* bottom highlight */
+
+body > header::after {
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    bottom: 0;
+
+    width: 100%;
+    height: 2px;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,255,255,.45),
+            transparent
+        );
+}
+
+
+/* =========================================================
+   HEADER TITLE
+========================================================= */
+
+body > header h1 {
+    position: relative;
+
+    z-index: 2;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    color: #ffffff !important;
+
+    font-family:
+        "Poppins",
+        "Segoe UI",
+        Arial,
+        sans-serif !important;
+
+    font-size: 22px !important;
+
+    line-height: 1.2 !important;
+
+    font-weight: 800 !important;
+
+    letter-spacing: .2px;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   NAVIGATION BAR
+========================================================= */
+body > nav {
+    position: sticky;
+
+    top: 0;
+
+    z-index: 999;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    gap: 7px;
+
+    width: 100%;
+
+    padding: 10px 25px;
+
+    background:
+        rgba(255,255,255,.97);
+
+    border-bottom: 1px solid var(--sms-border);
+
+    box-shadow:
+        0 4px 18px rgba(15,23,42,.055);
+
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+
+    overflow-x: auto;
+
+    scrollbar-width: thin;
+
+    flex-shrink: 0;
+}
+
+
+/* =========================================================
+   NAVIGATION SCROLLBAR
+========================================================= */
+
+body > nav::-webkit-scrollbar {
+    height: 4px;
+}
+
+body > nav::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+body > nav::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 20px;
+}
+
+
+/* =========================================================
+   NAVIGATION LINKS
+========================================================= */
+
+body > nav > a {
+    position: relative;
+
+    display: inline-flex !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+
+    gap: 9px;
+
+    min-height: 42px;
+
+    padding: 9px 15px;
+
+    color: #475569 !important;
+
+    background: transparent;
+
+    border: 1px solid transparent;
+
+    border-radius: 11px;
+
+    font-family:
+        "Poppins",
+        "Segoe UI",
+        Arial,
+        sans-serif !important;
+
+    font-size: 12.5px !important;
+
+    line-height: 1.2 !important;
+
+    font-weight: 700 !important;
+
+    text-decoration: none !important;
+
+    white-space: nowrap;
+
+    transition:
+        color .22s ease,
+        background .22s ease,
+        border-color .22s ease,
+        transform .22s ease,
+        box-shadow .22s ease;
+}
+
+
+/* =========================================================
+   NAV TEXT
+========================================================= */
+
+body > nav > a span {
+    display: inline !important;
+
+    font-size: inherit !important;
+
+    font-weight: inherit !important;
+}
+
+
+/* =========================================================
+   NAV ICONS
+========================================================= */
+
+body > nav > a i {
+    width: 18px;
+
+    margin: 0 !important;
+
+    color: #64748b !important;
+
+    font-size: 14px !important;
+
+    line-height: 1 !important;
+
+    text-align: center;
+
+    flex-shrink: 0;
+
+    transition:
+        color .22s ease,
+        transform .22s ease;
+}
+
+
+/* =========================================================
+   NAV HOVER
+========================================================= */
+
+body > nav > a:hover {
+    color: var(--sms-primary) !important;
+
+    background:
+        linear-gradient(
+            135deg,
+            #f8faff,
+            #eef2ff
+        );
+
+    border-color: #dbe4f5;
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 4px 12px rgba(30,58,138,.06);
+
+    text-decoration: none !important;
+}
+
+body > nav > a:hover i {
+    color: var(--sms-primary) !important;
+
+    transform: scale(1.05);
+}
+
+
+/* =========================================================
+   ACTIVE NAVIGATION
+========================================================= */
+
+body > nav > a.active {
+    color: #ffffff !important;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--sms-primary),
+            var(--sms-accent)
+        );
+
+    border-color: transparent;
+
+    box-shadow:
+        0 6px 16px rgba(30,58,138,.20);
+}
+
+body > nav > a.active i {
+    color: #ffffff !important;
+
+    transform: none;
+}
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+body > nav > a[href="/logout/"] {
+    margin-left: 0;
+
+    color: #b91c1c !important;
+
+    background: #fff7f7;
+
+    border-color: #fee2e2;
+}
+
+body > nav > a[href="/logout/"] i {
+    color: #dc2626 !important;
+}
+
+body > nav > a[href="/logout/"]:hover {
+    color: #ffffff !important;
+
+    background:
+        linear-gradient(
+            135deg,
+            #dc2626,
+            #b91c1c
+        );
+
+    border-color: #dc2626;
+
+    box-shadow:
+        0 6px 16px rgba(220,38,38,.18);
+
+    transform: translateY(-1px);
+}
+
+body > nav > a[href="/logout/"]:hover i {
+    color: #ffffff !important;
+}
+
+
+/* =========================================================
+   MAIN CONTENT
+========================================================= */
+
+body > main {
+    position: relative;
+
+    flex: 1;
+
+    width: 100%;
+
+    padding: 28px 30px 40px;
+
+    animation:
+        smsPageEnter .25s ease-out;
+}
+
+
+/* =========================================================
+   PAGE ENTER ANIMATION
+========================================================= */
+
+@keyframes smsPageEnter {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+body > footer {
+    flex-shrink: 0;
+
+    padding: 17px 25px;
+
+    color: #64748b;
+
+    background:
+        rgba(255,255,255,.96);
+
+    border-top: 1px solid var(--sms-border);
+
+    font-family:
+        "Poppins",
+        "Segoe UI",
+        Arial,
+        sans-serif !important;
+
+    font-size: 11px !important;
+
+    line-height: 1.4 !important;
+
+    text-align: center;
+}
+
+
+/* footer decoration */
+
+body > footer::before {
+    content: "✦";
+
+    margin-right: 7px;
+
+    color: var(--sms-accent);
+
+    font-size: 10px;
+}
+
+
+/* =========================================================
+   GLOBAL SCROLLBAR
+========================================================= */
+
+::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+
+    border-radius: 20px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media screen and (max-width: 768px) {
+
+    body > header {
+        min-height: 64px;
+
+        padding: 0 17px;
+    }
+
+
+    body > header h1 {
+        font-size: 18px !important;
+    }
+
+
+    body > nav {
+        gap: 5px;
+
+        padding: 8px 12px;
+    }
+
+
+    body > nav > a {
+        min-height: 38px;
+
+        padding: 8px 11px;
+
+        font-size: 11px !important;
+
+        border-radius: 9px;
+    }
+
+
+    body > nav > a i {
+        font-size: 13px !important;
+    }
+
+
+    body > nav > a[href="/logout/"] {
+        margin-left: 0;
+    }
+
+
+    body > main {
+        padding: 18px 13px 30px;
+    }
+
+
+    body > footer {
+        padding: 15px 12px;
+
+        font-size: 10px !important;
+    }
+}
+
+
+/* =========================================================
+   SMALL PHONES
+========================================================= */
+
+@media screen and (max-width: 480px) {
+
+    body > header {
+        min-height: 60px;
+
+        padding: 0 15px;
+    }
+
+
+    body > header h1 {
+        font-size: 16px !important;
+    }
+
+
+    body > nav {
+        padding: 7px 10px;
+    }
+
+
+    body > nav > a {
+        min-width: 39px;
+
+        padding: 8px 10px;
+    }
+
+
+    body > nav > a span {
+        display: none !important;
+    }
+
+
+    body > nav > a i {
+        margin: 0 !important;
+
+        font-size: 13px !important;
+    }
+}
+
+
+/* =========================================================
+   PRINT
+========================================================= */
+
+@media print {
+
+    body > nav,
+    body > footer,
+    body > header {
+        display: none !important;
+    }
+
+
+    body > main {
+        padding: 0 !important;
+
+        animation: none !important;
+    }
+
+
+    body {
+        background: #ffffff !important;
+    }
+}
+
+</style>
 </head>
+
+
 <body>
+
+
+<!-- =====================================================
+     HEADER
+===================================================== -->
 
 <header>
     <h1>School Management System</h1>
 </header>
 
+
+<!-- =====================================================
+     NAVIGATION
+===================================================== -->
+
 <nav>
-<a href="{% url 'accounts:admin_dashboard' %}" 
-   class="{% if 'admin-dashboard' in request.path %}active{% endif %}">
-    <i class="fas fa-chart-line"></i> Dashboard
-</a>
 
-    <a href="/teachers/" class="{% if 'teachers' in request.path %}active{% endif %}">
-        <i class="fas fa-chalkboard-teacher"></i> Teachers</a>
+    <a href="{% url 'accounts:admin_dashboard' %}"
+       class="{% if 'admin-dashboard' in request.path %}active{% endif %}">
+        <i class="fas fa-chart-line"></i>
+        <span>Dashboard</span>
+    </a>
 
-<a href="{% url 'accounts:manage_accountant_grid' %}" 
-   class="{% if 'manage-accountants' in request.path %}active{% endif %}">
-    <i class="fas fa-calculator"></i> Accountants
-</a>
 
-    <a href="/students/" class="{% if 'students' in request.path %}active{% endif %}">
-        <i class="fas fa-user-graduate"></i> Students</a>
+{% if request.user.role == "admin" or request.user.role == "proprietor" or request.user.role == "proprietress" %}
 
-    <a href="/parents/" class="{% if 'parents' in request.path %}active{% endif %}">
-        <i class="fas fa-users"></i> Guardians</a>
-        
+    <a href="{% url 'accounts:manage_headmaster_grid' %}"
+       class="{% if 'headmaster' in request.path %}active{% endif %}">
+        <i class="fas fa-user-tie"></i>
+        <span>Headteacher</span>
+    </a>
 
-    <!-- ADD THIS BACK -->
+{% endif %}
+
+
+    <a href="/teachers/"
+       class="{% if 'teachers' in request.path %}active{% endif %}">
+        <i class="fas fa-chalkboard-teacher"></i>
+        <span>Teachers</span>
+    </a>
+
+
+{% if not is_basic_school %}
+
+    <a href="{% url 'accounts:manage_accountant_grid' %}"
+       class="{% if 'manage-accountants' in request.path %}active{% endif %}">
+        <i class="fas fa-calculator"></i>
+        <span>Accountants</span>
+    </a>
+
+{% endif %}
+
+
+    <a href="/students/"
+       class="{% if 'students' in request.path %}active{% endif %}">
+        <i class="fas fa-user-graduate"></i>
+        <span>Students</span>
+    </a>
+
+
+{% if not is_basic_school %}
+
+    <a href="/parents/"
+       class="{% if 'parents' in request.path %}active{% endif %}">
+        <i class="fas fa-users"></i>
+        <span>Guardians</span>
+    </a>
+
+{% endif %}
+
+
+    <!-- LOGOUT -->
+
     <a href="/logout/">
-        <i class="fas fa-sign-out-alt"></i> Logout</a>
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Logout</span>
+    </a>
+
 </nav>
 
+
+<!-- =====================================================
+     MAIN CONTENT
+===================================================== -->
+
 <main>
+
     {% block content %}
+
     <!-- Page content will go here -->
+
     {% endblock %}
+
 </main>
 
+
+<!-- =====================================================
+     FOOTER
+===================================================== -->
+
+
 <footer>
-    &copy; 2026 My School
+    &copy;2026 {{ request.user.school.name }} • School Management System. All rights reserved.
+    <div style="font-size:11px; margin-top:4px;">
+        Developed by Antwi-Agyei Manu
+    </div>
 </footer>
 
 </body>

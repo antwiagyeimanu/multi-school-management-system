@@ -2,86 +2,970 @@
 {% block content %}
 
 <style>
-  .provider-box { display:none; margin-top:15px; padding:0; }
-  .provider-box.active { display:block; }
-  .mini-card { background:#f8f9ff; border:1px solid #ddd; border-radius:10px; padding:15px; }
+
+/* =========================================================
+   PREMIUM SMS SETTINGS
+========================================================= */
+
+.sms-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 25px 18px 50px;
+}
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.sms-hero {
+    position: relative;
+    overflow: hidden;
+
+    padding: 30px 32px;
+    margin-bottom: 24px;
+
+    border-radius: 24px;
+
+    color: #fff;
+
+    background:
+        radial-gradient(
+            circle at 88% 12%,
+            rgba(255,255,255,.16),
+            transparent 28%
+        ),
+        radial-gradient(
+            circle at 8% 100%,
+            rgba(255,255,255,.08),
+            transparent 30%
+        ),
+        linear-gradient(
+            135deg,
+            #0f172a,
+            #1e3a8a 55%,
+            #4f46e5
+        );
+
+    box-shadow: 0 18px 45px rgba(15,23,42,.18);
+}
+
+.sms-hero::before {
+    content: "";
+
+    position: absolute;
+
+    width: 190px;
+    height: 190px;
+
+    right: -65px;
+    top: -85px;
+
+    border: 1px solid rgba(255,255,255,.12);
+
+    border-radius: 50%;
+}
+
+.sms-hero::after {
+    content: "";
+
+    position: absolute;
+
+    width: 120px;
+    height: 120px;
+
+    right: 80px;
+    bottom: -80px;
+
+    border: 1px solid rgba(255,255,255,.08);
+
+    border-radius: 50%;
+}
+
+.sms-hero-content {
+    position: relative;
+    z-index: 2;
+
+    display: flex;
+    align-items: center;
+
+    gap: 18px;
+}
+
+.sms-hero-icon {
+    width: 64px;
+    height: 64px;
+
+    flex: 0 0 64px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 19px;
+
+    background: rgba(255,255,255,.13);
+
+    border: 1px solid rgba(255,255,255,.18);
+
+    backdrop-filter: blur(10px);
+
+    font-size: 29px;
+}
+
+.sms-hero-text {
+    flex: 1;
+}
+
+.sms-hero-text h1 {
+    margin: 0 0 5px;
+
+    font-size: 29px;
+    font-weight: 850;
+
+    letter-spacing: -.6px;
+}
+
+.sms-hero-text p {
+    margin: 0;
+
+    max-width: 650px;
+
+    color: rgba(255,255,255,.78);
+
+    font-size: 13px;
+
+    line-height: 1.6;
+}
+
+.sms-status-badge {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 7px;
+
+    margin-top: 12px;
+
+    padding: 7px 13px;
+
+    border-radius: 30px;
+
+    background: rgba(255,255,255,.11);
+
+    border: 1px solid rgba(255,255,255,.17);
+
+    color: #fff;
+
+    font-size: 11px;
+    font-weight: 750;
+}
+
+/* =========================================================
+   MAIN CARD
+========================================================= */
+
+.sms-card {
+    padding: 25px;
+
+    background: #fff;
+
+    border: 1px solid #e8edf5;
+
+    border-radius: 20px;
+
+    box-shadow: 0 8px 28px rgba(15,23,42,.06);
+
+    margin-bottom: 20px;
+}
+
+/* =========================================================
+   SECTION HEADER
+========================================================= */
+
+.sms-section-heading {
+    display: flex;
+    align-items: flex-start;
+
+    gap: 13px;
+
+    margin-bottom: 20px;
+}
+
+.sms-section-number {
+    width: 40px;
+    height: 40px;
+
+    flex: 0 0 40px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 12px;
+
+    background: #eef2ff;
+
+    color: #4338ca;
+
+    font-size: 17px;
+    font-weight: 900;
+}
+
+.sms-section-title {
+    margin: 0;
+
+    color: #111827;
+
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.sms-section-description {
+    margin: 4px 0 0;
+
+    color: #6b7280;
+
+    font-size: 12px;
+
+    line-height: 1.6;
+}
+
+/* =========================================================
+   TOGGLE CARDS
+========================================================= */
+
+.sms-toggle-card {
+    height: 100%;
+
+    padding: 17px;
+
+    background: #f8fafc;
+
+    border: 1px solid #e5eaf1;
+
+    border-radius: 15px;
+
+    transition:
+        .2s ease;
+}
+
+.sms-toggle-card:hover {
+    background: #f5f7ff;
+
+    border-color: #c7d2fe;
+
+    transform: translateY(-2px);
+}
+
+.sms-toggle-inner {
+    display: flex;
+    align-items: center;
+
+    gap: 13px;
+}
+
+.sms-toggle-icon {
+    width: 42px;
+    height: 42px;
+
+    flex: 0 0 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 12px;
+
+    background: #eef2ff;
+
+    color: #4f46e5;
+
+    font-size: 18px;
+}
+
+.sms-toggle-content {
+    flex: 1;
+}
+
+.sms-toggle-content strong {
+    display: block;
+
+    color: #1e293b;
+
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.sms-toggle-content span {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #64748b;
+
+    font-size: 11px;
+
+    line-height: 1.5;
+}
+
+.sms-toggle-card input {
+    width: 19px;
+    height: 19px;
+
+    flex: 0 0 auto;
+
+    cursor: pointer;
+
+    accent-color: #4f46e5;
+}
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.sms-label {
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: #374151;
+
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.sms-form-control,
+.sms-form-select {
+    width: 100%;
+
+    min-height: 46px;
+
+    padding: 10px 13px;
+
+    background: #fff;
+
+    border: 1px solid #d8dee9;
+
+    border-radius: 11px;
+
+    color: #1f2937;
+
+    font-size: 13px;
+
+    transition: .2s ease;
+}
+
+.sms-form-control:focus,
+.sms-form-select:focus {
+    outline: none;
+
+    border-color: #6366f1;
+
+    box-shadow:
+        0 0 0 4px rgba(99,102,241,.10);
+}
+
+/* =========================================================
+   PROVIDER BOX
+========================================================= */
+
+.provider-box {
+    display: none;
+
+    margin-top: 18px;
+}
+
+.provider-box.active {
+    display: block;
+}
+
+.provider-panel {
+    padding: 20px;
+
+    border-radius: 16px;
+
+    border: 1px solid #e2e8f0;
+
+    background: #f8fafc;
+}
+
+.provider-panel.hubtel {
+    background:
+        linear-gradient(
+            145deg,
+            #f0f9ff,
+            #eaf4ff
+        );
+
+    border-color: #bfdbfe;
+}
+
+.provider-panel.mnotify {
+    background:
+        linear-gradient(
+            145deg,
+            #faf5ff,
+            #f5edff
+        );
+
+    border-color: #e9d5ff;
+}
+
+.provider-heading {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    margin-bottom: 18px;
+}
+
+.provider-logo {
+    width: 38px;
+    height: 38px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 10px;
+
+    background: #fff;
+
+    box-shadow: 0 4px 12px rgba(15,23,42,.07);
+
+    font-size: 18px;
+}
+
+.provider-heading h4 {
+    margin: 0;
+
+    color: #1e293b;
+
+    font-size: 14px;
+    font-weight: 850;
+}
+
+.provider-heading p {
+    margin: 2px 0 0;
+
+    color: #64748b;
+
+    font-size: 11px;
+}
+
+/* =========================================================
+   SAVE
+========================================================= */
+
+.sms-save-btn {
+    width: 100%;
+
+    min-height: 52px;
+
+    border: 0;
+
+    border-radius: 14px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #2563eb,
+            #4f46e5
+        );
+
+    color: #fff;
+
+    font-size: 13px;
+    font-weight: 800;
+
+    box-shadow:
+        0 10px 24px rgba(37,99,235,.20);
+
+    transition: .2s ease;
+}
+
+.sms-save-btn:hover {
+    color: #fff;
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 14px 30px rgba(37,99,235,.27);
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 768px) {
+
+    .sms-page {
+        padding: 15px 10px 35px;
+    }
+
+    .sms-hero {
+        padding: 23px 20px;
+
+        border-radius: 20px;
+    }
+
+    .sms-hero-content {
+        align-items: flex-start;
+
+        gap: 13px;
+    }
+
+    .sms-hero-icon {
+        width: 52px;
+        height: 52px;
+
+        flex-basis: 52px;
+
+        border-radius: 15px;
+
+        font-size: 24px;
+    }
+
+    .sms-hero-text h1 {
+        font-size: 23px;
+    }
+
+    .sms-hero-text p {
+        font-size: 11px;
+    }
+
+    .sms-card {
+        padding: 18px 15px;
+
+        border-radius: 17px;
+    }
+
+    .sms-section-heading {
+        gap: 10px;
+    }
+
+    .sms-section-number {
+        width: 36px;
+        height: 36px;
+
+        flex-basis: 36px;
+
+        border-radius: 11px;
+
+        font-size: 15px;
+    }
+
+    .sms-section-title {
+        font-size: 16px;
+    }
+
+    .provider-panel {
+        padding: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .sms-page {
+        padding: 10px 7px 30px;
+    }
+
+    .sms-hero {
+        padding: 20px 16px;
+    }
+
+    .sms-hero-icon {
+        width: 47px;
+        height: 47px;
+
+        flex-basis: 47px;
+
+        font-size: 21px;
+    }
+
+    .sms-hero-text h1 {
+        font-size: 20px;
+    }
+
+    .sms-hero-text p {
+        font-size: 10px;
+    }
+
+    .sms-card {
+        padding: 16px 13px;
+    }
+
+    .sms-toggle-card {
+        padding: 14px;
+    }
+
+    .sms-toggle-icon {
+        width: 38px;
+        height: 38px;
+
+        flex-basis: 38px;
+    }
+}
+
 </style>
 
-<div class="container mt-3">
-  <div class="card" style="max-width:900px; margin:auto;">
-    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">📱 SMS Settings</h5>
-      <small>Test Mode = FREE</small>
+
+<div class="sms-page">
+
+    <!-- =====================================================
+         HERO
+    ====================================================== -->
+
+    <div class="sms-hero">
+
+        <div class="sms-hero-content">
+
+            <div class="sms-hero-icon">
+                📱
+            </div>
+
+            <div class="sms-hero-text">
+
+                <h1>SMS Settings</h1>
+
+                <p>
+                    Configure SMS notifications, messaging providers,
+                    sender information and test mode for your school.
+                </p>
+
+                <div class="sms-status-badge">
+                    🧪 Test Mode Available — FREE
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
-    <div class="card-body p-3">
-      <form method="POST">
+
+
+    <!-- =====================================================
+         SETTINGS FORM
+    ====================================================== -->
+
+    <form method="POST">
+
         {% csrf_token %}
-        
-        <!-- Row 1: Toggles -->
-        <div class="row g-2 mb-3">
-          <div class="col-6">
-            <div class="mini-card">{{ form.sms_enabled }} <strong>Enable SMS</strong></div>
-          </div>
-          <div class="col-6">
-            <div class="mini-card">{{ form.sms_test_mode }} <strong>Test Mode (FREE)</strong></div>
-          </div>
-        </div>
 
-        <!-- Row 2: Provider + Sender ID side by side -->
-        <div class="row g-3 mb-3">
-          <div class="col-md-6">
-            <label class="form-label fw-bold small">SMS Provider</label>
-            {{ form.sms_provider }}
-          </div>
-          <div class="col-md-6"> 
-            <label class="form-label fw-bold small">Sender ID (e.g. School Name)</label>
-            {{ form.sms_sender_id }}
-          </div>
-        </div>
 
-        <!-- Hubtel Box -->
-        <div id="hubtel-box" class="provider-box">
-          <div class="mini-card" style="background:#e3f2fd; border-color:#90caf9;">
-            <h6 class="fw-bold">🔵 Hubtel</h6>
-            <div class="row g-2">
-              <div class="col-md-6">
-                <label class="small">Client ID</label>
-                {{ form.hubtel_client_id }}
-              </div>
-              <div class="col-md-6">
-                <label class="small">Client Secret</label>
-                {{ form.hubtel_client_secret }}
-              </div>
-              <div class="col-12 mt-2">
-                <label class="small">Merchant Account</label>
-                {{ form.hubtel_merchant_account }}
-              </div>
+        <!-- =================================================
+             SMS CONTROL
+        ================================================== -->
+
+        <div class="sms-card">
+
+            <div class="sms-section-heading">
+
+                <div class="sms-section-number">
+                    1
+                </div>
+
+                <div>
+
+                    <h3 class="sms-section-title">
+                        SMS Control
+                    </h3>
+
+                    <p class="sms-section-description">
+                        Turn SMS messaging on or off and choose
+                        whether you want to test messages for free.
+                    </p>
+
+                </div>
+
             </div>
-          </div>
-        </div>
 
-        <!-- MNotify Box -->
-        <div id="mnotify-box" class="provider-box">
-          <div class="mini-card" style="background:#f3e5f5; border-color:#ce93d8;">
-            <h6 class="fw-bold">🟣 MNotify</h6>
-            <div class="row g-2">
-              <div class="col-md-6">
-                <label class="small">API Key</label>
-                {{ form.mnotify_api_key }}
-              </div>
-              <div class="col-md-6">
-                <label class="small">Sender ID</label>
-                {{ form.mnotify_sender_id }}
-              </div>
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+
+                    <div class="sms-toggle-card">
+
+                        <div class="sms-toggle-inner">
+
+                            <div class="sms-toggle-icon">
+                                🔔
+                            </div>
+
+                            <div class="sms-toggle-content">
+
+                                <strong>
+                                    Enable SMS
+                                </strong>
+
+                                <span>
+                                    Allow the school system to send SMS notifications.
+                                </span>
+
+                            </div>
+
+                            {{ form.sms_enabled }}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <div class="sms-toggle-card">
+
+                        <div class="sms-toggle-inner">
+
+                            <div class="sms-toggle-icon">
+                                🧪
+                            </div>
+
+                            <div class="sms-toggle-content">
+
+                                <strong>
+                                    Test Mode
+                                </strong>
+
+                                <span>
+                                    Test SMS functionality without using paid SMS credits.
+                                </span>
+
+                            </div>
+
+                            {{ form.sms_test_mode }}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
             </div>
-          </div>
+
         </div>
 
-        <button class="btn btn-primary w-100 mt-3">Save Settings</button>
-      </form>
-    </div>
-  </div>
+
+        <!-- =================================================
+             GENERAL SMS SETTINGS
+        ================================================== -->
+
+        <div class="sms-card">
+
+            <div class="sms-section-heading">
+
+                <div class="sms-section-number">
+                    2
+                </div>
+
+                <div>
+
+                    <h3 class="sms-section-title">
+                        Messaging Configuration
+                    </h3>
+
+                    <p class="sms-section-description">
+                        Select your SMS provider and define the sender
+                        information that recipients will see.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+
+                    <label class="sms-label">
+                        SMS Provider
+                    </label>
+
+                    {{ form.sms_provider }}
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <label class="sms-label">
+                        Sender ID
+                    </label>
+
+                    {{ form.sms_sender_id }}
+
+                    <small
+                        style="
+                            display:block;
+                            margin-top:6px;
+                            color:#94a3b8;
+                            font-size:10px;
+                        "
+                    >
+                        Example: Your School Name
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 HUBTEL
+            ================================================== -->
+
+            <div
+                id="hubtel-box"
+                class="provider-box"
+            >
+
+                <div class="provider-panel hubtel">
+
+                    <div class="provider-heading">
+
+                        <div class="provider-logo">
+                            🔵
+                        </div>
+
+                        <div>
+
+                            <h4>
+                                Hubtel Configuration
+                            </h4>
+
+                            <p>
+                                Enter your Hubtel account credentials.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+
+                            <label class="sms-label">
+                                Client ID
+                            </label>
+
+                            {{ form.hubtel_client_id }}
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label class="sms-label">
+                                Client Secret
+                            </label>
+
+                            {{ form.hubtel_client_secret }}
+
+                        </div>
+
+
+                        <div class="col-12">
+
+                            <label class="sms-label">
+                                Merchant Account
+                            </label>
+
+                            {{ form.hubtel_merchant_account }}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 MNOTIFY
+            ================================================== -->
+
+            <div
+                id="mnotify-box"
+                class="provider-box"
+            >
+
+                <div class="provider-panel mnotify">
+
+                    <div class="provider-heading">
+
+                        <div class="provider-logo">
+                            🟣
+                        </div>
+
+                        <div>
+
+                            <h4>
+                                MNotify Configuration
+                            </h4>
+
+                            <p>
+                                Enter your MNotify API credentials.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+
+                            <label class="sms-label">
+                                API Key
+                            </label>
+
+                            {{ form.mnotify_api_key }}
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label class="sms-label">
+                                Sender ID
+                            </label>
+
+                            {{ form.mnotify_sender_id }}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             SAVE
+        ================================================== -->
+
+        <button
+            type="submit"
+            class="sms-save-btn"
+        >
+            💾 Save SMS Settings
+        </button>
+
+    </form>
+
 </div>
+
 
 <script>
 function toggleProvider() {

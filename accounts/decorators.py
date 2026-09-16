@@ -24,7 +24,7 @@ def student_required(view_func):
 def admin_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-        if request.user.is_authenticated and request.user.role == 'admin':
+        if request.user.is_authenticated and request.user.role in ['admin', 'proprietor', 'proprietress']:
             return view_func(request, *args, **kwargs)
         return redirect('login')  # redirect if not admin
     return wrapper

@@ -1,0 +1,337 @@
+{% extends "accounts/dashboard_base.html" %}
+
+{% block content %}
+
+<style>
+    .daily-fee-page {
+        padding-bottom: 30px;
+    }
+
+    .daily-fee-header {
+        background: linear-gradient(135deg, #111827, #1f2937);
+        color: #fff;
+        border-radius: 18px;
+        padding: 26px 28px;
+        margin-bottom: 22px;
+        box-shadow: 0 10px 30px rgba(0,0,0,.08);
+    }
+
+    .daily-fee-header h4 {
+        margin: 0;
+        font-weight: 700;
+    }
+
+    .daily-fee-header p {
+        margin: 6px 0 0;
+        color: rgba(255,255,255,.7);
+        font-size: 14px;
+    }
+
+    .fee-card {
+        background: #fff;
+        border: 1px solid #edf0f4;
+        border-radius: 18px;
+        box-shadow: 0 8px 25px rgba(15,23,42,.05);
+        overflow: hidden;
+    }
+
+    .fee-card-header {
+        padding: 20px 22px;
+        border-bottom: 1px solid #edf0f4;
+    }
+
+    .fee-card-header h6 {
+        margin: 0;
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .fee-card-header small {
+        color: #6b7280;
+    }
+
+    .fee-form {
+        padding: 22px;
+    }
+
+    .fee-form label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 7px;
+    }
+
+    .fee-form .form-select,
+    .fee-form .form-control {
+        min-height: 46px;
+        border-radius: 10px;
+        border: 1px solid #dfe3e8;
+        box-shadow: none;
+    }
+
+    .fee-form .form-select:focus,
+    .fee-form .form-control:focus {
+        border-color: #6b7280;
+        box-shadow: 0 0 0 3px rgba(107,114,128,.12);
+    }
+
+    .save-fee-btn {
+        min-height: 46px;
+        border: 0;
+        border-radius: 10px;
+        font-weight: 600;
+        background: #111827;
+        color: #fff;
+        transition: .2s ease;
+    }
+
+    .save-fee-btn:hover {
+        background: #000;
+        color: #fff;
+        transform: translateY(-1px);
+    }
+
+    .fee-table {
+        margin: 0;
+    }
+
+    .fee-table thead th {
+        background: #f8fafc;
+        color: #6b7280;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        font-weight: 700;
+        padding: 14px 22px;
+        border-bottom: 1px solid #edf0f4;
+    }
+
+    .fee-table tbody td {
+        padding: 17px 22px;
+        vertical-align: middle;
+        border-color: #f0f2f5;
+    }
+
+    .class-name {
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .fee-amount {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: #f1f5f9;
+        color: #111827;
+        font-weight: 700;
+        font-size: 13px;
+    }
+
+    .empty-state {
+        padding: 45px 20px !important;
+        text-align: center;
+        color: #6b7280;
+    }
+
+    .empty-icon {
+        width: 52px;
+        height: 52px;
+        margin: 0 auto 12px;
+        border-radius: 50%;
+        background: #f3f4f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6b7280;
+        font-size: 20px;
+    }
+
+    @media (max-width: 767px) {
+        .daily-fee-header {
+            padding: 22px 20px;
+        }
+
+        .fee-form {
+            padding: 18px;
+        }
+
+        .fee-table thead th,
+        .fee-table tbody td {
+            padding: 13px 16px;
+        }
+
+        .save-fee-btn {
+            width: 100%;
+        }
+    }
+</style>
+
+
+<div class="container-fluid daily-fee-page">
+
+    <!-- PAGE HEADER -->
+    <div class="daily-fee-header">
+        <h4>
+            <i class="fas fa-coins me-2"></i>
+            Daily Fee Settings
+        </h4>
+
+        <p>
+            Configure the daily fee amount for each class in your school.
+        </p>
+    </div>
+
+
+    <!-- SET DAILY FEE -->
+    <div class="fee-card mb-4">
+
+        <div class="fee-card-header">
+            <h6>Set Class Daily Fee</h6>
+            <small>
+                Each class can have its own daily fee amount.
+            </small>
+        </div>
+
+        <div class="fee-form">
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="row g-3 align-items-end">
+
+                    <div class="col-lg-5">
+                        <label for="school_class">
+                            Class
+                        </label>
+
+                        <select name="school_class"
+                                id="school_class"
+                                class="form-select"
+                                required>
+
+                            <option value="">
+                                Select class
+                            </option>
+
+                            {% for school_class in classes %}
+                                <option value="{{ school_class.id }}">
+                                    {{ school_class.name }}
+                                </option>
+                            {% endfor %}
+
+                        </select>
+                    </div>
+
+
+                    <div class="col-lg-4">
+                        <label for="amount">
+                            Daily Fee Amount
+                        </label>
+
+                        <div class="input-group">
+                            <span class="input-group-text">GH₵</span>
+
+                            <input type="number"
+                                   name="amount"
+                                   id="amount"
+                                   class="form-control"
+                                   min="0"
+                                   step="0.01"
+                                   placeholder="0.00"
+                                   required>
+                        </div>
+                    </div>
+
+
+                    <div class="col-lg-3">
+                        <button type="submit"
+                                class="btn save-fee-btn w-100">
+                            <i class="fas fa-save me-2"></i>
+                            Save Daily Fee
+                        </button>
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- CURRENT FEES -->
+    <div class="fee-card">
+
+        <div class="fee-card-header">
+            <h6>Current Daily Fees</h6>
+            <small>
+                Daily fee amounts currently configured for each class.
+            </small>
+        </div>
+
+
+        <div class="table-responsive">
+
+            <table class="table fee-table align-middle">
+
+                <thead>
+                    <tr>
+                        <th>Class</th>
+                        <th>Daily Fee</th>
+                    </tr>
+                </thead>
+
+
+                <tbody>
+
+                    {% for item in settings %}
+
+                    <tr>
+
+                        <td>
+                            <span class="class-name">
+                                {{ item.school_class.name }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="fee-amount">
+                                GH₵ {{ item.amount }}
+                            </span>
+                        </td>
+
+                    </tr>
+
+                    {% empty %}
+
+                    <tr>
+                        <td colspan="2" class="empty-state">
+
+                            <div class="empty-icon">
+                                <i class="fas fa-coins"></i>
+                            </div>
+
+                            <strong>No daily fees configured</strong>
+
+                            <div class="small mt-1">
+                                Set a daily fee above to get started.
+                            </div>
+
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

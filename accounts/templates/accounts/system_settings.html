@@ -1,16 +1,754 @@
 {% extends 'accounts/dashboard_base.html' %}
 
 {% block content %}
-<h2>System Settings</h2>
 
-<form method="post">
-  {% csrf_token %}
-  <label for="site_name">Site Name:</label>
-  <input type="text" id="site_name" name="site_name" value="My School Management System"><br><br>
+<div class="settings-page">
+<!-- PAGE HEADER -->
+<div class="settings-hero">
+    <div class="hero-icon">
+        <i class="fas fa-sliders-h"></i>
+    </div>
+    <div>
+        <h1>System Settings</h1>
+        <p>Manage your school's system preferences, limits and data protection.</p>
+    </div>
+</div>
+<!-- GENERAL SETTINGS CARD -->
+<div class="settings-card">
+    <div class="card-heading">
+        <div class="heading-icon blue">
+            <i class="fas fa-globe"></i>
+        </div>
+        <div>
+            <h3>General Settings</h3>
+            <p>Configure the basic information displayed across your system.</p>
+        </div>
+    </div>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="site_name">
+                Site Name
+            </label>
+            <input
+                type="text"
+                id="site_name"
+                name="site_name"
+                class="modern-input"
+                value="{{ setting.site_name }}"
+                required
+            >
+            <span class="help-text">
+                The name displayed for your school management system.
+            </span>
+        </div>
+        <!-- STUDENT SETTINGS -->
+        <div class="card-heading section-heading">
+            <div class="heading-icon purple">
+                <i class="fas fa-user-graduate"></i>
+            </div>
+            <div>
+                <h3>Student & Class Settings</h3>
+                <p>Control the maximum number of students allowed in a class.</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="max_students">
+                Maximum Students per Class
+            </label>
+            <input
+                type="number"
+                id="max_students"
+                name="max_students"
+                class="modern-input"
+                value="{{ setting.max_students }}"
+                min="1"
+                required
+            >
+            <span class="help-text">
+                Maximum number of students allowed in a class.
+            </span>
+        </div>
+        <button type="submit" class="save-button">
+            <i class="fas fa-check"></i>
+            Save System Settings
+        </button>
+    </form>
+</div>
+<!-- BACKUP & RESTORE -->
+<div class="backup-card">
+    <div class="backup-top">
+        <div class="backup-icon">
+            <i class="fas fa-database"></i>
+        </div>
+        <div>
+            <h2>Backup & Restore</h2>
+            <p>
+                Protect your school's data by creating secure backups
+                and restoring them whenever necessary.
+            </p>
+        </div>
+    </div>
+    <!-- ACTION CARDS -->
+    <div class="backup-actions">
+        <!-- BACKUP -->
+        <div class="backup-action backup-action-blue">
+            <div class="action-icon">
+                <i class="fas fa-cloud-download-alt"></i>
+            </div>
+            <div class="action-content">
+                <h4>Create Backup</h4>
+                <p>
+                    Download a complete backup of your school's
+                    data and important files.
+                </p>
+                <a
+                    href="{% url 'accounts:school_backup' %}"
+                    class="action-button primary"
+                >
+                    <i class="fas fa-download"></i>
+                    Backup Database
+                </a>
+            </div>
+        </div>
+        <!-- RESTORE -->
+        <div class="backup-action backup-action-purple">
+            <div class="action-icon">
+                <i class="fas fa-cloud-upload-alt"></i>
+            </div>
+            <div class="action-content">
+                <h4>Restore Backup</h4>
+                <p>
+                    Restore your school's data from a previously
+                    created ZIP backup file.
+                </p>
+                <form
+                    method="post"
+                    enctype="multipart/form-data"
+                    action="{% url 'accounts:restore_school_backup' %}"
+                    class="restore-form"
+                >
+                    {% csrf_token %}
+                    <label class="file-picker">
+                        <i class="fas fa-file-archive"></i>
+                        <span>
+                            Choose ZIP backup
+                        </span>
+                  <input
+                    type="file"
+                    name="backup_file"
+                    id="backupFile"
+                    accept=".zip"
+                    required
+                >
+                    </label>
+                    <button
+                        type="submit"
+                        class="action-button secondary"
+                    >
+                        <i class="fas fa-upload"></i>
+                        Restore Database
+                    </button>
+                </form>
+                <script>
+document.getElementById("backupFile").addEventListener("change", function () {
 
-  <label for="max_students">Max Students per Class:</label>
-  <input type="number" id="max_students" name="max_students" value="30"><br><br>
+    const fileName = this.files.length
+        ? this.files[0].name
+        : "Choose ZIP backup";
 
-  <input type="submit" value="Save Settings">
-</form>
+    this.closest(".restore-form")
+        .querySelector(".file-picker span")
+        .textContent = fileName;
+
+});
+</script>
+            </div>
+        </div>
+    </div>
+    <!-- AVAILABLE BACKUPS -->
+    <div class="available-backups">
+        <div class="backup-list-header">
+            <div>
+                <h3>
+                    <i class="fas fa-history"></i>
+                    Available Backups
+                </h3>
+                <p>
+                    Backups created for your school are listed below.
+                </p>
+            </div>
+            {% if backups %}
+                <span class="backup-count">
+                    {{ backups|length }}
+                    Backup{{ backups|length|pluralize }}
+                </span>
+            {% endif %}
+        </div>
+        {% if backups %}
+            <div class="backup-list">
+                {% for backup in backups %}
+                    <div class="backup-file">
+                        <div class="file-icon">
+                            <i class="fas fa-file-archive"></i>
+                        </div>
+                        <div class="file-info">
+                            <strong>
+                                {{ backup.name }}
+                            </strong>
+                            <span>
+                                School backup file
+                            </span>
+                        </div>
+                        <div class="file-status">
+                            <i class="fas fa-check-circle"></i>
+                            Available
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-backups">
+                <div class="empty-icon">
+                    <i class="fas fa-database"></i>
+                </div>
+                <h4>No backups yet</h4>
+                <p>
+                    Create your first backup to protect your school's data.
+                </p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+</div>
+<style>
+/* =========================================
+   PAGE
+========================================= */
+.settings-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 25px 15px 60px;
+}
+/* =========================================
+   HERO
+========================================= */
+.settings-hero {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 28px 30px;
+    margin-bottom: 25px;
+    border-radius: 22px;
+    background:
+        linear-gradient(
+            135deg,
+            #2563eb,
+            #4f46e5
+        );
+    color: white;
+    box-shadow:
+        0 12px 35px rgba(37, 99, 235, .20);
+}
+.hero-icon {
+    width: 62px;
+    height: 62px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 18px;
+    background: rgba(255,255,255,.18);
+    font-size: 27px;
+}
+.settings-hero h1 {
+    margin: 0;
+    font-size: 29px;
+    font-weight: 800;
+}
+.settings-hero p {
+    margin: 5px 0 0;
+    font-size: 14px;
+    opacity: .88;
+}
+/* =========================================
+   MAIN SETTINGS CARD
+========================================= */
+.settings-card {
+    background: white;
+    border-radius: 22px;
+    padding: 30px;
+    margin-bottom: 25px;
+    box-shadow:
+        0 8px 30px rgba(15,23,42,.07);
+    border: 1px solid #eef0f5;
+}
+/* =========================================
+   CARD HEADING
+========================================= */
+.card-heading {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+.card-heading.section-heading {
+    margin-top: 35px;
+    padding-top: 30px;
+    border-top: 1px solid #eef0f4;
+}
+.heading-icon {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    font-size: 19px;
+}
+.heading-icon.blue {
+    background: #eff6ff;
+    color: #2563eb;
+}
+.heading-icon.purple {
+    background: #f5f3ff;
+    color: #7c3aed;
+}
+.card-heading h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 750;
+    color: #111827;
+}
+.card-heading p {
+    margin: 4px 0 0;
+    color: #6b7280;
+    font-size: 13px;
+}
+/* =========================================
+   FORM
+========================================= */
+.form-group {
+    margin-bottom: 20px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #374151;
+}
+.modern-input {
+    width: 100%;
+    height: 48px;
+    padding: 0 15px;
+    border: 1px solid #d9dee8;
+    border-radius: 12px;
+    background: #fbfcfe;
+    font-size: 14px;
+    color: #111827;
+    outline: none;
+    transition: .2s;
+}
+.modern-input:focus {
+    border-color: #4f46e5;
+    background: white;
+    box-shadow:
+        0 0 0 4px rgba(79,70,229,.10);
+}
+.help-text {
+    display: block;
+    margin-top: 7px;
+    font-size: 12px;
+    color: #6b7280;
+}
+/* =========================================
+   SAVE BUTTON
+========================================= */
+.save-button {
+    margin-top: 10px;
+    border: none;
+    border-radius: 12px;
+    padding: 13px 22px;
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    background:
+        linear-gradient(
+            135deg,
+            #2563eb,
+            #4f46e5
+        );
+    box-shadow:
+        0 7px 18px rgba(79,70,229,.18);
+    transition: .2s;
+}
+.save-button:hover {
+    transform: translateY(-1px);
+}
+/* =========================================
+   BACKUP CARD
+========================================= */
+.backup-card {
+    background: white;
+    border-radius: 22px;
+    padding: 30px;
+    border: 1px solid #eef0f5;
+    box-shadow:
+        0 8px 30px rgba(15,23,42,.07);
+}
+/* =========================================
+   BACKUP HEADER
+========================================= */
+.backup-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    padding-bottom: 25px;
+    border-bottom: 1px solid #eef0f4;
+}
+.backup-icon {
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 17px;
+    background: #ecfdf5;
+    color: #059669;
+    font-size: 23px;
+    flex-shrink: 0;
+}
+.backup-top h2 {
+    margin: 0;
+    font-size: 21px;
+    font-weight: 800;
+    color: #111827;
+}
+.backup-top p {
+    max-width: 650px;
+    margin: 6px 0 0;
+    color: #6b7280;
+    font-size: 13px;
+    line-height: 1.6;
+}
+/* =========================================
+   ACTIONS
+========================================= */
+.backup-actions {
+    display: grid;
+    grid-template-columns:
+        repeat(2, 1fr);
+    gap: 18px;
+    margin-top: 25px;
+}
+.backup-action {
+    display: flex;
+    gap: 15px;
+    padding: 22px;
+    border-radius: 18px;
+    border: 1px solid #e8ebf1;
+    background: #fafbfc;
+}
+.backup-action-blue {
+    background: linear-gradient(
+        145deg,
+        #f8fbff,
+        #f1f6ff
+    );
+}
+.backup-action-purple {
+    background: linear-gradient(
+        145deg,
+        #fbfaff,
+        #f6f3ff
+    );
+}
+.action-icon {
+    width: 45px;
+    height: 45px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 13px;
+    background: white;
+    box-shadow:
+        0 4px 12px rgba(0,0,0,.06);
+}
+.backup-action-blue .action-icon {
+    color: #2563eb;
+}
+.backup-action-purple .action-icon {
+    color: #7c3aed;
+}
+.action-content {
+    min-width: 0;
+    flex: 1;
+}
+.action-content h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 750;
+    color: #111827;
+}
+.action-content p {
+    margin: 5px 0 15px;
+    color: #6b7280;
+    font-size: 12px;
+    line-height: 1.55;
+}
+/* =========================================
+   ACTION BUTTONS
+========================================= */
+.action-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 10px 15px;
+    border-radius: 10px;
+    border: none;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: .2s;
+}
+.action-button:hover {
+    transform: translateY(-1px);
+}
+.action-button.primary {
+    color: white;
+    background:
+        linear-gradient(
+            135deg,
+            #2563eb,
+            #4f46e5
+        );
+}
+.action-button.secondary {
+    color: #6d28d9;
+    background: #ede9fe;
+}
+/* =========================================
+   FILE PICKER
+========================================= */
+.restore-form {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+.file-picker {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 42px;
+    padding: 9px 12px;
+    border: 1px dashed #c4b5fd;
+    border-radius: 10px;
+    background: white;
+    color: #6d28d9;
+    font-size: 12px;
+    font-weight: 650;
+    cursor: pointer;
+    overflow: hidden;
+}
+.file-picker input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+/* =========================================
+   AVAILABLE BACKUPS
+========================================= */
+.available-backups {
+    margin-top: 30px;
+    padding-top: 25px;
+    border-top: 1px solid #eef0f4;
+}
+.backup-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+.backup-list-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 750;
+    color: #111827;
+}
+.backup-list-header h3 i {
+    margin-right: 7px;
+    color: #6b7280;
+}
+.backup-list-header p {
+    margin: 4px 0 0;
+    color: #6b7280;
+    font-size: 12px;
+}
+.backup-count {
+    padding: 6px 10px;
+    border-radius: 20px;
+    background: #f3f4f6;
+    color: #4b5563;
+    font-size: 11px;
+    font-weight: 700;
+}
+/* =========================================
+   BACKUP FILE
+========================================= */
+.backup-file {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 13px 15px;
+    margin-bottom: 9px;
+    border: 1px solid #edf0f4;
+    border-radius: 13px;
+    background: #fafbfc;
+}
+.file-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    background: #f3f4f6;
+    color: #6b7280;
+}
+.file-info {
+    flex: 1;
+    min-width: 0;
+}
+.file-info strong {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    color: #374151;
+}
+.file-info span {
+    display: block;
+    margin-top: 3px;
+    color: #9ca3af;
+    font-size: 11px;
+}
+.file-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #059669;
+    font-size: 11px;
+    font-weight: 700;
+}
+/* =========================================
+   EMPTY STATE
+========================================= */
+.empty-backups {
+    text-align: center;
+    padding: 35px 15px;
+    border: 1px dashed #dfe3ea;
+    border-radius: 15px;
+    background: #fafbfc;
+}
+.empty-icon {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 15px;
+    background: #f3f4f6;
+    color: #9ca3af;
+    font-size: 20px;
+}
+.empty-backups h4 {
+    margin: 0;
+    font-size: 14px;
+    color: #374151;
+}
+.empty-backups p {
+    margin: 5px 0 0;
+    color: #9ca3af;
+    font-size: 12px;
+}
+/* =========================================
+   MOBILE
+========================================= */
+@media (max-width: 768px) {
+    .settings-page {
+        padding: 15px 10px 40px;
+    }
+    .settings-hero {
+        padding: 22px;
+        border-radius: 18px;
+    }
+    .settings-hero h1 {
+        font-size: 23px;
+    }
+    .settings-card,
+    .backup-card {
+        padding: 20px;
+        border-radius: 18px;
+    }
+    .backup-actions {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 500px) {
+    .settings-hero {
+        align-items: flex-start;
+    }
+    .hero-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 21px;
+    }
+    .settings-hero h1 {
+        font-size: 20px;
+    }
+    .settings-hero p {
+        font-size: 12px;
+    }
+    .card-heading {
+        align-items: flex-start;
+    }
+    .heading-icon {
+        width: 42px;
+        height: 42px;
+    }
+    .backup-top {
+        align-items: flex-start;
+    }
+    .backup-action {
+        padding: 17px;
+    }
+    .backup-list-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+    .backup-file {
+        align-items: flex-start;
+    }
+    .file-status {
+        display: none;
+    }
+    .action-button {
+        width: 100%;
+    }
+}
+</style>
+
 {% endblock %}

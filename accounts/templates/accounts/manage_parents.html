@@ -290,11 +290,56 @@
 }
 
 }
-
+  .cred-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999; backdrop-filter: blur(3px);
+  }
+  .cred-popup {
+    background: #fff; width: 420px; max-width: 90%;
+    border-radius: 16px; padding: 28px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    text-align: center; animation: popIn 0.3s ease;
+  }
+  @keyframes popIn { from { transform: scale(0.8); opacity:0 } to { transform: scale(1); opacity:1 } }
+  .cred-popup h3 { margin: 0 0 15px; font-size: 22px; color: #1e293b; }
+  .cred-row {
+    background: #f1f5f9; border-radius: 10px;
+    padding: 12px 15px; margin: 10px 0;
+    display: flex; justify-content: space-between; align-items: center;
+    text-align: left;
+  }
+  .cred-row b { font-size: 14px; color: #475569; }
+  .cred-row span { font-family: monospace; font-weight: bold; font-size: 16px; color: #0f172a; }
+  .cred-copy { cursor: pointer; background: #2563eb; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 12px; }
+  .cred-warning { font-size: 13px; color: #dc2626; margin-top: 15px; background: #fef2f2; padding: 8px; border-radius: 8px; }
+  .cred-close { margin-top: 18px; width: 100%; background: #1e293b; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; }
 
 </style>
 
+{% if credentials %}
+<div class="cred-overlay" id="credOverlay">
+  <div class="cred-popup">
+    <div style="font-size: 48px;">🔐</div>
+    <h3>Parent Login Credentials</h3>
+    <p style="color:#64748b; font-size:14px; margin-top:-10px;">For {{ credentials.name|default:"Parent" }}</p>
 
+    <div class="cred-row">
+      <div><b>Username</b><br><span id="credUser">{{ credentials.username }}</span></div>
+      <button class="cred-copy" onclick="copyText('credUser')">Copy</button>
+    </div>
+
+    <div class="cred-row">
+      <div><b>Password</b><br><span id="credPass">{{ credentials.password }}</span></div>
+      <button class="cred-copy" onclick="copyText('credPass')">Copy</button>
+    </div>
+
+    <div class="cred-warning">⚠️ Save these details. They will not be shown again.</div>
+    <button class="cred-close" onclick="document.getElementById('credOverlay').style.display='none'">Done, I've Saved</button>
+  </div>
+</div>
+{% endif %}
 
 <div class="parent-page">
 
@@ -361,7 +406,7 @@ View Deactivated
 
         <h2 class="parent-name">
 
-            {{ parent.first_name }} {{ parent.last_name }}
+          {{parent.get_title_display}} {{ parent.first_name }} {{ parent.last_name }}
 
         </h2>
 
@@ -817,6 +862,22 @@ function closeDeleteModal(){
     document.getElementById('deleteModal').style.display='none';
 
 }
+
+function copyText(id){
+  const text = document.getElementById(id).innerText;
+  navigator.clipboard.writeText(text);
+  const btn = document.getElementById(id).parentElement.parentElement.querySelector('.cred-copy');
+  const original = btn.innerText;
+  btn.innerText = 'Copied!';
+  btn.style.background = '#16a34a';
+  setTimeout(()=>{
+    btn.innerText = original;
+    btn.style.background = '#2563eb';
+  }, 1500);
+}
+document.getElementById('credOverlay').addEventListener('click', function(e){
+  if(e.target === this) this.style.display='none';
+});
 
 
 </script>

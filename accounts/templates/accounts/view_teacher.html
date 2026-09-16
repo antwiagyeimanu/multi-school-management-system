@@ -5,750 +5,709 @@
 {% block content %}
 
 <style>
-
-/* PAGE */
-.teacher-profile-wrapper {
+/* =========================================================
+   TEACHER PROFILE PAGE
+========================================================= */
+.teacher-profile-wrapper{
     background:#f4f6f9;
     min-height:100vh;
     padding:30px 15px 60px;
 }
-
-/* MAIN CARD */
-.teacher-profile-card {
+.teacher-profile-card{
     max-width:1200px;
     margin:auto;
     background:white;
     border-radius:24px;
     overflow:hidden;
-    box-shadow:0 10px 30px rgba(0,0,0,0.08);
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
 }
-
-
-/* HEADER */
-.profile-header {
-    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+/* =========================================================
+   PROFILE HEADER
+========================================================= */
+.profile-header{
+    background:linear-gradient(135deg,#2563eb,#1e3a8a);
     color:white;
-    text-align:center;
-    padding:35px 20px;
+    padding:35px 30px;
+    display:flex;
+    align-items:center;
+    gap:25px;
 }
-
-.profile-header img {
-    width:130px;
-    height:130px;
+.profile-header img,
+.profile-placeholder{
+    width:125px;
+    height:125px;
     border-radius:50%;
-    object-fit:cover;
-    border:5px solid white;
-    box-shadow:0 8px 20px rgba(0,0,0,.25);
+    flex-shrink:0;
 }
-
-.profile-header h1 {
-    margin-top:15px;
-    font-size:34px;
+.profile-header img{
+    object-fit:cover;
+    border:5px solid rgba(255,255,255,.35);
+    box-shadow:0 8px 20px rgba(0,0,0,.20);
+}
+.profile-placeholder{
+    background:rgba(255,255,255,.15);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:50px;
+}
+.profile-header h1{
+    margin:0 0 10px;
+    font-size:30px;
     font-weight:800;
 }
-
-
-/* BODY */
-.profile-body {
+.profile-role{
+    display:inline-block;
+    padding:7px 14px;
+    border-radius:999px;
+    background:rgba(255,255,255,.15);
+    font-size:14px;
+    font-weight:700;
+}
+.profile-school{
+    margin-top:12px;
+    color:#dbeafe;
+    font-size:15px;
+}
+/* =========================================================
+   PROFILE BODY
+========================================================= */
+.profile-body{
     padding:30px;
 }
-
-
-/* TABS */
-.profile-tabs {
+/* =========================================================
+   TABS
+========================================================= */
+.profile-tabs{
     display:flex;
-    gap:12px;
-    justify-content:center;
+    gap:10px;
     margin-bottom:30px;
+    border-bottom:1px solid #e5e7eb;
+    padding-bottom:12px;
     flex-wrap:wrap;
 }
-
-.profile-tabs button {
+.profile-tabs button{
     border:none;
-    padding:12px 25px;
-    border-radius:12px;
+    padding:11px 20px;
+    border-radius:10px;
     font-weight:700;
-    background:#e5e7eb;
+    background:#f3f4f6;
+    color:#4b5563;
     cursor:pointer;
-    transition:.3s;
+    transition:.2s ease;
 }
-
-.profile-tabs button.active {
+.profile-tabs button:hover{
+    background:#e5e7eb;
+}
+.profile-tabs button.active{
     background:#2563eb;
     color:white;
 }
-
-
-/* TAB CONTENT */
-.tab-content {
+/* =========================================================
+   TAB CONTENT
+========================================================= */
+.tab-content{
     display:none;
 }
-
-.tab-content.active {
+.tab-content.active{
     display:block;
 }
-
-
-/* INFORMATION CARD */
-.info-section {
-
-    background:#f9fafb;
+/* =========================================================
+   INFORMATION SECTIONS
+========================================================= */
+.info-section{
+    background:#f8fafc;
     border:1px solid #e5e7eb;
     border-radius:18px;
-    padding:25px;
-    margin-bottom:25px;
-
+    padding:24px;
+    margin-bottom:22px;
 }
-
-
-.info-section h3 {
-
-    margin-bottom:20px;
-    font-size:22px;
+.info-section h3{
+    margin:0 0 20px;
+    padding-bottom:12px;
+    border-bottom:2px solid #2563eb;
+    color:#111827;
+    font-size:20px;
     font-weight:800;
-    color:#1f2937;
-    border-bottom:3px solid #2563eb;
-    padding-bottom:10px;
-
 }
-
-
-.info-grid {
-
+.info-grid{
     display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:20px;
-
+    grid-template-columns:repeat(3,1fr);
+    gap:15px;
 }
-
-
-.info-row {
-
-    display:grid;
-    grid-template-columns:auto 1fr;
-    gap:12px;
-    font-size:16px;
+.info-item{
+    background:white;
+    border:1px solid #e5e7eb;
+    border-radius:12px;
+    padding:14px;
 }
-
-
-.label {
-
+.info-item .label{
+    display:block;
+    font-size:12px;
     font-weight:700;
-    color:#4b5563;
-
+    color:#6b7280;
+    margin-bottom:5px;
 }
-
-
-.value {
-
-    font-weight:600;
+.info-item .value{
+    display:block;
+    font-size:15px;
+    font-weight:700;
     color:#111827;
     overflow-wrap:anywhere;
-
 }
-
-
-
-/* MOBILE */
+/* =========================================================
+   STATUS
+========================================================= */
+.status-active{
+    color:#16a34a !important;
+}
+.status-inactive{
+    color:#dc2626 !important;
+}
+/* =========================================================
+   ASSIGNMENTS
+========================================================= */
+.info-section-title{
+    margin:0 0 22px;
+    font-size:22px;
+    font-weight:800;
+    color:#111827;
+}
+.assignment-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,2fr));
+    gap:20px;
+}
+.assignment-card{
+    background:#f8fafc;
+    border:1px solid #e5e7eb;
+    border-radius:18px;
+    padding:20px;
+    transition:.2s ease;
+}
+.assignment-card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 8px 20px rgba(0,0,0,.07);
+}
+.assignment-card h4{
+    font-size:20px;
+    font-weight:800;
+    color:#2563eb;
+    margin:0 0 15px;
+}
+.subject-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    background:white;
+    border:1px solid #e5e7eb;
+    padding:13px;
+    border-radius:12px;
+    margin-bottom:10px;
+}
+.subject-name{
+    font-weight:700;
+    color:#111827;
+}
+.subject-item small{
+    color:#6b7280;
+}
+.assignment-actions{
+    display:flex;
+    gap:7px;
+    flex-shrink:0;
+}
+.edit-btn,
+.delete-btn{
+    padding:7px 13px;
+    border-radius:8px;
+    color:white;
+    font-size:13px;
+    font-weight:700;
+    text-decoration:none;
+    border:none;
+    cursor:pointer;
+}
+.edit-btn{
+    background:#2563eb;
+}
+.delete-btn{
+    background:#dc2626;
+}
+.empty-box{
+    background:#f8fafc;
+    border:1px solid #e5e7eb;
+    padding:40px 20px;
+    border-radius:15px;
+    text-align:center;
+    color:#6b7280;
+    font-size:16px;
+}
+/* =========================================================
+   DELETE MODAL
+========================================================= */
+.delete-modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.5);
+    z-index:9999;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+}
+.delete-modal-content{
+    background:white;
+    padding:25px;
+    border-radius:16px;
+    width:100%;
+    max-width:360px;
+    text-align:center;
+    box-shadow:0 20px 40px rgba(0,0,0,.20);
+}
+.delete-modal-content h3{
+    margin:0 0 10px;
+    color:#111827;
+}
+.delete-modal-content p{
+    color:#6b7280;
+    margin-bottom:20px;
+}
+.modal-actions{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+}
+.modal-cancel,
+.modal-delete{
+    padding:9px 17px;
+    border-radius:8px;
+    border:none;
+    cursor:pointer;
+    font-weight:700;
+}
+.modal-cancel{
+    background:#e5e7eb;
+    color:#374151;
+}
+.modal-delete{
+    background:#dc2626;
+    color:white;
+}
+/* =========================================================
+   BACK BUTTON
+========================================================= */
+.back-area{
+    text-align:center;
+    margin-top:30px;
+}
+.back-btn{
+    display:inline-block;
+    background:#111827;
+    color:white;
+    padding:12px 25px;
+    border-radius:10px;
+    text-decoration:none;
+    font-weight:700;
+    transition:.2s ease;
+}
+.back-btn:hover{
+    opacity:.92;
+    color:white;
+}
+/* =========================================================
+   MOBILE
+========================================================= */
 @media(max-width:768px){
-
-    .profile-body{
-        padding:15px;
+    .teacher-profile-wrapper{
+        padding:20px 10px 40px;
     }
-
-
-    .info-grid{
-        grid-template-columns:1fr;
+    .profile-header{
+        flex-direction:column;
+        text-align:center;
+        padding:28px 18px;
     }
-
-
+    .profile-header img,
+    .profile-placeholder{
+        width:105px;
+        height:105px;
+    }
+    .profile-placeholder{
+        font-size:42px;
+    }
     .profile-header h1{
-        font-size:26px;
+        font-size:25px;
     }
-
-
+    .profile-body{
+        padding:18px 14px;
+    }
+    .profile-tabs{
+        flex-direction:column;
+    }
     .profile-tabs button{
         width:100%;
     }
-
+    .info-grid{
+        grid-template-columns:1fr;
+    }
+    .info-section{
+        padding:18px;
+    }
+    .assignment-grid{
+        grid-template-columns:1fr;
+    }
+    .subject-item{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+    .assignment-actions{
+        width:100%;
+    }
+    .edit-btn,
+    .delete-btn{
+        flex:1;
+        text-align:center;
+    }
 }
-
 </style>
-
-
 <div class="teacher-profile-wrapper">
-
 <div class="teacher-profile-card">
-
-
-<!-- HEADER -->
-
-<div class="profile-header">
-
-{% if teacher.photo %}
-
-<img src="{{ teacher.photo.url }}">
-
-{% else %}
-
-<img src="https://ui-avatars.com/api/?name={{ teacher.first_name }}+{{ teacher.last_name }}&background=ffffff&color=2563eb&size=200">
-
-{% endif %}
-
-
-<h1>
-{{ teacher.first_name }} {{ teacher.last_name }}
-</h1>
-
-</div>
-
-
-
-<div class="profile-body">
-
-
-<!-- TABS -->
-
-<div class="profile-tabs">
-
-<button class="active" onclick="openTab(event,'schoolDetails')">
-School Details
-</button>
-
-<button onclick="openTab(event,'personalInfo')">
-Personal Information
-</button>
-
-<button onclick="openTab(event,'assignments')">
-Assignments
-</button>
-
-</div>
-
-
-
-
-
-<!-- TAB 1 -->
-
-<div id="schoolDetails" class="tab-content active">
-
-
-<div class="info-section">
-
-<h3>
-School Details
-</h3>
-
-
-<div class="info-grid">
-
-
-<div class="info-row">
-<span class="label">School:</span>
-<span class="value">
-{{ teacher.school.name|default:"No school assigned" }}
-</span>
-</div>
-
-<div class="info-row">
-<span class="label">Staff ID:</span>
-<span class="value">
-{{ teacher.staff_id|default:"N/A" }}
-</span>
-</div>
-
-<div class="info-row">
-<span class="label">Department:</span>
-<span class="value">
-{{ teacher.department|default:"N/A" }}
-</span>
-</div>
-
-
-
-<div class="info-row">
-<span class="label">Date Joined:</span>
-<span class="value">
-{{ teacher.date_joined|date:"M d, Y" }}
-</span>
-</div>
-
-       
- <div class="info-item">
- <span class="label">Role:</span>
-<span class="value">{{ teacher.display_role|default:"Not provided" }}</span>
-</div>
-
-<div class="info-row">
-
-<span class="label">
-Status:
-</span>
-
-<span class="value"
-style="color:{% if teacher.is_active %}#16a34a{% else %}#dc2626{% endif %};">
-
-{% if teacher.is_active %}
-Active
-{% else %}
-Inactive
-{% endif %}
-
-</span>
-
-</div>
-
-
-</div>
-
-</div>
-</div>
-
-
-
-
-
-<div id="personalInfo" class="tab-content">
-
-<div class="info-section">
-<h3>
-Personal Information
-</h3>
-
-
-<div class="info-grid">
-
-
-
-
-
-<div class="info-row">
-<span class="label">Full Name:</span>
-<span class="value">
-{{ teacher.get_full_name }}
-</span>
-</div>
-
-
-
-<div class="info-row">
-<span class="label">Username:</span>
-<span class="value">
-{{ teacher.username }}
-</span>
-</div>
-
-
-
-<div class="info-row">
-<span class="label">Email:</span>
-<span class="value">
-{{ teacher.email|default:"Not provided" }}
-</span>
-</div>
-
-
-
-<div class="info-row">
-<span class="label">Phone:</span>
-<span class="value">
-{{ teacher.phone|default:"Not provided" }}
-</span>
-</div>
-
-
-<div class="info-row">
-<span class="label">Gender:</span>
-<span class="value">
-{{ teacher.get_gender_display|default:"Not set" }}
-</span>
-</div>
-
-
-
-<div class="info-row">
-<span class="label">Qualification:</span>
-<span class="value">
-{{ teacher.qualification|default:"Not provided" }}
-</span>
-</div>
-
-
-<div class="info-row">
-<span class="label">Nationality:</span>
-<span class="value">
-{{ teacher.nationality|default:"Not set" }}
-</span>
-</div>
-
-            <div class="info-row">
-                <span class="label">Religion:</span>
-                <span class="value">{{ teacher.get_religion_display|default:"Not set" }}</span>
+    <!-- =================================================
+         PROFILE HEADER
+    ================================================== -->
+    <div class="profile-header">
+        {% if teacher.photo %}
+            <img
+                src="{{ teacher.photo.url }}"
+                alt="{{ teacher.get_full_name }}"
+            >
+        {% else %}
+            <div class="profile-placeholder">
+                <i class="fas fa-user-tie"></i>
             </div>
+        {% endif %}
+        <div>
+            <h1>
+                {{ teacher.get_title_display }} {{ teacher.get_full_name }}
+            </h1>
+            <span class="profile-role">
+                {{ teacher.display_role }}
+            </span>
+            <div class="profile-school">
+                <i class="fas fa-school"></i>
+                {{ teacher.school.name|default:"No school assigned" }}
+            </div>
+        </div>
+    </div>
+    <div class="profile-body">
+        <!-- =================================================
+             TABS
+        ================================================== -->
+        <div class="profile-tabs">
+            <button
+                class="active"
+                onclick="openTab(event,'schoolDetails')"
+            >
+                🏫 School Details
+            </button>
+            <button
+                onclick="openTab(event,'personalInfo')"
+            >
+                👤 Personal Information
+            </button>
+            <button
+                onclick="openTab(event,'assignments')"
+            >
+                📚 Assignments
+            </button>
+        </div>
+        <!-- =================================================
+             SCHOOL DETAILS
+        ================================================== -->
+        <div id="schoolDetails" class="tab-content active">
+            <div class="info-section">
+                <h3>
+                    🏫 School Details
+                </h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="label">School</span>
+                        <span class="value">
+                            {{ teacher.school.name|default:"No school assigned" }}
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Staff ID</span>
+                        <span class="value">
+                            {{ teacher.staff_id|default:"N/A" }}
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Department</span>
+                        <span class="value">
+                            {{ teacher.department|default:"N/A" }}
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Date Joined</span>
+                        <span class="value">
+                            {{ teacher.date_joined|date:"M d, Y" }}
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Role</span>
+                        <span class="value">
+                            {{ teacher.display_role|default:"Not provided" }}
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Status</span>
+                        <span class="value {% if teacher.is_active %}status-active{% else %}status-inactive{% endif %}">
+                            {% if teacher.is_active %}
+                                Active
+                            {% else %}
+                                Inactive
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- =================================================
+             PERSONAL INFORMATION
+        ================================================== -->
+        <div id="personalInfo" class="tab-content">
+            <div class="info-section">
+                <h3>
+                    👤 Personal Information
+                </h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="label">Full Name</span>
+                        <span class="value">
+                            {{ teacher.get_title_display }} {{ teacher.get_full_name }}
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Username</span>
+                        <span class="value">
+                            {{ teacher.username|default:"Not provided" }}
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Email</span>
+                        <span class="value">
+                            {{ teacher.email|default:"Not provided" }}
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Phone</span>
+                        <span class="value">
+                            {{ teacher.phone|default:"Not provided" }}
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Gender</span>
+                        <span class="value">
+                            {{ teacher.get_gender_display|default:"Not set" }}
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Date of Birth</span>
+                        <span class="value">
+                            {{ teacher.date_of_birth|date:"M d, Y"|default:"Not provided" }}
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Nationality</span>
+                        <span class="value">
+                            {{ teacher.nationality|default:"Not set" }}
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Religion</span>
+                        <span class="value">
+                            {{ teacher.get_religion_display|default:"Not set" }}
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Qualification</span>
+                        <span class="value">
+                            {{ teacher.qualification|default:"Not provided" }}
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Address</span>
+                        <span class="value">
+                            {{ teacher.address|default:"Not provided" }}
+                        </span>
+                    </div>
+                    <div class="info-item">
+    <span class="label">
+        Ghana Card / National ID
+    </span>
 
-
+    <span class="value">
+        {{ teacher.national_id_card|default:"Not provided" }}
+    </span>
 </div>
-
-
-</div>
-
-
-</div>
-
-
-
-   <!-- TAB 2: ASSIGNMENTS -->
-
-<div id="assignments" class="tab-content">
-
-
-<h3 class="info-section-title">
-Teacher Assignments
-</h3>
-
-
-{% if teacher_classes %}
-
-{% regroup teacher_classes by school_class as class_list %}
-
-
-<div class="assignment-grid">
-
-
-{% for class in class_list %}
-
-
-<div class="assignment-card">
-
-
-<h4>
-{{ class.grouper.name }}
-</h4>
-
-
-
-{% for item in class.list %}
-
-
-<div class="subject-item">
-
-
-<div>
-<strong>
-{{ item.subject.name }}
-</strong>
-
-<br>
-
-<small>
-Timetable Slots: {{ item.slot_count }}
-</small>
-
-</div>
-
-
-
-<div class="assignment-actions" style="display:flex; gap:8px; align-items:center;">
-
-  <a href="{% url 'accounts:edit-assignment' item.id %}"
-     style="background:#2563eb; color:white; padding:6px 14px; border-radius:6px; font-size:13px; text-decoration:none; display:inline-block;">
-    Edit
-  </a>
-
-  <button type="button" 
-          onclick="openMyModal('{{ item.id }}', '{{ item.subject_name }}')"
-          style="background:#dc2626; color:white; padding:6px 14px; border-radius:6px; font-size:13px; border:none; cursor:pointer; display:inline-block;">
-    Delete
-  </button>
-
-</div>
-
-
-<!-- MODAL OUTSIDE the loop - put this at very bottom before </body> -->
-<div id="myDeleteModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
-  <div style="background:white; padding:25px; border-radius:12px; width:90%; max-width:350px; text-align:center;">
-    <h3 style="margin:0 0 10px;">Delete?</h3>
-    <p id="myModalText" style="color:#666; margin-bottom:20px;"></p>
-    <div style="display:flex; gap:10px; justify-content:center;">
-      <button onclick="closeMyModal()" style="background:#e5e7eb; padding:8px 16px; border-radius:6px; border:none; cursor:pointer;">Cancel</button>
-      <form id="myDeleteForm" method="POST" style="margin:0;">
-        {% csrf_token %}
-        <button type="submit" style="background:#dc2626; color:white; padding:8px 16px; border-radius:6px; border:none; cursor:pointer;">Delete</button>
-      </form>
+                </div>
+            </div>
+            <!-- EMERGENCY CONTACT -->
+            <div class="info-section">
+                <h3>
+                    🚨 Emergency Contact
+                </h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="label">Contact Name</span>
+                        <span class="value">
+                            {{ teacher.emergency_contact_name|default:"Not provided" }}
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Contact Phone</span>
+                        <span class="value">
+                            {{ teacher.emergency_contact_phone|default:"Not provided" }}
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Relationship</span>
+                        <span class="value">
+                            {{ teacher.emergency_contact_relationship|default:"Not provided" }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- =================================================
+             ASSIGNMENTS
+        ================================================== -->
+        <div id="assignments" class="tab-content">
+            <h3 class="info-section-title">
+                📚 Teacher Assignments
+            </h3>
+            {% if teacher_classes %}
+                {% regroup teacher_classes by school_class as class_list %}
+                <div class="assignment-grid">
+                    {% for class in class_list %}
+                        <div class="assignment-card">
+                            <h4>
+                                {{ class.grouper.name }}
+                            </h4>
+                            {% for item in class.list %}
+                                <div class="subject-item">
+                                    <div>
+                                        <div class="subject-name">
+                                            {{ item.subject.name }}
+                                        </div>
+                                        <small>
+                                            Timetable Slots: {{ item.slot_count }}
+                                        </small>
+                                    </div>
+                                    <div class="assignment-actions">
+                                        <a
+                                            href="{% url 'accounts:edit-assignment' item.id %}"
+                                            class="edit-btn"
+                                        >
+                                            Edit
+                                        </a>
+                                        <button
+                                            type="button"
+                                            class="delete-btn"
+                                            onclick="openMyModal('{{ item.id }}', '{{ item.subject_name }}')"
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-box">
+                    No classes or subjects assigned yet.
+                </div>
+            {% endif %}
+        </div>
+        <!-- =================================================
+             BACK BUTTON
+        ================================================== -->
+        <div class="back-area">
+            <a
+                href="{% url 'accounts:manage-teachers-grid' %}"
+                class="back-btn"
+            >
+                ← Back to Teachers
+            </a>
+        </div>
     </div>
 </div>
 </div>
+<!-- =========================================================
+     DELETE MODAL
+========================================================= -->
+<div id="myDeleteModal" class="delete-modal">
+<div class="delete-modal-content">
+    <h3>
+        Delete Assignment?
+    </h3>
+    <p id="myModalText"></p>
+    <div class="modal-actions">
+        <button
+            type="button"
+            class="modal-cancel"
+            onclick="closeMyModal()"
+        >
+            Cancel
+        </button>
+        <form
+            id="myDeleteForm"
+            method="POST"
+            style="margin:0;"
+        >
+            {% csrf_token %}
+            <button
+                type="submit"
+                class="modal-delete"
+            >
+                Delete
+            </button>
+        </form>
+    </div>
 </div>
-
-
+</div>
 <script>
+/* =========================================================
+   PROFILE TABS
+========================================================= */
+function openTab(event, tabName){
+    let contents = document.querySelectorAll(".tab-content");
+    contents.forEach(function(content){
+        content.classList.remove("active");
+    });
+    let buttons = document.querySelectorAll(".profile-tabs button");
+    buttons.forEach(function(button){
+        button.classList.remove("active");
+    });
+    document.getElementById(tabName).classList.add("active");
+    event.currentTarget.classList.add("active");
+}
+/* =========================================================
+   DELETE ASSIGNMENT MODAL
+========================================================= */
 function openMyModal(id, subject){
-  document.getElementById('myModalText').innerText = 'Delete ' + subject + '?';
-  document.getElementById('myDeleteForm').action = '/teachers/delete-assignment/' + id + '/';
-  document.getElementById('myDeleteModal').style.display = 'flex';
+    document.getElementById("myModalText").innerText =
+        "Delete " + subject + "?";
+    document.getElementById("myDeleteForm").action =
+        "/teachers/delete-assignment/" + id + "/";
+    document.getElementById("myDeleteModal").style.display = "flex";
 }
 function closeMyModal(){
-  document.getElementById('myDeleteModal').style.display = 'none';
+    document.getElementById("myDeleteModal").style.display = "none";
 }
 </script>
 
-
-{% endfor %}
-
-
-</div>
-
-
-{% endfor %}
-
-
-</div>
-
-
-{% else %}
-
-
-<div class="empty-box">
-
-No classes or subjects assigned yet.
-
-</div>
-
-
-{% endif %}
-
-
-
-</div>
-
-
-
-
-
-<!-- BACK BUTTON -->
-
-<div style="text-align:center;margin-top:30px;">
-
-<a href="{% url 'accounts:manage-teachers-grid' %}"
-class="back-btn">
-
-← Back to Teachers
-
-</a>
-
-</div>
-
-
-
-
-
-<style>
-
-
-.info-section-title{
-
-text-align:center;
-font-size:28px;
-font-weight:800;
-margin:25px 0;
-
-}
-
-
-
-.assignment-grid{
-
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
-gap:20px;
-
-}
-
-
-
-.assignment-card{
-
-background:white;
-border:1px solid #e5e7eb;
-border-radius:18px;
-padding:20px;
-transition:.3s;
-
-}
-
-
-
-.assignment-card:hover{
-
-transform:translateY(-5px);
-box-shadow:0 10px 25px rgba(0,0,0,.08);
-
-}
-
-
-
-.assignment-card h4{
-
-font-size:22px;
-font-weight:800;
-color:#2563eb;
-margin-bottom:15px;
-
-}
-
-
-
-.subject-item{
-
-display:flex;
-justify-content:space-between;
-align-items:center;
-gap:10px;
-background:#f9fafb;
-padding:12px;
-border-radius:12px;
-margin-bottom:12px;
-
-}
-
-
-
-.subject-item small{
-
-color:#6b7280;
-
-}
-
-
-
-.assignment-actions{
-
-display:flex;
-gap:8px;
-
-}
-
-
-
-.edit-btn,
-.delete-btn{
-
-padding:7px 14px;
-border-radius:8px;
-color:white;
-font-weight:700;
-text-decoration:none;
-border:none;
-cursor:pointer;
-
-}
-
-
-
-.edit-btn{
-
-background:#f97316;
-
-}
-
-
-
-.delete-btn{
-
-background:#dc2626;
-
-}
-
-
-
-.empty-box{
-
-background:#f9fafb;
-padding:40px;
-border-radius:15px;
-text-align:center;
-color:#6b7280;
-font-size:18px;
-
-}
-
-
-
-.back-btn{
-
-display:inline-block;
-background:#111827;
-color:white;
-padding:12px 25px;
-border-radius:10px;
-text-decoration:none;
-font-weight:700;
-
-}
-
-
-@media(max-width:600px){
-
-.subject-item{
-
-flex-direction:column;
-align-items:flex-start;
-
-}
-
-.assignment-actions{
-
-width:100%;
-
-}
-
-.edit-btn,
-.delete-btn{
-
-flex:1;
-text-align:center;
-
-}
-
-}
-
-
-</style>
-
-
-
-
-
-<script>
-
-function openTab(event, tabName){
-
-let contents=document.querySelectorAll(".tab-content");
-
-contents.forEach(function(content){
-
-content.classList.remove("active");
-
-});
-
-
-let buttons=document.querySelectorAll(".profile-tabs button");
-
-buttons.forEach(function(button){
-
-button.classList.remove("active");
-
-});
-
-
-document.getElementById(tabName).classList.add("active");
-
-event.currentTarget.classList.add("active");
-
-
-}
-
-
-</script>
 {% endblock %}

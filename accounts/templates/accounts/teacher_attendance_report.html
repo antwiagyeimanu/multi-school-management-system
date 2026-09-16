@@ -289,7 +289,116 @@
     text-align:left !important;
     padding:4px 6px;
 }
+/* ===== FILTER CARD ===== */
 
+.filter-card{
+    background: linear-gradient(135deg,#ffffff,#f8fbff);
+    border:1px solid #e7eef8;
+    border-radius:22px;
+    padding:24px;
+    margin-bottom:28px;
+    box-shadow:0 10px 30px rgba(15,23,42,.08);
+    position:relative;
+    overflow:hidden;
+}
+
+.filter-card::before{
+    content:"";
+    position:absolute;
+    top:-70px;
+    right:-70px;
+    width:180px;
+    height:180px;
+    border-radius:50%;
+    background:rgba(79,70,229,.08);
+}
+
+.filter-card::after{
+    content:"";
+    position:absolute;
+    bottom:-60px;
+    left:-60px;
+    width:150px;
+    height:150px;
+    border-radius:50%;
+    background:rgba(59,130,246,.05);
+}
+
+.filter-card form{
+    position:relative;
+    z-index:2;
+}
+
+/* Labels */
+
+.filter-card label{
+    display:block;
+    margin-bottom:8px;
+    font-size:.82rem;
+    font-weight:700;
+    color:#374151;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+}
+
+/* Select */
+
+.filter-card .form-select{
+    height:54px;
+    border-radius:14px;
+    border:2px solid #e5e7eb;
+    background:#fff;
+    font-weight:600;
+    color:#111827;
+    transition:.3s;
+    box-shadow:none;
+}
+
+.filter-card .form-select:hover{
+    border-color:#4f46e5;
+}
+
+.filter-card .form-select:focus{
+    border-color:#4f46e5;
+    box-shadow:0 0 0 .25rem rgba(79,70,229,.15);
+}
+
+/* Button */
+
+.filter-card .btn-primary{
+    height:54px;
+    border:none;
+    border-radius:14px;
+    background:linear-gradient(135deg,#4f46e5,#2563eb);
+    font-weight:700;
+    letter-spacing:.4px;
+    transition:.3s;
+    box-shadow:0 8px 20px rgba(79,70,229,.25);
+}
+
+.filter-card .btn-primary:hover{
+    transform:translateY(-2px);
+    box-shadow:0 14px 28px rgba(79,70,229,.35);
+}
+
+/* Mobile */
+
+@media(max-width:768px){
+
+    .filter-card{
+        padding:18px;
+        border-radius:18px;
+    }
+
+    .filter-card .btn-primary,
+    .filter-card .form-select{
+        height:50px;
+    }
+
+    .filter-card label{
+        margin-top:4px;
+    }
+}
 
 </style>
 
@@ -313,6 +422,25 @@ Teacher Weekly Attendance Report
 
 </p>
 
+</div>
+<div class="filter-card">
+  <form method="get" class="row g-3 align-items-end">
+    <div class="col-lg-3">
+      <label>Year</label>
+      <select name="year" class="form-select">
+        <option value="">All Years</option>
+        {% for y in academic_years %}<option value="{{ y.id }}" {% if selected_year == y.id|stringformat:"s" %}selected{% endif %}>{{ y.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-lg-3">
+      <label>Term</label>
+      <select name="term" class="form-select">
+        <option value="">All Terms</option>
+        {% for t in terms %}<option value="{{ t.id }}" {% if selected_term == t.id|stringformat:"s" %}selected{% endif %}>{{ t.get_term_number_display }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-lg-2"><button class="btn btn-primary w-100">Filter</button></div>
+  </form>
 </div>
 
 
@@ -619,20 +747,57 @@ Mark Teacher Attendance
 </a>
 
 
-<button onclick="window.print()"
-class="btn btn-primary print-btn">
-
-<i class="bi bi-printer"></i>
-Print Report
-
+<button type="button"
+        onclick="printTeacherAttendance()"
+        class="btn btn-primary print-btn">
+    <i class="bi bi-printer"></i>
+    Print Report
 </button>
 
-
 </div>
 
 
 
 </div>
 
+<script>
+function printTeacherAttendance() {
+
+    const year = "{{ request.GET.year|default:'' }}";
+    const term = "{{ request.GET.term|default:'' }}";
+
+    const printUrl =
+        "{% url 'accounts:teacher_attendance_print' %}" +
+        "?year=" + encodeURIComponent(year) +
+        "&term=" + encodeURIComponent(term);
+
+    const iframe = document.createElement("iframe");
+
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+
+    document.body.appendChild(iframe);
+
+    iframe.onload = function () {
+
+        setTimeout(function () {
+
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+
+            setTimeout(function () {
+                document.body.removeChild(iframe);
+            }, 1000);
+
+        }, 300);
+    };
+
+    iframe.src = printUrl;
+}
+</script>
 
 {% endblock %}

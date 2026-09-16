@@ -441,301 +441,68 @@
 
 @media(max-width:700px){
 
-.page-title h2{
+    .page-title h2{
 
-font-size:24px;
+        font-size:24px;
+
+    }
+
+
+    .payment-table{
+
+        font-size:14px;
+
+    }
+
+
+    .history-card{
+
+        overflow-x:auto;
+
+    }
 
 }
 
 
-.payment-table{
-
-font-size:14px;
-
-}
-
-
-.history-card{
-
-overflow-x:auto;
-
-}
-
-}
 /* ==========================
  PREMIUM PAYMENT HERO
 ========================== */
-
-
-.payment-hero{
-
-    background:
-    linear-gradient(135deg,#0f172a,#2563eb);
-
-    color:white;
-
-    padding:30px;
-
-    border-radius:26px;
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    gap:20px;
-
-    flex-wrap:wrap;
-
-    box-shadow:
-    0 18px 45px rgba(0,0,0,.15);
-
-}
-
-
-
-.payment-hero-left{
-
-    display:flex;
-
-    align-items:center;
-
-    gap:18px;
-
-}
-
-
-
-.payment-hero-icon{
-
-    width:65px;
-
-    height:65px;
-
-    border-radius:18px;
-
-    background:
-    rgba(255,255,255,.18);
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    font-size:28px;
-
-}
-
-
-
-.payment-hero h2{
-
-    margin:0;
-
-    font-size:30px;
-
-    font-weight:900;
-
-}
-
-
-
-.payment-hero p{
-
-    margin:8px 0 0;
-
-    opacity:.85;
-
-}
-
-
-
-.child-payment-badge{
-
-    background:white;
-
-    color:#2563eb;
-
-    padding:12px 20px;
-
-    border-radius:30px;
-
-    font-weight:800;
-
-}
-
-
+/* HERO - SAME AS PROGRESS - FIXED - NO HARD CODE */
+.parent-progress-hero{display:flex;justify-content:space-between;align-items:center;padding:32px;border-radius:28px;background:linear-gradient(135deg,#4338ca,#0f172a);color:white;margin-bottom:30px;box-shadow:0 20px 50px rgba(0,0,0,.18)}
+.hero-left{display:flex;align-items:center;gap:22px}
+.hero-avatar{width:95px;height:95px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.15);border:4px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:800}
+.hero-avatar img{width:100%;height:100%;object-fit:cover}
+.hero-label{display:inline-block;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.12);font-size:12px;font-weight:700;text-transform:uppercase;margin-bottom:10px}
+.hero-info h2{margin:0;font-size:30px;font-weight:800}
+.hero-meta{display:flex;gap:18px;margin-top:12px;flex-wrap:wrap}
+.hero-meta span{background:rgba(255,255,255,.10);padding:8px 14px;border-radius:999px;font-size:14px}
 
 @media(max-width:768px){
-
-
-.payment-hero{
-
-    justify-content:center;
-
-    text-align:center;
-
+.parent-progress-hero{flex-direction:column;text-align:center;gap:18px;padding:20px 14px!important;border-radius:18px!important}
+.hero-left{flex-direction:column;gap:12px}
+.hero-avatar{width:80px!important;height:80px!important}
+.hero-info h2{font-size:22px!important}
+.hero-meta{justify-content:center;gap:8px}
 }
 
 
-
-.payment-hero-left{
-
-    flex-direction:column;
-
-}
-
-
-.payment-hero h2{
-
-    font-size:24px;
-
-}
-
-}
 /* ==========================
  PREMIUM CHILD SWITCHER
 ========================== */
 
-.child-switcher{
-
-    display:flex;
-    flex-wrap:wrap;
-    gap:15px;
-    margin-bottom:30px;
-
-}
-
-
-.child-selector{
-
-    display:flex;
-    align-items:center;
-    gap:12px;
-
-    background:white;
-
-    padding:12px 18px;
-
-    border-radius:18px;
-
-    border:2px solid #e5e7eb;
-
-    text-decoration:none;
-
-    box-shadow:
-    0 8px 20px rgba(0,0,0,.06);
-
-    transition:.3s ease;
-
-}
-
-
-
-.child-selector:hover{
-
-    transform:translateY(-3px);
-
-    border-color:#4f46e5;
-
-}
-
-
-
-.child-photo{
-
-    width:48px;
-
-    height:48px;
-
-    border-radius:50%;
-
-    object-fit:cover;
-
-}
-
-
-
-.child-photo.fallback{
-
-    background:#e0e7ff;
-
-    color:#3730a3;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    font-weight:800;
-
-}
-
-
-
-.child-details{
-
-    display:flex;
-
-    flex-direction:column;
-
-}
-
-
-
-.child-name{
-
-    font-weight:800;
-
-    color:#111827;
-
-    font-size:14px;
-
-}
-
-
-
-.child-class{
-
-    font-size:12px;
-
-    color:#6b7280;
-
-    font-weight:600;
-
-}
-
-
-
-.child-id{
-
-    font-size:11px;
-
-    color:#9ca3af;
-
-}
-
-
-
+/* CHILD SWITCHER - SAME AS PROGRESS - 50% SIDE BY SIDE - PHOTO TOP - NO HARD CODE */
+.child-card{background:#fff;border-radius:20px;padding:16px;display:flex;align-items:center;gap:15px;position:relative;border:2px solid #eef2f7;box-shadow:0 6px 18px rgba(0,0,0,.05);height:100%}
+.child-active{border-color:#4f46e5;background:#eef2ff}
+.child-photo,.child-avatar{width:65px;height:65px;border-radius:50%;object-fit:cover;flex-shrink:0}
+.child-avatar{background:linear-gradient(135deg,#4f46e5,#2563eb);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800}
+.child-info{flex:1;min-width:0} .child-info h6{margin:0;font-weight:800;color:#111827;font-size:15px} .child-info p{margin:4px 0;color:#6b7280;font-size:13px} .child-info span{font-size:12px;color:#9ca3af;font-weight:600}
+.selected-badge{position:absolute;top:10px;right:12px;background:#4f46e5;color:#fff;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700}
 @media(max-width:600px){
-
-.child-switcher{
-
-    flex-direction:column;
-
+#child-switcher .col-md-6{width:50%!important;flex:0 0 50%!important;max-width:50%!important}
+.child-card{padding:10px 8px!important;border-radius:14px!important;flex-direction:column!important;text-align:center!important;gap:8px!important}
+.child-photo,.child-avatar{width:48px!important;height:48px!important}
 }
 
-
-.child-selector{
-
-    width:100%;
-
-}
-
-}
 /* ==========================
  PREMIUM PAYMENT STATS
 ========================== */
@@ -921,11 +688,11 @@ overflow-x:auto;
 
 @media(max-width:900px){
 
-.payment-stats-grid{
+    .payment-stats-grid{
 
-grid-template-columns:repeat(2,1fr);
+        grid-template-columns:repeat(2,1fr);
 
-}
+    }
 
 }
 
@@ -933,13 +700,78 @@ grid-template-columns:repeat(2,1fr);
 
 @media(max-width:600px){
 
-.payment-stats-grid{
+    .payment-stats-grid{
 
-grid-template-columns:1fr;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+
+        gap:10px;
+
+    }
+
+
+    .payment-stat-card{
+
+        padding:15px 12px;
+
+        border-radius:16px;
+
+    }
+
+
+    .payment-stat-icon{
+
+        width:40px;
+
+        height:40px;
+
+        border-radius:12px;
+
+        font-size:18px;
+
+        margin-bottom:10px;
+
+    }
+
+
+    .payment-stat-label{
+
+        font-size:11px;
+
+        line-height:1.3;
+
+    }
+
+
+    .payment-stat-value{
+
+        font-size:19px;
+
+        line-height:1.25;
+
+        margin-top:6px;
+
+        overflow-wrap:anywhere;
+
+    }
+
+
+    .payment-stat-card small{
+
+        display:block;
+
+        font-size:9px;
+
+        line-height:1.3;
+
+        margin-top:4px;
+
+    }
 
 }
 
-}
+
+/* CHILD CARD */
+
 .child-card{
     background:#fff;
     border-radius:20px;
@@ -985,6 +817,7 @@ grid-template-columns:1fr;
 
 .child-info{
     flex:1;
+    min-width:0;
 }
 
 .child-info h6{
@@ -1020,21 +853,67 @@ grid-template-columns:1fr;
 
 @media(max-width:768px){
 
-.child-card{
-    padding:14px;
+    .child-card{
+        padding:10px !important;
+        gap:8px !important;
+        border-radius:14px !important;
+        min-height:96px !important;
+        box-sizing:border-box !important;
+        overflow:visible !important;
+    }
+
+    .child-photo,
+    .child-avatar{
+        width:43px !important;
+        height:43px !important;
+        flex:0 0 43px !important;
+    }
+
+    .child-avatar{
+        font-size:14px !important;
+    }
+
+    .child-info{
+        min-width:0 !important;
+        padding-bottom:16px !important;
+    }
+
+    .child-info h6{
+        font-size:14px !important;
+        line-height:1.2 !important;
+        overflow-wrap:anywhere !important;
+        word-break:break-word !important;
+    }
+
+    .child-info p{
+        margin:3px 0 !important;
+        font-size:14px !important;
+        line-height:1.2 !important;
+        overflow-wrap:anywhere !important;
+        word-break:break-word !important;
+    }
+
+    .child-info span{
+        display:block !important;
+        font-size:12px !important;
+        line-height:1.2 !important;
+        overflow-wrap:anywhere !important;
+        word-break:break-word !important;
+        white-space:normal !important;
+    }
+
+    .selected-badge{
+        top:auto !important;
+        right:6px !important;
+        bottom:5px !important;
+        padding:2px 6px !important;
+        font-size:13px !important;
+        line-height:1.2 !important;
+    }
+
 }
 
-.child-photo,
-.child-avatar{
-    width:55px;
-    height:55px;
-}
 
-.child-info h6{
-    font-size:14px;
-}
-
-}
 /* PAYMENT FILTER CARD */
 
 .filter-card{
@@ -1138,12 +1017,759 @@ grid-template-columns:1fr;
 .filter-btn:hover{
 
     transform:translateY(-2px);
+
     box-shadow:0 10px 20px rgba(37,99,235,.25);
 
 }
+
+
+/* =========================================================
+   MOBILE FILTER
+========================================================= */
+
+@media(max-width:600px){
+
+    .filter-card{
+
+        padding:16px 12px !important;
+
+        border-radius:18px !important;
+
+        margin-bottom:18px !important;
+
+    }
+
+
+    .filter-header{
+
+        gap:10px !important;
+
+        margin-bottom:16px !important;
+
+    }
+
+
+    .filter-header i{
+
+        width:38px !important;
+
+        height:38px !important;
+
+        border-radius:11px !important;
+
+        font-size:16px !important;
+
+        flex:0 0 38px !important;
+
+    }
+
+
+    .filter-header h5{
+
+        font-size:15px !important;
+
+    }
+
+
+    .filter-header p{
+
+        font-size:13px !important;
+
+        line-height:1.35 !important;
+
+    }
+
+
+    .filter-select{
+
+        padding:14px 12px !important;
+
+        border-radius:11px !important;
+
+        font-size:13px !important;
+
+        box-sizing:border-box !important;
+
+    }
+
+
+    .filter-btn{
+
+        width:100% !important;
+
+        padding:11px !important;
+
+        border-radius:11px !important;
+
+        font-size:13px !important;
+
+    }
+
+}
+
+
+/* =========================================================
+   PAYMENT HISTORY TABLE
+   MOBILE = HORIZONTAL SCROLL
+========================================================= */
+
+@media(max-width:600px){
+
+    /* Outer table card */
+    .page-wrapper > div[style*="background:#ffffff"]{
+
+        width:100% !important;
+
+        max-width:100% !important;
+
+        border-radius:18px !important;
+
+        overflow:hidden !important;
+
+        box-sizing:border-box !important;
+
+    }
+
+
+    /* Table heading */
+    .page-wrapper > div[style*="background:#ffffff"] > div[style*="padding:22px"]{
+
+        padding:16px 14px !important;
+
+    }
+
+
+    .page-wrapper > div[style*="background:#ffffff"] h3{
+
+        font-size:15px !important;
+
+        line-height:1.35 !important;
+
+        word-break:break-word !important;
+
+    }
+
+
+    /* The actual scrolling area */
+    .page-wrapper > div[style*="background:#ffffff"] > div[style*="overflow-x:auto"]{
+
+        width:100% !important;
+
+        max-width:100% !important;
+
+        overflow-x:auto !important;
+
+        overflow-y:hidden !important;
+
+        -webkit-overflow-scrolling:touch !important;
+
+        scrollbar-width:thin !important;
+
+    }
+
+
+    /* Keep table wide enough to remain readable */
+    .page-wrapper > div[style*="background:#ffffff"] table{
+
+        width:780px !important;
+
+        min-width:780px !important;
+
+        max-width:none !important;
+
+        table-layout:auto !important;
+
+        border-collapse:collapse !important;
+
+    }
+
+
+    .page-wrapper > div[style*="background:#ffffff"] th{
+
+        padding:12px 10px !important;
+
+        font-size:11px !important;
+
+        white-space:nowrap !important;
+
+        text-align:left !important;
+
+    }
+
+
+    .page-wrapper > div[style*="background:#ffffff"] td{
+
+        padding:13px 10px !important;
+
+        font-size:13px !important;
+
+        white-space:nowrap !important;
+
+        vertical-align:middle !important;
+
+    }
+
+
+    /* Date */
+    .page-wrapper > div[style*="background:#ffffff"] th:nth-child(1),
+    .page-wrapper > div[style*="background:#ffffff"] td:nth-child(1){
+
+        min-width:135px !important;
+
+    }
+
+
+    /* Amount */
+    .page-wrapper > div[style*="background:#ffffff"] th:nth-child(2),
+    .page-wrapper > div[style*="background:#ffffff"] td:nth-child(2){
+
+        min-width:100px !important;
+
+    }
+
+
+    /* Method */
+    .page-wrapper > div[style*="background:#ffffff"] th:nth-child(3),
+    .page-wrapper > div[style*="background:#ffffff"] td:nth-child(3){
+
+        min-width:110px !important;
+
+    }
+
+
+    /* Transaction ID */
+    .page-wrapper > div[style*="background:#ffffff"] th:nth-child(4),
+    .page-wrapper > div[style*="background:#ffffff"] td:nth-child(4){
+
+        min-width:170px !important;
+
+        font-family:monospace !important;
+
+    }
+
+
+    /* Status */
+    .page-wrapper > div[style*="background:#ffffff"] th:nth-child(5),
+    .page-wrapper > div[style*="background:#ffffff"] td:nth-child(5){
+
+        min-width:100px !important;
+
+        text-align:center !important;
+
+    }
+
+
+    /* Action */
+    .page-wrapper > div[style*="background:#ffffff"] th:nth-child(6),
+    .page-wrapper > div[style*="background:#ffffff"] td:nth-child(6){
+
+        min-width:100px !important;
+
+        text-align:center !important;
+
+    }
+
+
+    /* Status badge */
+    .page-wrapper > div[style*="background:#ffffff"] td span{
+
+        display:inline-block !important;
+
+        white-space:nowrap !important;
+
+        padding:5px 10px !important;
+
+        font-size:12px !important;
+
+        border-radius:16px !important;
+
+    }
+
+
+    /* Receipt button */
+    .page-wrapper > div[style*="background:#ffffff"] td a{
+
+        white-space:nowrap !important;
+
+        display:inline-block !important;
+
+        padding:7px 12px !important;
+
+        font-size:11px !important;
+
+        border-radius:8px !important;
+
+    }
+
+}
+
+
+/* =========================================================
+   REJECTED PAYMENTS TABLE
+========================================================= */
+
+@media(max-width:600px){
+
+    .page-wrapper > div[style*="border:1px solid #fecaca"]{
+
+        width:100% !important;
+
+        max-width:100% !important;
+
+        border-radius:18px !important;
+
+        overflow:hidden !important;
+
+        box-sizing:border-box !important;
+
+    }
+
+
+    .page-wrapper > div[style*="border:1px solid #fecaca"] > div[style*="overflow-x:auto"]{
+
+        width:100% !important;
+
+        overflow-x:auto !important;
+
+        overflow-y:hidden !important;
+
+        -webkit-overflow-scrolling:touch !important;
+
+    }
+
+
+    .page-wrapper > div[style*="border:1px solid #fecaca"] table{
+
+        width:650px !important;
+
+        min-width:650px !important;
+
+        max-width:none !important;
+
+        table-layout:auto !important;
+
+    }
+
+
+    .page-wrapper > div[style*="border:1px solid #fecaca"] th,
+    .page-wrapper > div[style*="border:1px solid #fecaca"] td{
+
+        padding:11px 9px !important;
+
+        font-size:14px !important;
+
+        white-space:nowrap !important;
+
+    }
+
+
+    .page-wrapper > div[style*="border:1px solid #fecaca"] h3{
+
+        font-size:15px !important;
+
+    }
+
+}
+
+
+/* =========================================================
+   PAGE WRAPPER — MOBILE
+========================================================= */
+
+@media(max-width:600px){
+
+    .page-wrapper{
+
+        width:100% !important;
+
+        max-width:100% !important;
+
+        padding:10px !important;
+
+        margin:0 !important;
+
+        box-sizing:border-box !important;
+
+        overflow-x:hidden !important;
+
+    }
+
+}
+
+
+/* =========================================================
+   PAGINATION — MOBILE
+========================================================= */
+
+.paginator-wrap{
+  margin-top: 24px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  border:1px solid #e5e7eb;
+  background:#fff;
+  border-radius:14px;
+  padding:14px 16px;
+  box-shadow:0 1px 2px rgba(0,0,0,0.04);
+  font-family: Inter, system-ui, sans-serif;
+}
+
+@media(min-width:640px){
+  .paginator-wrap{
+      flex-direction:row;
+      align-items:center;
+      justify-content:space-between;
+  }
+}
+
+.paginator-count{
+    font-size:16px;
+    color:#6b7280;
+    font-weight:500;
+}
+
+.paginator-count b{
+    color:#111827;
+    font-weight:600;
+}
+
+.paginator-center{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.paginator-btn{
+  height:36px;
+  padding:0 14px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  border:1px solid #e5e7eb;
+  background:#fff;
+  border-radius:10px;
+  font-size:13px;
+  font-weight:500;
+  color:#374151;
+  text-decoration:none;
+  transition:all .15s;
+}
+
+.paginator-btn:hover{
+    background:#f9fafb;
+    border-color:#d1d5db;
+    color:#111827;
+}
+
+.paginator-btn.disabled{
+    background:#f9fafb;
+    border-color:#f3f4f6;
+    color:#9ca3af;
+    pointer-events:none;
+}
+
+.paginator-badge{
+    background:#111827;
+    color:#fff;
+    border-radius:999px;
+    padding:4px 10px;
+    font-size:12px;
+    font-weight:600;
+}
+
+.paginator-viewall{
+    font-size:13px;
+    font-weight:600;
+    color:#2563eb;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+}
+
+.paginator-viewall:hover{
+    color:#1d4ed8;
+    text-decoration:underline;
+}
+
+.paginator-viewall span{
+  width:22px;
+  height:22px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#eff6ff;
+  border-radius:50%;
+}
+
+
+@media(max-width:600px){
+
+    .paginator-wrap{
+
+        padding:12px !important;
+
+        gap:10px !important;
+
+        border-radius:13px !important;
+
+    }
+
+
+    .paginator-count{
+
+        font-size:14px !important;
+
+        text-align:center !important;
+
+    }
+
+
+    .paginator-center{
+
+        width:100% !important;
+
+        justify-content:center !important;
+
+        gap:6px !important;
+
+    }
+
+
+    .paginator-btn{
+
+        height:34px !important;
+
+        padding:0 10px !important;
+
+        font-size:14px !important;
+
+    }
+
+
+    .paginator-badge{
+
+        font-size:14px !important;
+
+        padding:4px 8px !important;
+
+    }
+
+
+    .paginator-viewall{
+
+        justify-content:center !important;
+
+        font-size:16px !important;
+
+    }
+
+}
+
+
+/* =========================================================
+   NO-PAYMENT / NO-CHILD BOXES — MOBILE
+========================================================= */
+
+@media(max-width:600px){
+
+    .report-card{
+
+        width:100% !important;
+
+        box-sizing:border-box !important;
+
+    }
+
+}
+@media (max-width: 600px) {
+
+    /* =========================================
+       CHILD SWITCHER — 2 CARDS SIDE BY SIDE
+    ========================================= */
+    #child-switcher .col-md-6 {
+        width: 50% !important;
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+
+    /* =========================================
+       ACADEMIC YEAR + TERM — SIDE BY SIDE
+    ========================================= */
+    .filter-card form .col-md-4 {
+        width: 50% !important;
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+
+    /* Apply Filter stays full width */
+    .filter-card form .col-md-4:has(.filter-btn) {
+        width: 100% !important;
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+
+}
+@media (max-width: 600px) {
+
+    /* =========================================
+       CHILD SWITCHER — 2 CARDS SIDE BY SIDE
+    ========================================= */
+    #child-switcher .col-md-6 {
+        width: 50% !important;
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+
+    /* =========================================
+       ACADEMIC YEAR + TERM — SIDE BY SIDE
+    ========================================= */
+    .filter-card form .col-md-4 {
+        width: 50% !important;
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+
+    /* Apply Filter stays full width */
+    .filter-card form .col-md-4:has(.filter-btn) {
+        width: 100% !important;
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+
+}
+@media (max-width: 600px) {
+
+    /* Date + time */
+    .payment-date-cell {
+        white-space: nowrap;
+        font-size: 14px !important;
+    }
+
+    .payment-date {
+        display: block;
+        font-weight: 600;
+    }
+
+    .payment-time {
+        display: block;
+        margin-top: 3px;
+        font-size: 13px !important;
+        opacity: 0.75;
+    }
+
+    /* Make payment table easier to read */
+    .payment-table th {
+        font-size: 16px !important;
+    }
+
+    .payment-table td {
+        font-size: 14px !important;
+    }
+
+    .payment-table .status,
+    .payment-table .receipt-btn {
+        font-size: 13px !important;
+    }
+
+    .transaction-id {
+        font-size: 13px !important;
+    }
+}
+/* =========================================================
+   PAYMENT DATE + TIME
+   ALL DEVICES
+========================================================= */
+
+.payment-date-cell {
+    white-space: nowrap !important;
+    vertical-align: middle !important;
+}
+
+.payment-date {
+    display: block !important;
+    font-weight: 700 !important;
+    line-height: 1.4 !important;
+}
+
+.payment-time {
+    display: block !important;
+    margin-top: 3px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    opacity: .7 !important;
+    line-height: 1.3 !important;
+}
+
+
+/* =========================================================
+   MOBILE PAYMENT TABLE — LARGER TEXT
+========================================================= */
+
+@media (max-width: 600px) {
+
+    .payment-table th {
+        font-size: 16px !important;
+    }
+
+    .payment-table td {
+        font-size: 15px !important;
+    }
+
+    .payment-table .payment-date {
+        font-size: 15px !important;
+    }
+
+    .payment-table .payment-time {
+        font-size: 14px !important;
+    }
+
+    .payment-table .transaction-id {
+        font-size: 14px !important;
+    }
+
+    .payment-table .status {
+        font-size: 14px !important;
+    }
+
+    .payment-table .receipt-btn {
+        font-size: 14px !important;
+    }
+}
+/* =========================================================
+   FORCE PAYMENT DATE + TIME TO STACK ON MOBILE
+========================================================= */
+
+@media (max-width:600px) {
+
+    .page-wrapper > div[style*="background:#ffffff"] td.payment-date-cell span.payment-date,
+    .page-wrapper > div[style*="background:#ffffff"] td.payment-date-cell span.payment-time {
+        display:block !important;
+        width:100% !important;
+        white-space:nowrap !important;
+    }
+
+    .page-wrapper > div[style*="background:#ffffff"] td.payment-date-cell .payment-date {
+        font-size:15px !important;
+        font-weight:700 !important;
+        line-height:1.4 !important;
+    }
+
+    .page-wrapper > div[style*="background:#ffffff"] td.payment-date-cell .payment-time {
+        font-size:14px !important;
+        font-weight:600 !important;
+        line-height:1.3 !important;
+        margin-top:3px !important;
+        opacity:.7 !important;
+    }
+
+}
+
 </style>
 
 <div class="page-wrapper" style="max-width:1200px; margin:0 auto; padding:20px; font-family:system-ui,-apple-system,sans-serif;">
+
 {% if show_switcher %}
 <div id="child-switcher" class="mb-4">
 
@@ -1158,7 +1784,7 @@ grid-template-columns:1fr;
         <div class="col-md-6 col-lg-4">
 
             <a href="?child={{ child.id }}#child-switcher"
-               style="text-decoration:none;">
+               style="text-decoration:none; display:block; height:100%;">
 
                 <div class="child-card {% if selected_child.id == child.id %}child-active{% endif %}">
 
@@ -1204,51 +1830,20 @@ grid-template-columns:1fr;
 
 </div>
 {% endif %}
-    {% if selected_child %}
+
+
+{% if selected_child %}
 
 <!-- PREMIUM HERO -->
-<div class="payment-hero mb-4">
-
-    <div class="payment-hero-left">
-
-        <div class="payment-hero-icon">
-            <i class="fas fa-wallet"></i>
-        </div>
-
-        <div>
-
-            <h2>
-                Payment History
-            </h2>
-
-            <p>
-                Track school payments, approvals and transaction records for your child.
-            </p>
-
-        </div>
-
-    </div>
+<div class="parent-progress-hero"><div class="hero-left"><div class="hero-avatar">{% if selected_child.photo %}<img src="{{ selected_child.photo.url }}">{% else %}{{ selected_child.first_name.0 }}{{ selected_child.last_name.0 }}{% endif %}</div><div class="hero-info"><span class="hero-label">Payment History</span><h2>{{ selected_child.get_full_name }}</h2><div class="hero-meta"><span>{{ selected_child.student_number|default:"No ID" }}</span><span>{{ selected_child.school_class.name|default:"No Class" }}</span></div></div></div></div>
 
 
-    {% if selected_child %}
-
-    <div class="child-payment-badge">
-
-        <i class="fas fa-user-graduate me-2"></i>
-
-        {{ selected_child.get_full_name }}
-
-    </div>
-
-    {% endif %}
-
-
-</div>
 <!-- PAYMENT FILTER -->
 <div class="filter-card mb-4">
 
     <div class="filter-header">
         <i class="fas fa-filter"></i>
+
         <div>
             <h5>Filter Payment History</h5>
             <p>Search payments by academic year and term</p>
@@ -1339,10 +1934,10 @@ grid-template-columns:1fr;
 
 </div>
 
-    <!-- Child Switcher - SAME AS view_child_fees -->
 
-        {% if payments %}
-          <!-- SUMMARY STATS -->
+{% if payments %}
+
+<!-- SUMMARY STATS -->
 <div class="payment-stats-grid">
 
 
@@ -1515,8 +2110,13 @@ Action
 <tr style="border-top:1px solid #f1f5f9;">
 
 
-<td style="padding:18px;">
-{{ payment.created_at|date:"d M Y, h:i A" }}
+<td class="payment-date-cell">
+    <span class="payment-date">
+        {{ payment.created_at|date:"d M Y" }}
+    </span>
+    <span class="payment-time">
+        {{ payment.created_at|date:"g:i A" }}
+    </span>
 </td>
 
 
@@ -1542,9 +2142,7 @@ GH₵ {{ payment.total_amount|floatformat:2 }}
 <td style="padding:18px; font-family:monospace;">
     <div style="color:#2563eb; font-weight:600;">
      {{ payment.transaction_id }}
-      
     </div>
- 
 </td>
 
 
@@ -1600,8 +2198,13 @@ Receipt
 <tr style="border-top:1px solid #f1f5f9;">
 
 
-<td style="padding:18px;">
-{{ payment.submitted_at|date:"d M Y, h:i A" }}
+<td class="payment-date-cell">
+    <span class="payment-date">
+        {{ payment.submitted_at|date:"d M Y" }}
+    </span>
+    <span class="payment-time">
+        {{ payment.submitted_at|date:"g:i A" }}
+    </span>
 </td>
 
 
@@ -1683,28 +2286,76 @@ Awaiting review
 </div>
 
 </div>
-{% if rejected_payments %}
-<div style="background:#fff; border-radius:18px; overflow:hidden; border:1px solid #fecaca; box-shadow:0 8px 24px rgba(15,23,42,.08); margin-top:30px;">
 
-    <div style="padding:22px 25px; background:#fef2f2; border-bottom:1px solid #fecaca;">
-        <h3 style="margin:0; color:#991b1b; font-size:18px; font-weight:700;">
+
+{% if rejected_payments %}
+
+<div style="
+    background:#fff;
+    border-radius:18px;
+    overflow:hidden;
+    border:1px solid #fecaca;
+    box-shadow:0 8px 24px rgba(15,23,42,.08);
+    margin-top:30px;
+">
+
+    <div style="
+        padding:22px 25px;
+        background:#fef2f2;
+        border-bottom:1px solid #fecaca;
+    ">
+
+        <h3 style="
+            margin:0;
+            color:#991b1b;
+            font-size:18px;
+            font-weight:700;
+        ">
+
             <i class="fas fa-times-circle"></i>
+
             Rejected Payments
+
         </h3>
+
     </div>
 
+
     <div style="overflow-x:auto;">
-        <table style="width:100%; border-collapse:collapse;">
+
+        <table style="
+            width:100%;
+            border-collapse:collapse;
+        ">
 
             <thead>
+
                 <tr style="background:#f8fafc;">
-                    <th style="padding:15px;">Date</th>
-                    <th style="padding:15px;">Amount</th>
-                    <th style="padding:15px;">Method</th>
-                    <th style="padding:15px;">Reason</th>
-                    <th style="padding:15px;">Action</th>
+
+                    <th style="padding:15px;">
+                        Date
+                    </th>
+
+                    <th style="padding:15px;">
+                        Amount
+                    </th>
+
+                    <th style="padding:15px;">
+                        Method
+                    </th>
+
+                    <th style="padding:15px;">
+                        Reason
+                    </th>
+
+                    <th style="padding:15px;">
+                        Action
+                    </th>
+
                 </tr>
+
             </thead>
+
 
             <tbody>
 
@@ -1712,11 +2363,20 @@ Awaiting review
 
             <tr style="border-top:1px solid #edf2f7;">
 
-                <td style="padding:15px;">
-                    {{ payment.submitted_at|date:"d M Y, h:i A" }}
-                </td>
+             <td class="payment-date-cell">
+    <span class="payment-date">
+        {{ payment.submitted_at|date:"d M Y" }}
+    </span>
+    <span class="payment-time">
+        {{ payment.submitted_at|date:"g:i A" }}
+    </span>
+</td>
 
-                <td style="padding:15px; font-weight:700; color:#dc2626;">
+                <td style="
+                    padding:15px;
+                    font-weight:700;
+                    color:#dc2626;
+                ">
                     GH₵ {{ payment.amount|floatformat:2 }}
                 </td>
 
@@ -1724,28 +2384,36 @@ Awaiting review
                     {{ payment.get_payment_method_display }}
                 </td>
 
-                <td style="padding:15px; color:#991b1b;">
+                <td style="
+                    padding:15px;
+                    color:#991b1b;
+                ">
                     {{ payment.rejection_reason|default:"No reason provided" }}
                 </td>
-                <td style="padding:15px; text-align:center;">
 
-<a href="{% url 'accounts:submit_manual_payment' payment.student_fee.id %}?resubmit={{ payment.id }}"
-style="
-background:#f59e0b;
-color:white;
-padding:8px 15px;
-border-radius:10px;
-text-decoration:none;
-font-size:13px;
-font-weight:600;
-">
+                <td style="
+                    padding:15px;
+                    text-align:center;
+                ">
 
-<i class="fas fa-redo"></i>
-Resubmit
+                    <a href="{% url 'accounts:submit_manual_payment' payment.student_fee.id %}?resubmit={{ payment.id }}"
+                    style="
+                    background:#f59e0b;
+                    color:white;
+                    padding:8px 15px;
+                    border-radius:10px;
+                    text-decoration:none;
+                    font-size:13px;
+                    font-weight:600;
+                    ">
 
-</a>
+                        <i class="fas fa-redo"></i>
 
-</td>
+                        Resubmit
+
+                    </a>
+
+                </td>
 
             </tr>
 
@@ -1754,28 +2422,169 @@ Resubmit
             </tbody>
 
         </table>
+
     </div>
 
 </div>
+
 {% endif %}
-        {% else %}
-            <!-- NO PAYMENT HISTORY - SAME STYLE AS view_child_fees -->
-            <div class="report-card" style="text-align:center; padding:60px 30px;">
-                <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:30px;">
-                    <h3 style="color:#991b1b; margin:0 0 15px 0; font-size:18px;">
-                        No fee payment history found for <strong>{{ selected_child.get_full_name }}</strong><br>
-                        Student ID: {{ selected_child.student_number|default:"-" }} | Class: {{ selected_child.school_class.name|default:"-" }}
-                    </h3>
-                </div>
-            </div>
-        {% endif %}
+
+
+{% if not show_all and page_obj and page_obj.paginator.count > 0 %}
+
+<div class="paginator-wrap">
+
+  <p class="paginator-count">
+
+    Showing <b>{{ page_obj.end_index }}</b>
+    of <b>{{ total_count }}</b> payments
+
+  </p>
+
+
+  <div class="paginator-center">
+
+    {% if page_obj.has_previous %}
+
+      <a class="paginator-btn"
+         href="?child={{ selected_child.id }}&page={{ page_obj.previous_page_number }}{% if request.GET.academic_year %}&academic_year={{ request.GET.academic_year }}{% endif %}{% if request.GET.term %}&term={{ request.GET.term }}{% endif %}">
+
+        ‹ Prev
+
+      </a>
 
     {% else %}
-        <!-- NO CHILD SELECTED -->
-        <div class="report-card" style="text-align:center; padding:60px 30px; min-height:auto;">
-            <p style="color:#000;">Please select a child to view payment history.</p>
-        </div>
+
+      <span class="paginator-btn disabled">
+        Prev
+      </span>
+
     {% endif %}
 
+
+    <span class="paginator-badge">
+
+        Page {{ page_obj.number }}
+        of {{ page_obj.paginator.num_pages }}
+
+    </span>
+
+
+    {% if page_obj.has_next %}
+
+      <a class="paginator-btn"
+         href="?child={{ selected_child.id }}&page={{ page_obj.next_page_number }}{% if request.GET.academic_year %}&academic_year={{ request.GET.academic_year }}{% endif %}{% if request.GET.term %}&term={{ request.GET.term }}{% endif %}">
+
+        Next ›
+
+      </a>
+
+    {% else %}
+
+      <span class="paginator-btn disabled">
+        Next
+      </span>
+
+    {% endif %}
+
+  </div>
+
+
+  <a class="paginator-viewall"
+     href="?child={{ selected_child.id }}&view=all{% if request.GET.academic_year %}&academic_year={{ request.GET.academic_year }}{% endif %}{% if request.GET.term %}&term={{ request.GET.term }}{% endif %}">
+
+    View all {{ total_count }}
+
+  </a>
+
 </div>
+
+{% endif %}
+
+
+{% if show_all %}
+
+<div style="
+    margin-top:20px;
+    text-align:center;
+">
+
+  <a class="paginator-btn"
+     href="?child={{ selected_child.id }}{% if request.GET.academic_year %}&academic_year={{ request.GET.academic_year }}{% endif %}{% if request.GET.term %}&term={{ request.GET.term }}{% endif %}">
+
+      ← Show 10 per page
+
+  </a>
+
+</div>
+
+{% endif %}
+
+
+{% else %}
+
+<!-- NO PAYMENT HISTORY - SAME STYLE AS view_child_fees -->
+
+<div class="report-card"
+     style="
+        text-align:center;
+        padding:60px 30px;
+     ">
+
+    <div style="
+        background:#fef2f2;
+        border:1px solid #fecaca;
+        border-radius:8px;
+        padding:30px;
+    ">
+
+        <h3 style="
+            color:#991b1b;
+            margin:0 0 15px 0;
+            font-size:18px;
+        ">
+
+            No fee payment history found for
+            <strong>{{ selected_child.get_full_name }}</strong>
+
+            <br>
+
+            Student ID:
+            {{ selected_child.student_number|default:"-" }}
+
+            |
+
+            Class:
+            {{ selected_child.school_class.name|default:"-" }}
+
+        </h3>
+
+    </div>
+
+</div>
+
+{% endif %}
+
+
+{% else %}
+
+<!-- NO CHILD SELECTED -->
+
+<div class="report-card"
+     style="
+        text-align:center;
+        padding:60px 30px;
+        min-height:auto;
+     ">
+
+    <p style="color:#000;">
+        Please select a child to view payment history.
+    </p>
+
+</div>
+
+{% endif %}
+
+</div>
+
 {% endblock %}

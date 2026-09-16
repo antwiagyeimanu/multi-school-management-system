@@ -1,422 +1,133 @@
 {% extends "accounts/dashboard_base.html" %}
 {% block title %}Expenses{% endblock %}
-
 {% block content %}
 <style>
-/* Cursor Fix */
-.card-body,label,p,div{
-    cursor:default;
+.expenses-page{--ex-primary:#2563eb;--ex-dark:#0f172a;--ex-text:#334155;--ex-muted:#64748b;--ex-border:#e5e7eb;--ex-radius:22px;width:100%}
+.expenses-page *,.expenses-page *::before,.expenses-page *::after{box-sizing:border-box}
+.expense-hero{position:relative;overflow:hidden;background:radial-gradient(circle at 85% 20%,rgba(96,165,250,.30),transparent 30%),linear-gradient(135deg,#0f172a 0%,#1e3a8a 55%,#2563eb 100%);color:#fff;border-radius:var(--ex-radius);padding:28px 32px;display:flex;justify-content:space-between;align-items:center;gap:25px;box-shadow:0 18px 45px rgba(15,23,42,.16)}
+.expense-hero-content{position:relative;z-index:2;min-width:0}
+.expense-hero h2{margin:0 0 8px;font-size:27px;line-height:1.25;font-weight:800}
+.expense-hero p{margin:0;color:rgba(255,255,255,.78);font-size:14px;line-height:1.6}
+.expense-hero-summary{position:relative;z-index:2;min-width:180px;text-align:right}
+.expense-term-pill{display:inline-flex;align-items:center;padding:9px 15px;border-radius:999px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.16);font-size:12px;font-weight:700;margin-bottom:12px}
+.expense-total{margin:0;font-size:27px;font-weight:800}
+.expense-total-label{display:block;margin-top:3px;color:rgba(255,255,255,.65);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px}
+.expense-filter-card{border:1px solid var(--ex-border)!important;border-radius:20px!important;background:#fff;box-shadow:0 10px 30px rgba(15,23,42,.055)!important}
+.expense-filter-card .card-body{padding:22px!important}
+.expense-filter-heading{display:flex;align-items:center;gap:10px;margin-bottom:18px;color:var(--ex-dark);font-size:15px;font-weight:800}
+.expense-filter-heading-icon{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:11px;background:#eff6ff;color:var(--ex-primary)}
+.expense-filter-card label{display:block;margin-bottom:7px;color:#475569;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.55px}
+.expense-filter-card .form-control,.expense-filter-card .form-select{height:45px;border:1px solid #dfe5ec;border-radius:12px;font-size:13px;color:var(--ex-dark);box-shadow:none!important}
+.expense-filter-actions{display:flex;gap:9px}
+.expense-filter-actions .btn{height:45px;border-radius:12px!important;padding:0 17px;font-size:12px;font-weight:700;white-space:nowrap}
+.expense-warning{border:1px solid #fed7aa!important;border-radius:16px!important;background:#fff7ed;color:#9a3412;padding:15px 18px;font-size:13px}
+.expense-card{border:1px solid var(--ex-border)!important;border-radius:22px!important;overflow:hidden;background:#fff;box-shadow:0 12px 35px rgba(15,23,42,.07)!important}
+.expense-card-header{padding:18px 22px;background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:15px}
+.expense-card-title{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:800}
+.expense-card-title-icon{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.12);color:#bfdbfe}
+.add-expense-btn{border-radius:999px!important;padding:9px 17px!important;font-size:12px!important;font-weight:800!important}
+.expense-table-wrapper{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.expense-table{width:100%!important;margin:0!important;border:0!important;border-collapse:separate;border-spacing:0;table-layout:fixed}
+.expense-table thead th{padding:14px 13px;background:#f8fafc;border-bottom:1px solid var(--ex-border);color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.55px;white-space:nowrap}
+.expense-table tbody td{padding:15px 13px;border-bottom:1px solid #eef2f7;color:var(--ex-text);font-size:12px;vertical-align:middle}
+.expense-date{color:var(--ex-dark);font-weight:700}
+.expense-description{color:#475569;line-height:1.5;word-break:break-word}
+.expense-amount{color:var(--ex-dark);font-weight:800;white-space:nowrap}
+.expense-receipt-number{display:inline-flex;padding:6px 9px;border-radius:8px;background:#eff6ff;border:1px solid #dbeafe;color:#1d4ed8;font-size:10px;font-weight:800}
+.expense-receipt-link{color:#2563eb;font-size:11px;font-weight:700;text-decoration:none}
+.expense-status{display:inline-flex;gap:5px;padding:6px 9px;border-radius:999px;font-size:12px;font-weight:800;white-space:nowrap}
+.expense-status.verified{background:#f0fdf4;border:1px solid #dcfce7;color:#15803d}
+.expense-status.pending{background:#fff7ed;border:1px solid #fed7aa;color:#c2410c}
+.expense-action-btn{border-radius:999px!important;padding:6px 10px!important;font-size:10px!important;font-weight:700!important}
+.expense-empty{text-align:center;padding:55px 20px}
+.expense-empty-icon{width:76px;height:76px;margin:0 auto 16px;border-radius:22px;display:flex;align-items:center;justify-content:center;background:#f1f5f9;color:#94a3b8;font-size:27px}
+
+/* === MOBILE ONLY - IPHONE 11 FIX === */
+@media(max-width:767px){
+.expenses-page{padding:0}
+.expense-hero{padding:20px 18px;border-radius:18px;flex-direction:column;align-items:stretch;gap:14px}
+.expense-hero h2{font-size:22px!important}
+.expense-hero p{font-size:14px!important}
+.expense-hero-summary{width:100%;text-align:left}
+.expense-term-pill{width:100%;justify-content:center;font-size:13px!important}
+.expense-total{font-size:24px!important}
+.expense-filter-card{border-radius:17px!important}
+.expense-filter-card .card-body{padding:16px!important}
+/* VERTICAL FILTER - NOT SIDE BY SIDE */
+.expense-filter-card form .row{display:flex!important;flex-direction:column!important;gap:14px!important}
+.expense-filter-card form .row > div{width:100%!important;max-width:100%!important}
+.expense-filter-card label{font-size:13px!important;margin-bottom:6px!important}
+.expense-filter-card .form-select,.expense-filter-card .form-control{height:48px!important;font-size:14px!important}
+.expense-filter-actions{width:100%;display:flex!important;gap:8px}
+.expense-filter-actions .btn{flex:1;height:48px!important;font-size:13px!important}
+
+/* TABLE BIG & READABLE */
+.expense-card{border-radius:18px!important}
+.expense-card-header{padding:15px}
+.expense-table-wrapper{display:block!important;width:100%;overflow-x:auto!important;-webkit-overflow-scrolling:touch!important;border-top:1px solid #e5e7eb}
+.expense-table{width:900px!important;min-width:900px!important}
+.expense-table thead th{font-size:15px!important;padding:16px 12px!important}
+.expense-table tbody td{font-size:16px!important;padding:16px 12px!important}
+/* FIX LONG CATEGORY */
+.expense-table td:nth-child(2){white-space:normal!important;word-break:break-word!important;min-width:140px!important}
+.expense-table td:nth-child(3){white-space:normal!important;word-break:break-word!important;min-width:180px!important}
 }
-
-.btn,a{
-    cursor:pointer !important;
+/* INCREASE RECEIPT / PENDING / EDIT SIZE ON PHONE */
+.expense-receipt-link{
+  font-size:16px!important;
+  padding:8px 12px!important;
+  background:#eff6ff!important;
+  border-radius:8px!important;
+  display:inline-flex!important;
 }
-
-/* HERO */
-
-.expense-hero{
-
-    background:linear-gradient(135deg,#0f172a,#2563eb);
-
-    color:#fff;
-
-    border-radius:24px;
-
-    padding:25px 30px;
-
-    margin-bottom:25px;
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    flex-wrap:wrap;
-
-    gap:15px;
-
-    box-shadow:0 12px 28px rgba(0,0,0,.12);
-
+.expense-status{
+  font-size:13px!important;
+  padding:8px 12px!important;
 }
-
-.expense-hero h2{
-
-    margin:0;
-
-    font-weight:800;
-
+.expense-receipt-number{
+  font-size:12px!important;
+  padding:12px 12px!important;
 }
-
-.expense-hero p{
-
-    margin-top:6px;
-
-    opacity:.85;
-
+.expense-status.verified,
+.expense-status.pending{
+  font-size:13px!important;
 }
-
-.total-box{
-
-    background:rgba(255,255,255,.15);
-
-    padding:14px 22px;
-
-    border-radius:18px;
-
-    text-align:center;
-
+.expense-action-btn{
+  font-size:14px!important;
+  padding:10px 16px!important;
+  height:42px!important;
 }
-
-.total-box small{
-
-    display:block;
-
-    opacity:.8;
-
-}
-
-.total-box h3{
-
-    margin:0;
-
-    font-weight:800;
-
-}
-
-/* CARD */
-
-.expense-card{
-
-    border:none;
-
-    border-radius:22px;
-
-    overflow:hidden;
-
-    box-shadow:0 8px 25px rgba(0,0,0,.08);
-
-}
-
-.expense-card .card-header{
-
-    background:linear-gradient(135deg,#2563eb,#3b82f6);
-
-    color:white;
-
-    border:none;
-
-    padding:18px 24px;
-
-    font-weight:700;
-
-}
-
-/* TABLE */
-
-.table{
-
-    margin-bottom:0;
-
-}
-
-.table thead th{
-
-    background:#0f172a;
-
-    color:white;
-
-    border:none;
-
-    padding:15px;
-
-    font-size:13px;
-
-    text-transform:uppercase;
-
-}
-
-.table tbody td{
-
-    padding:15px;
-
-    vertical-align:middle;
-
-}
-
-.table tbody tr:hover{
-
-    background:#f8fafc;
-
-}
-
-.badge{
-
-    border-radius:30px;
-
-    padding:7px 14px;
-
-}
-
-.btn{
-
-    border-radius:30px;
-
-}
-
-@media(max-width:768px){
-
-.expense-hero{
-
-    padding:20px;
-
-}
-
-}
-/* ===========================
-   PREMIUM HERO
-=========================== */
-
-.expense-hero{
-    background:linear-gradient(135deg,#0f172a,#2563eb);
-    color:#fff;
-    border-radius:22px;
-    padding:26px 30px;
-    display:flex;
-    margin-top:25px;
-    justify-content:space-between;
-    align-items:center;
-    flex-wrap:wrap;
-    gap:15px;
-}
-
-.expense-hero h2{
-    font-weight:800;
-    margin:0;
-}
-
-.expense-hero p{
-    opacity:.85;
-    margin:0;
-}
-
-.expense-pill{
-    background:rgba(255,255,255,.15);
-    padding:12px 20px;
-    border-radius:40px;
-    font-weight:700;
-    white-space:nowrap;
-}
-
-@media(max-width:768px){
-
-    .expense-hero{
-        flex-direction:column;
-        align-items:flex-start;
-    }
-
-    .expense-pill{
-        width:100%;
-        text-align:center;
-    }
-
+.btn-sm{
+  font-size:14px!important;
+  padding:10px 16px!important;
 }
 </style>
-<div class="container-fluid px-4">
-    <!-- Premium Hero -->
-<!-- Premium Hero -->
-<div class="expense-hero mb-4">
 
-    <div>
-        <h2 class="mb-1">
-            <i class="fas fa-receipt me-2"></i>
-            School Expenses
-        </h2>
-
-        <p class="mb-0">
-            View, manage and verify all school expenses for the active academic term.
-        </p>
+<div class="container-fluid px-4 expenses-page">
+    <div class="expense-hero mb-4">
+        <div class="expense-hero-content"><h2><i class="fas fa-receipt me-2"></i>School Expenses</h2><p>View, manage and verify all school expenses.</p></div>
+        {% if active_term %}<div class="expense-hero-summary"><div class="expense-term-pill"><i class="fas fa-calendar-alt me-2"></i>{{ active_term.get_term_number_display }} • {{ active_term.academic_year }}</div><h3 class="expense-total">GH₵ {{ total_expense|floatformat:2 }}</h3><span class="expense-total-label">Total Expenses</span></div>{% endif %}
     </div>
-
-    {% if active_term %}
-    <div class="text-end">
-
-        <div class="expense-pill mb-2">
-            <i class="fas fa-calendar-alt me-2"></i>
-            {{ active_term.get_term_number_display }} • {{ active_term.academic_year }}
-        </div>
-
-        <h3 class="fw-bold mb-0">
-            GH₵ {{ total_expense|floatformat:2 }}
-        </h3>
-
-        <small class="text-white-50">
-            Total Expenses
-        </small>
-
+    <div class="card expense-filter-card border-0 mb-4"><div class="card-body">
+        <div class="expense-filter-heading"><span class="expense-filter-heading-icon"><i class="fas fa-sliders-h"></i></span>Filter Expenses</div>
+        <form method="get"><div class="row g-3 align-items-end">
+            <div class="col-lg-3 col-md-6"><label>Term</label><select name="term" class="form-select"><option value="">-- Select Term --</option>{% for term in all_terms %}<option value="{{ term.id }}" {% if selected_term_id == term.id|stringformat:"s" %}selected{% endif %}>{% if term.term_number == 1 %}First Term{% elif term.term_number == 2 %}Second Term{% elif term.term_number == 3 %}Third Term{% else %}Term {{ term.term_number }}{% endif %}</option>{% endfor %}</select></div>
+            <div class="col-lg-2 col-md-6"><label>Academic Year</label><select name="year" class="form-select"><option value="">-- All Years --</option>{% for y in years %}<option value="{{ y.id }}" {% if selected_year_param == y.id|stringformat:"s" %}selected{% endif %}>{{ y.name }}</option>{% endfor %}</select></div>
+            <div class="col-lg-2 col-md-6"><label>From</label><input type="date" name="start_date" value="{{ start_date }}" class="form-control"></div>
+            <div class="col-lg-2 col-md-6"><label>To</label><input type="date" name="end_date" value="{{ end_date }}" class="form-control"></div>
+            <div class="col-lg-3 col-md-12"><div class="expense-filter-actions"><button type="submit" class="btn btn-primary"><i class="fas fa-filter me-1"></i>Filter</button><a href="{% url 'accounts:expense_list' %}" class="btn btn-light border"><i class="fas fa-rotate-left me-1"></i>Reset</a></div></div>
+        </div></form>
+    </div></div>
+    {% if not active_term %}<div class="expense-warning mb-4"><i class="fas fa-triangle-exclamation me-2"></i>{{ message|default:"No active term set." }}</div>{% endif %}
+    <div class="card expense-card border-0 mb-4">
+        <div class="expense-card-header"><div class="expense-card-title"><span class="expense-card-title-icon"><i class="fas fa-wallet"></i></span>All Expenses</div>{% if request.user.role == 'accountant' and active_term %}<a href="{% url 'accounts:add_expense' %}" class="btn btn-light add-expense-btn"><i class="fas fa-plus me-1"></i>Add Expense</a>{% endif %}</div>
+        <div class="expense-table-wrapper"><table class="table expense-table align-middle"><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Receipt No.</th><th>Receipt</th><th>Verified</th>{% if request.user.role == 'accountant' %}<th>Action</th>{% endif %}</tr></thead>
+        <tbody>{% for exp in expenses %}<tr>
+            <td><span class="expense-date">{{ exp.expense_date }}</span></td><td>{{ exp.get_category_display }}</td><td><div class="expense-description">{{ exp.description }}</div></td><td><span class="expense-amount">GH₵ {{ exp.amount|floatformat:2 }}</span></td><td><span class="expense-receipt-number">{{ exp.receipt_number }}</span></td>
+            <td>{% if exp.receipt_file %}{% if request.user.role in "admin,bursar,head" or not exp.verified %}<a href="{{ exp.receipt_file.url }}" target="_blank" class="expense-receipt-link">View </a>{% else %}Verified{% endif %}{% else %}No file{% endif %}</td>
+            <td>{% if exp.verified %}<span class="expense-status verified">Verified</span>{% else %}{% if request.user.role in 'admin,bursar,head' %}<form method="post" action="{% url 'accounts:verify_expense' exp.id %}" class="d-inline">{% csrf_token %}<button type="submit" class="btn btn-sm btn-success expense-action-btn">Verify</button></form>{% else %}<span class="expense-status pending">Pending</span>{% endif %}{% endif %}</td>
+            {% if request.user.role == 'accountant' %}<td>{% if not exp.verified and exp.recorded_by == request.user %}<a href="{% url 'accounts:edit_expense' exp.id %}" class="btn btn-sm btn-outline-primary expense-action-btn">Edit</a>{% else %}<button class="btn btn-sm btn-secondary expense-action-btn" disabled>Locked</button>{% endif %}</td>{% endif %}
+        </tr>{% empty %}<tr><td colspan="8"><div class="expense-empty"><div class="expense-empty-icon"><i class="fas fa-wallet"></i></div><h5>No expenses</h5><p>No expenses for selected period.</p></div></td></tr>{% endfor %}</tbody></table></div>
     </div>
-    {% endif %}
-
-</div>
-</div>
-<div class="card mb-3 p-3">
-<form method="get" class="row g-2">
-    <div class="col-md-3">
-        <label>Term</label>
-<select name="term" class="form-control">
-    <option value="">-- Select Term --</option>
-    {% for term in all_terms %}
-        <option value="{{ term.id }}" {% if selected_term_id == term.id|stringformat:"s" %}selected{% endif %}>
-            {% if term.term_number == 1 %}First Term
-            {% elif term.term_number == 2 %}Second Term
-            {% elif term.term_number == 3 %}Third Term
-            {% else %}Term {{ term.term_number }}
-            {% endif %}
-        </option>
-    {% endfor %}
-</select>
-    </div>
-    <div class="col-md-2">
-        <label>Year</label>
-<select name="year" class="form-control">
-    <option value="">-- All Years --</option>
-    {% for y in years %}
-        <option value="{{ y.id }}" {% if selected_year_param == y.id|stringformat:"s" %}selected{% endif %}>
-            {{ y.name }} 
-        </option>
-    {% endfor %}
-</select>
-    </div>
-    <div class="col-md-2">
-        <label>From</label>
-        <input type="date" name="start_date" value="{{ start_date }}" class="form-control">
-    </div>
-    <div class="col-md-2">
-        <label>To</label>
-        <input type="date" name="end_date" value="{{ end_date }}" class="form-control">
-    </div>
-    <div class="col-md-3 d-flex align-items-end gap-2">
-        <button type="submit" class="btn btn-primary">Filter</button>
-        <a href="{% url 'accounts:expense_list' %}" class="btn btn-secondary">Reset</a>
-    </div>
-</form>
-</div>
-
-
-{% if not active_term %}
-<div class="alert alert-warning">
-    {{ message|default:"No active term set. Ask admin to set an active term." }}
-</div>
-{% endif %}
-
-  <div class="card expense-card mb-4">
-    <div class="card-header bg-primary text-white">
-       <i class="fas fa-wallet me-2"></i>
-
-All Expenses
-        {% if request.user.role == 'accountant' and active_term %}
-            <a href="{% url 'accounts:add_expense' %}" class="btn btn-light rounded-pill px-4 py-2 float-end fw-bold"> Add Expense</a>
-        {% endif %}
-    </div>
-    
-    <div class="card-body">
-      <div class="table-responsive" style="overflow-x: auto;">
-        <table class="table table-bordered table-striped align-middle" style="width: 100%; white-space: nowrap;">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Category</th>
-              <th style="white-space: normal; min-width: 200px;">Description</th>
-              <th>Amount (GH₵ )</th>
-              <th>Receipt No.</th>
-              <th>Receipt</th>
-              <th>Verified</th>
-              {% if request.user.role == 'accountant' %}
-              <th>Action</th>
-              {% endif %}
-            </tr>
-          </thead>
-
-          <tbody>
-            {% for exp in expenses %}
-            <tr>
-              <td>{{ exp.expense_date }}</td>
-              <td>{{ exp.get_category_display }}</td>
-              <td style="white-space: normal; max-width: 250px; word-wrap: break-word;">
-                {{ exp.description }}
-              </td>
-              <td>{{ exp.amount }}</td>
-              <td>{{ exp.receipt_number }}</td>
-              
-              <td>
-                {% if exp.receipt_file %}
-                  {% if request.user.role in "admin,bursar,head" or not exp.verified %}
-                    <a href="{{ exp.receipt_file.url }}" target="_blank"><i class="fas fa-file-alt me-1"></i>View Receipt</a>
-                  {% else %}
-                    <span class="text-muted">Verified</span>
-                  {% endif %}
-                {% else %}
-                  <span class="text-muted">No file</span>
-                {% endif %}
-              </td>
-
-              <td class="text-nowrap">
-                {% if exp.verified %}
-                  <span class="badge bg-success">Verified</span>
-                  {% if request.user.role == 'accountant' %}
-                    <br>
-                    <small class="text-muted">
-                      by {{ exp.verified_by.username|default:"Unknown" }}<br>
-                      {{ exp.verified_at|date:"M d, Y H:i" }}
-                    </small>
-                  {% endif %}
-                {% else %}
-                  {% if request.user.role in 'admin,bursar,head' %}
-                    <form method="post" action="{% url 'accounts:verify_expense' exp.id %}" class="d-inline">
-                      {% csrf_token %}
-                      <button type="submit" class="btn btn-sm btn-success"><i class="fas fa-check-circle me-1"></i>Verify</button>
-                    </form>
-                  {% else %}
-                    <span class="text-muted">Pending</span>
-                  {% endif %}
-                {% endif %}
-              </td>
-
-              {% if request.user.role == 'accountant' %}
-              <td>
-                {% if not exp.verified and exp.recorded_by == request.user %}
-                  <a href="{% url 'accounts:edit_expense' exp.id %}" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit me-1"></i>Edit</a>
-                {% else %}
-                  <button class="btn btn-sm btn-secondary" disabled title="Locked">
-                    <i class="bi bi-lock-fill"></i> <i class="fas fa-lock me-1"></i>Locked
-                  </button>
-                {% endif %}
-              </td>
-              {% endif %}
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="{% if request.user.role == 'accountant' %}8{% else %}7{% endif %}" class="text-center">
-                <div class="py-4">
-
-<i class="fas fa-wallet fa-3x text-muted mb-3"></i>
-
-<h5>No expenses recorded</h5>
-
-<p class="text-muted mb-0">
-
-There are no expenses for this academic term.
-
-</p>
-
-</div>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
 </div>
 {% endblock %}

@@ -631,7 +631,7 @@ class="inactive-btn">
         
         <div class="card-info-section">
          <h2 class="accountant-name">
-    {{ accountant.first_name|default:"" }}
+   {{accountant.get_title_display}} {{ accountant.first_name|default:"" }}
     {{ accountant.middle_name|default:"" }}
     {{ accountant.last_name|default:"" }}
 </h2>
@@ -702,7 +702,7 @@ class="inactive-btn">
     </a>
 
 
-    {% if request.user.role == 'admin' %}
+    {% if user.role == 'admin' or user.role == 'proprietor' or user.role == 'proprietress' %}
 
     <a href="{% url 'accounts:edit_accountant' accountant.id %}" 
        class="btn-big btn-edit">

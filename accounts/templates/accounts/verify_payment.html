@@ -1,613 +1,135 @@
-{% extends "accounts/dashboard_base.html" %}
-
+{% extends 'accounts/dashboard_base.html' %}
 {% block content %}
 <style>
-/* cursor fix */
-.settings-card, .card-body, label, p, div {
-    cursor: default;
+.vp-page{width:100%;background:transparent!important}
+.vp-hero{background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 55%,#2563eb 100%);color:#fff;border-radius:20px;padding:22px 20px;display:flex;justify-content:space-between;align-items:center;gap:15px}
+.vp-hero h2{margin:0 0 6px;font-size:22px;font-weight:800}
+.vp-hero p{margin:0;opacity:.8;font-size:13px}
+.vp-pill{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);padding:8px 14px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+.vp-search{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px}
+.vp-search.input-group-text{height:50px;background:#fff;border-radius:12px 0 0 12px}
+.vp-search.form-control{height:50px;box-shadow:none!important;border-radius:0 12px 12px 0}
+.vp-search.btn{height:50px;border-radius:12px!important;font-weight:700}
+.vp-result{background:#fff;border:1px solid #e2e8f0;border-radius:18px;overflow:visible!important}
+.vp-result-header{background:#0f172a;color:#fff;padding:14px 18px;font-weight:800;border-radius:18px 18px 0 0}
+.vp-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.vp-card{background:#fff;border:1px solid #e8edf4;border-radius:14px;padding:14px 10px;text-align:center;box-shadow:0 4px 15px rgba(15,23,42,.04)}
+.vp-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;margin:0 auto 8px;font-size:18px}
+.vp-card small{color:#64748b;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px}
+.vp-card h5{margin:6px 0 0;font-size:13px;font-weight:800;color:#0f172a;word-break:break-word;line-height:1.3}
+.vp-table-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid #e2e8f0;border-radius:14px;background:#fff;display:block}
+.vp-table-wrap table{width:100%;margin:0;border-collapse:collapse}
+.vp-table-wrap th{padding:12px 14px;background:#f8fafc;font-size:12px;font-weight:800;white-space:nowrap;text-align:left;border-bottom:1px solid #e2e8f0}
+.vp-table-wrap td{padding:12px 14px;border-bottom:1px solid #eef2f7;white-space:nowrap;font-size:13px}
+.vp-amount{background:#f0fdf4;border:1px solid #dcfce7;color:#15803d;padding:5px 10px;border-radius:8px;font-weight:800;font-size:12px;white-space:nowrap}
+
+/* VIEW BUTTON - works everywhere */
+.view-btn{display:inline-flex!important;align-items:center;justify-content:center;gap:5px;padding:7px 14px!important;border-radius:999px!important;font-size:11px!important;font-weight:700!important;border:1.5px solid #2563eb!important;color:#2563eb!important;background:#eff6ff!important;white-space:nowrap!important;text-decoration:none!important;line-height:1!important}
+.view-btn:hover{background:#2563eb!important;color:#fff!important}
+
+@media(min-width:1024px){
+.vp-grid{grid-template-columns:repeat(3,1fr);gap:16px}
+.vp-card{padding:20px 15px;min-height:160px}.vp-card h5{font-size:15px}.vp-icon{width:56px;height:56px;font-size:20px}
+.vp-table-wrap{overflow:visible!important}.vp-table-wrap table{min-width:100%!important}
+.view-btn{padding:8px 16px!important;font-size:14px!important}
 }
-/* ===================================
-   VERIFY PAYMENT PREMIUM UI
-=================================== */
-
-.verify-hero{
-
-    background:linear-gradient(135deg,#0f172a,#2563eb);
-
-    color:#fff;
-
-    border-radius:22px;
-
-    padding:24px 30px;
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    flex-wrap:wrap;
-
-    gap:20px;
-
+@media(min-width:768px) and (max-width:1023px){
+.vp-grid{grid-template-columns:repeat(3,1fr);gap:12px}
+.vp-table-wrap table{width:100%!important;min-width:100%!important}
 }
-
-.verify-hero h2{
-
-    font-weight:800;
-
-    margin:0;
-
+@media(max-width:767px){
+.vp-hero{flex-direction:column;align-items:flex-start;gap:10px}
+.vp-hero h2{font-size:22px}
+.vp-table-wrap table{width:max-content!important;min-width:650px!important}
+.view-btn{padding:6px 12px!important;font-size:10px!important}
 }
-
-.verify-hero p{
-
-    opacity:.9;
-
+@media(max-width:380px){
+.vp-table-wrap table{min-width:620px!important}
 }
-
-.verify-pill{
-
-    background:rgba(255,255,255,.15);
-
-    padding:12px 20px;
-
-    border-radius:40px;
-
-    font-weight:700;
-
-}
-
-.verify-search-card{
-
-    border-radius:20px;
-
-}
-
-.verify-search-card .form-control{
-
-    border-radius:0 14px 14px 0;
-
-    height:58px;
-
-    font-size:16px;
-
-}
-
-.verify-search-card .input-group-text{
-
-    border-radius:14px 0 0 14px;
-
-    font-size:18px;
-
-}
-
-.verify-search-card .btn{
-
-    border-radius:14px;
-
-    font-weight:700;
-
-}
-
-.info-card{
-
-    background:#fff;
-
-    border-radius:18px;
-
-    padding:22px;
-
-    text-align:center;
-
-    box-shadow:0 10px 25px rgba(0,0,0,.08);
-
-    transition:.3s;
-
-    height:100%;
-
-}
-
-.info-card:hover{
-
-    transform:translateY(-5px);
-
-}
-
-.info-icon{
-
-    width:65px;
-
-    height:65px;
-
-    border-radius:50%;
-
-    color:#fff;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    margin:auto auto 15px;
-
-    font-size:24px;
-
-}
-
-.info-card small{
-
-    color:#6b7280;
-
-    font-weight:600;
-
-}
-
-.info-card h5{
-
-    margin-top:8px;
-
-    font-weight:800;
-
-    color:#111827;
-
-}
-
-@media(max-width:768px){
-
-.verify-hero{
-
-flex-direction:column;
-
-align-items:flex-start;
-
-}
-
-}
-/* ===========================
-   PAYMENT HISTORY TABLE
-=========================== */
-
-.payment-history-table{
-
-    border-collapse:separate;
-
-    border-spacing:0 10px;
-
-}
-
-.payment-history-table thead th{
-
-    background:#0f172a;
-
-    color:#fff;
-
-    border:none;
-
-    padding:16px;
-
-    font-weight:700;
-
-}
-
-.payment-history-table tbody tr{
-
-    background:#fff;
-
-    box-shadow:0 5px 15px rgba(0,0,0,.06);
-
-    transition:.25s;
-
-}
-
-.payment-history-table tbody tr:hover{
-
-    transform:translateY(-2px);
-
-}
-
-.payment-history-table td{
-
-    padding:16px;
-
-    border-top:none;
-
-    border-bottom:none;
-
-}
-
-.receipt-badge{
-
-    display:inline-block;
-
-    background:#eff6ff;
-
-    color:#2563eb;
-
-    font-weight:700;
-
-    padding:8px 16px;
-
-    border-radius:30px;
-
-}
-
-.amount-pill{
-
-    display:inline-block;
-
-    background:#dcfce7;
-
-    color:#15803d;
-
-    font-weight:800;
-
-    padding:8px 18px;
-
-    border-radius:30px;
-
-}
+.vp-table-wrap th{font-size:16px!important}
+.vp-table-wrap td{font-size:14px!important}
+.vp-amount{font-size:14px!important}
+.view-btn{font-size:13px!important}
 </style>
-<div class="container-fluid px-4">
 
-   <!-- PREMIUM HERO -->
-<div class="verify-hero mb-4">
+<div class="container-fluid px-2 px-md-4 vp-page">
+  <div class="vp-hero mb-3">
+    <div><h2><i class="fas fa-shield-check me-2"></i>Verify Payment</h2><p>Search receipts or students securely.</p></div>
+    <div class="vp-pill"><i class="fas fa-lock me-1"></i> Accountant Portal</div>
+  </div>
 
-    <div>
+  <div class="vp-search mb-3">
+    <form method="GET">
+      <div class="input-group">
+        <span class="input-group-text"><i class="fas fa-search text-primary"></i></span>
+        <input type="text" name="query" value="{{ query }}" class="form-control" placeholder="Receipt No., Student ID or Name">
+        <button class="btn btn-primary px-3 ms-2"><i class="fas fa-search me-1"></i> Search</button>
+      </div>
+    </form>
+  </div>
 
-        <h2 class="mb-2">
-            <i class="fas fa-shield-check me-2"></i>
-            Verify Student Payment
-        </h2>
+  {% if receipt or student %}
+  <div class="vp-result">
+    <div class="vp-result-header"><i class="fas fa-file-invoice me-2"></i>Verification Result</div>
+    <div class="p-2 p-md-3">
+      {% if student %}
+      <div class="vp-grid mb-3">
+        <div class="vp-card"><div class="vp-icon bg-primary"><i class="fas fa-user-graduate"></i></div><small>Student Name</small><h5>{{ student.get_full_name }}</h5></div>
+        <div class="vp-card"><div class="vp-icon bg-success"><i class="fas fa-id-card"></i></div><small>Student ID</small><h5>{{ student.student_number }}</h5></div>
+        <div class="vp-card"><div class="vp-icon bg-warning"><i class="fas fa-school"></i></div><small>Class</small><h5>{{ student.school_class.name }}</h5></div>
+        {% if student.academic_year %}<div class="vp-card"><div class="vp-icon bg-info"><i class="fas fa-calendar"></i></div><small>Year</small><h5>{{ student.academic_year }}</h5></div>{% endif %}
+      </div>
+      {% endif %}
 
-        <p class="mb-0">
-            Search receipts or students and verify payment records securely.
-        </p>
+      {% if receipt %}
+      <div class="card border-success-subtle mb-3" style="border-radius:14px;overflow:hidden">
+        <div style="background:linear-gradient(135deg,#15803d,#22c55e);color:#fff;padding:12px 14px;display:flex;justify-content:space-between;align-items:center"><span><i class="fas fa-check-circle me-1"></i> Payment Verified</span><span style="background:#fff;color:#15803d;padding:5px 10px;border-radius:999px;font-size:10px;font-weight:800">{{ receipt.receipt_number }}</span></div>
+        <div class="p-3">
+          <div class="row g-2">
+            <div class="col-6"><div style="background:#fbfdff;border:1px solid #edf2f7;border-radius:10px;padding:10px"><small style="font-size:10px;font-weight:800;color:#64748b">AMOUNT</small><h6 class="m-0 text-success fw-bold">GH₵ {{ receipt.total_amount|floatformat:2 }}</h6></div></div>
+            <div class="col-6"><div style="background:#fbfdff;border:1px solid #edf2f7;border-radius:10px;padding:10px"><small style="font-size:10px;font-weight:800;color:#64748b">DATE</small><h6 class="m-0 fw-bold" style="font-size:13px">{{ receipt.transaction_date|date:"d M Y" }}</h6></div></div>
+          </div>
+          <a href="{% url 'accounts:view_receipt' receipt.id %}" class="btn btn-success btn-sm rounded-pill mt-3 px-3"><i class="fas fa-print me-1"></i> Print Receipt</a>
+        </div>
+      </div>
+      {% endif %}
 
+      {% if payments %}
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="m-0 fw-bold" style="font-size:14px"><i class="fas fa-history text-primary me-1"></i> All Payments ({{ payments|length }})</h6>
+        {% if payments|length > 5 %}
+        <button id="togglePaymentsBtn" class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="togglePayments()"><i class="fas fa-list me-1"></i> View All ({{ payments|length }})</button>
+        {% endif %}
+      </div>
+      <div class="vp-table-wrap">
+        <table class="table mb-0" id="paymentsTable">
+          <thead><tr><th>Date</th><th>Receipt</th><th>Amount</th><th>Action</th></tr></thead>
+          <tbody id="paymentsTableBody">
+            {% for p in payments %}
+            <tr class="{% if forloop.counter > 5 %}d-none extra-payment{% endif %}">
+              <td>{{ p.transaction_date|date:"d M Y"|default:p.created_at|date:"d M Y" }}<br><small class="text-muted">{{ p.transaction_date|date:"h:i A"|default:p.created_at|date:"h:i A" }}</small></td>
+              <td style="font-weight:700">{{ p.receipt_number }}</td>
+              <td><span class="vp-amount">GH₵ {{ p.total_amount|default:p.amount_paid|floatformat:2 }}</span></td>
+              <td><a href="{% url 'accounts:view_receipt' p.id %}" class="view-btn"><i class="fas fa-eye"></i> View</a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <script>
+      function togglePayments(){
+        let extra=document.querySelectorAll('.extra-payment');
+        let btn=document.getElementById('togglePaymentsBtn');
+        if(!extra.length||!btn) return;
+        let isHidden=extra[0].classList.contains('d-none');
+        extra.forEach(r=>{ if(isHidden) r.classList.remove('d-none'); else r.classList.add('d-none'); });
+        if(isHidden){ btn.innerHTML='<i class="fas fa-eye-slash me-1"></i> Show Less'; }
+        else{ btn.innerHTML='<i class="fas fa-list me-1"></i> View All ({{ payments|length }})'; }
+      }
+      </script>
+      {% endif %}
     </div>
-
-    <div class="verify-pill">
-        <i class="fas fa-lock me-2"></i>
-        Accountant Verification Portal
-    </div>
-
+  </div>
+  {% endif %}
 </div>
-
-    <!-- SEARCH BOX -->
-<div class="card verify-search-card shadow-sm border-0 mb-4">
-
-    <div class="card-body p-4">
-
-        <form method="GET">
-
-            <div class="input-group input-group-lg">
-
-                <span class="input-group-text bg-white border-end-0">
-                    <i class="fas fa-search text-primary"></i>
-                </span>
-
-                <input
-                    type="text"
-                    name="query"
-                    value="{{ query }}"
-                    class="form-control border-start-0"
-                    placeholder="Receipt Number, Student ID or Student Name">
-
-                <button class="btn btn-primary px-4">
-                    <i class="fas fa-search me-2"></i>
-                    Search
-                </button>
-
-            </div>
-
-        </form>
-
-    </div>
-
-</div>
-    <!-- RESULT -->
-    {% if receipt or student %}
-
-        <div class="card shadow-sm">
-
-            <div class="card-header bg-dark text-white">
-                Payment Verification Result
-            </div>
-
-            <div class="card-body">
-
-<!-- STUDENT INFO -->
-{% if student %}
-<div class="row g-3 mb-4">
-
-    <div class="col-lg-4 col-md-6">
-
-        <div class="info-card">
-
-            <div class="info-icon bg-primary">
-                <i class="fas fa-user-graduate"></i>
-            </div>
-
-            <small>Student Name</small>
-
-            <h5>{{ student.get_full_name }}</h5>
-
-        </div>
-
-    </div>
-
-    <div class="col-lg-4 col-md-6">
-
-        <div class="info-card">
-
-            <div class="info-icon bg-success">
-                <i class="fas fa-id-card"></i>
-            </div>
-
-            <small>Student ID</small>
-
-            <h5>{{ student.student_number }}</h5>
-
-        </div>
-
-    </div>
-
-    <div class="col-lg-4 col-md-6">
-
-        <div class="info-card">
-
-            <div class="info-icon bg-warning">
-                <i class="fas fa-school"></i>
-            </div>
-
-            <small>Current Class</small>
-
-            <h5>{{ student.school_class.name }}</h5>
-
-        </div>
-
-    </div>
-
-</div>
-{% endif %}
-
-                <!-- SINGLE RECEIPT VIEW -->
-                {% if receipt %}
-<div class="card border-0 shadow-sm mb-4" style="border-radius:20px; overflow:hidden;">
-
-    <div class="card-header text-white"
-         style="background:linear-gradient(135deg,#16a34a,#22c55e);">
-
-        <div class="d-flex justify-content-between align-items-center">
-
-            <div>
-                <i class="fas fa-check-circle me-2"></i>
-                <strong>Payment Verified</strong>
-            </div>
-
-            <span class="badge bg-light text-success px-3 py-2">
-                {{ receipt.receipt_number }}
-            </span>
-
-        </div>
-
-    </div>
-
-    <div class="card-body">
-
-        <div class="row g-4">
-
-            <div class="col-md-6">
-
-                <small class="text-muted">Amount Paid</small>
-
-                <h4 class="fw-bold text-success">
-                    GH₵ {{ receipt.amount_paid|floatformat:2 }}
-                </h4>
-
-            </div>
-
-            <div class="col-md-6">
-
-                <small class="text-muted">Date</small>
-
-                <h5 class="fw-bold">
-                    {{ receipt.created_at|date:"d M Y" }}
-                </h5>
-
-                <small class="text-muted">
-                    {{ receipt.created_at|date:"h:i A" }}
-                </small>
-
-            </div>
-
-            <div class="col-md-6">
-
-                <small class="text-muted">Term</small>
-
-                <h6 class="fw-bold">
-                    {{ receipt.term }}
-                </h6>
-
-            </div>
-
-            <div class="col-md-6">
-
-                <small class="text-muted">Academic Year</small>
-
-                <h6 class="fw-bold">
-                    {{ receipt.academic_year }}
-                </h6>
-
-            </div>
-
-        </div>
-
-        <hr>
-
-        <div class="d-flex flex-wrap gap-2">
-
-            <a href="{% url 'accounts:view_receipt' receipt.id %}"
-               class="btn btn-success rounded-pill px-4">
-
-                <i class="fas fa-print me-2"></i>
-
-                Print Receipt
-
-            </a>
-
-        </div>
-
-    </div>
-
-</div>
-                {% endif %}
-
-                <!-- FULL PAYMENT HISTORY -->
-                {% if payments %}
-                <hr>
-                <div class="mb-3 text-dark">
-                <h2>All Payments</h2>
-                </div>
-
-               <div class="table-responsive">
-
-<table class="table align-middle payment-history-table">
-
-    <thead>
-
-        <tr>
-
-            <th>Date</th>
-
-            <th>Receipt No.</th>
-
-            <th class="text-end">Amount</th>
-
-            <th class="text-center">Action</th>
-
-        </tr>
-
-    </thead>
-
-    <tbody>
-
-        {% for p in payments %}
-
-        <tr>
-
-            <td class="text-nowrap">
-
-                <div class="fw-semibold">
-
-                    {{ p.created_at|date:"d M Y" }}
-
-                </div>
-
-                <small class="text-muted">
-
-                    {{ p.created_at|date:"h:i A" }}
-
-                </small>
-
-            </td>
-
-            <td>
-
-                <span class="receipt-badge">
-
-                    {{ p.receipt_number }}
-
-                </span>
-
-            </td>
-
-            <td class="text-end">
-
-                <span class="amount-pill">
-
-                    GH₵ {{ p.amount_paid|floatformat:2 }}
-
-                </span>
-
-            </td>
-
-            <td class="text-center">
-
-                <a href="{% url 'accounts:view_receipt' p.id %}"
-
-                   class="btn btn-outline-primary btn-sm rounded-pill px-3">
-
-                    <i class="fas fa-eye me-1"></i>
-
-                    View
-
-                </a>
-
-            </td>
-
-        </tr>
-
-        {% endfor %}
-
-    </tbody>
-
-</table>
-
-</div>
-                {% endif %}
-
-            </div>
-
-        </div>
-
-    {% elif query %}
-<div class="card border-0 shadow-sm text-center py-5" style="border-radius:22px;">
-
-    <div class="mb-3">
-
-        <div style="
-            width:90px;
-            height:90px;
-            margin:auto;
-            border-radius:50%;
-            background:#fff7ed;
-            display:flex;
-            align-items:center;
-            justify-content:center;">
-
-            <i class="fas fa-search fa-2x text-warning"></i>
-
-        </div>
-
-    </div>
-
-    <h4 class="fw-bold mb-2">
-        No Payment Record Found
-    </h4>
-
-    <p class="text-muted mb-4">
-        We couldn't find any payment record matching
-        <strong>"{{ query }}"</strong>.
-    </p>
-
-    <div>
-
-        <a href="{% url 'accounts:verify_payment' %}"
-           class="btn btn-primary rounded-pill px-4">
-
-            <i class="fas fa-search me-2"></i>
-
-            Search Again
-
-        </a>
-
-    </div>
-
-</div>
-    {% endif %}
-
-</div>
-
 {% endblock %}

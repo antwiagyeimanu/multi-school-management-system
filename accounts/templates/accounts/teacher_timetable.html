@@ -3,61 +3,106 @@
 
 <style>
 
-/* PAGE SPACE */
+/* =========================================================
+   PAGE
+========================================================= */
+
 .timetable-page{
-    margin-top:25px;
+    max-width:1450px;
+    margin:0 auto;
+    padding:25px 0 45px;
 }
 
 
-/* HERO */
+/* =========================================================
+   HERO
+========================================================= */
 
 .timetable-header{
-
     background:linear-gradient(135deg,#2563eb,#1d4ed8);
-
-    color:white;
-
+    color:#fff;
     padding:28px;
-
     border-radius:22px;
-
     margin-bottom:30px;
-
     box-shadow:0 12px 30px rgba(37,99,235,.18);
-
+    position:relative;
+    overflow:hidden;
 }
 
+.timetable-header::after{
+    content:"";
+    position:absolute;
+    width:220px;
+    height:220px;
+    border-radius:50%;
+    background:rgba(255,255,255,.07);
+    right:-80px;
+    top:-100px;
+}
+
+.timetable-header-content{
+    position:relative;
+    z-index:2;
+}
 
 .timetable-header h3{
-
     margin:0;
-
-    font-weight:800;
-
+    font-size:28px;
+    font-weight:850;
 }
-
 
 .timetable-header p{
-
     margin:8px 0 0;
-
     opacity:.9;
-
+    font-size:14px;
 }
 
 
+/* =========================================================
+   ACADEMIC YEAR / TERM
+========================================================= */
 
-/* NAVIGATION */
+.academic-period{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:9px;
+    margin-top:17px;
+}
+
+.academic-period-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+
+    padding:7px 14px;
+
+    background:rgba(255,255,255,.15);
+    border:1px solid rgba(255,255,255,.18);
+
+    border-radius:30px;
+
+    font-size:12px;
+    font-weight:800;
+
+    backdrop-filter:blur(5px);
+}
+
+.academic-period-badge i{
+    font-size:11px;
+}
+
+
+/* =========================================================
+   WEEK NAVIGATION
+========================================================= */
 
 .week-controls{
-
     display:flex;
-
     justify-content:space-between;
-
     align-items:center;
 
-    background:white;
+    background:#fff;
 
     padding:15px 20px;
 
@@ -67,27 +112,29 @@
 
     box-shadow:0 8px 25px rgba(0,0,0,.08);
 
+    border:1px solid #e5e7eb;
 }
 
-
+.week-controls-left{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+}
 
 .week-btn{
-
     border-radius:30px!important;
-
     padding:8px 18px!important;
-
     font-weight:600;
-
 }
 
 
-
-/* DAY CARD */
+/* =========================================================
+   DAY CARD
+========================================================= */
 
 .day-card{
-
-    background:white;
+    background:#fff;
 
     border-radius:22px;
 
@@ -99,25 +146,22 @@
 
     box-shadow:0 8px 25px rgba(15,23,42,.08);
 
+    transition:.2s ease;
 }
-
-
 
 .day-card.today{
-
     border:2px solid #2563eb;
-
 }
 
 
-
-/* DAY HEADER */
+/* =========================================================
+   DAY HEADER
+========================================================= */
 
 .day-header{
-
     background:#475569;
 
-    color:white;
+    color:#fff;
 
     padding:16px 22px;
 
@@ -128,422 +172,1100 @@
     align-items:center;
 
     font-weight:700;
-
 }
-
-
 
 .day-header.today{
-
     background:#2563eb;
+}
 
+.day-name{
+    font-size:16px;
+    font-weight:800;
+}
+
+.day-date{
+    font-size:13px;
 }
 
 
-
-/* EVENT */
+/* =========================================================
+   EVENT
+========================================================= */
 
 .event-banner{
-
     padding:18px;
-
     text-align:center;
-
     font-weight:600;
-
 }
 
 
-
-/* TABLE */
+/* =========================================================
+   TABLE
+========================================================= */
 
 .timetable-table{
-
     width:100%;
-
+    border-collapse:collapse;
 }
 
-
-
 .timetable-table thead th{
-
     background:#f8fafc;
-
     color:#475569;
 
     font-size:.85rem;
+    font-weight:800;
 
-    border:none;
+    padding:13px 15px;
 
+    border-bottom:1px solid #e5e7eb;
+
+    text-align:left;
+
+    white-space:nowrap;
 }
 
-
-
 .timetable-table td{
-
     padding:15px;
 
     vertical-align:middle;
 
     border-bottom:1px solid #f1f5f9;
 
+    color:#334155;
+
+    font-size:14px;
+}
+
+.timetable-table tbody tr:last-child td{
+    border-bottom:none;
+}
+
+.timetable-table tbody tr:hover{
+    background:#f8fafc;
 }
 
 
+/* =========================================================
+   CLASS
+========================================================= */
 
 .class-badge{
-
     background:#dbeafe;
 
     color:#1d4ed8;
 
-    padding:6px 14px;
+    padding:7px 13px;
 
     border-radius:30px;
 
     font-weight:700;
 
-    display:inline-block;
+    display:inline-flex;
 
+    align-items:center;
+
+    gap:6px;
 }
 
 
+/* =========================================================
+   SUBJECT
+========================================================= */
 
 .subject-badge{
-
     background:#f1f5f9;
 
     color:#334155;
 
-    padding:6px 14px;
+    padding:7px 13px;
 
     border-radius:30px;
 
     font-weight:600;
 
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:6px;
 }
 
 
+/* =========================================================
+   PERIOD
+========================================================= */
+
+.period-badge{
+    display:inline-flex;
+
+    align-items:center;
+    justify-content:center;
+
+    min-width:32px;
+    min-height:30px;
+
+    padding:5px 10px;
+
+    border-radius:9px;
+
+    background:#eef2ff;
+
+    color:#4338ca;
+
+    font-size:12px;
+
+    font-weight:850;
+}
+
+
+/* =========================================================
+   TIME
+========================================================= */
 
 .time-box{
-
     color:#64748b;
 
-    font-weight:600;
+    font-weight:650;
 
+    white-space:nowrap;
+
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:5px;
+}
+
+.time-box i{
+    color:#2563eb;
 }
 
 
+/* =========================================================
+   EMPTY
+========================================================= */
 
 .empty-box{
-
     padding:25px;
 
     text-align:center;
 
     color:#64748b;
+}
+
+.empty-box i{
+    color:#94a3b8;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media(max-width:1024px) and (min-width:769px){
+
+    .timetable-page{
+        padding:20px 12px 40px;
+    }
+
+    .timetable-header{
+        padding:25px;
+    }
+
+    .timetable-header h3{
+        font-size:26px;
+    }
+
+    .timetable-table thead th{
+        font-size:12px;
+        padding:12px;
+    }
+
+    .timetable-table td{
+        padding:12px;
+        font-size:13px;
+    }
+
+    .class-badge,
+    .subject-badge{
+        padding:6px 10px;
+        font-size:12px;
+    }
+
+    .time-box{
+        font-size:12px;
+    }
 
 }
 
 
-
-/* MOBILE */
+/* =========================================================
+   MOBILE
+========================================================= */
 
 @media(max-width:768px){
 
-.week-controls{
+    .timetable-page{
+        padding:10px 8px 30px;
+    }
 
-    flex-direction:column;
 
+    /* HERO */
+
+    .timetable-header{
+        padding:22px 17px;
+        border-radius:20px;
+        text-align:center;
+        margin-bottom:20px;
+    }
+
+    .timetable-header h3{
+        font-size:24px;
+    }
+
+    .timetable-header p{
+        font-size:13px;
+        line-height:1.5;
+    }
+
+    .academic-period{
+        justify-content:center;
+        gap:7px;
+        margin-top:14px;
+    }
+
+    .academic-period-badge{
+        font-size:15px;
+        padding:6px 10px;
+    }
+
+
+    /* WEEK CONTROLS */
+
+    .week-controls{
+        padding:13px;
+
+        flex-direction:column;
+
+        gap:12px;
+
+        border-radius:16px;
+
+        align-items:stretch;
+    }
+
+    .week-controls-left{
+        width:100%;
+
+        display:flex;
+
+        gap:7px;
+    }
+
+    .week-controls-left .week-btn{
+        flex:1;
+
+        padding:8px 9px!important;
+
+        font-size:13px;
+    }
+
+
+    /* DAY */
+
+    .day-card{
+        border-radius:18px;
+        margin-bottom:18px;
+    }
+
+    .day-header{
+        padding:13px 15px;
+    }
+
+    .day-name{
+        font-size:16px;
+    }
+
+    .day-date{
+        font-size:14px;
+    }
+
+
+    /* TABLE */
+
+    .timetable-table{
+        width:100%;
+        table-layout:fixed;
+    }
+
+    .timetable-table thead{
+        display:table-header-group;
+    }
+
+    .timetable-table thead th{
+        display:table-cell;
+
+        padding:9px 5px;
+
+        font-size:12px;
+
+        text-transform:uppercase;
+
+        letter-spacing:.25px;
+
+        text-align:center;
+
+        white-space:nowrap;
+    }
+
+    .timetable-table tbody{
+        display:table-row-group;
+    }
+
+    .timetable-table tbody tr{
+        display:table-row;
+    }
+
+    .timetable-table td{
+        display:table-cell;
+
+        padding:10px 4px;
+
+        text-align:center;
+
+        font-size:12px;
+
+        vertical-align:middle;
+
+        overflow:hidden;
+    }
+
+
+    /* COLUMN WIDTHS */
+
+    .timetable-table th:nth-child(1),
+    .timetable-table td:nth-child(1){
+        width:25%;
+    }
+
+    .timetable-table th:nth-child(2),
+    .timetable-table td:nth-child(2){
+        width:29%;
+    }
+
+    .timetable-table th:nth-child(3),
+    .timetable-table td:nth-child(3){
+        width:13%;
+    }
+
+    .timetable-table th:nth-child(4),
+    .timetable-table td:nth-child(4){
+        width:33%;
+    }
+
+
+    /* BADGES */
+
+    .class-badge,
+    .subject-badge{
+        display:inline-flex;
+
+        justify-content:center;
+        align-items:center;
+
+        max-width:100%;
+
+        padding:5px 5px;
+
+        border-radius:8px;
+
+        font-size:11px;
+
+        line-height:1.2;
+
+        white-space:normal;
+
+        word-break:break-word;
+    }
+
+    .class-badge i,
+    .subject-badge i{
+        display:none;
+    }
+
+
+    /* PERIOD */
+
+    .period-badge{
+        min-width:26px;
+
+        min-height:25px;
+
+        padding:4px 6px;
+
+        border-radius:7px;
+
+        font-size:12px;
+    }
+
+
+    /* TIME */
+
+    .time-box{
+        justify-content:center;
+
+        font-size:11px;
+
+        white-space:nowrap;
+
+        gap:2px;
+    }
+
+    .time-box i{
+        font-size:8px;
+    }
+
+
+    /* EVENT */
+
+    .event-banner{
+        padding:15px 10px;
+        font-size:12px;
+    }
+
+    .event-banner h5{
+        font-size:14px;
+    }
+
+}
+
+
+/* =========================================================
+   VERY SMALL PHONES
+========================================================= */
+
+@media(max-width:380px){
+
+    .timetable-page{
+        padding-left:5px;
+        padding-right:5px;
+    }
+
+    .timetable-header h3{
+        font-size:22px;
+    }
+
+    .timetable-header p{
+        font-size:12px;
+    }
+
+    .academic-period-badge{
+        font-size:9px;
+        padding:5px 8px;
+    }
+
+    .timetable-table thead th{
+        font-size:7px;
+        padding:8px 3px;
+    }
+
+    .timetable-table td{
+        padding:9px 2px;
+        font-size:8px;
+    }
+
+    .class-badge,
+    .subject-badge{
+        font-size:7.5px;
+        padding:4px;
+    }
+
+    .period-badge{
+        font-size:8px;
+        min-width:23px;
+        min-height:23px;
+    }
+
+    .time-box{
+        font-size:7.5px;
+    }
+
+}
+/* =====================================================
+   TIMETABLE FILTER
+===================================================== */
+
+.timetable-filter{
+    background:#fff;
+    border:1px solid #e5e7eb;
+    border-radius:20px;
+    padding:18px;
+    margin-bottom:25px;
+    box-shadow:0 8px 25px rgba(15,23,42,.06);
+}
+
+.timetable-filter form{
+    display:grid;
+    grid-template-columns:1fr 1fr auto;
     gap:15px;
+    align-items:end;
+}
 
+.filter-group label{
+    display:block;
+    margin-bottom:6px;
+    color:#475569;
+    font-size:12px;
+    font-weight:800;
+}
+
+.filter-group label i{
+    color:#2563eb;
+    margin-right:5px;
+}
+
+.filter-group .form-select{
+    min-height:44px;
+    border-radius:12px;
+    border:1px solid #dbe3ef;
+    font-size:13px;
+    font-weight:600;
+}
+
+.filter-btn{
+    min-height:44px;
+    padding:0 22px;
+    border-radius:12px!important;
+    font-weight:800;
 }
 
 
-.day-header{
+/* =====================================================
+   MOBILE
+===================================================== */
 
-    flex-direction:column;
+@media(max-width:768px){
 
-    gap:5px;
+    .timetable-filter{
+        padding:15px;
+        border-radius:18px;
+    }
+
+    .timetable-filter form{
+        grid-template-columns:1fr 1fr;
+        gap:12px;
+    }
+
+    .filter-btn{
+        width:100%;
+        grid-column:1 / -1;
+    }
 
 }
+/* =====================================================
+   PERIOD STATUS
+===================================================== */
 
-
-.timetable-table{
-
-    font-size:.85rem;
-
+.active-period{
+    background:rgba(34,197,94,.18);
+    border-color:rgba(255,255,255,.25);
 }
 
+.active-period i{
+    color:#86efac;
+    font-size:8px;
 }
 
+.previous-period{
+    background:rgba(255,255,255,.12);
+}
+
+.previous-period i{
+    opacity:.8;
+}
 </style>
-
 
 
 <div class="timetable-page">
 
 
+<!-- =====================================================
+     HERO
+===================================================== -->
+
 <div class="timetable-header">
 
-<h3>
-<i class="fas fa-calendar-alt"></i>
-My Timetable
-</h3>
+    <div class="timetable-header-content">
 
-<p>
-View your assigned classes and teaching schedule
-</p>
+        <div>
+
+            <h3>
+                <i class="fas fa-calendar-alt me-2"></i>
+                My Timetable
+            </h3>
+
+            <p>
+                View your assigned classes and teaching schedule
+            </p>
+
+
+            <!-- =========================================
+                 ACADEMIC PERIOD
+            ========================================== -->
+
+            <div class="academic-period">
+
+                {% if selected_term_obj %}
+
+                    <!-- SELECTED YEAR -->
+
+                    {% if selected_term_obj.academic_year %}
+
+                        <span class="academic-period-badge">
+
+                            <i class="fas fa-graduation-cap"></i>
+
+                            {{ selected_term_obj.academic_year.name }}
+
+                        </span>
+
+                    {% endif %}
+
+
+                    <!-- SELECTED TERM -->
+
+                    <span class="academic-period-badge">
+
+                        <i class="fas fa-bookmark"></i>
+
+                        {{ selected_term_obj.get_term_number_display }}
+
+                    </span>
+
+
+                    <!-- STATUS -->
+
+                    {% if selected_term_obj.is_active %}
+
+                        <span class="academic-period-badge active-period">
+
+                            <i class="fas fa-circle"></i>
+
+                            Active
+
+                        </span>
+
+                    {% else %}
+
+                        <span class="academic-period-badge previous-period">
+
+                            <i class="fas fa-history"></i>
+
+                            Previous
+
+                        </span>
+
+                    {% endif %}
+
+
+                {% elif active_term %}
+
+                    <!-- =================================
+                         NO FILTER SELECTED
+                         SHOW ACTIVE TIMETABLE
+                    ================================== -->
+
+                    {% if active_term.academic_year %}
+
+                        <span class="academic-period-badge">
+
+                            <i class="fas fa-graduation-cap"></i>
+
+                            {{ active_term.academic_year.name }}
+
+                        </span>
+
+                    {% endif %}
+
+
+                    <span class="academic-period-badge">
+
+                        <i class="fas fa-bookmark"></i>
+
+                        {{ active_term.get_term_number_display }}
+
+                    </span>
+
+
+                    <span class="academic-period-badge active-period">
+
+                        <i class="fas fa-circle"></i>
+
+                        Active
+
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
 
 </div>
 
+</div>
 
+<div class="timetable-filter">
+
+    <form method="get">
+
+        <input type="hidden"
+               name="week"
+               value="{{ week_offset }}">
+
+        <div class="filter-group">
+
+            <label>
+                <i class="fas fa-calendar-alt"></i>
+                Academic Year
+            </label>
+
+            <select name="year" class="form-select">
+
+                <option value="">
+                    Select Academic Year
+                </option>
+
+                {% for year in years %}
+
+                <option value="{{ year.id }}"
+                    {% if selected_year == year.id|stringformat:"s" %}
+                        selected
+                    {% endif %}>
+
+                    {{ year.name }}
+
+                </option>
+
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+        <div class="filter-group">
+
+            <label>
+                <i class="fas fa-book"></i>
+                Term
+            </label>
+
+            <select name="term" class="form-select">
+
+                <option value="">
+                    Select Term
+                </option>
+
+                <option value="1"
+                    {% if selected_term == "1" %}
+                        selected
+                    {% endif %}>
+                    First Term
+                </option>
+
+                <option value="2"
+                    {% if selected_term == "2" %}
+                        selected
+                    {% endif %}>
+                    Second Term
+                </option>
+
+                <option value="3"
+                    {% if selected_term == "3" %}
+                        selected
+                    {% endif %}>
+                    Third Term
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <button type="submit"
+                class="btn btn-primary filter-btn">
+
+            <i class="fas fa-filter"></i>
+            Filter
+
+        </button>
+
+    </form>
+
+</div>
+
+<!-- =====================================================
+     WEEK NAVIGATION
+===================================================== -->
 
 <div class="week-controls">
 
+    <div class="week-controls-left">
 
-<div>
+        {% if can_go_previous %}
 
-<a href="?week={{ prev_week }}" 
-class="btn btn-outline-primary week-btn">
+        <a href="?week={{ prev_week }}&year={{ selected_year }}&term={{ selected_term }}"
+           class="btn btn-outline-primary week-btn">
 
-<i class="fas fa-chevron-left"></i>
-Previous
+            <i class="fas fa-chevron-left"></i>
+            Previous
 
-</a>
+        </a>
+
+        {% else %}
+
+        <button class="btn btn-outline-secondary week-btn" disabled>
+
+            <i class="fas fa-chevron-left"></i>
+            Previous
+
+        </button>
+
+        {% endif %}
 
 
-{% if week_offset != 0 %}
+        {% if week_offset != 0 %}
 
-<a href="?week=0"
-class="btn btn-outline-secondary week-btn">
+        <a href="?week=0&year={{ selected_year }}&term={{ selected_term }}"
+           class="btn btn-outline-secondary week-btn">
 
-Today
+            Today
 
-</a>
+        </a>
 
-{% endif %}
+        {% endif %}
 
 
-<a href="?week={{ next_week }}"
-class="btn btn-outline-primary week-btn">
+        {% if can_go_next %}
 
-Next
-<i class="fas fa-chevron-right"></i>
+        <a href="?week={{ next_week }}&year={{ selected_year }}&term={{ selected_term }}"
+           class="btn btn-outline-primary week-btn">
 
-</a>
+            Next
+            <i class="fas fa-chevron-right"></i>
+
+        </a>
+
+        {% else %}
+
+        <button class="btn btn-outline-secondary week-btn" disabled>
+
+            Next
+            <i class="fas fa-chevron-right"></i>
+
+        </button>
+
+        {% endif %}
+
+    </div>
 
 </div>
 
 
-</div>
 
-
-
+<!-- =====================================================
+     DAYS
+===================================================== -->
 
 {% for day in timetable_by_day %}
 
 
-<div class="day-card {% if day.num == today %}today{% endif %}">
+<div class="day-card {% if day.date == today %}today{% endif %}">
 
 
-<div class="day-header {% if day.num == today %}today{% endif %}">
+    <!-- DAY HEADER -->
 
-<span>
-{{ day.name }}
-</span>
+    <div class="day-header {% if day.date == today %}today{% endif %}">
 
+        <span class="day-name">
+            {{ day.name }}
+        </span>
 
-<span>
 
-{{ day.date|date:"M d" }}
+        <span class="day-date">
 
+            {{ day.date|date:"M d" }}
 
-{% if day.num == today %}
 
-<span class="badge bg-light text-primary ms-2">
-Today
-</span>
+            {% if day.date == today %}
 
-{% endif %}
+                <span class="badge bg-light text-primary ms-2">
+                    Today
+                </span>
 
-</span>
+            {% endif %}
 
+        </span>
 
-</div>
+    </div>
 
 
 
+    <!-- EVENT -->
 
-{% if day.event %}
+    {% if day.event %}
 
+        <div class="event-banner
+            {% if day.event.affects_timetable %}
+                bg-warning-subtle
+            {% else %}
+                bg-info-subtle
+            {% endif %}">
 
-<div class="event-banner 
-{% if day.event.affects_timetable %}
-bg-warning-subtle
-{% else %}
-bg-info-subtle
-{% endif %}">
+            <h5 class="mb-1">
 
+                {% if day.event.affects_timetable %}
 
-<h5 class="mb-1">
+                    🎉 {{ day.event.name }}
 
-{% if day.event.affects_timetable %}
+                {% else %}
 
-🎉 {{ day.event.name }}
+                    📚 {{ day.event.name }}
 
-{% else %}
+                {% endif %}
 
-📚 {{ day.event.name }}
+            </h5>
 
-{% endif %}
 
-</h5>
+            {% if day.event.affects_timetable %}
 
+                <small>
+                    No classes scheduled
+                </small>
 
+            {% endif %}
 
-{% if day.event.affects_timetable %}
+        </div>
 
-<small>
-No classes scheduled
-</small>
+    {% endif %}
 
-{% endif %}
 
 
-</div>
+    <!-- TABLE -->
 
+    <div class="p-3">
 
-{% endif %}
+        {% if day.entries %}
 
+            <div class="table-responsive">
 
+                <table class="timetable-table">
 
+                    <thead>
 
+                        <tr>
 
-<div class="p-3">
+                            <th>Class</th>
 
+                            <th>Subject</th>
 
-{% if day.entries %}
+                            <th>Period</th>
 
+                            <th>Time</th>
 
-<div class="table-responsive">
+                        </tr>
 
+                    </thead>
 
-<table class="timetable-table">
 
+                    <tbody>
 
-<thead>
+                    {% for entry in day.entries %}
 
-<tr>
+                        <tr>
 
-<th>Class</th>
+                            <td>
 
-<th>Subject</th>
+                                <span class="class-badge">
 
-<th>Period</th>
+                                    <i class="fas fa-school"></i>
 
-<th>Time</th>
+                                    {{ entry.school_class.name }}
 
-</tr>
+                                </span>
 
-</thead>
+                            </td>
 
 
+                            <td>
 
-<tbody>
+                                <span class="subject-badge">
 
+                                    <i class="fas fa-book"></i>
 
-{% for entry in day.entries %}
+                                    {{ entry.subject.name }}
 
+                                </span>
 
-<tr>
+                            </td>
 
 
-<td>
+                            <td>
 
-<span class="class-badge">
+                                <span class="period-badge">
 
-<i class="fas fa-school"></i>
+                                    {{ entry.period|default:"-" }}
 
-{{ entry.school_class.name }}
+                                </span>
 
-</span>
+                            </td>
 
-</td>
 
+                            <td>
 
+                                <span class="time-box">
 
-<td>
+                                    <i class="far fa-clock"></i>
 
-<span class="subject-badge">
+                                    {{ entry.start_time|time:"H:i" }}
 
-<i class="fas fa-book"></i>
+                                    -
 
-{{ entry.subject.name }}
+                                    {{ entry.end_time|time:"H:i" }}
 
-</span>
+                                </span>
 
-</td>
+                            </td>
 
+                        </tr>
 
+                    {% endfor %}
 
-<td>
+                    </tbody>
 
-{{ entry.period|default:"-" }}
+                </table>
 
-</td>
+            </div>
 
 
+        {% else %}
 
-<td>
+            <div class="empty-box">
 
-<span class="time-box">
+                <i class="fas fa-calendar-times fa-2x mb-2"></i>
 
-<i class="far fa-clock"></i>
+                <p class="mb-0">
+                    No classes scheduled
+                </p>
 
-{{ entry.start_time|time:"H:i" }}
--
-{{ entry.end_time|time:"H:i" }}
+            </div>
 
-</span>
+        {% endif %}
 
-</td>
-
-
-</tr>
-
-
-{% endfor %}
-
-
-</tbody>
-
-
-</table>
-
-
-</div>
-
-
-{% elif not day.event or day.event.affects_timetable %}
-
-
-<div class="empty-box">
-
-<i class="fas fa-calendar-times fa-2x mb-2"></i>
-
-<p class="mb-0">
-No classes scheduled
-</p>
-
-</div>
-
-
-{% endif %}
-
-
-</div>
-
+    </div>
 
 </div>
 
@@ -552,6 +1274,5 @@ No classes scheduled
 
 
 </div>
-
 
 {% endblock %}

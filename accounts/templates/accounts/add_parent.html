@@ -1,19 +1,13 @@
 {% extends 'accounts/dashboard_base.html' %}
-
 {% block title %}Add Parent{% endblock %}
-
 {% block content %}
-
 <style>
-
 /* PAGE */
 .parent-page{
     background:#f8fafc;
     min-height:100vh;
     padding:25px;
 }
-
-
 /* HERO */
 .parent-hero{
     background:linear-gradient(135deg,#2563eb,#1d4ed8);
@@ -23,19 +17,15 @@
     margin-bottom:25px;
     box-shadow:0 15px 35px rgba(37,99,235,.25);
 }
-
 .parent-hero h2{
     font-size:32px;
     font-weight:800;
     margin-bottom:8px;
 }
-
 .parent-hero p{
     margin:0;
     opacity:.85;
 }
-
-
 /* CARD */
 .parent-card{
     background:white;
@@ -43,10 +33,7 @@
     padding:30px;
     box-shadow:0 10px 30px rgba(0,0,0,.08);
 }
-
-
 /* ALERT */
-
 .success-box{
     background:#ecfdf5;
     border-left:5px solid #10b981;
@@ -55,53 +42,33 @@
     color:#065f46;
     margin-bottom:20px;
 }
-
-
 /* FORM GRID */
-
 .form-grid{
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:30px;
 }
-
-
 .form-section{
-
     background:#f8fafc;
     padding:25px;
     border-radius:18px;
-
 }
-
-
 .form-section-title{
-
     font-size:18px;
     font-weight:800;
     color:#1f2937;
     margin-bottom:20px;
-
 }
-
-
 /* LABEL */
-
 label{
-
     display:block;
     font-weight:700;
     color:#374151;
     margin-bottom:7px;
     font-size:14px;
-
 }
-
-
 /* INPUT */
-
 input{
-
     width:100%;
     height:45px;
     border-radius:12px;
@@ -110,35 +77,57 @@ input{
     background:white;
     font-size:15px;
     margin-bottom:18px;
-
 }
-
-
 input:focus{
-
     outline:none;
     border-color:#2563eb;
     box-shadow:0 0 0 4px rgba(37,99,235,.12);
-
 }
-
-
+/* SELECT */
+select{
+    width:100%;
+    height:45px;
+    border-radius:12px;
+    border:1px solid #d1d5db;
+    padding:10px 14px;
+    background:white;
+    font-size:15px;
+    margin-bottom:18px;
+    color:#374151;
+}
+select:focus{
+    outline:none;
+    border-color:#2563eb;
+    box-shadow:0 0 0 4px rgba(37,99,235,.12);
+}
 /* PHOTO */
-
 .photo-box{
-
     background:white;
     border:2px dashed #cbd5e1;
     border-radius:15px;
     padding:15px;
-
 }
-
-
+/* EMERGENCY CONTACT */
+.emergency-section{
+    background:#fff7ed;
+    border:1px solid #fed7aa;
+    padding:25px;
+    border-radius:18px;
+    margin-top:30px;
+}
+.emergency-section .form-section-title{
+    color:#9a3412;
+}
+.emergency-note{
+    background:#ffedd5;
+    color:#9a3412;
+    padding:12px 15px;
+    border-radius:12px;
+    font-size:14px;
+    margin-bottom:20px;
+}
 /* BUTTON */
-
 .save-parent-btn{
-
     width:100%;
     border:none;
     padding:14px;
@@ -149,268 +138,207 @@ input:focus{
     font-weight:700;
     margin-top:20px;
     transition:.3s;
-
 }
-
-
 .save-parent-btn:hover{
-
     transform:translateY(-2px);
     box-shadow:0 10px 20px rgba(37,99,235,.25);
-
 }
-
-
 /* MOBILE */
-
 @media(max-width:768px){
-
-.form-grid{
-
-    grid-template-columns:1fr;
-
+    .form-grid{
+        grid-template-columns:1fr;
+    }
+    .parent-hero h2{
+        font-size:25px;
+    }
+    .parent-page{
+        padding:15px;
+    }
+    .parent-card{
+        padding:20px;
+    }
 }
-
-.parent-hero h2{
-
-    font-size:25px;
-
-}
-
-}
-
 </style>
-
-
-
 <div class="parent-page">
-
-
 <!-- HERO -->
-
 <div class="parent-hero">
-
 <h2>
 👨‍👩‍👧 Add New Parent
 </h2>
-
 <p>
 Register parents and create secure login access for your school.
 </p>
-
 </div>
-
-
-
 {% if messages %}
-
 {% for message in messages %}
-
 <div class="success-box">
-
 ✅ {{ message }}
-
 </div>
-
 {% endfor %}
-
 {% endif %}
-
-
-
 {% if credentials %}
-
 <div class="success-box">
-
 <h4>
 Parent Login Credentials
 </h4>
-
-
 <p>
 <strong>Username:</strong>
 {{ credentials.username }}
 </p>
-
-
 <p>
 <strong>Password:</strong>
 {{ credentials.password }}
 </p>
-
-
 <small>
 Save these details. They will not be shown again.
 </small>
-
-
 </div>
-
 {% endif %}
-
-
-
 <div class="parent-card">
-
-
 <form method="POST" enctype="multipart/form-data">
-
 {% csrf_token %}
-
-
-
 <div class="form-grid">
-
-
-
 <!-- LEFT -->
-
 <div class="form-section">
-
-
 <div class="form-section-title">
 Parent Information
 </div>
-
-
-
+<label>
+Title
+</label>
+{{ form.title.as_widget }}
 <label>
 First Name *
 </label>
-
-<input type="text" name="first_name" required>
-
-
-
+<input
+    type="text"
+    name="first_name"
+    required
+>
 <label>
 Middle Name
 </label>
-
-<input type="text" name="middle_name">
-
-
-
+<input
+    type="text"
+    name="middle_name"
+>
 <label>
 Last Name *
 </label>
-
-<input type="text" name="last_name" required>
-
-
-
-
-
-
-
+<input
+    type="text"
+    name="last_name"
+    required
+>
 <label>
 Parent Photo
 </label>
-
-
 <div class="photo-box">
-
-<input type="file" name="photo" accept="image/*">
-
+<input
+    type="file"
+    name="photo"
+    accept="image/*"
+>
 </div>
-
-
-
 </div>
-
-
-
-
-
 <!-- RIGHT -->
-
 <div class="form-section">
-
-
-
-
 <label>
 Email
 </label>
-
-<input type="email" name="email">
-
+<input
+    type="email"
+    name="email"
+>
 <label>
 Phone Number *
 </label>
-
-<input type="text" name="phone" required>
-
-
-
+<input
+    type="text"
+    name="phone"
+    required
+>
 <label>
 Occupation
 </label>
-
-<input type="text" name="occupation">
-
-
-
+<input
+    type="text"
+    name="occupation"
+>
 <label>
 Address
 </label>
-
-<input type="text" name="address">
-
-
-
+<input
+    type="text"
+    name="address"
+>
 <label>
 Relationship
 </label>
-
-<input 
-type="text" 
-name="relationship"
-placeholder="Father / Mother / Guardian"
+<input
+    type="text"
+    name="relationship"
+    placeholder="Father / Mother / Guardian"
 >
-
-
-
 </div>
-
-
 </div>
-
-
-
-<button 
-type="submit"
-class="save-parent-btn">
-
+<!-- EMERGENCY CONTACT -->
+<div class="emergency-section">
+<div class="form-section-title">
+🚨 Emergency Contact
+</div>
+<div class="emergency-note">
+    Provide the details of another person the school can contact
+    if the parent cannot be reached during an emergency.
+</div>
+<div class="form-grid">
+<div>
+<label>
+Emergency Contact Name
+</label>
+<input
+    type="text"
+    name="emergency_contact_name"
+    placeholder="Full name"
+>
+</div>
+<div>
+<label>
+Emergency Contact Phone
+</label>
+<input
+    type="text"
+    name="emergency_contact_phone"
+    placeholder="Phone number"
+>
+</div>
+<div>
+<label>
+Relationship to Parent
+</label>
+<input
+    type="text"
+    name="emergency_contact_relationship"
+    placeholder="Spouse / Brother / Sister / etc."
+>
+</div>
+</div>
+</div>
+<button
+    type="submit"
+    class="save-parent-btn"
+>
 💾 Add Parent
-
 </button>
-
-
-
 </form>
-
-
 </div>
-
-
 </div>
-
-
-
 <script>
-
 document.querySelector("form")
 .addEventListener("submit", function(){
-
-const btn=document.querySelector(".save-parent-btn");
-
-btn.disabled=true;
-
-btn.innerHTML="⏳ Saving Parent...";
-
+    const btn = document.querySelector(".save-parent-btn");
+    btn.disabled = true;
+    btn.innerHTML = "⏳ Saving Parent...";
 });
-
 </script>
-
-
 {% endblock %}

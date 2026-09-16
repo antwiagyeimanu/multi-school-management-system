@@ -1,622 +1,538 @@
 {% extends "accounts/dashboard_base.html" %}
+{% load custom_filters %}
 {% block content %}
 
 <style>
 
-.timetable-page{
-    max-width:1200px;
-    margin:auto;
-    padding:25px 15px;
-    background:#f8fafc;
-    min-height:100vh;
-}
-
-
-/* HEADER */
-
-.timetable-header{
-
-    background:linear-gradient(135deg,#0f172a,#2563eb);
-
-    color:white;
-
-    border-radius:24px;
-
-    padding:30px;
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    margin-bottom:30px;
-
-    box-shadow:0 15px 35px rgba(15,23,42,.15);
-
-}
-
-
-.timetable-header h3{
-
-    margin:0;
-
-    font-size:32px;
-
-    font-weight:800;
-
-}
-
-
-.class-badge{
-
-    margin-top:10px;
-
-    display:inline-block;
-
-    background:rgba(255,255,255,.15);
-
-    padding:8px 16px;
-
-    border-radius:999px;
-
-    font-weight:600;
-
-}
-
-
-
-/* BUTTONS */
-
-.week-buttons a{
-
-    border-radius:999px;
-
-    padding:10px 18px;
-
-    font-weight:700;
-
-}
-
-
-
-/* DAY CARD */
-
-.day-card{
-
-    background:white;
-
-    border-radius:22px;
-
-    overflow:hidden;
-
-    margin-bottom:25px;
-
-    box-shadow:
-    0 10px 25px rgba(15,23,42,.08);
-
-    transition:.3s;
-
-}
-
-
-
-.day-card:hover{
-
-    transform:translateY(-3px);
-
-}
-
-
-
-/* DAY HEADER */
-
-.day-header{
-
-    background:#334155;
-
-    color:white;
-
-    padding:18px 22px;
-
-    font-size:18px;
-
-    font-weight:800;
-
-}
-
-
-.today-header{
-
-    background:linear-gradient(135deg,#2563eb,#1d4ed8);
-
-}
-
-
-
-/* EVENT */
-
-.event-banner{
-
-    padding:18px;
-
-    text-align:center;
-
-    font-weight:700;
-
-}
-
-
-
-/* TABLE */
-
-.timetable-table th{
-
-    background:#eff6ff;
-
-    color:#1e40af;
-
-    font-size:13px;
-
-}
-
-
-.timetable-table td{
-
-    padding:15px;
-
-    vertical-align:middle;
-
-}
-
-
-
-.subject-pill{
-
-    background:#dbeafe;
-
-    color:#1d4ed8;
-
-    padding:7px 14px;
-
-    border-radius:999px;
-
-    font-weight:700;
-
-    display:inline-block;
-
-}
-
-
-
-/* MOBILE CARDS */
-
-.mobile-class{
-
-    display:none;
-
-}
-
-
+/* =========================================================
+   PAGE - SAME AS PARENT
+========================================================= */
+.timetable-page{max-width:1450px;margin:auto;padding:10px 0 40px}
+.timetable-header{background:linear-gradient(135deg,#4338ca,#0f172a);color:#fff;border-radius:28px;padding:32px;display:flex;align-items:center;justify-content:space-between;gap:20px;box-shadow:0 20px 50px rgba(0,0,0,.18)}
+.timetable-header-left{display:flex;align-items:center;gap:22px}
+.timetable-icon{width:64px;height:64px;border-radius:18px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:27px}
+.timetable-header h3{margin:0;font-size:30px;font-weight:800}
+.timetable-header p{margin:5px 0 0;font-size:14px;opacity:.88}
+.class-badge{background:white;color:#4f46e5;padding:10px 18px;border-radius:30px;font-size:16px;font-weight:800;white-space:nowrap}
+
+/* FILTER */
+.timetable-filter{margin-top:20px;padding:25px;background:#fff;border:1px solid #e5e7eb;border-radius:22px;box-shadow:0 10px 25px rgba(0,0,0,.06)}
+.timetable-filter label{font-size:12px;font-weight:800;color:#111827;margin-bottom:5px}
+.timetable-filter .form-select{border-radius:12px;min-height:43px;font-size:14px;font-weight:600}
+.filter-btn{min-height:43px;border-radius:12px;font-weight:800}
+
+/* WEEK NAV - SAME AS PARENT */
+.week-navigation{margin-top:20px;padding:18px 20px;background:#fff;border:1px solid #e5e7eb;border-radius:21px;box-shadow:0 8px 25px rgba(15,23,42,.05);display:flex;align-items:center;gap:18px}
+.week-center{flex:1;text-align:center}
+.week-center h4{margin:0;font-size:19px;font-weight:850;color:#111827}
+.week-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:30px;background:#eef2ff;color:#4f46e5;font-size:13px;font-weight:850}
+.week-date{margin-top:7px;color:#64748b;font-size:12px;font-weight:700}
+.week-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 16px;border-radius:30px;border:1px solid #e2e8f0;background:#f8fafc;color:#2563eb;text-decoration:none;font-size:12px;font-weight:800;white-space:nowrap;transition:.2s ease}
+.week-btn:hover{background:#2563eb;border-color:#2563eb;color:#fff}
+.today-btn{background:#4f46e5;border-color:#4f46e5;color:white}
+
+/* TIMETABLE CARD - SAME AS PARENT */
+.timetable-card{margin-top:25px;background:white;border:1px solid #e5e7eb;border-radius:24px;overflow:hidden;box-shadow:0 12px 32px rgba(15,23,42,.07)}
+.timetable-heading{padding:20px 24px;border-bottom:1px solid #e5e7eb}
+.timetable-heading h4{margin:0;font-size:18px;font-weight:800;color:#111827}
+.timetable-heading p{margin:4px 0 0;color:#64748b;font-size:15px}
+.timetable-scroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.school-timetable{width:100%;min-width:1050px;border-collapse:collapse;table-layout:fixed}
+.school-timetable thead th{height:65px;padding:8px;background:#f8fafc;border:1px solid #e2e8f0;color:#334155;text-align:center;font-size:14px;font-weight:800}
+.school-timetable thead th:first-child{width:145px;background:#eef2ff;color:#4338ca}
+.day-cell{width:145px;padding:12px!important;background:#f8fafc!important;border:1px solid #e2e8f0!important;text-align:left}
+.day-name{display:block;color:#111827;font-size:17px;font-weight:800}
+.day-date{display:block;margin-top:4px;color:#64748b;font-size:13px;font-weight:600}
+.day-cell.today{background:#eef2ff!important}
+.today-mark{display:inline-block;margin-top:6px;padding:3px 8px;border-radius:20px;background:#4f46e5;color:white;font-size:14px;font-weight:900}
+.school-timetable tbody td{height:105px;padding:7px;border:1px solid #e2e8f0;background:white;vertical-align:middle}
+.lesson-card{min-height:82px;width:100%;padding:9px 7px;border-radius:14px;background:linear-gradient(135deg,#eff6ff,#eef2ff);border:1px solid #dbeafe;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;box-shadow:0 4px 10px rgba(37,99,235,.06)}
+.period-label{display:inline-block;padding:4px 9px;margin-bottom:5px;border-radius:20px;background:#4f46e5;color:white;font-size:11px;font-weight:900}
+.subject-name{color:#1e293b;font-size:15px;font-weight:900;line-height:1.2}
+.teacher-name{margin-top:4px;color:#64748b;font-size:12px;font-weight:900}
+.teacher-name i{color:#4f46e5;margin-right:3px}
+.special-column{width:85px!important;min-width:85px!important;padding:0!important;background:#fff7ed!important;border-left:1px solid #fed7aa!important;border-right:1px solid #fed7aa!important}
+.special-inner{height:100%;min-height:105px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#fff7ed,#fffbeb);color:#92400e;text-align:center;padding:10px 6px}
+.special-title{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:900;line-height:1.25;letter-spacing:.3px;max-width:70px;text-transform:uppercase;text-align:center}
+.break-column{background:#fff7ed!important}
+.break-inner{background:linear-gradient(180deg,#fff7ed,#fffbeb);color:#92400e}
+.break-icon{font-size:14px;margin-bottom:4px}
+.event-column{background:#fef2f2!important;border-left:1px solid #fecaca!important;border-right:1px solid #fecaca!important}
+.event-inner{min-height:105px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#fef2f2,#fff1f2);color:#991b1b;text-align:center;padding:10px 6px}
+.event-icon{font-size:14px;margin-bottom:4px}
+.empty-cell{color:#cbd5e1;text-align:center;font-size:17px}
+.timetable-alert{margin-top:20px;border:0;border-radius:16px;padding:15px 18px;font-size:13px;font-weight:650}
 
 @media(max-width:768px){
-
-
-.timetable-header{
-
-    flex-direction:column;
-
-    gap:20px;
-
-    text-align:center;
-
+.timetable-page{padding:8px 0 30px}
+.timetable-header{flex-direction:column;text-align:center;gap:18px;padding:20px 14px!important;border-radius:18px!important}
+.timetable-header-left{flex-direction:column;gap:12px}
+.timetable-header h3{font-size:22px!important}
+.timetable-filter{padding:12px!important;border-radius:16px!important}
+.timetable-filter .row{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important}
+.timetable-filter .col-md-4{width:auto!important;padding:0!important}
+.timetable-filter .col-md-2{width:100%!important;grid-column:1 / -1!important;padding:0!important}
+.week-navigation{flex-direction:row!important;flex-wrap:nowrap!important;padding:10px 8px!important;gap:6px!important;overflow-x:auto!important;align-items:center!important;justify-content:space-between!important}
+.week-navigation::-webkit-scrollbar{display:none!important}
+.week-center{flex:1 1 auto!important;min-width:120px!important}
+.timetable-scroll{overflow-x:auto!important;-webkit-overflow-scrolling:touch!important}
+.school-timetable thead th:first-child{position:sticky!important;left:0!important;z-index:6!important;background:#eef2ff!important}
+.day-cell{position:sticky!important;left:0!important;z-index:5!important;background:#f8fafc!important;box-shadow:2px 0 5px rgba(0,0,0,0.06)!important}
+.school-timetable thead th{font-size:15px!important}
+.time-header .time{font-size:13px!important}
+.day-name{font-size:15px!important}
+.day-date{font-size:11px!important}
+.subject-name{font-size:14px!important}
+.teacher-name{font-size:12px!important}
 }
-
-
-.timetable-header h3{
-
-    font-size:25px;
-
-}
-
-
-.desktop-table{
-
-    display:none;
-
-}
-
-
-.mobile-class{
-
-    display:block;
-
-}
-
-
-.lesson-card{
-
-    background:#f8fafc;
-
-    border-radius:18px;
-
-    padding:16px;
-
-    margin-bottom:15px;
-
-    border-left:5px solid #2563eb;
-
-}
-
-
-.lesson-title{
-
-    font-weight:800;
-
-    color:#0f172a;
-
-}
-
-
-.lesson-info{
-
-    margin-top:8px;
-
-    font-size:14px;
-
-    color:#475569;
-
-}
-
-
-}
-
-
-@media(min-width:769px){
-
-.mobile-class{
-
-    display:none;
-
-}
-
-}
-
-
 </style>
 
-{% if need_both %}
-    <div class="alert alert-info">Please select both Academic Year and Term and click Filter to view timetable.</div>
-{% elif no_timetable %}
-    <div class="alert alert-warning">No timetable found for selected Year and Term.</div>
-{% endif %}
 
 <div class="timetable-page">
 
 
+<!-- =====================================================
+     ALERTS
+===================================================== -->
 
-<!-- HEADER -->
+{% if need_both %}
+
+<div class="alert alert-info timetable-alert">
+    <i class="fas fa-info-circle me-2"></i>
+    Please select both Academic Year and Term and click Filter to view your timetable.
+</div>
+
+{% elif no_timetable %}
+
+<div class="alert alert-warning timetable-alert">
+    <i class="fas fa-calendar-times me-2"></i>
+    No timetable found for the selected Academic Year and Term.
+</div>
+
+{% endif %}
+
+
+<!-- =====================================================
+     HEADER
+===================================================== -->
 
 <div class="timetable-header">
 
+    <div class="timetable-header-left">
 
-<div>
+        <div class="timetable-icon">
+            <i class="fas fa-calendar-alt"></i>
+        </div>
 
-<h3>
-📅 My Timetable
-</h3>
+        <div>
 
+            <h3>
+                My Timetable
+            </h3>
 
-<span class="class-badge">
-
-Class: {{ request.user.school_class.name }}
-
-</span>
-
-
-</div>
-
-
-
-<div class="week-buttons btn-group">
-
-
-
-{% if timetable_prev_week %}
-<a href="?year={{ selected_year }}&term={{ selected_term }}&t_week={{ timetable_prev_week }}" class="btn btn-light">Prev</a>
-{% endif %}
-
-<a href="?year={{ selected_year }}&term={{ selected_term }}&t_week={{ timetable_today_week }}" class="btn btn-success">Today</a>
-
-{% if timetable_next_week %}
-<a href="?year={{ selected_year }}&term={{ selected_term }}&t_week={{ timetable_next_week }}" class="btn btn-light">Next</a>
-{% endif %}
-
-
-</div>
-
-
-</div>
-
-
-<form method="get" class="row g-2 mb-3">
-    <div class="col-md-3">
-        <select name="year" class="form-select">
-            <option value="">Academic Year</option>
-            {% for year in years %}
-                <option value="{{ year.id }}" {% if selected_year == year.id|stringformat:"s" %}selected{% endif %}>{{ year.name }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="col-md-3">
-        <select name="term" class="form-select">
-            <option value="">Term</option>
-            <option value="1" {% if selected_term == "1" %}selected{% endif %}>First Term</option>
-            <option value="2" {% if selected_term == "2" %}selected{% endif %}>Second Term</option>
-            <option value="3" {% if selected_term == "3" %}selected{% endif %}>Third Term</option>
-        </select>
-    </div>
-    <div class="col-md-2">
-        <button type="submit" class="btn btn-primary w-100">Filter</button>
-    </div>
-</form>
-
-
-{% for day in timetable_by_day %}
-
-
-
-<div class="day-card">
-
-
-
-<div class="day-header {% if day.date == today %}today-header{% endif %}">
-
-
-{{ day.name }}
-
-<span class="ms-2 opacity-75">
-
-{{ day.date|date:"M d" }}
-
-</span>
-
-
-{% if day.date == today %}
-<span class="badge bg-light text-primary ms-2">
-Today
-</span>
-{% endif %}
-
-
-</div>
-
-
-
-
-{% if day.event %}
-
-<div class="event-banner 
-{% if day.event.affects_timetable %}
-bg-warning
-{% else %}
-bg-info
-{% endif %}">
-
-
-<h5 class="mb-1">
-
-
-{% if day.event.affects_timetable %}
-
-🎉 {{ day.event.name }}
-
-{% else %}
-
-📚 {{ day.event.name }}
-
-{% endif %}
-
-
-</h5>
-
-
-{% if day.event.affects_timetable %}
-
-<small>
-No classes scheduled
-</small>
-
-{% endif %}
-
-
-</div>
-
-
-{% endif %}
-
-
-
-
-
-<div class="card-body">
-
-
-
-{% if day.entries %}
-
-
-
-<!-- DESKTOP TABLE -->
-
-<div class="table-responsive desktop-table">
-
-
-<table class="table timetable-table mb-0">
-
-
-<thead>
-
-<tr>
-
-<th>Teacher</th>
-
-<th>Subject</th>
-
-<th>Period</th>
-
-<th>Time</th>
-
-</tr>
-
-</thead>
-
-
-<tbody>
-
-
-{% for entry in day.entries %}
-
-
-<tr>
-
-
-<td>
-<strong>
-{{ entry.teacher.get_full_name|default:"No teacher assigned" }}
-</strong>
-</td>
-
-
-<td>
-
-<span class="subject-pill">
-
-{{ entry.subject.name }}
-
-</span>
-
-</td>
-
-
-<td>
-
-{{ entry.period|default:"-" }}
-
-</td>
-
-
-<td>
-
-{{ entry.start_time|time:"h:i A" }}
-
--
-
-{{ entry.end_time|time:"h:i A" }}
-
-</td>
-
-
-</tr>
-
-
-{% endfor %}
-
-
-</tbody>
-
-
-</table>
-
-
-</div>
-
-
-
-
-
-<!-- MOBILE VIEW -->
-
-<div class="mobile-class">
-
-
-{% for entry in day.entries %}
-
-
-<div class="lesson-card">
-
-
-<div class="lesson-title">
-
-📘 {{ entry.subject.name }}
-
-</div>
-
-
-<div class="lesson-info">
-
-👨‍🏫 {{ entry.teacher.get_full_name|default:"No teacher assigned" }}
-
-</div>
-
-
-<div class="lesson-info">
-
-⏰ {{ entry.start_time|time:"h:i A" }}
--
-{{ entry.end_time|time:"h:i A" }}
-
-</div>
-
-
-<div class="lesson-info">
-
-📌 Period: {{ entry.period|default:"-" }}
-
-</div>
-
-
-</div>
-
-
-{% endfor %}
-
-
-</div>
-
-
-
-        {% elif not day.event or day.event.affects_timetable %}
-
-        <div class="text-center py-5">
-
-            <i class="fas fa-calendar-times fa-3x text-secondary mb-3"></i>
-
-            <h6 class="fw-bold text-secondary">
-                No Classes Scheduled
-            </h6>
-
-            <p class="text-muted mb-0">
-                Enjoy your day.
+            <p>
+                Your class timetable for the selected term.
             </p>
 
         </div>
 
+    </div>
+
+
+    <div class="class-badge">
+
+        <i class="fas fa-school me-1"></i>
+
+        Class:
+        {{ request.user.school_class.name }}
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     FILTER
+===================================================== -->
+
+<form method="get" class="timetable-filter">
+
+    <div class="row g-3 align-items-end">
+
+        <div class="col-md-4">
+
+            <label>
+                Academic Year
+            </label>
+
+            <select name="year" class="form-select">
+
+                <option value="">
+                    Academic Year
+                </option>
+
+                {% for year in years %}
+
+                <option value="{{ year.id }}"
+                    {% if selected_year == year.id|stringformat:"s" %}
+                        selected
+                    {% endif %}>
+
+                    {{ year.name }}
+
+                </option>
+
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+        <div class="col-md-4">
+
+            <label>
+                Term
+            </label>
+
+            <select name="term" class="form-select">
+
+                <option value="">
+                    Select Term
+                </option>
+
+                <option value="1"
+                    {% if selected_term == "1" %}
+                        selected
+                    {% endif %}>
+                    First Term
+                </option>
+
+                <option value="2"
+                    {% if selected_term == "2" %}
+                        selected
+                    {% endif %}>
+                    Second Term
+                </option>
+
+                <option value="3"
+                    {% if selected_term == "3" %}
+                        selected
+                    {% endif %}>
+                    Third Term
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="col-md-2">
+
+            <button type="submit"
+                    class="btn btn-primary w-100 filter-btn">
+
+                <i class="fas fa-filter me-1"></i>
+                Filter
+
+            </button>
+
+        </div>
+
+    </div>
+
+</form>
+
+
+{% if active_term %}
+
+
+<!-- =====================================================
+     WEEK NAVIGATION
+===================================================== -->
+
+<div class="week-navigation">
+
+    {% if timetable_prev_week %}
+
+    <a href="?year={{ selected_year }}&term={{ selected_term }}&t_week={{ timetable_prev_week }}"
+       class="week-btn">
+
+        <i class="fas fa-chevron-left"></i>
+        Previous
+
+    </a>
+
+    {% endif %}
+
+
+    <div class="week-center">
+
+     
+
+  
+
+
+        <div class="week-badge">
+
+            <i class="fas fa-calendar-week"></i>
+
+            Week {{ timetable_active_week }}
+
+            {% if timetable_active_week == timetable_today_week %}
+
+                <span>• Current</span>
+
+            {% endif %}
+
+        </div>
+
+
+        <div class="week-date">
+
+            {{ current_week_start|date:"M d, Y" }}
+
+            -
+
+            {{ current_week_end|date:"M d, Y" }}
+
+        </div>
+
+    </div>
+
+
+    <div class="d-flex gap-2">
+
+        {% if timetable_active_week != timetable_today_week %}
+
+        <a href="?year={{ selected_year }}&term={{ selected_term }}&t_week={{ timetable_today_week }}"
+           class="week-btn today-btn">
+
+            <i class="fas fa-calendar-day"></i>
+            Today
+
+        </a>
+
         {% endif %}
 
 
+        {% if timetable_next_week %}
+
+        <a href="?year={{ selected_year }}&term={{ selected_term }}&t_week={{ timetable_next_week }}"
+           class="week-btn">
+
+            Next
+            <i class="fas fa-chevron-right"></i>
+
+        </a>
+
+        {% endif %}
+
+    </div>
 
 </div>
 
 
-</div>
+<!-- =====================================================
+     TIMETABLE
+===================================================== -->
 
+{% if timetable_by_day %}
+
+<div class="timetable-card">
+
+
+    <div class="timetable-heading">
+
+        <div>
+
+            <h4>
+
+                This timetable applies throughout the term.
+            </h4>
+
+                
+            
+
+        </div>
+
+    </div>
+
+
+    <div class="timetable-scroll">
+
+        <table class="school-timetable">
+
+            <!-- =================================================
+                 TIME HEADER
+            ================================================= -->
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        <i class="fas fa-calendar-day me-1"></i>
+                        Day
+                    </th>
+
+
+                    {% for slot in time_slots %}
+
+                    <th>
+
+                        <div class="time-header">
+
+                            <div class="time-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+
+                            <span class="time">
+                                {{ slot}}
+                            </span>
+
+                        </div>
+
+                    </th>
+
+                    {% endfor %}
+
+                </tr>
+
+            </thead>
+
+
+            <!-- =================================================
+                 DAYS
+            ================================================= -->
+
+            <tbody>
+
+            {% for day in timetable_by_day %}
+
+                <tr>
+
+
+                    <!-- DAY -->
+
+                    <td class="day-cell
+                        {% if day.date == today %}
+                            today
+                        {% endif %}">
+
+                        <span class="day-name">
+                            {{ day.name }}
+                        </span>
+
+                        <span class="day-date">
+                            {{ day.date|date:" d M Y" }}
+                        </span>
+
+
+                        {% if day.date == today %}
+
+                        <span class="today-mark">
+                            TODAY
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+<!-- =================================================
+     TIME SLOTS
+================================================= -->
+
+{% for slot in time_slots %}
+
+    {% if slot in break_times %}
+        {% if day.num == 0 %}
+        <td rowspan="5" class="special-column break-column">
+            <div class="special-inner break-inner">
+                {% for br in break_slots %}
+                    {% if br.label == slot %}
+                    <div>
+                        <div class="break-icon"><i class="fas fa-coffee"></i></div>
+                        <div class="special-title">
+                            {% for word in br.name.split %}<span>{{ word }}</span>{% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </td>
+        {% endif %}
+
+    {% elif day.event and day.event.affects_timetable %}
+        {% if day.num == 0 %}
+        <td rowspan="5" class="special-column event-column">
+            <div class="special-inner event-inner">
+                <div>
+                    <div class="event-icon"><i class="fas fa-calendar-star"></i></div>
+                    <div class="special-title">
+                        {% for word in day.event.name.split %}<span>{{ word }}</span>{% endfor %}
+                    </div>
+                </div>
+            </div>
+        </td>
+        {% endif %}
+
+    {% else %}
+        <td>
+            {% for entry in day.entries %}
+                {% with entry_time=entry.start_time|time:"H:i" %}
+                    {% if entry_time == slot|slice:":5" %}
+                        <div class="lesson-card">
+                            <div class="period-label">
+                                {{ entry.period }} {% if entry.period == 1 %}PERIOD{% else %}PERIODS{% endif %}
+                            </div>
+                            <div class="subject-name">{{ entry.subject.name }}</div>
+                           <div class="teacher-name">
+    <i class="fas fa-user-tie"></i>
+    {{ entry.teacher.title }} {{ entry.teacher.last_name|default:entry.teacher.first_name|default:"Teacher not assigned" }}
+</div>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            {% endfor %}
+
+            {% if not day.entries %}
+                <span class="empty-cell">—</span>
+            {% endif %}
+        </td>
+    {% endif %}
 
 {% endfor %}
 
+                </tr>
 
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
 
 </div>
 
+{% else %}
+
+<div class="empty-timetable text-center py-5">
+
+    <i class="fas fa-calendar-times fa-3x text-secondary mb-3"></i>
+
+    <h5 class="fw-bold text-secondary">
+        No Classes Scheduled
+    </h5>
+
+</div>
+
+{% endif %}
+
+{% endif %}
+
+</div>
 
 {% endblock %}

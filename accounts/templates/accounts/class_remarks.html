@@ -1,150 +1,1186 @@
 {% extends 'accounts/dashboard_base.html' %}
-{% block title %}Class Remarks - {{ class_obj }}{% endblock %}
+
+{% block title %}Class Remarks - {{ class_obj.name }}{% endblock %}
 
 {% block content %}
-<h2>Class Remarks - {{ class_obj.name }}</h2>
 
-<div id="all-done" style="display:none; text-align:center; padding:40px; color:green; font-size:18px;">
-    ✓ All students completed!
+<style>
+
+/* =========================================================
+   PREMIUM CLASS REMARKS
+========================================================= */
+
+.remarks-page{
+    max-width:1100px;
+    margin:0 auto;
+    padding:25px 18px 50px;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.remarks-header{
+    background:linear-gradient(135deg,#4f46e5,#1e1b4b);
+    color:#fff;
+    border-radius:24px;
+    padding:28px;
+    margin-bottom:24px;
+    box-shadow:0 18px 45px rgba(79,70,229,.20);
+}
+
+.remarks-header-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+}
+
+.remarks-header h1{
+    margin:0;
+    font-size:28px;
+    font-weight:900;
+}
+
+.remarks-header p{
+    margin:7px 0 0;
+    color:#c7d2fe;
+    font-size:14px;
+}
+
+.class-badge{
+    background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.18);
+    padding:9px 16px;
+    border-radius:30px;
+    font-weight:700;
+    white-space:nowrap;
+}
+
+/* =========================
+   PROGRESS
+========================= */
+
+.remarks-progress-card{
+    background:#fff;
+    border:1px solid #e5e7eb;
+    border-radius:18px;
+    padding:18px 20px;
+    margin-bottom:22px;
+    box-shadow:0 8px 25px rgba(15,23,42,.05);
+}
+
+.progress-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:15px;
+    margin-bottom:10px;
+}
+
+.progress-label{
+    font-weight:800;
+    color:#111827;
+}
+
+.progress-count{
+    color:#64748b;
+    font-size:13px;
+    font-weight:700;
+}
+
+.progress-track{
+    width:100%;
+    height:9px;
+    background:#eef2ff;
+    border-radius:20px;
+    overflow:hidden;
+}
+
+.progress-bar{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg,#4f46e5,#6366f1);
+    border-radius:20px;
+    transition:.35s ease;
+}
+
+/* =========================
+   STUDENT CARD
+========================= */
+
+.student-remark-card{
+    background:#fff;
+    border-radius:24px;
+    border:1px solid #e5e7eb;
+    box-shadow:0 15px 40px rgba(15,23,42,.08);
+    overflow:hidden;
+}
+
+.student-card-top{
+    padding:25px;
+    background:linear-gradient(180deg,#f8fafc,#fff);
+    border-bottom:1px solid #eef2f7;
+}
+
+.student-profile{
+    display:flex;
+    align-items:center;
+    gap:18px;
+}
+
+.student-avatar{
+    width:78px;
+    height:78px;
+    border-radius:50%;
+    flex-shrink:0;
+    background:linear-gradient(135deg,#4f46e5,#2563eb);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:27px;
+    font-weight:900;
+    box-shadow:0 8px 20px rgba(79,70,229,.22);
+    overflow:hidden;
+}
+
+.student-avatar img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.student-details{
+    min-width:0;
+}
+
+.student-details h2{
+    margin:0;
+    color:#111827;
+    font-size:23px;
+    font-weight:900;
+}
+
+.student-meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:8px;
+}
+
+.meta-pill{
+    background:#f1f5f9;
+    color:#475569;
+    border-radius:20px;
+    padding:6px 11px;
+    font-size:12px;
+    font-weight:700;
+}
+
+/* =========================
+   REMARK AREA
+========================= */
+
+.remark-body{
+    padding:25px;
+}
+
+.remark-title{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:15px;
+    margin-bottom:12px;
+}
+
+.remark-title h3{
+    margin:0;
+    font-size:17px;
+    font-weight:900;
+    color:#111827;
+}
+
+.saved-status{
+    display:none;
+    background:#dcfce7;
+    color:#15803d;
+    padding:6px 11px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:800;
+}
+
+.remark-textarea{
+    width:100%;
+    min-height:180px;
+    resize:vertical;
+    border:1px solid #dbe2ea;
+    border-radius:16px;
+    padding:16px;
+    font-size:15px;
+    line-height:1.6;
+    color:#1f2937;
+    background:#f8fafc;
+    outline:none;
+    transition:.2s;
+    box-sizing:border-box;
+}
+
+.remark-textarea:focus{
+    background:#fff;
+    border-color:#6366f1;
+    box-shadow:0 0 0 4px rgba(99,102,241,.10);
+}
+
+.remark-textarea::placeholder{
+    color:#94a3b8;
+}
+
+/* =========================
+   ACTION AREA
+========================= */
+
+.remark-actions{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:15px;
+    margin-top:20px;
+}
+
+.nav-buttons{
+    display:flex;
+    gap:10px;
+}
+
+.nav-btn,
+.save-btn{
+    border:none;
+    border-radius:13px;
+    padding:11px 18px;
+    font-weight:800;
+    cursor:pointer;
+    transition:.2s;
+    font-size:14px;
+}
+
+.nav-btn{
+    background:#f1f5f9;
+    color:#334155;
+}
+
+.nav-btn:hover{
+    background:#e2e8f0;
+}
+
+.nav-btn:disabled{
+    opacity:.45;
+    cursor:not-allowed;
+}
+
+.save-btn{
+    background:#4f46e5;
+    color:#fff;
+    min-width:125px;
+    box-shadow:0 7px 18px rgba(79,70,229,.20);
+}
+
+.save-btn:hover{
+    background:#4338ca;
+    transform:translateY(-1px);
+}
+
+.save-btn.saved{
+    background:#16a34a;
+}
+
+.save-btn.saving{
+    opacity:.75;
+    cursor:wait;
+}
+
+/* =========================
+   STUDENT NUMBER
+========================= */
+
+.student-position{
+    text-align:center;
+    color:#64748b;
+    font-size:13px;
+    font-weight:700;
+}
+
+/* =========================
+   COMPLETED
+========================= */
+
+.all-done{
+    display:none;
+    background:#fff;
+    border:1px solid #dcfce7;
+    border-radius:24px;
+    padding:55px 25px;
+    text-align:center;
+    box-shadow:0 15px 40px rgba(15,23,42,.07);
+}
+
+.done-icon{
+    width:75px;
+    height:75px;
+    margin:0 auto 18px;
+    border-radius:50%;
+    background:#dcfce7;
+    color:#16a34a;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:32px;
+}
+
+.all-done h2{
+    margin:0;
+    color:#166534;
+    font-weight:900;
+}
+
+.all-done p{
+    color:#64748b;
+    margin-top:8px;
+}
+
+/* =========================
+   EMPTY
+========================= */
+
+.empty-remarks{
+    background:#fff;
+    border-radius:22px;
+    padding:50px 25px;
+    text-align:center;
+    border:1px solid #e5e7eb;
+}
+
+.empty-icon{
+    font-size:45px;
+    color:#94a3b8;
+    margin-bottom:15px;
+}
+
+.empty-remarks h3{
+    margin:0;
+    font-weight:900;
+    color:#334155;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:700px){
+
+    .remarks-page{
+        padding:15px 10px 40px;
+    }
+
+    .remarks-header{
+        padding:22px 18px;
+        border-radius:20px;
+    }
+
+    .remarks-header-top{
+        align-items:flex-start;
+        flex-direction:column;
+    }
+
+    .remarks-header h1{
+        font-size:23px;
+    }
+
+    .class-badge{
+        font-size:12px;
+    }
+
+    .student-card-top,
+    .remark-body{
+        padding:20px;
+    }
+
+    .student-profile{
+        align-items:flex-start;
+    }
+
+    .student-avatar{
+        width:62px;
+        height:62px;
+        font-size:22px;
+    }
+
+    .student-details h2{
+        font-size:19px;
+    }
+
+    .remark-title{
+        align-items:flex-start;
+        flex-direction:column;
+    }
+
+    .remark-textarea{
+        min-height:190px;
+        font-size:14px;
+    }
+
+    .remark-actions{
+        flex-direction:column-reverse;
+        align-items:stretch;
+    }
+
+    .nav-buttons{
+        width:100%;
+    }
+
+    .nav-btn{
+        flex:1;
+    }
+
+    .save-btn{
+        width:100%;
+    }
+
+}
+
+</style>
+
+
+<div class="remarks-page">
+
+    <!-- =================================================
+         HEADER
+    ================================================= -->
+
+    <div class="remarks-header">
+
+        <div class="remarks-header-top">
+
+            <div>
+                <h1>
+                    <i class="fas fa-comment-dots me-2"></i>
+                    Class Teacher Remarks
+                </h1>
+
+                <p>
+                    Add personalised academic remarks for your students.
+                </p>
+            </div>
+
+            <div class="class-badge">
+                <i class="fas fa-users me-1"></i>
+                {{ class_obj.name }}
+            </div>
+
+        </div>
+
+    </div>
+
+
+    {% if remarks %}
+
+    <!-- =================================================
+         PROGRESS
+    ================================================= -->
+
+    <div class="remarks-progress-card">
+
+        <div class="progress-top">
+
+            <span class="progress-label">
+                Remark Progress
+            </span>
+
+            <span class="progress-count" id="progress-count">
+                Student 1 of {{ remarks|length }}
+            </span>
+
+        </div>
+
+        <div class="progress-track">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+
+    </div>
+
+
+    <!-- =================================================
+         STUDENT REMARK CARD
+    ================================================= -->
+
+    <div id="student-container">
+
+        {% for item in remarks %}
+
+        <div class="student-remark-card student-item"
+             data-index="{{ forloop.counter0 }}"
+             style="{% if not forloop.first %}display:none;{% endif %}">
+
+            <!-- STUDENT PROFILE -->
+
+            <div class="student-card-top">
+
+                <div class="student-profile">
+
+                    <div class="student-avatar">
+
+                        {% if item.student.photo %}
+
+                            <img src="{{ item.student.photo.url }}">
+
+                        {% else %}
+
+                            {{ item.student.first_name|first }}{{ item.student.last_name|first }}
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <div class="student-details">
+
+                        <h2>
+                            {{ item.student.get_full_name }}
+                        </h2>
+
+                        <div class="student-meta">
+
+                            <span class="meta-pill">
+                                <i class="fas fa-id-card me-1"></i>
+                                {{ item.student.student_number|default:"No ID" }}
+                            </span>
+
+                            <span class="meta-pill">
+                                <i class="fas fa-school me-1"></i>
+                                {{ class_obj.name }}
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- REMARK -->
+
+            <div class="remark-body">
+
+                <div class="remark-title">
+
+                    <h3>
+                        <i class="fas fa-pen me-2"></i>
+                        Class Teacher's Remark
+                    </h3>
+
+                    {% if item.remark.class_teacher_remark %}
+
+                    <span class="saved-status"
+                          style="display:inline-block;">
+
+                        <i class="fas fa-check-circle me-1"></i>
+                        Saved
+
+                    </span>
+
+                    {% endif %}
+
+                </div>
+
+
+                <textarea
+                    class="remark-textarea"
+                    data-student-id="{{ item.student.id }}"
+                    placeholder="Write a personalised remark for {{ item.student.first_name }}...">{{ item.remark.class_teacher_remark|default_if_none:'' }}</textarea>
+
+
+                <!-- ACTIONS -->
+
+                <div class="remark-actions">
+
+                    <div class="nav-buttons">
+
+                        <button type="button"
+                                class="nav-btn previous-btn"
+                                onclick="previousStudent()">
+
+                            <i class="fas fa-arrow-left me-1"></i>
+                            Previous
+
+                        </button>
+
+
+                        <button type="button"
+                                class="nav-btn next-btn"
+                                onclick="nextStudent()">
+
+                            Next
+                            <i class="fas fa-arrow-right ms-1"></i>
+
+                        </button>
+
+                    </div>
+
+
+                    <div class="student-position">
+                        <span class="current-number">
+                            {{ forloop.counter }}
+                        </span>
+                        /
+                        {{ remarks|length }}
+                    </div>
+
+
+                    <button type="button"
+                            class="save-btn"
+                            onclick="saveRemark(this)">
+
+                        {% if item.remark.class_teacher_remark %}
+                            <i class="fas fa-check me-1"></i>
+                            Saved
+                        {% else %}
+                            <i class="fas fa-save me-1"></i>
+                            Save Remark
+                        {% endif %}
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+
+    <!-- =================================================
+         ALL DONE
+    ================================================= -->
+
+    <div class="all-done" id="all-done">
+
+        <div class="done-icon">
+            <i class="fas fa-check"></i>
+        </div>
+
+        <h2>
+            All Remarks Completed
+        </h2>
+
+        <p>
+            You have completed the class teacher remarks for
+            all {{ remarks|length }} students.
+        </p>
+
+    </div>
+
+
+    {% else %}
+
+    <!-- =================================================
+         EMPTY
+    ================================================= -->
+
+    <div class="empty-remarks">
+
+        <div class="empty-icon">
+            <i class="fas fa-user-graduate"></i>
+        </div>
+
+        <h3>
+            No Students Found
+        </h3>
+
+        <p style="color:#64748b;">
+            There are currently no students assigned to this class.
+        </p>
+
+    </div>
+
+    {% endif %}
+
 </div>
-<div id="undo-container" style="position:fixed; bottom:20px; right:20px; display:none; background:#333; color:white; padding:12px 20px; border-radius:8px; z-index:9999;">
-    <span id="undo-text"></span>
-    <button id="undo-btn" style="margin-left:10px; background:#ffc107; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">Undo</button>
-</div>
 
-<form method="post" id="remarks_form">
-{% csrf_token %}
-
-<table style="width:100%; border-collapse: collapse;">
-    <thead>
-        <tr style="background:#f0f0f0">
-            <th style="padding:10px; border:1px solid #ddd">#</th>
-            <th style="padding:10px; border:1px solid #ddd">Student Name</th>
-            <th style="padding:10px; border:1px solid #ddd">Student ID</th>
-            <th style="padding:10px; border:1px solid #ddd">Class Teacher Remark</th>
-            <th style="padding:10px; border:1px solid #ddd">Action</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for item in remarks %}
-<tr id="row-{{ item.student.id }}">
-    <td style="padding:10px; border:1px solid #ddd">{{ forloop.counter }}</td>
-    <td style="padding:10px; border:1px solid #ddd">{{ item.student.get_full_name }}</td>
-     <td style="padding:8px; border:1px solid #ddd">{{ item.student.student_number}}</td>
-    <td style="padding:10px; border:1px solid #ddd">
-<textarea name="class_teacher_remark_{{ item.student.id }}"
-          rows="2"
-          style="width:100%">{{ item.remark.class_teacher_remark|default_if_none:'' }}</textarea>
-        <span id="msg-{{ item.student.id }}" style="font-size:12px; color:green; display:none;">Saved ✓</span>
-    </td>
-<td style="padding:10px; border:1px solid #ddd">
-
-<button type="button"
-        onclick="saveRemark({{ item.student.id }}, this)">
-
-{% if item.remark.class_teacher_remark %}
-    Saved ✓
-{% else %}
-    Save
-{% endif %}
-
-</button>
-
-</td>
-</tr>
-{% empty %}
-<tr>
-    <td colspan="5" style="text-align:center; padding:40px; color:green; font-size:18px;">
-        ✓ All students completed!
-    </td>
-</tr>
-{% endfor %}
-    </tbody>
-</table>
-</form>
 
 <script>
-let undoTimeout = null;
-let lastDeletedRow = null;
-let lastStudentId = null;
 
-function saveRemark(studentId, button) {
+/* =========================================================
+   STUDENT NAVIGATION
+========================================================= */
 
-    const row = document.getElementById(`row-${studentId}`);
-    const textarea = row.querySelector("textarea");
+const students = document.querySelectorAll(".student-item");
 
-    const remark = textarea.value;
+let currentStudent = 0;
 
-    button.innerText = "Saving...";
-    button.disabled = true;
 
-    fetch(`/save-remark/${studentId}/`, {
-        method: "POST",
-        headers: {
-            "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value,
-            "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: `class_teacher_remark=${encodeURIComponent(remark)}`
-    })
-    .then(res => res.text())
-    .then(msg => {
+/* =========================================================
+   SHOW STUDENT
+========================================================= */
 
-        if (msg.includes("successfully")) {
+function showStudent(index){
 
-            button.innerText = "Saved ✓";
-            button.style.background = "green";
-            button.style.color = "white";
-            button.disabled = true;
-            updateRemainingCount(); 
+    if(!students.length) return;
 
-        } else {
+    if(index < 0){
+        index = 0;
+    }
 
-            button.innerText = "Save";
-            button.disabled = false;
-            alert("Error saving remark");
-        }
+    if(index >= students.length){
+        index = students.length - 1;
+    }
 
-    })
-    .catch(() => {
-        button.innerText = "Save";
-        button.disabled = false;
-        alert("Network error");
+    students.forEach((student, i) => {
+
+        student.style.display =
+            i === index ? "block" : "none";
+
+    });
+
+    currentStudent = index;
+
+    updateNavigation();
+
+    updateProgress();
+
+    window.scrollTo({
+        top:0,
+        behavior:"smooth"
     });
 }
 
-function resetButton(btn) {
-    btn.innerText = "Save";
-    btn.disabled = false;
-    btn.removeAttribute("disabled");
+
+/* =========================================================
+   PREVIOUS
+========================================================= */
+
+function previousStudent(){
+
+    if(currentStudent > 0){
+
+        showStudent(currentStudent - 1);
+
+    }
+
 }
 
-document.addEventListener("input", function(e) {
-    if (e.target.tagName === "TEXTAREA") {
 
-        const row = e.target.closest("tr");
-        const button = row.querySelector("button");
+/* =========================================================
+   NEXT
+========================================================= */
 
-        button.innerText = "Save";
-        button.disabled = false;
-        button.removeAttribute("disabled");
-        button.style.background = "#007bff";
-        button.style.color = "white";
+function nextStudent(){
+
+    if(currentStudent < students.length - 1){
+
+        showStudent(currentStudent + 1);
+
     }
+
+}
+
+
+/* =========================================================
+   NAVIGATION STATE
+========================================================= */
+
+function updateNavigation(){
+
+    students.forEach((student, index) => {
+
+        const previous =
+            student.querySelector(".previous-btn");
+
+        const next =
+            student.querySelector(".next-btn");
+
+        if(previous){
+
+            previous.disabled = index === 0;
+
+        }
+
+        if(next){
+
+            next.disabled =
+                index === students.length - 1;
+
+        }
+
+    });
+
+}
+
+
+/* =========================================================
+   PROGRESS
+========================================================= */
+
+function updateProgress(){
+
+    const count =
+        document.getElementById("progress-count");
+
+    const bar =
+        document.getElementById("progress-bar");
+
+    if(!count || !bar) return;
+
+    count.innerText =
+        `Student ${currentStudent + 1} of ${students.length}`;
+
+    const percentage =
+        ((currentStudent + 1) / students.length) * 100;
+
+    bar.style.width =
+        percentage + "%";
+
+}
+
+
+/* =========================================================
+   SAVE REMARK
+========================================================= */
+
+function saveRemark(button){
+
+    const card =
+        button.closest(".student-item");
+
+    const textarea =
+        card.querySelector(".remark-textarea");
+
+    const studentId =
+        textarea.dataset.studentId;
+
+    const remark =
+        textarea.value.trim();
+
+
+    /* Saving state */
+
+    button.disabled = true;
+
+    button.classList.add("saving");
+
+    button.innerHTML =
+        '<i class="fas fa-spinner fa-spin me-1"></i> Saving...';
+
+
+    fetch(`/save-remark/${studentId}/`, {
+
+        method:"POST",
+
+        headers:{
+            "X-CSRFToken":
+                document.querySelector(
+                    '[name=csrfmiddlewaretoken]'
+                )?.value || getCookie("csrftoken"),
+
+            "Content-Type":
+                "application/x-www-form-urlencoded; charset=UTF-8",
+
+            "X-Requested-With":
+                "XMLHttpRequest"
+        },
+
+        body:
+            "class_teacher_remark=" +
+            encodeURIComponent(remark)
+
+    })
+
+    .then(response => {
+
+        /*
+         * Django returning a successful HTTP response
+         * means the request reached the server.
+         *
+         * We do NOT depend on the exact response text.
+         */
+
+        if(!response.ok){
+
+            throw new Error(
+                "Server returned " + response.status
+            );
+
+        }
+
+        return response.text();
+
+    })
+
+    .then(() => {
+
+        /* SUCCESS */
+
+        button.disabled = false;
+
+        button.classList.remove("saving");
+
+        button.classList.add("saved");
+
+        button.innerHTML =
+            '<i class="fas fa-check me-1"></i> Saved';
+
+
+        /* Show saved badge */
+
+        let badge =
+            card.querySelector(".saved-status");
+
+        if(!badge){
+
+            badge =
+                document.createElement("span");
+
+            badge.className =
+                "saved-status";
+
+            badge.innerHTML =
+                '<i class="fas fa-check-circle me-1"></i> Saved';
+
+            card
+                .querySelector(".remark-title")
+                .appendChild(badge);
+
+        }
+
+        badge.style.display =
+            "inline-block";
+
+
+        /*
+         * Automatically allow editing again
+         * when the teacher types.
+         */
+
+        textarea.dataset.saved =
+            "true";
+
+    })
+
+    .catch(error => {
+
+        console.error("Remark save error:", error);
+
+        /*
+         * Only show an error when the HTTP request
+         * genuinely failed.
+         */
+
+        button.disabled = false;
+
+        button.classList.remove("saving");
+
+        button.classList.remove("saved");
+
+        button.innerHTML =
+            '<i class="fas fa-save me-1"></i> Save Remark';
+
+
+        showMessage(
+            "Unable to save the remark. Please try again.",
+            "error"
+        );
+
+    });
+
+}
+
+
+/* =========================================================
+   WHEN TEACHER EDITS A SAVED REMARK
+========================================================= */
+
+document.addEventListener("input", function(event){
+
+    if(
+        event.target.classList.contains(
+            "remark-textarea"
+        )
+    ){
+
+        const card =
+            event.target.closest(".student-item");
+
+        const button =
+            card.querySelector(".save-btn");
+
+        button.disabled = false;
+
+        button.classList.remove("saved");
+
+        button.innerHTML =
+            '<i class="fas fa-save me-1"></i> Save Remark';
+
+
+        const badge =
+            card.querySelector(".saved-status");
+
+        if(badge){
+
+            badge.style.display =
+                "none";
+
+        }
+
+    }
+
 });
 
-function updateRemainingCount() {
-    const remaining = document.querySelectorAll("tbody tr[id^='row-']").length;
 
-    const counter = document.getElementById("remaining-count");
-    const table = document.querySelector("table");
-    const done = document.getElementById("all-done");
+/* =========================================================
+   MESSAGE
+========================================================= */
 
-    counter.innerText = `${remaining} student${remaining === 1 ? "" : "s"} remaining`;
+function showMessage(message, type){
 
-    if (remaining === 0) {
-        table.style.display = "none";
-        done.style.display = "block";
+    const old =
+        document.getElementById("save-message");
+
+    if(old){
+
+        old.remove();
+
     }
+
+    const box =
+        document.createElement("div");
+
+    box.id =
+        "save-message";
+
+    box.style.position =
+        "fixed";
+
+    box.style.bottom =
+        "25px";
+
+    box.style.right =
+        "25px";
+
+    box.style.zIndex =
+        "99999";
+
+    box.style.padding =
+        "13px 18px";
+
+    box.style.borderRadius =
+        "12px";
+
+    box.style.fontWeight =
+        "700";
+
+    box.style.fontSize =
+        "14px";
+
+    box.style.boxShadow =
+        "0 10px 30px rgba(0,0,0,.15)";
+
+    if(type === "error"){
+
+        box.style.background =
+            "#fee2e2";
+
+        box.style.color =
+            "#991b1b";
+
+        box.innerHTML =
+            '<i class="fas fa-exclamation-circle me-2"></i>' +
+            message;
+
+    }else{
+
+        box.style.background =
+            "#dcfce7";
+
+        box.style.color =
+            "#166534";
+
+        box.innerHTML =
+            '<i class="fas fa-check-circle me-2"></i>' +
+            message;
+
+    }
+
+    document.body.appendChild(box);
+
+
+    setTimeout(() => {
+
+        box.remove();
+
+    }, 3000);
+
 }
+
+
+/* =========================================================
+   CSRF COOKIE FALLBACK
+========================================================= */
+
+function getCookie(name){
+
+    let cookieValue = null;
+
+    if(document.cookie && document.cookie !== ""){
+
+        const cookies =
+            document.cookie.split(";");
+
+        for(let cookie of cookies){
+
+            cookie = cookie.trim();
+
+            if(
+                cookie.substring(
+                    0,
+                    name.length + 1
+                ) === (name + "=")
+            ){
+
+                cookieValue =
+                    decodeURIComponent(
+                        cookie.substring(
+                            name.length + 1
+                        )
+                    );
+
+                break;
+
+            }
+
+        }
+
+    }
+
+    return cookieValue;
+
+}
+
+
+/* =========================================================
+   INITIALISE
+========================================================= */
+
+document.addEventListener("DOMContentLoaded", function(){
+
+    showStudent(0);
+
+});
+
 </script>
+
 {% endblock %}

@@ -232,55 +232,28 @@ input:focus{
 
 
 
-{% if messages %}
-
-{% for message in messages %}
-
-<div class="success-box">
-
-    ✅ {{ message }}
-
-</div>
-
-{% endfor %}
-
-{% endif %}
-
-
-
 {% if credentials %}
+<div style="background:#d4edda; border:2px solid #28a745; padding:20px; border-radius:8px; color:#000;">
 
-<div class="success-box">
+<h4 style="color:#155724; text-align:center;">✅ Student Created Successfully</h4>
 
-<h4>
-    Student Created Successfully
-</h4>
+<p style="color:#000;"><strong style="color:#000;">Username:</strong> <span style="color:#000;">{{ credentials.username }}</span></p>
 
-<p>
-<strong>Username:</strong>
-{{ credentials.username }}
-</p>
+<p style="color:#000;"><strong style="color:#000;">Student ID:</strong> <span style="color:#000; font-weight:bold;">{{ credentials.student_number }}</span></p>
 
-<p>
-<strong>Student ID:</strong>
-{{ credentials.student_number }}
-</p>
+<p style="color:#000;"><strong style="color:#000;">Password:</strong> <span style="color:#000; font-weight:bold;">{{ credentials.password }}</span></p>
 
-<p>
-<strong>Password:</strong>
-{{ credentials.password }}
-</p>
+<small style="color:#721c24; display:block; margin:10px 0;">Save these details. They will not be shown again.</small>
 
-
-<small>
-Save these details. They will not be shown again.
-</small>
-
+<br>
+<a href="{% url 'print_admission_letter' credentials.student_id %}?pwd={{ credentials.password }}" 
+   target="_blank" 
+   style="background:#0d6efd; color:white; padding:10px 20px; border-radius:5px; text-decoration:none; display:inline-block;">
+   🖨️ Print Admission Letter
+</a>
 
 </div>
-
 {% endif %}
-
 
 
 {% if form.errors %}

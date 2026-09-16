@@ -1,315 +1,793 @@
-
 {% extends 'accounts/dashboard_base.html' %}
 {% block content %}
+
 <style>
-.notif-card{border:none;border-radius:22px;box-shadow:0 12px 30px rgba(0,0,0,.07);background:#fff;overflow:hidden;margin-bottom:20px;}
-.notif-top{height:5px;background:linear-gradient(90deg,#6a11cb,#2575fc);}
-.label{font-weight:800;color:#111;font-size:14px;text-transform:uppercase;letter-spacing:.5px;}
-.value{color:#333;font-size:16px;margin-top:4px;}
+
+/* =========================================================
+   PAGE
+========================================================= */
+
+.notifications-page{
+    max-width:980px;
+    margin:0 auto;
+    padding:24px 18px 50px;
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+
+/* =========================================================
+   CHILD SWITCHER
+========================================================= */
+
+.child-switcher{
+    margin-bottom:24px;
+}
+
+.child-switcher-title{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:14px;
+    color:#475569;
+    font-size:14px;
+    font-weight:800;
+}
+
+.child-switcher-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:14px;
+}
+
+.child-card{
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    min-height:92px;
+    padding:15px;
+    background:#fff;
+    border:1.5px solid #e8edf5;
+    border-radius:18px;
+    box-shadow:0 7px 20px rgba(15,23,42,.05);
+    transition:.25s ease;
+}
+
+.child-card:hover{
+    transform:translateY(-2px);
+    border-color:#c7d2fe;
+    box-shadow:0 12px 26px rgba(15,23,42,.09);
+}
+
+.child-active{
+    border-color:#4f46e5;
+    background:#eef2ff;
+    box-shadow:0 10px 25px rgba(79,70,229,.12);
+}
+
+.child-photo,
+.child-avatar{
+    width:58px;
+    height:58px;
+    min-width:58px;
+    border-radius:50%;
+    object-fit:cover;
+}
+
+.child-avatar{
+    background:linear-gradient(135deg,#4f46e5,#2563eb);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:19px;
+    font-weight:800;
+}
+
+.child-info{
+    min-width:0;
+    padding-right:55px;
+}
+
+.child-info h6{
+    margin:0;
+    color:#111827;
+    font-size:15px;
+    font-weight:800;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.child-info p{
+    margin:4px 0;
+    color:#64748b;
+    font-size:13px;
+    font-weight:600;
+}
+
+.child-info span{
+    color:#94a3b8;
+    font-size:11px;
+    font-weight:700;
+}
+
+.selected-badge{
+    position:absolute;
+    top:12px;
+    right:12px;
+    padding:4px 9px;
+    border-radius:999px;
+    background:#4f46e5;
+    color:#fff;
+    font-size:10px;
+    font-weight:800;
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
 .hero-card{
-background:linear-gradient(135deg,#6a11cb,#2575fc);
-border-radius:24px;
-padding:28px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-color:#fff;
-box-shadow:0 18px 45px rgba(0,0,0,.15);
-flex-wrap:wrap;
-gap:20px;
+    position:relative;
+    overflow:hidden;
+    background:linear-gradient(135deg,#4f46e5 0%,#2563eb 100%);
+    border-radius:24px;
+    padding:27px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    color:#fff;
+    box-shadow:0 18px 45px rgba(37,99,235,.20);
+    margin-bottom:22px;
+}
+
+.hero-card::before{
+    content:"";
+    position:absolute;
+    width:210px;
+    height:210px;
+    border-radius:50%;
+    background:rgba(255,255,255,.08);
+    right:-70px;
+    top:-100px;
+}
+
+.hero-card::after{
+    content:"";
+    position:absolute;
+    width:120px;
+    height:120px;
+    border-radius:50%;
+    background:rgba(255,255,255,.06);
+    left:-55px;
+    bottom:-75px;
 }
 
 .hero-left{
-display:flex;
-align-items:center;
-gap:18px;
+    position:relative;
+    z-index:2;
+    display:flex;
+    align-items:center;
+    gap:17px;
 }
 
 .hero-icon{
-width:70px;
-height:70px;
-border-radius:18px;
-background:rgba(255,255,255,.18);
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:28px;
+    width:64px;
+    height:64px;
+    min-width:64px;
+    border-radius:18px;
+    background:rgba(255,255,255,.15);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:27px;
+    backdrop-filter:blur(10px);
 }
 
 .hero-card h2{
-margin:0;
-font-weight:800;
+    margin:0;
+    font-size:25px;
+    font-weight:850;
+    letter-spacing:-.4px;
 }
 
 .hero-card p{
-margin-top:6px;
-opacity:.9;
+    margin:5px 0 0;
+    opacity:.88;
+    font-size:13px;
+    line-height:1.5;
 }
 
 .hero-badge{
-background:#fff;
-color:#2575fc;
-padding:12px 20px;
-border-radius:30px;
-font-weight:700;
+    position:relative;
+    z-index:2;
+    background:rgba(255,255,255,.96);
+    color:#2563eb;
+    padding:10px 16px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:800;
+    white-space:nowrap;
 }
 
+
+/* =========================================================
+   FILTERS
+========================================================= */
+
 .filter-bar{
-display:flex;
-gap:12px;
-flex-wrap:wrap;
+    display:flex;
+    gap:9px;
+    flex-wrap:wrap;
+    margin-bottom:22px;
 }
 
 .filter-pill{
-padding:10px 18px;
-border-radius:30px;
-background:#fff;
-color:#555;
-text-decoration:none;
-font-weight:700;
-box-shadow:0 8px 18px rgba(0,0,0,.05);
-transition:.3s;
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:9px 15px;
+    border-radius:999px;
+    background:#fff;
+    color:#475569;
+    text-decoration:none;
+    font-size:13px;
+    font-weight:750;
+    border:1px solid #e8edf5;
+    box-shadow:0 5px 15px rgba(15,23,42,.04);
+    transition:.25s ease;
+}
+
+.filter-pill:hover{
+    color:#4f46e5;
+    border-color:#c7d2fe;
+    transform:translateY(-1px);
 }
 
 .filter-pill.active{
-background:#2575fc;
-color:#fff;
+    background:#4f46e5;
+    color:#fff;
+    border-color:#4f46e5;
+    box-shadow:0 7px 18px rgba(79,70,229,.20);
 }
 
 .filter-pill span{
-margin-left:6px;
-background:rgba(255,255,255,.2);
-padding:3px 10px;
-border-radius:20px;
+    margin-left:2px;
+    padding:2px 7px;
+    border-radius:999px;
+    background:rgba(255,255,255,.18);
+    font-size:10px;
 }
 
-.notification-header{
-display:flex;
-align-items:center;
-gap:15px;
+
+/* =========================================================
+   CHILD CONTEXT
+========================================================= */
+
+.child-context{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:15px;
+    padding:14px 17px;
+    margin-bottom:20px;
+    background:#fff;
+    border:1px solid #e8edf5;
+    border-radius:17px;
+    box-shadow:0 6px 18px rgba(15,23,42,.04);
+}
+
+.child-context-left{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.child-context-icon{
+    width:38px;
+    height:38px;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#eef2ff;
+    color:#4f46e5;
+}
+
+.child-context-name{
+    font-weight:800;
+    color:#111827;
+    font-size:14px;
+}
+
+.child-context-class{
+    display:block;
+    color:#64748b;
+    font-size:12px;
+    margin-top:2px;
+}
+
+
+/* =========================================================
+   NOTIFICATION CARD
+========================================================= */
+
+.notif-card{
+    position:relative;
+    overflow:hidden;
+    border:none;
+    border-radius:21px;
+    background:#fff;
+    box-shadow:0 10px 28px rgba(15,23,42,.065);
+    margin-bottom:16px;
+    transition:.25s ease;
+}
+
+.notif-card:hover{
+    transform:translateY(-2px);
+    box-shadow:0 15px 35px rgba(15,23,42,.09);
+}
+
+.notif-top{
+    height:4px;
+    background:linear-gradient(90deg,#6a11cb,#2575fc);
+}
+
+.notification-body{
+    padding:21px;
+}
+
+.notification-title-block{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
 }
 
 .notification-avatar{
-width:55px;
-height:55px;
-border-radius:50%;
-background:linear-gradient(135deg,#6a11cb,#2575fc);
-color:#fff;
-display:flex;
-align-items:center;
-justify-content:center;
-font-weight:800;
-font-size:22px;
+    width:45px;
+    height:45px;
+    min-width:45px;
+    border-radius:14px;
+    background:linear-gradient(135deg,#6a11cb,#2575fc);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:18px;
 }
 
-.role-pill{
-background:#eef2ff;
-padding:7px 15px;
-border-radius:20px;
-font-size:12px;
-font-weight:700;
-color:#4f46e5;
+.label{
+    font-weight:800;
+    color:#64748b;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+}
+
+.value{
+    color:#111827;
+    font-size:19px;
+    margin-top:3px;
+    font-weight:800;
+    line-height:1.35;
+}
+
+.message-section{
+    margin-top:17px;
 }
 
 .message-box{
-margin-top:18px;
-background:#f8f9ff;
-padding:18px;
-border-radius:14px;
-line-height:1.8;
+    margin-top:7px;
+    background:#f8f9ff;
+    border:1px solid #edf0ff;
+    padding:15px 17px;
+    border-radius:14px;
+    color:#475569;
+    line-height:1.7;
+    font-size:14px;
 }
 
 .notification-footer{
-margin-top:18px;
-padding-top:18px;
-border-top:1px solid #ececec;
-display:flex;
-justify-content:space-between;
-flex-wrap:wrap;
-gap:10px;
+    margin-top:17px;
+    padding-top:14px;
+    border-top:1px solid #edf0f5;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:9px;
 }
 
+.role-pill{
+    background:#eef2ff;
+    padding:6px 11px;
+    border-radius:999px;
+    font-size:10px;
+    font-weight:800;
+    color:#4f46e5;
+}
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
 .empty-card{
-text-align:center;
-padding:70px 30px;
-border-radius:24px;
-background:#fff;
-box-shadow:0 12px 30px rgba(0,0,0,.06);
+    text-align:center;
+    padding:65px 25px;
+    border-radius:22px;
+    background:#fff;
+    box-shadow:0 10px 28px rgba(15,23,42,.06);
 }
 
 .empty-icon{
-font-size:60px;
-color:#cbd5e1;
-margin-bottom:18px;
+    width:70px;
+    height:70px;
+    margin:0 auto 17px;
+    border-radius:22px;
+    background:#f1f5f9;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:28px;
+    color:#94a3b8;
 }
 
+.empty-card h4{
+    margin:0;
+    color:#1e293b;
+    font-weight:800;
+}
+
+.empty-card p{
+    color:#94a3b8;
+    margin:6px 0 0;
+}
+
+
+/* =========================================================
+   PAGINATION
+========================================================= */
+
 .premium-pagination{
-display:flex;
-justify-content:center;
-align-items:center;
-gap:18px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:15px;
+    margin-top:24px;
 }
 
 .premium-pagination a{
-width:42px;
-height:42px;
-border-radius:50%;
-background:#fff;
-display:flex;
-align-items:center;
-justify-content:center;
-text-decoration:none;
-box-shadow:0 8px 18px rgba(0,0,0,.08);
-color:#2575fc;
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    background:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-decoration:none;
+    box-shadow:0 7px 18px rgba(15,23,42,.08);
+    color:#4f46e5;
+    transition:.25s;
+}
+
+.premium-pagination a:hover{
+    transform:translateY(-2px);
+    background:#eef2ff;
 }
 
 .premium-pagination span{
-font-weight:700;
+    min-width:55px;
+    text-align:center;
+    font-size:13px;
+    font-weight:800;
+    color:#475569;
 }
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
 
 @media(max-width:768px){
-
-.hero-card{
-text-align:center;
-justify-content:center;
+.notifications-page{padding:12px 8px 40px}
+.child-switcher-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+.child-card{flex-direction:column!important;text-align:center!important;align-items:center!important;min-height:auto!important;padding:10px 8px!important;border-radius:14px!important;gap:8px!important}
+.child-photo,.child-avatar{width:42px!important;height:42px!important;min-width:42px!important}
+.child-info{padding-right:0!important;min-width:0!important;width:100%!important}
+.child-info h6{font-size:12px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.child-info p{font-size:11px!important;margin:1px 0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.child-info span{font-size:10px!important;display:block!important;margin-top:2px!important;word-break:break-all!important}
+.selected-badge{top:4px!important;right:4px!important;font-size:7px!important;padding:2px 5px!important}
+.hero-card{padding:16px!important;flex-direction:column!important;align-items:stretch!important;gap:15px!important;border-radius:18px!important}
+.hero-left{display:flex!important;flex-direction:row!important;align-items:center!important;gap:12px!important;width:100%!important}
+.hero-icon{width:55px!important;height:55px!important;min-width:55px!important;font-size:22px!important}
+.hero-card h2{font-size:17px!important}
+.hero-card p{font-size:12px!important}
+.hero-badge{align-self:stretch!important;text-align:center!important;width:100%!important;box-sizing:border-box!important}
+.child-context{padding:10px 12px!important}
+.notification-body{padding:14px!important}
+.value{font-size:15px!important}
+.message-box{font-size:13px!important;padding:12px!important}
+.filter-bar{gap:6px!important}
+.filter-pill{padding:8px 12px!important;font-size:12px!important}
 }
 
-.hero-left{
-flex-direction:column;
+/* =========================================================
+   SMALL PHONES
+========================================================= */
+
+@media(max-width:430px){
+
+    .hero-icon{
+        width:55px;
+        height:55px;
+        min-width:55px;
+        font-size:23px;
+    }
+
+    .hero-left{
+        gap:12px;
+    }
+
+    .hero-card h2{
+        font-size:19px;
+    }
+
+    .filter-pill{
+        padding:8px 12px;
+        font-size:12px;
+    }
+
+    .child-card{
+        min-height:82px;
+        padding:12px;
+    }
+
+    .child-photo,
+    .child-avatar{
+        width:52px;
+        height:52px;
+        min-width:52px;
+    }
+
 }
 
-.notification-footer{
-flex-direction:column;
-text-align:center;
-}
-
-}
 </style>
 
-<div class="container py-4" style="max-width:900px;">
-<!-- Premium Hero -->
-<div class="hero-card mb-4">
+
+<div class="notifications-page">
+
+
+<!-- =====================================================
+     CHILD SWITCHER
+===================================================== -->
+
+{% if show_switcher %}
+
+<div id="child-switcher" class="child-switcher">
+
+    <div class="child-switcher-title">
+        <i class="fas fa-users"></i>
+        Select Child
+    </div>
+
+    <div class="child-switcher-grid">
+
+        {% for child in children %}
+
+        <a href="?child={{ child.id }}#child-switcher"
+           style="text-decoration:none; color:inherit;">
+
+            <div class="child-card {% if selected_child.id == child.id %}child-active{% endif %}">
+
+                {% if child.photo %}
+
+                    <img src="{{ child.photo.url }}"
+                         class="child-photo"
+                         alt="{{ child.get_full_name }}">
+
+                {% else %}
+
+                    <div class="child-avatar">
+                        {{ child.first_name|first }}{{ child.last_name|first }}
+                    </div>
+
+                {% endif %}
+
+                <div class="child-info">
+
+                    <h6>
+                        {{ child.first_name }} {{ child.last_name }}
+                    </h6>
+
+                    <p>
+                        {{ child.school_class.name|default:"No Class" }}
+                    </p>
+
+                    <span>
+                        ID: {{ child.student_number|default:"-" }}
+                    </span>
+
+                </div>
+
+                {% if selected_child.id == child.id %}
+
+                <div class="selected-badge">
+                    Selected
+                </div>
+
+                {% endif %}
+
+            </div>
+
+        </a>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+{% endif %}
+
+
+
+<!-- =====================================================
+     HERO
+===================================================== -->
+
+<div class="hero-card">
+
     <div class="hero-left">
+
         <div class="hero-icon">
             <i class="fas fa-bell"></i>
         </div>
 
         <div>
-            <h2>Parent Notifications</h2>
+
+            <h2>
+                Parent Notifications
+            </h2>
+
             <p>
-                Stay informed with school announcements, reminders and important updates.
+                Stay informed with school announcements,
+                reminders and important updates.
             </p>
+
         </div>
+
     </div>
 
     <div class="hero-badge">
         {{ total }} Notification{{ total|pluralize }}
     </div>
-</div>
-<div class="filter-bar mb-4">
-
-    <a href="?filter=all"
-       class="filter-pill {% if filter == 'all' %}active{% endif %}">
-        All
-        <span>{{ total }}</span>
-    </a>
-
-    <a href="?filter=today"
-       class="filter-pill {% if filter == 'today' %}active{% endif %}">
-        Today
-    </a>
-
-    <a href="?filter=week"
-       class="filter-pill {% if filter == 'week' %}active{% endif %}">
-        This Week
-    </a>
 
 </div>
 
- {% for ann in announcements %}
-
-<div class="notif-card">
-
-    <div class="notif-top"></div>
-
-    <div class="p-4">
-
-<div class="mb-3">
-    <div class="label">📌 Title</div>
-
-    <div class="value fw-bold" style="font-size:20px;">
-        {{ ann.title }}
-    </div>
-</div>
-
-<div class="mb-3">
-    <div class="label">💬 Message</div>
-
-    <div class="message-box">
-        {{ ann.message }}
-    </div>
-</div>
 
 
+<!-- =====================================================
+     SELECTED CHILD CONTEXT
+===================================================== -->
 
-        <div class="notification-footer">
+{% if selected_child %}
 
-            <small class="text-muted">
-                🕒 {{ ann.created_at|timesince }} ago
-            </small>
+<div class="child-context">
 
-            <span class="role-pill">
-                By {{ ann.created_by.get_full_name|default:ann.created_by.username }}
+    <div class="child-context-left">
+
+        <div class="child-context-icon">
+            <i class="fas fa-user-graduate"></i>
+        </div>
+
+        <div>
+
+            <div class="child-context-name">
+                {{ selected_child.get_full_name }}
+            </div>
+
+            <span class="child-context-class">
+                {{ selected_child.school_class.name|default:"No Class" }}
             </span>
 
         </div>
 
     </div>
 
-</div>
-
-{% empty %}
-
-<div class="empty-card">
-
-    <div class="empty-icon">
-        <i class="far fa-bell-slash"></i>
-    </div>
-
-    <h4>No Notifications</h4>
-
-    <p>You're all caught up.</p>
-
-</div>
-
-{% endfor %}
-  {% if page_obj.has_other_pages %}
-<div class="premium-pagination mt-4">
-
-    {% if page_obj.has_previous %}
-    <a href="?filter={{ filter }}&page={{ page_obj.previous_page_number }}">
-        <i class="fas fa-chevron-left"></i>
-    </a>
-    {% endif %}
-
-    <span>
-
-        {{ page_obj.number }}
-
-        /
-
-        {{ page_obj.paginator.num_pages }}
-
+    <span class="role-pill">
+        <i class="fas fa-child me-1"></i>
+        Child Updates
     </span>
 
-    {% if page_obj.has_next %}
-    <a href="?filter={{ filter }}&page={{ page_obj.next_page_number }}">
-        <i class="fas fa-chevron-right"></i>
-    </a>
-    {% endif %}
+</div>
 
+{% endif %}
+
+
+<!-- =====================================================
+     FILTER
+===================================================== -->
+
+<div class="filter-bar">
+
+    <a href="?{% if selected_child %}child={{ selected_child.id }}&{% endif %}filter=all#child-switcher"
+       class="filter-pill {% if filter == 'all' %}active{% endif %}">
+        <i class="fas fa-layer-group"></i> All <span>{{ total }}</span>
+    </a>
+
+    <a href="?{% if selected_child %}child={{ selected_child.id }}&{% endif %}filter=today#child-switcher"
+       class="filter-pill {% if filter == 'today' %}active{% endif %}">
+        <i class="fas fa-calendar-day"></i> Today
+    </a>
+
+    <a href="?{% if selected_child %}child={{ selected_child.id }}&{% endif %}filter=week#child-switcher"
+       class="filter-pill {% if filter == 'week' %}active{% endif %}">
+        <i class="fas fa-calendar-week"></i> This Week
+    </a>
+</div>
+
+<!-- =====================================================
+     NOTIFICATIONS - 2 SECTIONS
+===================================================== -->
+
+<!-- NOTIFICATIONS - FIXED LAYOUT -->
+{% for ann in announcements %}
+<div class="notif-card" style="background:#fff; border-radius:12px; border-left:4px solid #6c5ce7; margin-bottom:16px; padding:16px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+    <div style="display:flex; gap:12px; align-items:flex-start;">
+        <div style="width:40px; height:40px; background:#ede9fe; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <i class="fas fa-bullhorn" style="color:#6c5ce7;"></i>
+        </div>
+        <div style="flex:1; min-width:0;">
+            <div style="font-size:11px; font-weight:700; color:#6c5ce7; letter-spacing:0.5px; text-transform:uppercase; margin-bottom:6px;">
+                {% if ann.target_classes.all %}
+                    FOR {{ ann.target_classes.all|join:", "|upper }}
+                {% elif ann.target_class %}
+                    FOR {{ ann.target_class.name|upper }}
+                {% else %}
+                    GENERAL • ALL STUDENTS/PARENTS
+                {% endif %}
+            </div>
+
+            <div style="font-size:11px; font-weight:600; color:#888; margin-bottom:4px;">📌 TITLE</div>
+            <div style="font-size:15px; font-weight:700; color:#222; margin-bottom:12px; word-break:break-word;">{{ ann.title }}</div>
+
+            <div style="font-size:11px; font-weight:600; color:#888; margin-bottom:4px;">💬 MESSAGE</div>
+            <div style="background:#f8f9ff; border:1px solid #eef0ff; border-radius:8px; padding:12px; font-size:14px; color:#333; line-height:1.5; white-space:pre-wrap; word-break:break-word;">{{ ann.message }}</div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:10px; border-top:1px solid #f1f1f1;">
+                <small style="color:#888;"><i class="far fa-clock me-1"></i> {{ ann.created_at|timesince }} ago</small>
+                <span style="background:#f1f1f1; padding:4px 10px; border-radius:20px; font-size:11px; color:#555;">By {{ ann.created_by.get_full_name|default:ann.created_by.username }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="empty-card" style="text-align:center; padding:40px; background:#fff; border-radius:12px;">
+    <div style="font-size:32px; color:#ccc; margin-bottom:10px;"><i class="far fa-bell-slash"></i></div>
+    <h4>No Notifications</h4><p>You're all caught up.</p>
+</div>
+{% endfor %}
+
+<!-- =====================================================
+     PAGINATION - KEEP CHILD
+===================================================== -->
+{% if page_obj.has_other_pages %}
+<div class="premium-pagination">
+    {% if page_obj.has_previous %}
+    <a href="?{% if selected_child %}child={{ selected_child.id }}&{% endif %}filter={{ filter }}&page={{ page_obj.previous_page_number }}#child-switcher"><i class="fas fa-chevron-left"></i></a>
+    {% endif %}
+    <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a href="?{% if selected_child %}child={{ selected_child.id }}&{% endif %}filter={{ filter }}&page={{ page_obj.next_page_number }}#child-switcher"><i class="fas fa-chevron-right"></i></a>
+    {% endif %}
 </div>
 {% endif %}
 
+
 </div>
+
 {% endblock %}

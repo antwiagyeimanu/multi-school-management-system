@@ -2,72 +2,1748 @@
 
 {% block content %}
 
-<div style="display:flex;justify-content:center;margin-top:40px;">
+<style>
 
-    <div style="
-        width:520px;
-        background:white;
-        padding:35px;
+/* =========================================================
+   EDIT RESULT PAGE
+========================================================= */
+
+.edit-result-page{
+    max-width:1000px;
+    margin:0 auto;
+    padding:25px 15px 60px;
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.edit-result-hero{
+    background:linear-gradient(135deg,#2563eb,#1e3a8a);
+    color:#fff;
+    border-radius:24px;
+    padding:30px;
+    margin-bottom:22px;
+    box-shadow:0 18px 40px rgba(37,99,235,.18);
+}
+
+.edit-result-hero-content{
+    display:flex;
+    align-items:center;
+    gap:18px;
+}
+
+.edit-result-icon{
+    width:70px;
+    height:70px;
+    flex-shrink:0;
+    border-radius:20px;
+    background:rgba(255,255,255,.15);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:30px;
+}
+
+.edit-result-hero h1{
+    margin:0 0 6px;
+    font-size:29px;
+    font-weight:800;
+}
+
+.edit-result-hero p{
+    margin:0;
+    opacity:.88;
+    font-size:14px;
+}
+
+
+/* =========================================================
+   MAIN CARD
+========================================================= */
+
+.edit-result-card{
+    background:#fff;
+    border:1px solid #e2e8f0;
+    border-radius:24px;
+    padding:30px;
+    box-shadow:0 12px 35px rgba(15,23,42,.08);
+}
+
+
+/* =========================================================
+   STUDENT INFORMATION
+========================================================= */
+
+.student-info{
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:20px;
+    padding:22px;
+    margin-bottom:30px;
+}
+
+.student-info-title{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    color:#1e3a8a;
+    font-size:13px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    margin-bottom:16px;
+}
+
+.student-info-title::before{
+    content:"👤";
+    font-size:18px;
+}
+
+.student-info-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:15px;
+}
+
+.info-box{
+    background:#fff;
+    border:1px solid #e2e8f0;
+    border-radius:15px;
+    padding:15px 17px;
+}
+
+.info-box small{
+    display:block;
+    color:#64748b;
+    font-size:10px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    margin-bottom:5px;
+}
+
+.info-box strong{
+    display:block;
+    color:#1e293b !important;
+    font-size:16px;
+    font-weight:800;
+    word-break:break-word;
+}
+
+
+/* =========================================================
+   SECTION HEADER
+========================================================= */
+
+.score-section-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:15px;
+    margin-bottom:18px;
+}
+
+.score-section-title{
+    font-size:20px;
+    font-weight:800;
+    color:#1e293b;
+    margin:0;
+}
+
+.score-section-subtitle{
+    color:#64748b;
+    font-size:13px;
+    margin:4px 0 0;
+}
+
+
+/* =========================================================
+   CA SECTION
+========================================================= */
+
+.ca-section{
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:20px;
+    padding:22px;
+    margin-bottom:22px;
+}
+
+.ca-section-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:15px;
+    margin-bottom:18px;
+}
+
+.ca-section-title{
+    font-size:16px;
+    font-weight:800;
+    color:#1e293b;
+}
+
+.ca-section-note{
+    font-size:12px;
+    color:#64748b;
+}
+
+
+/* =========================================================
+   CA ITEMS
+========================================================= */
+
+.ca-list{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+
+.ca-item{
+    display:grid;
+    grid-template-columns:1fr 130px;
+    align-items:center;
+    gap:18px;
+    background:#fff;
+    border:1px solid #e2e8f0;
+    border-radius:15px;
+    padding:15px 17px;
+    transition:.2s;
+}
+
+.ca-item:hover{
+    border-color:#93c5fd;
+    box-shadow:0 6px 18px rgba(37,99,235,.07);
+}
+
+.ca-title{
+    font-size:14px;
+    font-weight:800;
+    color:#1e293b;
+}
+
+.ca-date{
+    margin-top:3px;
+    font-size:11px;
+    color:#94a3b8;
+}
+
+.ca-score input{
+    width:100%;
+    min-height:46px;
+    padding:8px 12px;
+    border:1px solid #cbd5e1;
+    border-radius:11px;
+    background:#fff;
+    color:#111827;
+    font-size:16px;
+    font-weight:800;
+    text-align:center;
+    outline:none;
+}
+
+.ca-score input:focus{
+    border-color:#2563eb;
+    box-shadow:0 0 0 4px rgba(37,99,235,.10);
+}
+
+
+/* =========================================================
+   CLASS SCORE TOTAL
+========================================================= */
+
+.class-score-summary{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:20px;
+    margin-top:18px;
+    padding:18px 20px;
+    background:linear-gradient(135deg,#eff6ff,#eef2ff);
+    border:1px solid #bfdbfe;
+    border-radius:16px;
+}
+
+.class-score-label{
+    color:#475569;
+    font-size:13px;
+    font-weight:800;
+}
+
+.class-score-value{
+    color:#1d4ed8;
+    font-size:26px;
+    font-weight:900;
+}
+
+
+/* =========================================================
+   EXAM SCORE
+========================================================= */
+
+.exam-section{
+    background:#fff;
+    border:1px solid #e2e8f0;
+    border-radius:20px;
+    padding:22px;
+}
+
+.exam-section-title{
+    color:#1e293b;
+    font-size:17px;
+    font-weight:800;
+    margin-bottom:14px;
+}
+
+.exam-input-wrap input{
+    width:100%;
+    min-height:54px;
+    padding:10px 15px;
+    border:2px solid #cbd5e1;
+    border-radius:13px;
+    background:#fff;
+    color:#111827;
+    font-size:18px;
+    font-weight:800;
+    outline:none;
+}
+
+.exam-input-wrap input:focus{
+    border-color:#2563eb;
+    box-shadow:0 0 0 4px rgba(37,99,235,.10);
+}
+
+.score-help{
+    display:block;
+    margin-top:7px;
+    color:#64748b;
+    font-size:11px;
+}
+
+.field-error{
+    margin-top:7px;
+    color:#dc2626;
+    font-size:12px;
+    font-weight:700;
+}
+
+
+/* =========================================================
+   RESULT PREVIEW
+========================================================= */
+
+.result-preview{
+    margin-top:22px;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+}
+
+.preview-box{
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:15px;
+    padding:15px;
+    text-align:center;
+}
+
+.preview-box small{
+    display:block;
+    color:#64748b;
+    font-size:10px;
+    font-weight:800;
+    text-transform:uppercase;
+    margin-bottom:5px;
+}
+
+.preview-box strong{
+    font-size:20px;
+    font-weight:900;
+    color:#1e293b;
+}
+
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.edit-result-actions{
+    display:flex;
+    gap:12px;
+    margin-top:30px;
+    padding-top:24px;
+    border-top:1px solid #e2e8f0;
+}
+
+.save-result-btn,
+.cancel-result-btn{
+    flex:1;
+    min-height:52px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-decoration:none;
+    font-weight:800;
+    font-size:15px;
+    transition:.25s;
+}
+
+.save-result-btn{
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:#fff;
+    border:none;
+    cursor:pointer;
+    box-shadow:0 9px 20px rgba(37,99,235,.20);
+}
+
+.save-result-btn:hover{
+    color:#fff;
+    transform:translateY(-2px);
+    box-shadow:0 13px 25px rgba(37,99,235,.25);
+}
+
+.cancel-result-btn{
+    background:#f1f5f9;
+    color:#334155;
+    border:1px solid #e2e8f0;
+}
+
+.cancel-result-btn:hover{
+    color:#1e293b;
+    background:#e2e8f0;
+    transform:translateY(-2px);
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media(max-width:700px){
+
+    .edit-result-page{
+        padding:12px 10px 40px;
+    }
+
+    .edit-result-hero{
+        padding:22px;
+        border-radius:20px;
+    }
+
+    .edit-result-hero-content{
+        align-items:flex-start;
+    }
+
+    .edit-result-icon{
+        width:55px;
+        height:55px;
+        border-radius:15px;
+        font-size:24px;
+    }
+
+    .edit-result-hero h1{
+        font-size:23px;
+    }
+
+    .edit-result-card{
+        padding:18px;
+        border-radius:20px;
+    }
+
+    .student-info-grid{
+        grid-template-columns:1fr;
+    }
+
+    .ca-item{
+        grid-template-columns:1fr;
+        gap:10px;
+    }
+
+    .ca-score input{
+        text-align:left;
+    }
+
+    .result-preview{
+        grid-template-columns:1fr;
+    }
+
+    .edit-result-actions{
+        flex-direction:column;
+    }
+
+    .class-score-summary{
+        align-items:flex-start;
+        flex-direction:column;
+        gap:5px;
+    }
+}
+
+
+/* =========================================================
+   SMALL PHONES
+========================================================= */
+
+@media(max-width:420px){
+
+    .edit-result-hero{
+        padding:18px;
+    }
+
+    .edit-result-hero h1{
+        font-size:21px;
+    }
+
+    .edit-result-card{
+        padding:14px;
+    }
+
+    .student-info,
+    .ca-section,
+    .exam-section{
+        padding:15px;
+    }
+
+}
+/* =========================================================
+   CA + LIVE SCORE LAYOUT
+========================================================= */
+
+.ca-edit-layout,
+.exam-edit-layout{
+    display:grid;
+    grid-template-columns:1.5fr .8fr;
+    gap:18px;
+    align-items:stretch;
+}
+
+.ca-input-panel,
+.exam-input-panel{
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:20px;
+    padding:22px;
+}
+
+.panel-heading{
+    margin-bottom:18px;
+}
+
+.panel-title{
+    color:#1e293b;
+    font-size:17px;
+    font-weight:800;
+}
+
+.panel-note,
+.exam-section-note{
+    color:#64748b;
+    font-size:12px;
+    margin-top:4px;
+}
+
+
+/* LIVE SCORE */
+
+.live-score-panel{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    padding:25px 20px;
+    border-radius:20px;
+    background:linear-gradient(
+        145deg,
+        #eff6ff,
+        #eef2ff
+    );
+    border:1px solid #bfdbfe;
+    min-height:220px;
+}
+
+.live-icon{
+    width:48px;
+    height:48px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#dbeafe;
+    font-size:22px;
+    margin-bottom:10px;
+}
+
+.live-label{
+    color:#64748b;
+    font-size:11px;
+    font-weight:900;
+    letter-spacing:.08em;
+}
+
+.live-score-value{
+    color:#1d4ed8;
+    font-size:38px;
+    line-height:1.1;
+    font-weight:900;
+    margin:7px 0;
+}
+
+.live-limit{
+    color:#64748b;
+    font-size:11px;
+}
+
+.live-validation{
+    margin-top:9px;
+    color:#15803d;
+    font-size:11px;
+    font-weight:800;
+}
+
+.live-validation.invalid{
+    color:#dc2626;
+}
+
+
+/* EXAM */
+
+.exam-edit-layout{
+    margin-top:22px;
+}
+
+.exam-input-panel{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+}
+
+.exam-live{
+    background:linear-gradient(
+        145deg,
+        #f0fdf4,
+        #ecfdf5
+    );
+    border-color:#bbf7d0;
+}
+
+.exam-live .live-icon{
+    background:#dcfce7;
+}
+
+.exam-live .live-score-value{
+    color:#15803d;
+}
+
+
+/* TOTAL INVALID */
+
+.total-invalid{
+    color:#dc2626!important;
+}
+
+
+/* EMPTY */
+
+.ca-empty{
+    padding:18px;
+    background:#fff7ed;
+    border:1px solid #fed7aa;
+    color:#9a3412;
+    border-radius:15px;
+    font-size:13px;
+    font-weight:700;
+}
+
+
+/* MOBILE */
+
+@media(max-width:700px){
+
+    .ca-edit-layout,
+    .exam-edit-layout{
+        grid-template-columns:1fr;
+    }
+
+    .live-score-panel{
+        min-height:180px;
+    }
+
+    .live-score-value{
+        font-size:32px;
+    }
+
+}
+/* =========================================================
+   FINAL MOBILE EDIT RESULT LAYOUT
+   MOBILE ONLY — DESKTOP REMAINS UNCHANGED
+========================================================= */
+
+@media (max-width: 700px){
+
+    /* -----------------------------------------------------
+       PAGE
+    ----------------------------------------------------- */
+
+    .edit-result-page{
+        width:100%;
+        max-width:100%;
+        margin:0;
+        padding:10px 8px 35px;
+        box-sizing:border-box;
+        overflow-x:hidden;
+    }
+
+
+    /* -----------------------------------------------------
+       HERO
+    ----------------------------------------------------- */
+
+    .edit-result-hero{
+        width:100%;
+        box-sizing:border-box;
+        padding:18px 15px;
+        border-radius:18px;
+        margin-bottom:14px;
+    }
+
+    .edit-result-hero-content{
+        display:flex;
+        align-items:center;
+        gap:12px;
+        width:100%;
+    }
+
+    .edit-result-icon{
+        width:48px;
+        height:48px;
+        min-width:48px;
         border-radius:14px;
-        box-shadow:0 6px 18px rgba(0,0,0,0.18);
-        font-size:18px;
-    ">
+        font-size:22px;
+    }
 
-        <h2 style="
-            text-align:center;
-            margin-bottom:25px;
-            font-size:26px;
-        ">
-            Edit Result
-        </h2>
+    .edit-result-hero h1{
+        font-size:20px;
+        line-height:1.25;
+        margin:0 0 4px;
+        white-space:normal;
+        overflow-wrap:anywhere;
+    }
+
+    .edit-result-hero p{
+        font-size:11px;
+        line-height:1.45;
+        white-space:normal;
+        overflow-wrap:anywhere;
+    }
+
+
+    /* -----------------------------------------------------
+       MAIN CARD
+    ----------------------------------------------------- */
+
+    .edit-result-card{
+        width:100%;
+        max-width:100%;
+        box-sizing:border-box;
+        padding:12px;
+        border-radius:18px;
+        overflow:visible;
+    }
+
+
+    /* -----------------------------------------------------
+       STUDENT INFORMATION
+       TWO COLUMNS ON PHONE
+    ----------------------------------------------------- */
+
+    .student-info{
+        width:100%;
+        box-sizing:border-box;
+        padding:13px;
+        margin-bottom:18px;
+        border-radius:16px;
+    }
+
+    .student-info-title{
+        font-size:14px;
+        margin-bottom:11px;
+    }
+
+    .student-info-title::before{
+        font-size:19px;
+    }
+
+    .student-info-grid{
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:8px;
+        width:100%;
+    }
+
+    .info-box{
+        min-width:0;
+        width:100%;
+        box-sizing:border-box;
+        padding:10px;
+        border-radius:12px;
+    }
+
+    .info-box small{
+        font-size:12px;
+        margin-bottom:4px;
+    }
+
+    .info-box strong{
+        font-size:14px;
+        line-height:1.35;
+        white-space:normal;
+        overflow-wrap:anywhere;
+        word-break:break-word;
+    }
+
+
+    /* -----------------------------------------------------
+       SCORE HEADER
+    ----------------------------------------------------- */
+
+    .score-section-header{
+        margin-bottom:12px;
+    }
+
+    .score-section-title{
+        font-size:17px;
+    }
+
+
+    /* -----------------------------------------------------
+       CA SECTION
+    ----------------------------------------------------- */
+
+    .ca-section{
+        width:100%;
+        box-sizing:border-box;
+        padding:12px;
+        margin-bottom:14px;
+        border-radius:16px;
+    }
+
+
+    /* -----------------------------------------------------
+       CA LAYOUT
+    ----------------------------------------------------- */
+
+    .ca-edit-layout{
+        display:flex;
+        flex-direction:column;
+        gap:10px;
+        width:100%;
+    }
+
+    .ca-input-panel{
+        width:100%;
+        box-sizing:border-box;
+        padding:12px;
+        border-radius:15px;
+    }
+
+    .panel-heading{
+        margin-bottom:11px;
+    }
+
+    .panel-title{
+        font-size:14px;
+    }
+
+    .panel-note{
+        font-size:12px;
+        line-height:1.4;
+    }
+
+
+    /* -----------------------------------------------------
+       CA ITEMS
+       TITLE LEFT / SCORE RIGHT
+    ----------------------------------------------------- */
+
+    .ca-list{
+        width:100%;
+        gap:8px;
+    }
+
+    .ca-item{
+        display:grid;
+        grid-template-columns:minmax(0,1fr) 82px;
+        align-items:center;
+        gap:8px;
+
+        width:100%;
+        box-sizing:border-box;
+
+        padding:10px;
+        border-radius:12px;
+    }
+
+    .ca-title{
+        min-width:0;
+        font-size:12px;
+        line-height:1.35;
+
+        white-space:normal;
+        overflow-wrap:anywhere;
+        word-break:break-word;
+    }
+
+    .ca-date{
+        font-size:11px;
+        line-height:1.3;
+        margin-top:2px;
+    }
+
+    .ca-score{
+        width:100%;
+        min-width:0;
+    }
+
+    .ca-score input{
+        display:block;
+        width:100%;
+        min-width:0;
+        min-height:40px;
+
+        box-sizing:border-box;
+
+        padding:7px 5px;
+
+        border-radius:9px;
+
+        font-size:14px;
+        text-align:center;
+    }
+
+
+    /* -----------------------------------------------------
+       LIVE CA SCORE
+    ----------------------------------------------------- */
+
+    .live-score-panel{
+        width:100%;
+        min-height:145px;
+        box-sizing:border-box;
+
+        padding:16px 12px;
+        border-radius:15px;
+    }
+
+    .live-icon{
+        width:38px;
+        height:38px;
+        border-radius:11px;
+        font-size:18px;
+        margin-bottom:7px;
+    }
+
+    .live-label{
+        font-size:9px;
+    }
+
+    .live-score-value{
+        font-size:29px;
+        margin:5px 0;
+    }
+
+    .live-limit{
+        font-size:9px;
+        text-align:center;
+    }
+
+    .live-validation{
+        font-size:9px;
+        line-height:1.3;
+        text-align:center;
+    }
+
+
+    /* -----------------------------------------------------
+       EXAM
+    ----------------------------------------------------- */
+
+    .exam-edit-layout{
+        display:flex;
+        flex-direction:column;
+        gap:10px;
+
+        width:100%;
+        margin-top:14px;
+    }
+
+    .exam-input-panel{
+        width:100%;
+        box-sizing:border-box;
+        padding:13px;
+        border-radius:15px;
+    }
+
+    .exam-section-title{
+        font-size:14px;
+        margin-bottom:5px;
+    }
+
+    .exam-section-note{
+        font-size:12px;
+        line-height:1.4;
+        margin-bottom:9px;
+    }
+
+    .exam-input-wrap{
+        width:100%;
+    }
+
+    .exam-input-wrap input{
+        width:100%;
+        box-sizing:border-box;
+        min-height:46px;
+        padding:8px 10px;
+        border-radius:10px;
+        font-size:16px;
+    }
+
+
+    /* -----------------------------------------------------
+       LIVE EXAM
+    ----------------------------------------------------- */
+
+    .exam-live{
+        width:100%;
+        min-height:145px;
+    }
+
+
+    /* -----------------------------------------------------
+       RESULT PREVIEW
+       THREE COMPACT BOXES
+    ----------------------------------------------------- */
+
+    .result-preview{
+        display:grid;
+        grid-template-columns:repeat(3,minmax(0,1fr));
+        gap:7px;
+
+        width:100%;
+        margin-top:14px;
+    }
+
+    .preview-box{
+        min-width:0;
+        width:100%;
+        box-sizing:border-box;
+
+        padding:10px 5px;
+        border-radius:11px;
+    }
+
+    .preview-box small{
+        font-size:10px;
+        line-height:1.25;
+        white-space:normal;
+    }
+
+    .preview-box strong{
+        display:block;
+        font-size:15px;
+        line-height:1.2;
+        overflow-wrap:anywhere;
+    }
+
+
+    /* -----------------------------------------------------
+       ACTION BUTTONS
+    ----------------------------------------------------- */
+
+    .edit-result-actions{
+        display:flex;
+        flex-direction:column;
+        gap:8px;
+
+        width:100%;
+        box-sizing:border-box;
+
+        margin-top:18px;
+        padding-top:15px;
+    }
+
+    .save-result-btn,
+    .cancel-result-btn{
+        width:100%;
+        min-height:46px;
+        box-sizing:border-box;
+
+        font-size:15px;
+        border-radius:12px;
+    }
+
+}
+
+
+/* =========================================================
+   VERY SMALL PHONES
+========================================================= */
+
+@media (max-width:380px){
+
+    .edit-result-page{
+        padding-left:5px;
+        padding-right:5px;
+    }
+
+    .edit-result-card{
+        padding:9px;
+    }
+
+    .student-info,
+    .ca-section{
+        padding:10px;
+    }
+
+    .student-info-grid{
+        gap:6px;
+    }
+
+    .info-box{
+        padding:8px;
+    }
+
+    .info-box strong{
+        font-size:13px;
+    }
+
+    .ca-item{
+        grid-template-columns:minmax(0,1fr) 76px;
+        padding:8px;
+    }
+
+    .ca-title{
+        font-size:13px;
+    }
+
+    .ca-score input{
+        min-height:38px;
+        font-size:13px;
+    }
+
+    .preview-box{
+        padding:9px 3px;
+    }
+
+    .preview-box strong{
+        font-size:14px;
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE LANDSCAPE
+   USE THE EXTRA WIDTH
+========================================================= */
+
+@media (max-width:700px) and (orientation:landscape){
+
+    .edit-result-page{
+        max-width:900px;
+        margin:0 auto;
+        padding-left:12px;
+        padding-right:12px;
+    }
+
+    .student-info-grid{
+        grid-template-columns:repeat(4,minmax(0,1fr));
+    }
+
+    .ca-edit-layout,
+    .exam-edit-layout{
+        display:grid;
+        grid-template-columns:minmax(0,1.5fr) minmax(220px,.8fr);
+        gap:12px;
+    }
+
+    .live-score-panel{
+        min-height:180px;
+    }
+
+    .result-preview{
+        grid-template-columns:repeat(3,minmax(0,1fr));
+    }
+
+    .edit-result-actions{
+        flex-direction:row;
+    }
+
+    .save-result-btn,
+    .cancel-result-btn{
+        width:auto;
+    }
+
+}
+</style>
+
+
+<div class="edit-result-page">
+
+
+    <!-- =====================================================
+         HERO
+    ====================================================== -->
+
+    <div class="edit-result-hero">
+
+        <div class="edit-result-hero-content">
+
+            <div class="edit-result-icon">
+                ✏️
+            </div>
+
+            <div>
+
+                <h1>Edit Student Result</h1>
+
+                <p>
+                    Review and correct the student's assessment and examination scores.
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         MAIN CARD
+    ====================================================== -->
+
+    <div class="edit-result-card">
 
         <form method="POST">
+
             {% csrf_token %}
 
-            <div style="margin-bottom:18px;">
-                <label style="font-size:18px;"><strong>Student</strong></label>
-                <div style="font-size:18px; padding:8px; background:#f5f5f5; border-radius:6px;">
-                    {{ result.student.get_full_name }}
+
+            <!-- =================================================
+                 STUDENT INFORMATION
+            ================================================== -->
+
+            <div class="student-info">
+
+                <div class="student-info-title">
+                    Student Information
                 </div>
-            </div>
 
-            <div style="margin-bottom:18px;">
-                <label style="text-align: center; font-size:18px;"><strong>Subject</strong></label>
-                <div style="font-size:18px; padding:8px; background:#f5f5f5; border-radius:6px;">
-                    {{ result.subject.name }}
+                <div class="student-info-grid">
+
+                    <div class="info-box">
+                        <small>Student</small>
+
+                        <strong>
+                            {{ result.student.get_full_name }}
+                        </strong>
+                    </div>
+
+
+                    <div class="info-box">
+                        <small>Student ID</small>
+
+                        <strong>
+                            {{ result.student.student_number }}
+                        </strong>
+                    </div>
+
+
+                    <div class="info-box">
+                        <small>Class</small>
+
+                        <strong>
+                            {{ result.student.school_class.name }}
+                        </strong>
+                    </div>
+
+
+                    <div class="info-box">
+                        <small>Subject</small>
+
+                        <strong>
+                            {{ result.subject.name }}
+                        </strong>
+                    </div>
+
                 </div>
+
             </div>
 
-            <div style="margin-bottom:18px;">
-                <label style="font-size:18px;"><strong>Class Score</strong></label>
-               <div style="font-size:18px;">
-                {{ result.class_score }}
+
+            <!-- =================================================
+                 SCORE HEADER
+            ================================================== -->
+
+            <div class="score-section-header">
+
+                <div>
+
+                    <h2 class="score-section-title">
+                        Score Information
+                    </h2>
+
+               
+                </div>
+
             </div>
 
-            <div style="margin-bottom:18px;">
-                <label style="font-size:18px;"><strong>Exam Score</strong></label>
-                <div style="font-size:18px;">{{ form.exam_score }}</div>
-                {{ form.exam_score.errors }}
+
+            <!-- =================================================
+                 CONTINUOUS ASSESSMENT
+            ================================================== -->
+
+            <div class="ca-section">
+
+                <div class="ca-section-header">
+
+                    <div>
+
+                      
+
+                    </div>
+
+                </div>
+
+{% if ca_records %}
+
+<div class="ca-edit-layout">
+
+    <!-- CA INPUTS -->
+    <div class="ca-input-panel">
+
+        <div class="panel-heading">
+            <div>
+                <div class="panel-title">
+                    📚 Continuous Assessment
+                </div>
+
+       
+            </div>
+        </div>
+
+        <div class="ca-list">
+
+            {% for ca in ca_records %}
+
+            <div class="ca-item">
+
+                <div>
+                    <div class="ca-title">
+                        {{ ca.title }}
+                    </div>
+
+                    <div class="ca-date">
+                        Created {{ ca.created_at|date:"d M Y" }}
+                    </div>
+                </div>
+
+                <div class="ca-score">
+
+                    <input
+                        type="number"
+                        name="ca_{{ ca.id }}"
+                        value="{{ ca.score }}"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        inputmode="decimal"
+                        class="ca-score-input"
+                    >
+
+                </div>
+
             </div>
 
-            <button type="submit" style="
-                width:100%;
-                padding:12px;
-                background:#3498db;
-                color:white;
-                border:none;
-                border-radius:8px;
-                font-size:18px;
-                cursor:pointer;
-            ">
-                Save Changes
-            </button>
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+
+    <!-- LIVE CA -->
+    <div class="live-score-panel">
+
+        <div class="live-icon">
+            📊
+        </div>
+
+        <div class="live-label">
+             CLASS SCORE
+        </div>
+
+        <div class="live-score-value">
+            <span id="live-ca-total">
+                {{ result.class_score|floatformat:0 }}
+            </span>
+        </div>
+
+        <div class="live-limit">
+            Maximum CA:
+            {{ result.term.ca_total|floatformat:0 }}
+        </div>
+
+        <div
+            id="ca-validation"
+            class="live-validation">
+        </div>
+
+    </div>
+
+</div>
+
+{% else %}
+
+<div class="ca-empty">
+    No Continuous Assessment records were found for this result.
+</div>
+
+{% endif %}
+</div>
+
+            <!-- =================================================
+                 EXAM SCORE
+            ================================================== -->
+
+         <div class="exam-edit-layout">
+
+    <!-- EXAM INPUT -->
+    <div class="exam-input-panel">
+
+        <div class="exam-section-title">
+            📝 Examination Score
+        </div>
+
+        <div class="exam-section-note">
+            Enter the corrected examination score.
+        </div>
+
+        <div class="exam-input-wrap">
+
+            {{ form.exam_score }}
+
+        </div>
+
+        {% if form.exam_score.errors %}
+
+        <div class="field-error">
+            {{ form.exam_score.errors }}
+        </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- LIVE EXAM -->
+    <div class="live-score-panel exam-live">
+
+        <div class="live-icon">
+            📝
+        </div>
+
+<div class="live-label">
+    EXAM MARK
+</div>
+
+<div class="live-score-value">
+    <span id="live-exam-score">
+        {{ result.exam_converted_score|floatformat:0 }}
+    </span>
+</div>
+
+<div class="live-limit">
+    Out of {{ result.term.exam_total|floatformat:0 }}
+</div>
+
+        <div
+            id="exam-validation"
+            class="live-validation">
+        </div>
+
+    </div>
+
+</div>
+
+            
+
+
+            <!-- =================================================
+                 RESULT PREVIEW
+            ================================================== -->
+
+      <div class="result-preview">
+
+    <div class="preview-box">
+
+        <small>Class Score</small>
+
+        <strong id="preview-ca">
+            {{ result.class_score|floatformat:0 }}
+        </strong>
+
+    </div>
+
+    <div class="preview-box">
+
+        <small>Exam Mark</small>
+
+        <strong id="preview-exam">
+            {{ result.exam_converted_score|default:"0"|floatformat:0 }}
+        </strong>
+
+    </div>
+
+    <div class="preview-box total-preview">
+
+        <small>Total Score</small>
+
+        <strong id="preview-total">
+            {{ result.total_score|floatformat:0 }}
+        </strong>
+
+    </div>
+
+</div>
+
+
+            <!-- =================================================
+                 ACTIONS
+            ================================================== -->
+
+            <div class="edit-result-actions">
+
+                <button
+                    type="submit"
+                    class="save-result-btn">
+
+                    <i class="fas fa-save me-2"></i>
+
+                    Save Changes
+
+                </button>
+
+
+                <a
+                    href="javascript:history.back()"
+                    class="cancel-result-btn">
+
+                    <i class="fas fa-arrow-left me-2"></i>
+
+                    Cancel
+
+                </a>
+
+            </div>
+
 
         </form>
 
     </div>
 
 </div>
+<script>
 
+document.addEventListener("DOMContentLoaded", function () {
+
+    const caInputs = document.querySelectorAll(".ca-score-input");
+
+    const examInput = document.querySelector(
+        'input[name="exam_score"]'
+    );
+
+    const liveCaTotal = document.getElementById(
+        "live-ca-total"
+    );
+
+    const liveExamScore = document.getElementById(
+        "live-exam-score"
+    );
+
+    const previewCa = document.getElementById(
+        "preview-ca"
+    );
+
+    const previewExam = document.getElementById(
+        "preview-exam"
+    );
+
+    const previewTotal = document.getElementById(
+        "preview-total"
+    );
+
+    const caValidation = document.getElementById(
+        "ca-validation"
+    );
+
+    const examValidation = document.getElementById(
+        "exam-validation"
+    );
+    const maxSba =
+        parseFloat("{{ result.term.sba_total|default:'0' }}") || 0;
+
+    const maxCa =
+        parseFloat("{{ result.term.ca_total|default:'0' }}") || 0;
+
+    const maxExam =
+        parseFloat("{{ result.term.exam_total|default:'0' }}") || 0;
+
+
+    function calculateScores() {
+
+        let caTotal = 0;
+
+        caInputs.forEach(function(input) {
+
+            const value = parseFloat(input.value);
+
+            if (!isNaN(value)) {
+                caTotal += value;
+            }
+
+        });
+
+
+        let exam = parseFloat(examInput.value);
+
+        if (isNaN(exam)) {
+            exam = 0;
+        }
+
+        const convertedCa =
+            maxSba > 0 
+            ? (caTotal / maxSba) * maxCa : 0;
+        const convertedExam =
+            (exam / 100) * maxExam;
+        const total = convertedCa + convertedExam;
+
+
+        /* -----------------------------
+           LIVE CA
+        ----------------------------- */
+
+        liveCaTotal.textContent =
+            Math.round(convertedCa);
+
+        previewCa.textContent =
+            Math.round(convertedCa);
+
+
+        /* -----------------------------
+           LIVE EXAM
+        ----------------------------- */
+
+        liveExamScore.textContent =
+            Math.round(convertedExam);
+
+        previewExam.textContent =
+            Math.round(convertedExam);
+
+
+        /* -----------------------------
+           LIVE TOTAL
+        ----------------------------- */
+
+        previewTotal.textContent =
+            Math.round(total);
+
+
+        /* -----------------------------
+           CA VALIDATION
+        ----------------------------- */
+
+        if (caTotal > maxSba) {
+
+            caValidation.textContent =
+                "⚠ SBA exceeds the school's maximum.";
+
+            caValidation.classList.add("invalid");
+
+        } else {
+
+            caValidation.textContent =
+                "✓ Within allowed CA limit.";
+
+            caValidation.classList.remove("invalid");
+
+        }
+
+
+        /* -----------------------------
+           EXAM VALIDATION
+        ----------------------------- */
+
+        if (exam > 100) {
+
+            examValidation.textContent =
+                "⚠ Exam exceeds the maximum raw score of 100.";
+
+            examValidation.classList.add("invalid");
+
+        } else {
+
+            examValidation.textContent =
+                "✓ Within allowed exam limit.";
+
+            examValidation.classList.remove("invalid");
+
+        }
+
+
+        /* -----------------------------
+           TOTAL VALIDATION
+        ----------------------------- */
+
+        if (total > 100) {
+
+            previewTotal.classList.add("total-invalid");
+
+        } else {
+
+            previewTotal.classList.remove("total-invalid");
+
+        }
+
+    }
+
+
+    caInputs.forEach(function(input) {
+
+        input.addEventListener(
+            "input",
+            calculateScores
+        );
+
+    });
+
+
+    if (examInput) {
+
+        examInput.addEventListener(
+            "input",
+            calculateScores
+        );
+
+    }
+
+
+    calculateScores();
+
+});
+
+</script>
 
 {% endblock %}

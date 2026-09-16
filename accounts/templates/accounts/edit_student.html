@@ -151,7 +151,16 @@ selected
 <input type="date"
 name="admission_date"
 value="{{ student.admission_date|date:'Y-m-d' }}">
-
+<div>
+  <label>Conduct</label>
+  <select name="conduct" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:8px;">
+    <option value="Excellent" {% if student.conduct == 'Excellent' %}selected{% endif %}>Excellent</option>
+    <option value="Very Good" {% if student.conduct == 'Very Good' %}selected{% endif %}>Very Good</option>
+    <option value="Good" {% if student.conduct == 'Good' %}selected{% endif %}>Good</option>
+    <option value="Satisfactory" {% if student.conduct == 'Satisfactory' %}selected{% endif %}>Satisfactory</option>
+    <option value="Needs Improvement" {% if student.conduct == 'Needs Improvement' %}selected{% endif %}>Needs Improvement</option>
+  </select>
+</div>
 
 
 <label>Nationality</label>

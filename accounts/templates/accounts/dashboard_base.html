@@ -1,1190 +1,2042 @@
-<!-- templates/accounts/dashboard_base.html -->
-<!DOCTYPE html>
 {% load static %}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>{% block title %}Dashboard{% endblock %}</title>
-    
-    {% load static %}
-    <!-- CSS files - ORDER MATTERS -->
+
     <link rel="stylesheet" href="{% static 'fontawesome/css/bootstrap.min.css' %}">
     <link rel="stylesheet" href="{% static 'fontawesome/css/all.min.css' %}">
-    <link rel="stylesheet" href="{% static 'accounts/css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'accounts/css/dashboard.css' %}?v=11">
 </head>
+
+<body>
+
+
+
+
+<!-- =========================================================
+     SYSTEM MESSAGES
+========================================================= -->
+
+{% if messages %}
+<div id="message-box" class="system-message-box">
+
+    {% for message in messages %}
+    <div class="alert alert-success shadow-sm">
+        {{ message }}
+    </div>
+    {% endfor %}
+
+</div>
+{% endif %}
+
+
+<!-- =========================================================
+     SIDEBAR TOGGLE
+========================================================= -->
+
+<button id="sidebarToggleBtn"
+        class="sidebar-toggle"
+        type="button"
+        aria-label="Toggle navigation">
+
+    <i class="fas fa-bars"></i>
+
+</button>
+
+
+<!-- =========================================================
+     SIDEBAR
+========================================================= -->
+
+<aside id="sidebar" class="sidebar open no-print">
+
+    <div class="sidebar-inner">
+
+        <!-- BRAND -->
+        <div class="sidebar-brand">
+
+            <div class="sidebar-brand-icon">
+                <i class="fas fa-school"></i>
+            </div>
+
+            <div class="sidebar-brand-text">
+                <strong>School Portal</strong>
+                <small>{{ request.user.school }}</small>
+            </div>
+
+        </div>
+
+
+        <nav class="sidebar-nav">
+
+            {% with role=request.user.role %}
+
+
+            <!-- =================================================
+                 ADMIN
+            ================================================= -->
+
+            {% if role == "admin" or role == "proprietor" or role == "proprietress" %}
+
+            <a href="{% url 'accounts:admin_dashboard' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+
+                <i class="fas fa-home icon-home"></i>
+                <span>Dashboard</span>
+
+            </a>
+
+
+<!-- ACADEMICS - Calendar stays in Academics -->
+
+            <div class="sidebar-section">
+                <button class="sidebar-section-toggle"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#academicsMenu"
+                        aria-expanded="{% if request.resolver_match.url_name == 'add-class' or request.resolver_match.url_name == 'add_subject' or request.resolver_match.url_name == 'assigned_teachers_list' or request.resolver_match.url_name == 'timetable_create' or request.resolver_match.url_name == 'manage_timetable' or request.resolver_match.url_name == 'calendar_list' or request.resolver_match.url_name == 'add_event' %}true{% else %}false{% endif %}">
+                    <span>
+                        <i class="fas fa-book-open"></i>
+                        Academics
+                    </span>
+                    <i class="fas fa-chevron-down section-chevron"></i>
+                </button>
+            </div>
+
+            <ul id="academicsMenu"
+                class="collapse sidebar-submenu
+                {% if request.resolver_match.url_name == 'add-class' or request.resolver_match.url_name == 'add_subject' or request.resolver_match.url_name == 'assigned_teachers_list' or request.resolver_match.url_name == 'timetable_create' or request.resolver_match.url_name == 'manage_timetable' or request.resolver_match.url_name == 'calendar_list'  %}show{% endif %}">
+
+                <li>
+                    <a href="{% url 'accounts:add-class' %}" class="{% if request.resolver_match.url_name == 'add-class' %}active{% endif %}">
+                        <i class="fas fa-school"></i><span>Add Class</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'accounts:add_subject' %}" class="{% if request.resolver_match.url_name == 'add_subject' %}active{% endif %}">
+                        <i class="fas fa-book"></i><span>Add Subject</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'accounts:assigned_teachers_list' %}" class="{% if request.resolver_match.url_name == 'assigned_teachers_list' %}active{% endif %}">
+                        <i class="fas fa-users-gear"></i><span>Assigned Teachers</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'accounts:timetable_create' %}" class="{% if request.resolver_match.url_name == 'timetable_create' %}active{% endif %}">
+                        <i class="fas fa-plus-square"></i><span>Create Timetable</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'accounts:manage_timetable' %}" class="{% if request.resolver_match.url_name == 'manage_timetable' %}active{% endif %}">
+                        <i class="fas fa-pen-to-square"></i><span>Manage Timetable</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'accounts:calendar_list' %}" class="{% if request.resolver_match.url_name == 'calendar_list' or request.resolver_match.url_name == 'add_event' %}active{% endif %}">
+                        <i class="fas fa-calendar-alt"></i><span>Calendar Event</span>
+                    </a>
+                </li>
+            </ul>
+
+
+            <!-- PEOPLE -->
+
+            <div class="sidebar-section">
+
+                <button class="sidebar-section-toggle"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#peopleMenu">
+
+                    <span>
+                        <i class="fas fa-users"></i>
+                        People
+                    </span>
+
+                    <i class="fas fa-chevron-down section-chevron"></i>
+
+                </button>
+
+            </div>
+
+
+            <ul id="peopleMenu"
+                class="collapse sidebar-submenu
+                {% if 'student' in request.resolver_match.url_name or 'parent' in request.resolver_match.url_name or 'teacher' in request.resolver_match.url_name or 'accountant' in request.resolver_match.url_name or 'staff' in request.resolver_match.url_name %}show{% endif %}">
+
+                <li>
+                    <a href="{% url 'accounts:add-student' %}"
+                       class="{% if 'student' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-user-graduate"></i>
+                        <span>Add Student</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{% url 'accounts:add-parent' %}"
+                       class="{% if 'parent' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-users"></i>
+                        <span>Add Parent</span>
+                    </a>
+                </li>
+
+
+                <!-- STAFF -->
+
+                <li>
+
+                    <button class="submenu-parent"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#staffMenu">
+
+                        <span>
+                            <i class="fas fa-briefcase"></i>
+                            Staff
+                        </span>
+
+                        <i class="fas fa-chevron-down"></i>
+
+                    </button>
+
+
+                    <ul id="staffMenu"
+                        class="collapse nested-submenu
+                        {% if 'teacher' in request.resolver_match.url_name or 'accountant' in request.resolver_match.url_name or 'headmaster' in request.resolver_match.url_name or 'staff' in request.resolver_match.url_name %}show{% endif %}">
+
+                        <li>
+                            <a href="{% url 'accounts:add-teacher' %}"
+                               class="{% if 'teacher' in request.resolver_match.url_name %}active{% endif %}">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                                <span>Add Teacher</span>
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="{% url 'accounts:add_accountant' %}"
+                               class="{% if 'accountant' in request.resolver_match.url_name %}active{% endif %}">
+                                <i class="fas fa-calculator"></i>
+                                <span>Add Accountant</span>
+                            </a>
+                        </li>
+                        <li>
+                        {% if request.user.role == "admin" or request.user.role == "proprietor" or request.user.role == "proprietress" %}
+                            <a href="{% url 'accounts:add_headmaster' %}?role=headmaster"
+                            class="{% if 'headmaster' in request.resolver_match.url_name %}active{% endif %}">
+                                <i class="fas fa-user-tie"></i>
+                                <span>Add Head Teacher</span>
+                            </a>
+                        {% endif %}
+                        </li>
+
+                    </ul>
+
+                </li>
+
+            </ul>
+
+
+            <!-- OPERATIONS -->
+
+            <div class="sidebar-section">
+
+                <button class="sidebar-section-toggle"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#operationsMenu">
+
+                    <span>
+                        <i class="fas fa-bolt"></i>
+                        Operations
+                    </span>
+
+                    <i class="fas fa-chevron-down section-chevron"></i>
+
+                </button>
+
+            </div>
+
+
+            <ul id="operationsMenu"
+                class="collapse sidebar-submenu
+                {% if 'attendance' in request.path or 'review-results' in request.path or request.resolver_match.url_name == 'results_by_class' %}show{% endif %}">
+
+                <li>
+                    <a href="{% url 'accounts:attendance_report' %}"
+                       class="{% if 'attendance' in request.path %}active{% endif %}">
+                        <i class="fas fa-clipboard-check"></i>
+                        <span>Student Attendance Report</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{% url 'accounts:mark_teacher_attendance' %}"
+                       class="{% if request.resolver_match.url_name == 'mark_teacher_attendance' %}active{% endif %}">
+                        <i class="fas fa-user-check"></i>
+                        <span>Teacher Attendance</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{% url 'accounts:admin_review_results' %}"
+                       class="{% if 'review-results' in request.path %}active{% endif %}">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Review Results</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{% url 'accounts:results_by_class' %}"
+                       class="{% if request.resolver_match.url_name == 'results_by_class' %}active{% endif %}">
+                        <i class="fas fa-award"></i>
+                        <span>Published Results</span>
+                    </a>
+                </li>
+
+            </ul>
+
+
+            <!-- FINANCE -->
+
+            <div class="sidebar-section">
+
+                <button class="sidebar-section-toggle"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#financeMenu">
+
+                    <span>
+                        <i class="fas fa-wallet"></i>
+                        Finance
+                    </span>
+
+                    <i class="fas fa-chevron-down section-chevron"></i>
+
+                </button>
+
+            </div>
+
+
+            <ul id="financeMenu"
+                class="collapse sidebar-submenu
+                {% if '/fees/' in request.path or '/student-fees' in request.path or '/expenses' in request.path or '/fee-structure-settings/' in request.path or 'admin-monitoring' in request.path %}show{% endif %}">
+
+              
+
+                <li>
+                    <a href="{% url 'accounts:finance_fee_list' %}"
+                       class="{% if request.resolver_match.url_name == 'finance_fee_list' %}active{% endif %}">
+                        <i class="fas fa-dollar-sign"></i>
+                        <span>Fees</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{% url 'accounts:student_fees_list' %}"
+                       class="{% if request.resolver_match.url_name == 'student_fees_list' %}active{% endif %}">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        <span>Edit Student Fees</span>
+                    </a>
+                </li>
+
+    {% if request.user.role == "admin" or request.user.role == "proprietor" or request.user.role == "proprietress" or request.user.role == "headmaster" or request.user.role == "headmistress" or request.user.role == "bursar" %}             <li>
+                    <a href="{% url 'accounts:expense_list' %}"
+                       class="{% if request.resolver_match.url_name == 'expense_list' %}active{% endif %}">
+                        <i class="fas fa-receipt"></i>
+                        <span>Expenses</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                <li>
+                    <a href="{% url 'accounts:admin_fee_monitoring' %}"
+                       class="{% if request.resolver_match.url_name == 'admin_fee_monitoring' %}active{% endif %}">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Fee Monitoring</span>
+                    </a>
+                </li>
+
+            </ul>
+
+
+            <!-- COMMUNICATION -->
+
+            <div class="sidebar-section">
+
+                <button class="sidebar-section-toggle"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#communicationMenu">
+
+                    <span>
+                        <i class="fas fa-comments"></i>
+                        Communication
+                    </span>
+
+                    <i class="fas fa-chevron-down section-chevron"></i>
+
+                </button>
+
+            </div>
+
+
+            <ul id="communicationMenu"
+                class="collapse sidebar-submenu
+                {% if '/communication' in request.path or 'announcement' in request.path or 'notification' in request.path %}show{% endif %}">
+
+                <li>
+                    <a href="{% url 'accounts:create_announcement' %}"
+                       class="{% if 'announcement' in request.path %}active{% endif %}">
+                        <i class="fas fa-bullhorn"></i>
+                        <span>Create Announcements</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{% url 'accounts:notifications' %}"
+                       class="{% if 'notification' in request.path %}active{% endif %}">
+
+                        <i class="fas fa-bell"></i>
+                        <span>Notifications</span>
+
+                        {% if notification_count %}
+                        <span class="sidebar-badge">
+                            {{ notification_count }}
+                        </span>
+                        {% endif %}
+
+                    </a>
+                </li>
+
+            </ul>
+
+
+<!-- REPORTS -->
+
+            <div class="sidebar-section">
+
+                <button class="sidebar-section-toggle"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#reportsMenu">
+
+                    <span>
+                        <i class="fas fa-chart-pie"></i>
+                        Reports
+                    </span>
+
+                    <i class="fas fa-chevron-down section-chevron"></i>
+
+                </button>
+
+            </div>
+
+            <ul id="reportsMenu"
+                class="collapse sidebar-submenu
+                {% if '/view-report' in request.path or 'headmaster' in request.path %}show{% endif %}">
+
+                <li>
+                    <a href="{% url 'accounts:view-reports' %}"
+                       class="{% if request.resolver_match.url_name == 'view-reports' %}active{% endif %}">
+                        <i class="fas fa-file-alt"></i>
+                        <span>View Reports</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{% url 'accounts:headmaster_remarks' %}"
+                       class="{% if 'headmaster_remarks' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-pen-nib"></i>
+                        <span>Head Teacher Remarks</span>
+                    </a>
+                </li>
+
+            </ul>
+
+
+<!-- SETTINGS - Term Settings stays in Settings -->
+
+            <div class="sidebar-section">
+                <button class="sidebar-section-toggle"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#systemMenu"
+                        aria-expanded="{% if '/users/' in request.path or '/settings/' in request.path or '/term-settings' in request.path or '/fee-structure-settings/' in request.path or '/system-settings' in request.path or 'term_settings' in request.resolver_match.url_name %}true{% else %}false{% endif %}">
+                    <span>
+                        <i class="fas fa-cog"></i>
+                        Settings
+                    </span>
+                    <i class="fas fa-chevron-down section-chevron"></i>
+                </button>
+            </div>
+
+            <ul id="systemMenu"
+                class="collapse sidebar-submenu
+                {% if '/users/' in request.path or '/settings/' in request.path or '/term-settings' in request.path or '/fee-structure-settings/' in request.path or '/system-settings' in request.path or 'term_settings' in request.resolver_match.url_name or request.resolver_match.url_name == 'add_event' %}show{% endif %}">
+
+                <li>
+                    <a href="{% url 'accounts:school_settings' %}"
+                       class="{% if request.resolver_match.url_name == 'school_settings' or 'term_settings' in request.resolver_match.url_name or '/fee-structure-settings/' in request.path %}active{% endif %}">
+                        <i class="fas fa-school"></i><span>School Settings</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'accounts:manage-users' %}" class="{% if request.resolver_match.url_name == 'manage-users' %}active{% endif %}">
+                        <i class="fas fa-user-cog"></i><span>User Management</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'accounts:system-settings' %}" class="{% if request.resolver_match.url_name == 'system-settings' %}active{% endif %}">
+                        <i class="fas fa-cogs"></i><span>System Settings</span>
+                    </a>
+                </li>
+            </ul>
+
+<!-- =================================================
+     ADMIN-STYLE SIDEBAR / PERMISSION CONTROLLED
+================================================= -->
+
+{% elif role == "headmaster" or role == "headmistress" %}
+
+{% with hp=request.user.school.headmaster_permissions %}
+
+<!-- =================================================
+     DASHBOARD
+================================================= -->
+
+<a href="{% url 'accounts:headmaster_dashboard' %}"
+   class="sidebar-link {% if request.resolver_match.url_name == 'headmaster_dashboard' %}active{% endif %}">
+
+    <i class="fas fa-home icon-home"></i>
+    <span>Dashboard</span>
+
+</a>
+
+
+<!-- =================================================
+     ACADEMICS
+================================================= -->
+
+{% if hp.can_add_class or hp.can_add_subject or hp.can_assigned_teachers or hp.can_create_timetable or hp.can_manage_timetable or hp.can_calendar %}
+
+<div class="sidebar-section">
+
+    <button class="sidebar-section-toggle"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#headmasterAcademicsMenu"
+            aria-expanded="{% if request.resolver_match.url_name == 'add-class' or request.resolver_match.url_name == 'add_subject' or request.resolver_match.url_name == 'assigned_teachers_list' or request.resolver_match.url_name == 'timetable_create' or request.resolver_match.url_name == 'manage_timetable' or request.resolver_match.url_name == 'calendar_list' or request.resolver_match.url_name == 'add_event' %}true{% else %}false{% endif %}">
+
+        <span>
+            <i class="fas fa-book-open"></i>
+            Academics
+        </span>
+
+        <i class="fas fa-chevron-down section-chevron"></i>
+
+    </button>
+
+</div>
+
+
+<ul id="headmasterAcademicsMenu"
+    class="collapse sidebar-submenu
+    {% if request.resolver_match.url_name == 'add-class' or request.resolver_match.url_name == 'add_subject' or request.resolver_match.url_name == 'assigned_teachers_list' or request.resolver_match.url_name == 'timetable_create' or request.resolver_match.url_name == 'manage_timetable' or request.resolver_match.url_name == 'calendar_list' or request.resolver_match.url_name == 'add_event' %}show{% endif %}">
+
+    {% if hp.can_add_class %}
+    <li>
+        <a href="{% url 'accounts:add-class' %}"
+           class="{% if request.resolver_match.url_name == 'add-class' %}active{% endif %}">
+
+            <i class="fas fa-school"></i>
+            <span>Add Class</span>
+
+        </a>
+    </li>
+    {% endif %}
+
+
+    {% if hp.can_add_subject %}
+    <li>
+        <a href="{% url 'accounts:add_subject' %}"
+           class="{% if request.resolver_match.url_name == 'add_subject' %}active{% endif %}">
+
+            <i class="fas fa-book"></i>
+            <span>Add Subject</span>
+
+        </a>
+    </li>
+    {% endif %}
+
+
+    {% if hp.can_assigned_teachers %}
+    <li>
+        <a href="{% url 'accounts:assigned_teachers_list' %}"
+           class="{% if request.resolver_match.url_name == 'assigned_teachers_list' %}active{% endif %}">
+
+            <i class="fas fa-users-gear"></i>
+            <span>Assigned Teachers</span>
+
+        </a>
+    </li>
+    {% endif %}
+
+
+    {% if hp.can_create_timetable and not is_basic_school %}
+    <li>
+        <a href="{% url 'accounts:timetable_create' %}"
+           class="{% if request.resolver_match.url_name == 'timetable_create' %}active{% endif %}">
+
+            <i class="fas fa-plus-square"></i>
+            <span>Create Timetable</span>
+
+        </a>
+    </li>
+    {% endif %}
+
+
+    {% if hp.can_manage_timetable and not is_basic_school %}
+    <li>
+        <a href="{% url 'accounts:manage_timetable' %}"
+           class="{% if request.resolver_match.url_name == 'manage_timetable' %}active{% endif %}">
+
+            <i class="fas fa-pen-to-square"></i>
+            <span>Manage Timetable</span>
+
+        </a>
+    </li>
+    {% endif %}
+
+
+    {% if hp.can_calendar and not is_basic_school %}
+    <li>
+        <a href="{% url 'accounts:calendar_list' %}"
+           class="{% if request.resolver_match.url_name == 'calendar_list' or request.resolver_match.url_name == 'add_event' %}active{% endif %}">
+
+            <i class="fas fa-calendar-alt"></i>
+            <span>Calendar Event</span>
+
+        </a>
+    </li>
+    {% endif %}
+
+</ul>
+
+{% endif %}
+
+
+<!-- =================================================
+     PEOPLE
+================================================= -->
+
+{% if hp.can_add_student or hp.can_add_teacher %}
+
+<div class="sidebar-section">
+
+    <button class="sidebar-section-toggle"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#headmasterPeopleMenu"
+            aria-expanded="{% if 'student' in request.resolver_match.url_name or 'parent' in request.resolver_match.url_name or 'teacher' in request.resolver_match.url_name or 'accountant' in request.resolver_match.url_name %}true{% else %}false{% endif %}">
+
+        <span>
+            <i class="fas fa-users"></i>
+            People
+        </span>
+
+        <i class="fas fa-chevron-down section-chevron"></i>
+
+    </button>
+
+</div>
+
+
+<ul id="headmasterPeopleMenu"
+    class="collapse sidebar-submenu
+    {% if 'student' in request.resolver_match.url_name or 'parent' in request.resolver_match.url_name or 'teacher' in request.resolver_match.url_name or 'accountant' in request.resolver_match.url_name %}show{% endif %}">
+
+    {% if hp.can_add_student %}
+    <li>
+        <a href="{% url 'accounts:add-student' %}"
+           class="{% if request.resolver_match.url_name == 'add-student' %}active{% endif %}">
+
+            <i class="fas fa-user-graduate"></i>
+            <span>Add Student</span>
+
+        </a>
+    </li>
+    {% endif %}
+
+
+    {% if hp.can_add_parent and not is_basic_school %}
+    <li>
+        <a href="{% url 'accounts:add-parent' %}"
+           class="{% if request.resolver_match.url_name == 'add-parent' %}active{% endif %}">
+
+            <i class="fas fa-users"></i>
+            <span>Add Parent</span>
+
+        </a>
+    </li>
+    {% endif %}
+
+
+    <!-- =================================================
+         STAFF - NESTED ACCORDION
+    ================================================= -->
+
+    {% if hp.can_add_teacher or hp.can_add_accountant %}
+
+    <li>
+
+        <button class="submenu-parent"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#headmasterStaffMenu">
+
+            <span>
+                <i class="fas fa-briefcase"></i>
+                Staff
+            </span>
+
+            <i class="fas fa-chevron-down"></i>
+
+        </button>
+
+
+        <ul id="headmasterStaffMenu"
+            class="collapse nested-submenu
+            {% if 'teacher' in request.resolver_match.url_name or 'accountant' in request.resolver_match.url_name %}show{% endif %}">
+
+            {% if hp.can_add_teacher %}
+            <li>
+                <a href="{% url 'accounts:add-teacher' %}"
+                   class="{% if request.resolver_match.url_name == 'add-teacher' %}active{% endif %}">
+
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    <span>Add Teacher</span>
+
+                </a>
+            </li>
+            {% endif %}
+
+
+            {% if hp.can_add_accountant and not is_basic_school %}
+            <li>
+                <a href="{% url 'accounts:add_accountant' %}"
+                   class="{% if request.resolver_match.url_name == 'add_accountant' %}active{% endif %}">
+
+                    <i class="fas fa-calculator"></i>
+                    <span>Add Accountant</span>
+
+                </a>
+            </li>
+            {% endif %}
+
+        </ul>
+
+    </li>
+
+    {% endif %}
+
+</ul>
+
+{% endif %}
+
+
+<!-- =================================================
+     OPERATIONS
+================================================= -->
+
+{% if hp.can_attendance or hp.can_teacher_attendance or hp.can_review_results or hp.can_published_results %}
+
+<div class="sidebar-section">
+
+    <button class="sidebar-section-toggle"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#headmasterOperationsMenu"
+            aria-expanded="{% if 'attendance' in request.path or 'review-results' in request.path or request.resolver_match.url_name == 'results_by_class' %}true{% else %}false{% endif %}">
+
+        <span>
+            <i class="fas fa-bolt"></i>
+            Operations
+        </span>
+
+        <i class="fas fa-chevron-down section-chevron"></i>
+
+    </button>
+
+</div>
+
+
+<ul id="headmasterOperationsMenu"
+    class="collapse sidebar-submenu
+    {% if 'attendance' in request.path or 'review-results' in request.path or request.resolver_match.url_name == 'results_by_class' %}show{% endif %}">
+
+    {% if hp.can_attendance %}
+    <li>
+        <a href="{% url 'accounts:attendance_report' %}"
+           class="{% if 'attendance' in request.path and request.resolver_match.url_name == 'attendance_report' %}active{% endif %}">
+
+            <i class="fas fa-clipboard-check"></i>
+            <span>Attendance</span>
+
+        </a>
+    </li>
+    {% endif %}
+
+
+    {% if hp.can_teacher_attendance %}
+    <li>
+        <a href="{% url 'accounts:mark_teacher_attendance' %}"
+           class="{% if request.resolver_match.url_name == 'mark_teacher_attendance' %}active{% endif %}">
+
+            <i class="fas fa-user-check"></i>
+            <span>Teacher Attendance</span>
+
+        </a>
+    </li>
+    {% endif %}
+
+
+    {% if hp.can_review_results %}
+    <li>
+        <a href="{% url 'accounts:admin_review_results' %}"
+           class="{% if 'review-results' in request.path %}active{% endif %}">
+
+            <i class="fas fa-chart-line"></i>
+            <span>Review Results</span>
+
+        </a>
+    </li>
+    {% endif %}
+
+
+    {% if hp.can_published_results %}
+    <li>
+        <a href="{% url 'accounts:results_by_class' %}"
+           class="{% if request.resolver_match.url_name == 'results_by_class' %}active{% endif %}">
+
+            <i class="fas fa-award"></i>
+            <span>Published Results</span>
+
+        </a>
+    </li>
+    {% endif %}
+
+</ul>
+
+{% endif %}
+
+
+<!-- =================================================
+     FINANCE
+================================================= -->
+
+{% if hp.can_fees or hp.can_expenses or hp.can_edit_student_fees or hp.can_fee_monitoring or is_basic_school %}
+
+<div class="sidebar-section">
+
+    <button class="sidebar-section-toggle"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#headmasterFinanceMenu"
+            aria-expanded="{% if '/fees/' in request.path or '/student-fees' in request.path or '/expenses' in request.path or 'admin-monitoring' in request.path %}true{% else %}false{% endif %}">
+
+        <span>
+            <i class="fas fa-wallet"></i>
+            Finance
+        </span>
+
+        <i class="fas fa-chevron-down section-chevron"></i>
+
+    </button>
+
+</div>
+
+
+<ul id="headmasterFinanceMenu"
+    class="collapse sidebar-submenu
+   {% if '/fees/' in request.path or '/student-fees' in request.path or '/expenses' in request.path or 'admin-monitoring' in request.path or 'basic/daily-fees' in request.path %}true{% else %}false{% endif %}">
+
+    {% if hp.can_fees and not is_basic_school %}
+    <li>
+        <a href="{% url 'accounts:finance_fee_list' %}"
+           class="{% if request.resolver_match.url_name == 'finance_fee_list' %}active{% endif %}">
+
+            <i class="fas fa-dollar-sign"></i>
+            <span>Fees</span>
+
+        </a>
+    </li>
+    {% endif %}
+
+
+    {% if hp.can_edit_student_fees and not is_basic_school %}
+    <li>
+        <a href="{% url 'accounts:student_fees_list' %}"
+           class="{% if request.resolver_match.url_name == 'student_fees_list' %}active{% endif %}">
+
+            <i class="fas fa-file-invoice-dollar"></i>
+            <span>Edit Student Fees</span>
+
+        </a>
+    </li>
+    {% endif %}
+
+
+    {% if hp.can_expenses and not is_basic_school %}
+    <li>
+        <a href="{% url 'accounts:expense_list' %}"
+           class="{% if request.resolver_match.url_name == 'expense_list' %}active{% endif %}">
+
+            <i class="fas fa-receipt"></i>
+            <span>Expenses</span>
+
+        </a>
+    </li>
+    {% endif %}
+
+
+    {% if hp.can_fee_monitoring and not is_basic_school %}
+    <li>
+        <a href="{% url 'accounts:admin_fee_monitoring' %}"
+           class="{% if request.resolver_match.url_name == 'admin_fee_monitoring' %}active{% endif %}">
+
+            <i class="fas fa-shield-alt"></i>
+            <span>Fee Monitoring</span>
+
+        </a>
+    </li>
+    {% endif %}
+    {% if is_basic_school %}
+<li>
+    <a href="{% url 'accounts:basic_daily_fee_settings' %}"
+       class="{% if request.resolver_match.url_name == 'basic_daily_fee_settings' %}active{% endif %}">
+
+        <i class="fas fa-coins"></i>
+        <span>Daily Fee Settings</span>
+
+    </a>
+</li>
+{% endif %}
+{% if is_basic_school %}
+<li>
+    <a href="{% url 'accounts:basic_daily_fee_monitoring' %}"
+       class="{% if request.resolver_match.url_name == 'basic_daily_fee_monitoring' %}active{% endif %}">
+        <i class="fas fa-chart-line"></i>
+        <span>Daily Fee Monitoring</span>
+    </a>
+</li>
+{% endif %}
+
+</ul>
+
+{% endif %}
+
+
+<!-- =================================================
+     COMMUNICATION
+================================================= -->
+
+{% if not is_basic_school %}
+<div class="sidebar-section">
+
+    <button class="sidebar-section-toggle"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#headmasterCommunicationMenu"
+            aria-expanded="{% if '/communication' in request.path or 'announcement' in request.path or 'notification' in request.path %}true{% else %}false{% endif %}">
+
+        <span>
+            <i class="fas fa-comments"></i>
+            Communication
+        </span>
+
+        <i class="fas fa-chevron-down section-chevron"></i>
+
+    </button>
+
+</div>
+
+
+<ul id="headmasterCommunicationMenu"
+    class="collapse sidebar-submenu
+    {% if '/communication' in request.path or 'announcement' in request.path or 'notification' in request.path %}show{% endif %}">
+
+    {% if hp.can_create_announcements %}
+    <li>
+        <a href="{% url 'accounts:create_announcement' %}"
+           class="{% if 'announcement' in request.path %}active{% endif %}">
+
+            <i class="fas fa-bullhorn"></i>
+            <span>Create Announcements</span>
+
+        </a>
+    </li>
+    {% endif %}
+
+
+    {% if hp.can_notifications %}
+    <li>
+        <a href="{% url 'accounts:notifications' %}"
+           class="{% if 'notification' in request.path %}active{% endif %}">
+
+            <i class="fas fa-bell"></i>
+            <span>Notifications</span>
+
+            {% if notification_count %}
+            <span class="sidebar-badge">
+                {{ notification_count }}
+            </span>
+            {% endif %}
+
+        </a>
+    </li>
+    {% endif %}
+
+</ul>
+
+{% endif %}
+
+
+<!-- =================================================
+     REPORTS
+================================================= -->
+
+{% if hp.can_view_reports or hp.can_headmaster_remarks %}
+
+<div class="sidebar-section">
+
+    <button class="sidebar-section-toggle"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#headmasterReportsMenu"
+            aria-expanded="{% if '/view-report' in request.path or 'headmaster' in request.path %}true{% else %}false{% endif %}">
+
+        <span>
+            <i class="fas fa-chart-pie"></i>
+            Reports
+        </span>
+
+        <i class="fas fa-chevron-down section-chevron"></i>
+
+    </button>
+
+</div>
+
+
+<ul id="headmasterReportsMenu"
+    class="collapse sidebar-submenu
+    {% if '/view-report' in request.path or 'headmaster' in request.path %}show{% endif %}">
+
+    {% if hp.can_view_reports %}
+    <li>
+        <a href="{% url 'accounts:view-reports' %}"
+           class="{% if request.resolver_match.url_name == 'view-reports' %}active{% endif %}">
+
+            <i class="fas fa-file-alt"></i>
+            <span>View Reports</span>
+
+        </a>
+    </li>
+    {% endif %}
+
+
+    {% if hp.can_headmaster_remarks %}
+    <li>
+        <a href="{% url 'accounts:headmaster_remarks' %}"
+           class="{% if request.resolver_match.url_name == 'headmaster_remarks' %}active{% endif %}">
+
+            <i class="fas fa-pen-nib"></i>
+            <span>Head Teacher Remarks</span>
+
+        </a>
+    </li>
+    {% endif %}
+
+</ul>
+
+{% endif %}
+
+
+<!-- =================================================
+     SETTINGS
+================================================= -->
+
+{% if hp.can_school_settings or hp.can_user_management or hp.can_system_settings %}
+
+<div class="sidebar-section">
+
+    <button class="sidebar-section-toggle"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#headmasterSystemMenu"
+            aria-expanded="{% if '/users/' in request.path or '/settings/' in request.path or '/term-settings' in request.path or '/system-settings' in request.path %}true{% else %}false{% endif %}">
+
+        <span>
+            <i class="fas fa-cog"></i>
+            Settings
+        </span>
+
+        <i class="fas fa-chevron-down section-chevron"></i>
+
+    </button>
+
+</div>
+
+
+<ul id="headmasterSystemMenu"
+    class="collapse sidebar-submenu
+    {% if '/users/' in request.path or '/settings/' in request.path or '/term-settings' in request.path or '/system-settings' in request.path %}show{% endif %}">
+
+    {% if hp.can_school_settings %}
+    <li>
+        <a href="{% url 'accounts:school_settings' %}"
+           class="{% if request.resolver_match.url_name == 'school_settings' or 'term_settings' in request.resolver_match.url_name or '/fee-structure-settings/' in request.path %}active{% endif %}">
+
+            <i class="fas fa-school"></i>
+            <span>School Settings</span>
+
+        </a>
+    </li>
+    {% endif %}
+
+
+
+
+
+    {% if hp.can_system_settings %}
+    <li>
+        <a href="{% url 'accounts:system-settings' %}"
+           class="{% if request.resolver_match.url_name == 'system-settings' %}active{% endif %}">
+
+            <i class="fas fa-cogs"></i>
+            <span>System Settings</span>
+
+        </a>
+    </li>
+    {% endif %}
+
+</ul>
+
+{% endif %}
+
+
+{% endwith %}
+
+            <!-- =================================================
+                 TEACHER
+            ================================================= -->
+
+            {% elif role == "teacher" %}
+
+            <a href="{% url 'accounts:teacher-dashboard' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'teacher-dashboard' %}active{% endif %}">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+
+            {% if request.user.school.can_teachers_manage_students  and not is_basic_school %}
+
+            <a href="{% url 'accounts:add-student' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'add-student' %}active{% endif %}">
+                <i class="fas fa-user-plus"></i>
+                <span>Add Student</span>
+            </a>
+
+            <a href="{% url 'accounts:manage-students' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'manage-students' %}active{% endif %}">
+                <i class="fas fa-users"></i>
+                <span>Manage Students</span>
+            </a>
+
+            {% endif %}
+
+            <a href="{% url 'accounts:teacher-assignments' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'teacher-assignments' %}active{% endif %}">
+                <i class="fas fa-book"></i>
+                <span>Assignments</span>
+            </a>
+
+
+            {% if not is_basic_school %}
+            <a href="{% url 'accounts:teacher_timetable' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'teacher_timetable' %}active{% endif %}">
+                <i class="fas fa-calendar-alt"></i>
+                <span>My Timetable</span>
+            </a>
+            
+            {% endif %}
+
+            {% if attendance_mode == "subject" or attendance_mode == "class_teacher" and request.user.is_class_teacher %}
+
+            <a href="{% url 'accounts:mark_attendance' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'mark_attendance' %}active{% endif %}">
+                <i class="fas fa-calendar-check"></i>
+                <span>Mark Attendance</span>
+            </a>
+
+            <a href="{% url 'accounts:attendance_report' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'attendance_report' %}active{% endif %}">
+                <i class="fas fa-file-alt"></i>
+                <span>Weekly Attendance Report</span>
+            </a>
+
+            {% endif %}
+
+            <a href="{% url 'accounts:upload-results-list' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'upload-results-list' %}active{% endif %}">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span>Upload Results</span>
+            </a>
+
+            <a href="{% url 'accounts:teacher-results' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'teacher-results' %}active{% endif %}">
+                <i class="fas fa-chart-line"></i>
+                <span>Student Results</span>
+            </a>
+
+            {% if request.user.is_real_class_teacher %}
+            <a href="{% url 'accounts:class_remarks_list' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'class_remarks_list' %}active{% endif %}">
+                <i class="fas fa-pen"></i>
+                <span>Write Remarks</span>
+            </a>
+            {% endif %}
+
+            <a href="{% url 'accounts:teacher_published_results' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'teacher_published_results' %}active{% endif %}">
+                <i class="fas fa-award"></i>
+                <span>Published Results</span>
+            </a>
+            <a href="{% url 'accounts:student-performance-report' %}"
+   class="sidebar-link {% if request.resolver_match.url_name == 'student_performance_report' %}active{% endif %}">
+    <i class="fas fa-chart-bar"></i>
+    <span>Performance Report</span>
+</a>
+  <a href="{% url 'accounts:student_attendance_report' %}"
+     class="sidebar-link {% if request.resolver_match.url_name == 'student_attendance_report' %}active{% endif %}">
+    <i class="fas fa-calendar-check"></i>
+    <span>Term Attendance Report</span>
+  </a>
+
+  {% if is_basic_school and request.user.is_class_teacher %}
+<a href="{% url 'accounts:basic_daily_fee_collection' %}"
+   class="sidebar-link {% if request.resolver_match.url_name == 'basic_daily_fee_collection' %}active{% endif %}">
+    <i class="fas fa-hand-holding-usd"></i>
+    <span>Daily Fee Collection</span>
+</a>
+{% endif %}
+
+{% if not is_basic_school %}
+            <a href="{% url 'accounts:teacher_notifications' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'teacher_notifications' %}active{% endif %}">
+                <i class="fas fa-bell"></i>
+                <span>Notifications</span>
+            </a>
+            
+            {% endif %}
+
+            <a href="{% url 'accounts:my-attendance' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'my-attendance' %}active{% endif %}">
+                <i class="fas fa-calendar-check"></i>
+                <span>My Attendance</span>
+            </a>
+
+
+            <!-- =================================================
+                 ACCOUNTANT
+            ================================================= -->
+
+            {% elif role == "accountant" %}
+
+            <a href="{% url 'accounts:accountant_dashboard' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'accountant_dashboard' %}active{% endif %}">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="{% url 'accounts:set_student_fee' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'set_student_fee' %}active{% endif %}">
+                <i class="fas fa-money-bill-wave"></i>
+                <span>Fees Structure</span>
+            </a>
+
+            <a href="{% url 'accounts:all_students_fees_list' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'all_students_fees_list' %}active{% endif %}">
+                <i class="fas fa-users"></i>
+                <span>All Defaulters</span>
+            </a>
+
+            <a href="{% url 'accounts:record_payment_search' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'record_payment_search' %}active{% endif %}">
+                <i class="fas fa-cash-register"></i>
+                <span>Collect Fees</span>
+            </a>
+
+            <a href="{% url 'accounts:pending_payments' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'pending_payments' %}active{% endif %}">
+                <i class="fas fa-clock"></i>
+                <span>Pending Payments</span>
+            </a>
+
+            <a href="{% url 'accounts:payment_history' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'payment_history' %}active{% endif %}">
+                <i class="fas fa-history"></i>
+                <span>Payment History</span>
+            </a>
+
+            <a href="{% url 'accounts:verify_payment' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'verify_payment' %}active{% endif %}">
+                <i class="fas fa-search-dollar"></i>
+                <span>Verify Payment</span>
+            </a>
+
+            <a href="{% url 'accounts:add_expense' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'add_expense' %}active{% endif %}">
+                <i class="fas fa-receipt"></i>
+                <span>Add Expense</span>
+            </a>
+
+            <a href="{% url 'accounts:expense_list' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'expense_list' %}active{% endif %}">
+                <i class="fas fa-list-alt"></i>
+                <span>View Expenses</span>
+            </a>
+
+            <a href="{% url 'accounts:accountant_notifications' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'accountant_notifications' %}active{% endif %}">
+                <i class="fas fa-bell"></i>
+                <span>Notifications</span>
+            </a>
+
+
+            <!-- =================================================
+                 PARENT
+            ================================================= -->
+
+            {% elif role == "parent" %}
+
+            <a href="{% url 'accounts:parent_dashboard' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'parent_dashboard' %}active{% endif %}">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+
+<a href="{% url 'accounts:my-children' %}"
+   class="sidebar-link {% if request.resolver_match.url_name == 'my-children' %}active{% endif %}">
+    <i class="fas fa-children"></i>
+    <span>
+        {% if request.user.student_links.count == 1 %}
+            My Child
+        {% else %}
+            My Children
+        {% endif %}
+    </span>
+</a>
+
+            <a href="{% url 'accounts:view-child-progress' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'view-child-progress' %}active{% endif %}">
+                <i class="fas fa-chart-line"></i>
+                <span>Results</span>
+            </a>
+
+            <a href="{% url 'accounts:view-child-results' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'view-child-results' %}active{% endif %}">
+                <i class="fas fa-award"></i>
+                <span>Terminal Report</span>
+            </a>
+
+            <a href="{% url 'accounts:parent_timetable' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'parent_timetable' %}active{% endif %}">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Timetable</span>
+            </a>
+
+            <a href="{% url 'accounts:view-child-fees' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'view-child-fees' %}active{% endif %}">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <span>Fees</span>
+            </a>
+
+            <a href="{% url 'accounts:parent_payment_history' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'parent_payment_history' %}active{% endif %}">
+                <i class="fas fa-history"></i>
+                <span>Payment History</span>
+            </a>
+
+            <a href="{% url 'accounts:parent_attendance' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'parent_attendance' %}active{% endif %}">
+                <i class="fas fa-clipboard-check"></i>
+                <span>Attendance</span>
+            </a>
+
+            <a href="{% url 'accounts:parent_notifications' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'parent_notifications' %}active{% endif %}">
+                <i class="fas fa-bell"></i>
+                <span>Notifications</span>
+            </a>
+
+
+            <!-- =================================================
+                 STUDENT
+            ================================================= -->
+
+            {% elif role == "student" %}
+
+            <a href="{% url 'accounts:student_dashboard' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'student_dashboard' %}active{% endif %}">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="{% url 'accounts:view-student-subjects' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'view-student-subjects' %}active{% endif %}">
+                <i class="fas fa-book"></i>
+                <span>My Subjects</span>
+            </a>
+
+            <a href="{% url 'accounts:student_timetable' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'student_timetable' %}active{% endif %}">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Timetable</span>
+            </a>
+
+            <a href="{% url 'accounts:view-student-results' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'view-student-results' %}active{% endif %}">
+                <i class="fas fa-award"></i>
+                <span>My Result</span>
+            </a>
+
+            <a href="{% url 'accounts:my_result' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'my_result' %}active{% endif %}">
+                <i class="fas fa-file-alt"></i>
+                <span>Terminal Report</span>
+            </a>
+
+            <a href="{% url 'accounts:view-student-fees' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'view-student-fees' %}active{% endif %}">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <span>My Fees</span>
+            </a>
+
+            <a href="{% url 'accounts:student_payment_history' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'student_payment_history' %}active{% endif %}">
+                <i class="fas fa-history"></i>
+                <span>Payment History</span>
+            </a>
+
+            <a href="{% url 'accounts:student_attendance' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'student_attendance' %}active{% endif %}">
+                <i class="fas fa-clipboard-check"></i>
+                <span>My Attendance</span>
+            </a>
+
+            <a href="{% url 'accounts:student_notifications' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'student_notifications' %}active{% endif %}">
+                <i class="fas fa-bell"></i>
+                <span>Notifications</span>
+            </a>
+
+
+            {% else %}
+
+            <div class="sidebar-empty">
+                No role assigned.
+            </div>
+
+            {% endif %}
+
+            {% endwith %}
+
+        </nav>
+
+    </div>
+
+</aside>
+
+
+<!-- =========================================================
+     MAIN APPLICATION AREA
+========================================================= -->
+
+<div id="appShell" class="app-shell">
+
+    <!-- =====================================================
+         TOP BAR
+    ====================================================== -->
+
+    <header class="topbar no-print">
+
+        <!-- TOP ROW -->
+
+        <div class="topbar-main">
+
+            <div class="topbar-left">
+
+                <button id="mobileSidebarBtn"
+                        class="mobile-sidebar-btn"
+                        type="button"
+                        aria-label="Open menu">
+
+                    <i class="fas fa-bars"></i>
+
+                </button>
+
+                <div class="page-brand">
+
+                    <span class="page-brand-title">
+                        {% block dashboard_name %}School Management System{% endblock %}
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- TERM INFORMATION -->
+
+            {% if active_term %}
+
+            <div class="term-summary">
+
+                <div class="term-pill">
+                    <i class="fas fa-circle"></i>
+                    {{ active_term.get_term_number_display }}
+                </div>
+
+                <div class="term-divider"></div>
+
+                <div class="term-info">
+                    <span class="term-label">Academic Year</span>
+                    <strong>{{ active_term.academic_year }}</strong>
+                </div>
+
+                <div class="term-divider"></div>
+
+                <div class="term-info">
+                    <span class="term-label">Opened Days</span>
+                    <strong>{{ total_open_days }}</strong>
+                </div>
+
+                <div class="term-divider"></div>
+
+                <div class="term-info">
+
+                    <span class="term-label">Remaining</span>
+
+                    <strong>
+                        {% if remaining_days > 0 %}
+                            {{ remaining_days }}
+                        {% else %}
+                            Term Ended
+                        {% endif %}
+                    </strong>
+
+                </div>
+
+            </div>
+
+            {% endif %}
+
+
+            <!-- PROFILE -->
+
+            <div class="profile-area">
+
+                <button id="profileBtn"
+                        class="profile-button"
+                        type="button">
+
+                    <span class="profile-avatar">
+                        {% if request.user.first_name %}
+                            {{ request.user.first_name|first|upper }}
+                        {% else %}
+                            {{ request.user.username|first|upper }}
+                        {% endif %}
+                    </span>
+
+                    <span class="profile-name">
+                        {{ request.user.first_name|default:request.user.username }}
+                    </span>
+
+                    <i class="fas fa-chevron-down"></i>
+
+                </button>
+
+
+                <div id="profileDropdown"
+                     class="profile-dropdown">
+
+                    <div class="profile-dropdown-header">
+
+                        <strong>
+                            {{ request.user.get_full_name|default:request.user.username }}
+                        </strong>
+
+                        <small>
+                            {{ request.user.role|title }}
+                        </small>
+
+                    </div>
+
+
+                    {% if request.user.role == 'teacher' %}
+
+                    <a href="{% url 'accounts:teacher_profile' request.user.id %}">
+                        <i class="fas fa-user"></i>
+                        View Profile
+                    </a>
+
+                    {% elif request.user.role == 'student' %}
+
+                    <a href="{% url 'accounts:student_profile' %}">
+                        <i class="fas fa-user"></i>
+                        View Profile
+                    </a>
+
+                    {% elif request.user.role == 'accountant' %}
+
+                    <a href="{% url 'accounts:accountant_profile' %}">
+                        <i class="fas fa-user"></i>
+                        View Profile
+                    </a>
+
+                    {% elif request.user.role == 'headmaster' or request.user.role == 'headmistress' %}
+                    <a href="{% url 'accounts:headmaster_profile' %}">
+                        <i class="fas fa-user"></i>
+                        View Profile
+                    </a>
+
+                    {% elif request.user.role == 'admin' or request.user.role == 'proprietor' or request.user.role == 'proprietress' %}
+
+                    <a href="{% url 'accounts:admin_profile' %}">
+                        <i class="fas fa-user"></i>
+                        View Profile
+                    </a>
+
+                    {% endif %}
+
+
+                    <div class="profile-divider"></div>
+
+                    <form method="POST"
+                          action="{% url 'accounts:logout' %}">
+
+                        {% csrf_token %}
+
+                        <button type="submit"
+                                class="logout-button">
+
+                            <i class="fas fa-sign-out-alt"></i>
+                            Logout
+
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             SECOND TOPBAR ROW
+        ================================================== -->
+
+        <div class="topbar-secondary">
+
+            <div class="current-date">
+
+                <i class="far fa-calendar-alt"></i>
+
+                <span>
+                    {{ today|date:"D, d M Y" }}
+                </span>
+
+            </div>
+
+
+            {% if active_term %}
+
+            <div class="week-navigation">
+
+                <a href="?top_week={{ prev_week }}&year={{ selected_year }}&term={{ selected_term }}&t_week={{ timetable_active_week }}&attendance_week={{ request.GET.attendance_week }}&att_week={% firstof att_week_offset request.GET.att_week 0 %}&s_week={{ request.GET.s_week|default:0 }}{% if selected_child %}&child={{ selected_child.id }}{% endif %}"
+                   class="week-button">
+
+                    <i class="fas fa-chevron-left"></i>
+                    <span>Prev</span>
+
+                </a>
+
+
+                <div class="week-current">
+
+                    <strong>
+                        Week {{ active_week|default:1 }}
+                    </strong>
+
+                    <span>
+                        {{ week_start|date:"d M" }}
+                        –
+                        {{ week_end|date:"d M" }}
+                    </span>
+
+                </div>
+
+
+                <a href="?top_week={{ next_week }}&year={{ selected_year }}&term={{ selected_term }}&t_week={{ timetable_active_week }}&attendance_week={{ request.GET.attendance_week }}&att_week={% firstof att_week_offset request.GET.att_week 0 %}&s_week={{ request.GET.s_week|default:0 }}{% if selected_child %}&child={{ selected_child.id }}{% endif %}"
+                   class="week-button">
+
+                    <span>Next</span>
+                    <i class="fas fa-chevron-right"></i>
+
+                </a>
+
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         PAGE CONTENT
+    ====================================================== -->
+
+<main class="page-content">
+
 <style>
-html {
-    background-color: #041729;
+/* MEDIUM - BLUE Important */
+.announcement-toast{
+    background:#eff6ff !important;
+    border:1.5px solid #bfdbfe !important;
+    border-left:6px solid #2563eb !important;
+    border-radius:10px !important;
+    padding:15px !important;
+    margin-bottom:12px !important;
+    color:#1e3a8a !important;
 }
-#sidebar {
-    padding-top: 40px;
-    
-}
+.announcement-toast *{color:#1e3a8a !important;}
+.announcement-toast h5{color:#1e40af !important; font-weight:800 !important;}
 
-    #sidebar ul li {
-    transition: background-color 0.3s ease;
+/* LOW - GRAY Info */
+.low-announcement-banner{
+    background:#f8fafc !important;
+    border:1.5px solid #e2e8f0 !important;
+    border-left:6px solid #64748b !important;
+    border-radius:10px !important;
+    padding:12px 16px !important;
+    margin-bottom:12px !important;
+    color:#334155 !important;
 }
-    /* Modern circular arrows for dropdown */
-    .chevron-icon {
-        display: inline-block;
-        transition: transform 0.3s ease;
-        transform: rotate(0deg);
-        font-size: 1.1em; /* slightly bigger */
-        color: #1abc9c;   /* green to match design */
-    }
+.low-announcement-banner *{color:#334155 !important;}
+.low-announcement-banner strong{color:#0f172a !important;}
 
-    .rotated {
-        transform: rotate(180deg);
-    }
-
-    /* Basic reset */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-    font-family: Arial, sans-serif;
-    min-height: 100vh;
-    margin: 0;
-    padding: 0;
-}
-.top-bar {
-    margin-top: 0 !important;
-    width: 100%;
-}
-    
-    /* Sidebar */
-#sidebar {
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 260px;
-    height: 100vh;
-    background-color: #041729;
-    color: white;
-    z-index: 1000;
-    overflow-y: auto;
-    transition: left 0.3s ease;
-    transform: translateZ(0);  /* add this line */
-    will-change: transform;    /* add this line */
-}
-
-#sidebar.open {
-    left: 0;
-}    #sidebar.collapsed { width: 60px; }
-    #sidebar h3 { text-align: center; padding: 20px 0; color: #ecf0f1; font-size: 18px; }
-    #sidebar ul { list-style: none; padding: 0; }
-    #sidebar ul li { padding: 15px 20px; }
-    #sidebar ul li a { color: white; text-decoration: none; display: block; }
-    #sidebar ul li a:hover { background-color: #34495e; border-radius: 4px; }
-
-    .sidebar-section {
-        font-weight: bold;
-        color: #1abc9c;
-        margin-top: 15px;
-        text-transform: uppercase;
-        padding: 25px 20px;
-    }
-    
-    /* Top bar */
-.top-bar {
-    background-color: #072848;
-    color: white;
-    font-size: 20px;
-    font-weight: bold;
-    padding: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    margin-top: 0 !important;
-}
-    .top-bar a { color: white; text-decoration: none; margin-left: 10px; }
-    .top-bar a:hover { text-decoration: underline; }
-    
-    /* Main content */
-.main-content {
-    margin-left: 260px;
-    padding: 0 30px 140px 30px;
-    min-height: 100vh;  /* ADD THIS */
-
-    overflow-y: auto;
-}
-.top-bar {
-    margin-top: 0 important;
-    position: relative;
-    top: 0;
-}
-.top-bar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-}
-
-.main-content {
-    margin-left: 260px;
-}  /* Toggle button */
-    .toggle-btn { background-color: #1abc9c; border: none; color: white; padding: 8px 12px; cursor: pointer; border-radius: 4px; }
-    .toggle-btn:hover { background-color: #16a085; }
-
-    .collapse ul {
-        padding-left: 20px;
-        list-style: none;
-    }
-    .collapse ul li {
-        padding: 5px 0;
-    }
-    .collapse ul li a {
-        color: #ccc;
-        text-decoration: none;
-    }
-    .collapse ul li a:hover {
-        color: #fff;
-    }
-
-    /* People submenu styles */
-    #people-collapse ul li a {
-        font-weight: bold;
-        text-transform: uppercase;
-        color: #ccc;
-        padding-left: 15px;
-    }
-    #people-collapse ul li a:hover { color: #fff; }
-    #people-collapse > li > a {
-        font-weight: bold;
-        text-transform: uppercase;
-        color: #e67e22;
-    }
-    #people-collapse > li > a:hover {
-        color: #f39c12;
-        text-decoration: none;
-    }
-/* Submenu items stacked vertically, text horizontal */
-.submenu {
-    list-style: none;
-    padding-left: 5px; /* indent under parent menu */
-}
-
-.submenu li {
-    margin-bottom: 5px;  /* space between items */
-}
-
-.submenu-link {
-    display: inline-block; /* keeps text on a single horizontal line */
-    padding: 5px 10px;
-    color: #ccc;
-    text-decoration: none;
-    border-radius: 4px;
-    transition: background 0.2s, color 0.2s;
-}
-
-.submenu-link:hover {
-    background-color: #34495e;
-    color: #fff;
-}
-/* Force submenu text to stay on a single line */
-.collapse ul li a {
-    white-space: nowrap;   /* prevent line breaks inside text */
-    display: block;        /* keep block for padding and hover */
-    padding-left: 50px;
-    padding-right: 15px;
-}
-.collapse ul li a {padding-left: 0 !important;}
-.sidebar li i {
-    width: 22px;
-    text-align: center;
-    color: #fff;   /* default white */
-    font-size: 16px;
-    opacity: 2;    /* fixed from opacity: 2 */
-}
-
-/* Override with colors */
-.fa-user-graduate { color: #3498db !important; }
-.fa-users { color: #e74c3c !important; }
-.fa-briefcase { color: #9b59b6 !important; }
-.fa-chalkboard-teacher { color: #2ecc71 !important; }
-.fa-calculator { color: #f39c12 !important; }
-.sidebar li a {
-    display: flex;
-    align-items: center;
-    gap: 14px;   /* 🔥 horizontal space between icon and text */
-    padding: 10px 15px;
-    font-weight: 500;
-}
-.top-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: relative;
-}
-#sidebar ul li {
-    padding: 6px 12px !important;
-    margin: 0 !important;
-}
-
-.sidebar-section {
-    margin-top: 8px !important;
-    padding: 8px 12px !important;
-}
-
-#sidebar .collapse ul li {
-    padding: 4px 12px !important;
-}
-
-#sidebar a {
-    padding: 6px 10px !important;
-}
-.sidebar a.active { 
-    color: #cccece !important; 
-    font-weight: bold; 
-    background-color: rgb(103, 3, 55) !important;
-    border-left: 4px solid #dcdde7;
-}
-.fa-users-gear { color: #16a085 !important; }  /* Teal for Assigned Teachers */
-.fa-file-invoice-dollar { color: #27ae60 !important; } /* Green money */
-/* ===== COLORED ICONS ===== */
-
-/* PEOPLE */
-.fa-user-graduate { color: #3498db !important; }      /* Add Student - Blue */
-.fa-users { color: #e74c3c !important; }               /* Add Parent - Red */
-.fa-briefcase { color: #9b59b6 !important; }          /* Staff - Purple */
-.fa-chalkboard-teacher { color: #2ecc71 !important; } /* Add Teacher - Green */
-.fa-calculator { color: #f39c12 !important; }         /* Add Accountant - Orange */
-
-/* ACADEMICS */
-.fa-school { color: #e67e22 !important; }   
-.fa-plus-square { color: #e74c3c !important; } 
-.fa-book { color: #3498db !important; }                /* Add Subject - Blue */
-.fa-users-gear { color: #16a085 !important; }          /* Assigned Teachers - Teal */
-.fa-pen-to-square{ color: #e97603 !important; }               /* Timetable Manager - Purple */
-.fa-calendar-alt { color: #1abc9c !important; }        /* Academic Calendar - Teal */
-.fa-clipboard-check { color: #27ae60 !important; }     /* Attendance - Green */
-.fa-chart-line { color: #e74c3c !important; }          /* Review Results - Red */
-.fa-award { color: #f1c40f !important; }               /* Published Results - Yellow */
-.fa-cloud-upload-alt {color: #c96363 !important;}
-.fa-chart-line {color: #53f1c2 !important;}
-/* FINANCE */
-.fa-dollar-sign { color: #2ecc71 !important; }         /* Fees - Green */
-.fa-file-invoice-dollar { color: #27ae60 !important; } /* Edit Student Fees - Green */
-.fa-receipt { color: #e67e22 !important; }             /* Expenses - Orange */
-
-/* COMMUNICATION */
-.fa-bullhorn { color: #e74c3c !important; }             /* Announcements - Red */
-.fa-sms { color: #3498db !important; }                 /* SMS/Notifications - Blue */
-
-/* REPORTS */
-.fa-file-alt { color: #95a5a6 !important; }            /* View Reports - Gray */
-
-/* SYSTEM */
-.fa-user-cog { color: #34495e !important; }            /* User Management - Dark */
-.fa-cogs { color: #7f8c8d !important; }                /* Settings - Gray */
-/* Hide text when sidebar collapses */
-#sidebar.collapsed a {
-    font-size: 0;
-}
-
-#sidebar.collapsed i {
-    font-size: 18px;
-    margin-right: 0;
-}
-
-#sidebar.collapsed .sidebar-section {
-    display: none;
-}
-
-#sidebar.collapsed ul li a {
-    justify-content: center;
-}
-.toggle-btn {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 22px;
-    padding: 10px 15px;
-    cursor: pointer;
- 
-}
-
-.toggle-btn:hover {
-    background-color: rgba(255,255,255,0.08);
-}
-#sidebarToggleBtn {
-    position: fixed;
-    top: 15px;
-    left: 200px;
-    z-index: 9999;
-    
-}
-#sidebar {
-    transition: all 0.3s ease;
-}
-
-/* CLOSED STATE */
-#sidebar:not(.open) {
-    left: -260px;   /* hide it off-screen */
-}
-
-/* OPEN STATE */
-#sidebar.open {
-    left: 0;
-}
-body {
-    background-color:  #041729;
-}
-#sidebar.open {
-    background-color: #041729;
-}
-.main-content {
-    background-color: #ffff;
-}
-#sidebar > ul {
-    margin-top: 20px;
-}
-@media print {
-
-    /* Hide sidebar completely */
-    #sidebar {
-        display: none !important;
-    }
-
-    /* Hide toggle button */
-    #sidebarToggleBtn {
-        display: none !important;
-    }
-
-    /* Remove left margin shift */
-    .main-content {
-        margin-left: 0 !important;
-        padding: 20px !important;
-        width: 100% !important;
-    }
-
-    /* Remove top bar buttons if needed */
-    .no-print {
-        display: none !important;
-    }
-
-    body {
-        background: white !important;
-    }
-}
-/* === SMART CURSOR FIX V2 === */
-.card,.card * { cursor: default!important; }
-
-/* clickable = hand */
-a, button,.btn,[onclick],.nav-link, select, label,
-input[type="checkbox"], input[type="radio"] {
-    cursor: pointer!important;
-}
-a *, button *,.btn * {
-    cursor: pointer!important;
-}
-
-/* text = I-beam */
-p, span, h1, h2, h3, h4, h5, h6, td, th,.badge, small {
-    cursor: text!important;
-}
-
-/* FIX: checkbox inside td should still be hand */
-td input[type="checkbox"], th input[type="checkbox"],
-.form-check-input,.form-check-label {
-    cursor: pointer!important;
-}
-
-input[type="text"], input[type="email"], textarea {
-    cursor: text!important;
-}
 
 </style>
 
-</head>
-<body>
-
-<!-- ===== ANNOUNCEMENTS SYSTEM START ===== -->
-
-{% for ann in critical_announcements %}
-<div class="modal fade" id="criticalAnn{{ ann.id }}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-danger border-3">
-      <div class="modal-header bg-danger text-white">
-        <h5 class="modal-title">
-          <i class="fas fa-exclamation-triangle"></i> CRITICAL: {{ ann.title }}
-        </h5>
-      </div>
-      <div class="modal-body">
-        <p class="fs-5">{{ ann.message|linebreaks }}</p>
-        {% if ann.expiry_date %}
-          <p class="text-muted small">Expires: {{ ann.expiry_date|date:"M d, Y" }}</p>
-        {% endif %}
-      </div>
-      <div class="modal-footer">
-        <a href="{% url 'accounts:acknowledge_announcement' ann.pk %}" class="btn btn-danger btn-lg w-100">
-          <i class="fas fa-check-circle"></i> I Understand
-          {% if ann.action_url %} & Continue{% endif %}
-        </a>
-      </div>
+    <!-- 1. LOW - ON TOP OF PAGE (small) -->
+    {% if low_priority_announcements %}
+    <div class="low-announcement-banner" id="lowBanner">
+        <div><i class="fas fa-info-circle"></i> {% for ann in low_priority_announcements|slice:":1" %}<strong>{{ ann.title }}:</strong> {{ ann.message|truncatewords:15 }}{% if ann.action_url %} <a href="{{ ann.action_url }}">Learn more</a>{% endif %}{% endfor %}</div>
+       <button type="button" class="btn-close" onclick="dismissLowBanner()"></button>
     </div>
-  </div>
-</div>
-{% endfor %}
-
-<!-- ADD THIS RIGHT HERE -->
-{% if critical_announcements %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    var criticalModal = new bootstrap.Modal(document.getElementById('criticalAnn{{ critical_announcements.0.id }}'));
-    criticalModal.show();
-});
-</script>
-{% endif %}
-
-<!-- 2. MEDIUM PRIORITY - Dismissible popup -->
-{% for ann in medium_priority_announcements %}
-<div class="alert alert-info alert-dismissible fade show m-3 shadow" role="alert" style="position: fixed; top: 80px; right: 20px; z-index: 9999; max-width: 400px;">
-  <h5 class="alert-heading">
-    <i class="fas fa-bell"></i> Important: {{ ann.title }}
-  </h5>
-  <p>{{ ann.message|linebreaks }}</p>
-  {% if ann.expiry_date %}
-    <p class="text-muted small mb-2">Expires: {{ ann.expiry_date|date:"M d, Y" }}</p>
-  {% endif %}
-  <div class="d-flex gap-2">
-    {% if ann.action_url %}
-    <a href="{% url 'accounts:acknowledge_announcement' ann.pk %}" class="btn btn-primary btn-sm">
-      <i class="fas fa-arrow-right"></i> Take Action
-    </a>
-    {% endif %}
-    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="alert" 
-            onclick="markAsRead({{ ann.id }})">
-      Dismiss
-    </button>
-  </div>
-</div>
-{% endfor %}
-
-<!-- 3. LOW PRIORITY - Small banner at top -->
-{% if low_priority_announcements %}
-<div class="alert alert-warning mx-auto py-2 mb-2" 
-     style="max-width: 900px; background-color: #fff3cd; border-color: #ffc107; color: #664d03; position: fixed; top: 0; left: 0; right: 0; z-index: 9998;" 
-     id="lowBanner">
-  <div class="container-fluid">
-    <div class="d-flex align-items-center justify-content-between">
-      <div class="text-center flex-grow-1">
-        <i class="fas fa-info-circle"></i>
-        {% for ann in low_priority_announcements|slice:":1" %}
-          <strong>{{ ann.title }}:</strong> {{ ann.message|truncatewords:15 }}
-          {% if ann.action_url %}
-            <a href="{{ ann.action_url }}" class="text-decoration-underline ms-2" style="color: #664d03;">Learn more</a>
-          {% endif %}
-        {% endfor %}
-      </div>
-      <button type="button" class="btn-close" onclick="dismissLowBanner()"></button>
-    </div>
-  </div>
-</div>
-{% endif %}
-
-<!-- JavaScript to auto-show popups -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Auto-show HIGH priority modals
-    {% for ann in high_priority_announcements %}
-    var modal{{ ann.id }} = new bootstrap.Modal(document.getElementById('criticalAnn{{ ann.id }}'));
-    modal{{ ann.id }}.show();
-    {% endfor %}
-});
-
-function markAsRead(annId) {
-    fetch('/announcements/acknowledge/' + annId + '/', {
-        method: 'GET',
-        headers: {'X-Requested-With': 'XMLHttpRequest'}
-    });
-}
-
-function markAllLowAsRead() {
-    {% for ann in low_priority_announcements %}
-    fetch('/announcements/acknowledge/{{ ann.id }}/', {
-        method: 'GET',
-        headers: {'X-Requested-With': 'XMLHttpRequest'}
-    });
-    {% endfor %}
-}
-</script>
-
-<!-- ===== ANNOUNCEMENTS SYSTEM END ===== -->
-
-{% if messages %}
-    <div id="message-box" style="
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 9999;
-        width: 300px;
-    ">
-        {% for message in messages %}
-            <div class="alert alert-success shadow-sm">
-                {{ message }}
-            </div>
-        {% endfor %}
-    </div>
-{% endif %}
-
-<!-- Floating toggle button (always visible) -->
-<button id="sidebarToggleBtn" class="toggle-btn" onclick="toggleSidebar()">
-    ☰
-</button>
-
-<div class="sidebar no-print open preload" id="sidebar">
-
-    <ul>
-    
-    {% with role=request.user.role %}
-{% if role == "admin"%}
-<!-- DASHBOARD -->
-<li>
-    <a href="{% url 'accounts:admin_dashboard' %}" class="{% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
-        <i class="fa fa-home"></i> Dashboard
-    </a>
-</li>
-<!-- ================= ACADEMICS ================= -->
-<li class="sidebar-section">
-    <a href="#" data-bs-toggle="collapse" data-bs-target="#academicsMenu" style="color:#1abc9c; font-weight:bold;">
-        📚 Academics
-        <span class="chevron-icon">▼</span>
-    </a>
-</li>
-
-<ul class="collapse {% if request.resolver_match.url_name == 'add-class' or request.resolver_match.url_name == 'add_subject' or request.resolver_match.url_name == 'assigned_teachers_list' or request.resolver_match.url_name == 'timetable_create' or request.resolver_match.url_name == 'manage_timetable' or request.resolver_match.url_name == 'calendar_list' or request.resolver_match.url_name == 'add_event' or '/assignments/' in request.path and '/edit/' in request.path %}show{% endif %}" id="academicsMenu">
-    <li>
-        <a href="{% url 'accounts:add-class' %}" class="{% if request.resolver_match.url_name == 'add-class' %}active{% endif %}">
-            <i class="fas fa-school"></i> Add Class
-        </a>
-    </li>
-
-    <li>
-        <a href="{% url 'accounts:add_subject' %}" class="{% if request.resolver_match.url_name == 'add_subject' %}active{% endif %}">
-            <i class="fas fa-book"></i> Add Subject
-        </a>
-    </li>
-
-    <li>
-        <a href="{% url 'accounts:assigned_teachers_list' %}" class="{% if request.resolver_match.url_name == 'assigned_teachers_list' %}active{% endif %}">
-            <i class="fas fa-users-gear"></i> Assigned Teachers
-        </a>
-    </li>
-
-    <li>
-        <a href="{% url 'accounts:timetable_create' %}" class="{% if request.resolver_match.url_name == 'timetable_create' %}active{% endif %}">
-            <i class="fas fa-plus-square"></i> Create Timetable 
-        </a>
-    </li>
-        <li>
-        <a href="{% url 'accounts:manage_timetable' %}" class="{% if request.resolver_match.url_name == 'manage_timetable' %}active{% endif %}">
-            <i class="fas fa-pen-to-square"></i> Manage Timetable 
-        </a>
-    </li>
-
-    <li>
-        <a href="{% url 'accounts:calendar_list' %}" class="{% if request.resolver_match.url_name == 'calendar_list' %}active{% endif %}">
-            <i class="fas fa-calendar-alt"></i> Academic Calendar
-        </a>
-    </li>
-
-</ul>
-
-<!-- ================= PEOPLE ================= -->
-<li class="sidebar-section">
-    <a data-bs-toggle="collapse" href="#peopleMenu" style="color:#1abc9c; font-weight:bold;">
-        👥 PEOPLE
-        <span class="chevron-icon">▼</span>
-    </a>
-</li>
-
-<ul class="collapse {% if 'student' in request.resolver_match.url_name or 'parent' in request.resolver_match.url_name or 'teacher' in request.resolver_match.url_name or 'accountant' in request.resolver_match.url_name or 'staff' in request.resolver_match.url_name %}show{% endif %}" id="peopleMenu">
-
-    <li>
-        <a href="{% url 'accounts:add-student' %}" class="{% if 'student' in request.resolver_match.url_name %}active{% endif %}">
-            <i class="fas fa-user-graduate"></i> Add Student
-        </a>
-    </li>
-
-    <li>
-        <a href="{% url 'accounts:add-parent' %}" class="{% if 'parent' in request.resolver_match.url_name %}active{% endif %}">
-            <i class="fas fa-users"></i> Add Parent
-        </a>
-    </li>
-
-    <li>
-        <a data-bs-toggle="collapse" href="#staffMenu" class="{% if 'teacher' in request.resolver_match.url_name or 'accountant' in request.resolver_match.url_name or 'staff' in request.resolver_match.url_name %}active{% endif %}">
-            <i class="fas fa-briefcase"></i> Staff
-            <span class="chevron-icon">▼</span>
-        </a>
-        <ul class="collapse submenu {% if 'teacher' in request.resolver_match.url_name or 'accountant' in request.resolver_match.url_name or 'staff' in request.resolver_match.url_name %}show{% endif %}" id="staffMenu">
-            <li>
-                <a href="{% url 'accounts:add-teacher' %}" class="{% if 'teacher' in request.resolver_match.url_name %}active{% endif %}">
-                    <i class="fas fa-chalkboard-teacher"></i> Add Teacher
-                </a>
-            </li>
-            <li>
-                <a href="{% url 'accounts:add_accountant' %}" class="{% if 'accountant' in request.resolver_match.url_name %}active{% endif %}">
-                    <i class="fas fa-calculator"></i> Add Accountant
-                </a>
-            </li>
-        </ul>
-    </li>
-
-</ul>
-
-
-
-<!-- ================= OPERATIONS ================= -->
-<li class="sidebar-section">
-    <a href="#" data-bs-toggle="collapse" data-bs-target="#operationsMenu" style="color:#1abc9c; font-weight:bold;">
-        ⚡ Operations
-        <span class="chevron-icon">▼</span>
-    </a>
-</li>
-
-<ul class="collapse {% if 'attendance' in request.path or 'review-results' in request.path or request.resolver_match.url_name == 'results_by_class' %}show{% endif %}" id="operationsMenu">
-
-    <li>
-        <a href="{% url 'accounts:attendance_report' %}" class="{% if 'attendance' in request.path %}active{% endif %}">
-            <i class="fas fa-clipboard-check"></i> Attendance
-        </a>
-    </li>
-       <li>
-        <a href="{% url 'accounts:mark_teacher_attendance' %}" class="{% if 'mark_teacher_attendance' in request.path %}active{% endif %}">
-            <i class="fas fa-clipboard-check"></i> Teacher Attendance
-        </a>
-    </li>
-
-    {% if request.user.role == 'admin' %}
-    <li>
-        <a href="{% url 'accounts:admin_review_results' %}" class="{% if 'review-results' in request.path %}active{% endif %}">
-            <i class="fas fa-chart-line"></i> Review Results
-        </a>
-    </li>
-
-    <li>
-        <a href="{% url 'accounts:results_by_class' %}" class="{% if request.resolver_match.url_name == 'results_by_class' %}active{% endif %}">
-            <i class="fas fa-award"></i> Published Results
-        </a>
-    </li>
     {% endif %}
 
-</ul>
-
-<!-- ================= FINANCE ================= -->
-<li class="sidebar-section">
-    <a data-bs-toggle="collapse" href="#financeMenu" style="color:#1abc9c; font-weight:bold;">
-        💰 Finance
-        <span class="chevron-icon">▼</span>
-    </a>
-</li>
-
-<ul class="collapse {% if '/fees/' in request.path or '/student-fees' in request.path or '/expenses' in request.path or '/fee-structure-settings/' in request.path or 'admin-monitoring' in request.path %}show{% endif %}" id="financeMenu">
-    <li class="nav-item">
-        <a class="nav-link" href="/fee-structure-settings/" class="{% if '/fee-structure-settings/' in request.path %}active{% endif %}">
-            <i class="fas fa-calculator"></i>
-            <span>Generate Term Fees</span>
-        </a>
-    </li>
-
-    <li>
-        <a href="{% url 'accounts:finance_fee_list' %}" class="{% if request.resolver_match.url_name == 'finance_fee_list' %}active{% endif %}">
-            <i class="fas fa-dollar-sign"></i> Fees
-        </a>
-    </li>
-    
-    <li class="nav-item">
-        <a class="nav-link" href="{% url 'accounts:student_fees_list' %}" class="{% if request.resolver_match.url_name == 'student_fees_list' %}active{% endif %}">
-            <i class="fas fa-file-invoice-dollar"></i>
-            <span>Edit Student Fees</span>
-        </a>
-    </li>
-    
-    {% if request.user.role == "admin" or request.user.role == "bursar" or request.user.role == "head" %}
-    <li class="nav-item">
-        <a class="nav-link" href="{% url 'accounts:expense_list' %}" class="{% if request.resolver_match.url_name == 'expense_list' %}active{% endif %}">
-            <i class="fas fa-receipt"></i>
-            <span>Expenses</span>
-        </a>
-    </li>
-    {% endif %}
-
-    {% if request.user.role == "admin" %}
-    <li class="nav-item">
-        <a class="nav-link" href="{% url 'accounts:admin_fee_monitoring' %}" class="{% if request.resolver_match.url_name == 'admin_fee_monitoring' %}active{% endif %}" style="color:#f1c40f;">
-            <i class="fas fa-shield-alt"></i>
-            <span>Fee Monitoring</span>
-        </a>
-    </li>
-    {% endif %}
-
-</ul>
-
-<!-- ================= COMMUNICATION ================= -->
-<li class="sidebar-section">
-    <a data-bs-toggle="collapse" href="#communicationMenu" style="color:#1abc9c; font-weight:bold;">
-        📢 Communication
-        <span class="chevron-icon">▼</span>
-    </a>
-</li>
-
-<ul class="collapse {% if '/communication' in request.path %}show{% endif %}" id="communicationMenu">
-
-    <li>
-        <a href="{% url 'accounts:create_announcement' %}" class="{% if 'announcement' in request.path %}active{% endif %}">
-            <i class="fas fa-bullhorn"></i> Create Announcements
-        </a>
-    </li>
-
-<li>
-        <a href="{% url 'accounts:notifications' %}" class="{% if 'notification' in request.path %}active{% endif %}">
-            <i class="fas fa-bell"></i> Notifications <span class="badge bg-danger">{{ notification_count }}</span>
-        </a>
-    </li>
-
-</ul>
-
-<!-- ================= REPORTS ================= -->
-<li class="sidebar-section">
-    <a data-bs-toggle="collapse" href="#reportsMenu" style="color:#1abc9c; font-weight:bold;">
-        📊 Reports
-        <span class="chevron-icon">▼</span>
-    </a>
-</li>
-
-<ul class="collapse {% if '/view-report' in request.path %}show{% endif %}" id="reportsMenu">
-
-    <li>
-        <a href="{% url 'accounts:view-reports' %}" class="{% if request.resolver_match.url_name == 'view-reports' %}active{% endif %}">
-            <i class="fas fa-file-alt"></i> View Reports
-        </a>
-    </li>
-
-</ul>
-
-<!-- ================= SYSTEM ================= -->
-<li class="sidebar-section">
-    <a data-bs-toggle="collapse" href="#systemMenu" style="color:#1abc9c; font-weight:bold;">
-        ⚙️ Settings
-        <span class="chevron-icon">▼</span>
-    </a>
-</li>
-
-<ul class="collapse {% if '/users/' in request.path or '/settings/' in request.path or request.resolver_match.url_name == 'school_payment_settings' or '/system-settings' in request.path %}show{% endif %}" id="systemMenu">
-    {% if request.user.role == 'admin' %}
-    <li>
-        <a href="{% url 'accounts:school_settings' %}" class="{% if request.resolver_match.url_name == 'school_settings' %}active{% endif %}">
-            <i class="fas fa-school"></i> School Settings
-        </a>
-    </li>
-        <li class="nav-item">
-        <a class="nav-link" href="{% url 'accounts:school_payment_settings' %}" class="{% if request.resolver_match.url_name == 'school_payment_settings' %}active{% endif %}">
-            <i class="fas fa-credit-card"></i>
-            <span>Payment setting</span>
-        </a>
-    </li>
-        <li>
-        <a href="{% url 'accounts:school_sms_settings' %}" class="{% if request.resolver_match.url_name == 'school_sms_settings'%}active{% endif %}">
-            <i class="fas fa-envelope"></i> SMS Settings 
-        </a>
-    </li>
-
-    <li>
-        <a href="{% url 'accounts:manage-users' %}" class="{% if request.resolver_match.url_name == 'manage-users' %}active{% endif %}">
-            <i class="fas fa-user-cog"></i> User Management
-        </a>
-    </li>
-
-    <li>
-        <a href="{% url 'accounts:system-settings' %}" class="{% if request.resolver_match.url_name == 'system-settings' %}active{% endif %}">
-            <i class="fas fa-cogs"></i> Settings
-        </a>
-    </li>
-
-
-
-    {% endif %}
-
-</ul>
-
-<!-- Teacher -->
-{% elif request.user.role == "teacher" %}
-{% with setting=None %}
-    <li><a href="{% url 'accounts:teacher-dashboard' %}" class="{% if request.resolver_match.url_name == 'teacher-dashboard' %}active{% endif %}"> <i class="fas fa-home"></i> Dashboard </a></li> 
-    
-    {% if request.user.school.can_teachers_manage_students %}
-        <li><a href="{% url 'accounts:add-student' %}" class="{% if request.resolver_match.url_name == 'add-student' %}active{% endif %}"><i class="fas fa-user-plus"></i> Add Student</a></li>
-        <li><a href="{% url 'accounts:manage-students' %}" class="{% if request.resolver_match.url_name == 'manage-students' %}active{% endif %}"><i class="fas fa-users"></i> Manage Students</a></li>
-    {% endif %}
-    
-    <li><a href="{% url 'accounts:teacher-assignments' %}" class="{% if request.resolver_match.url_name == 'teacher-assignments' %}active{% endif %}"><i class="fas fa-book"></i> Assignments</a></li>
-    <li><a href="{% url 'accounts:teacher_timetable' %}" class="{% if request.resolver_match.url_name == 'teacher_timetable' %}active{% endif %}"><i class="fas fa-calendar-alt"></i> My Timetable</a></li>
-    
-{% if attendance_mode == "subject" %}
-    <li><a href="{% url 'accounts:mark_attendance' %}" class="{% if request.resolver_match.url_name == 'mark_attendance' %}active{% endif %}">
-        <i class="fas fa-calendar-check"></i> Mark Attendance
-    </a></li>
-
-    <li><a href="{% url 'accounts:attendance_report' %}" class="{% if request.resolver_match.url_name == 'attendance_report' %}active{% endif %}">
-        <i class="fas fa-file-alt"></i> Attendance Report
-    </a></li>
-
-{% elif attendance_mode == "class_teacher" and request.user.is_class_teacher %}
-    <li><a href="{% url 'accounts:mark_attendance' %}" class="{% if request.resolver_match.url_name == 'mark_attendance' %}active{% endif %}">
-        <i class="fas fa-calendar-check"></i> Mark Attendance
-    </a></li>
-
-    <li><a href="{% url 'accounts:attendance_report' %}" class="{% if request.resolver_match.url_name == 'attendance_report' %}active{% endif %}">
-        <i class="fas fa-file-alt"></i> Attendance Report
-    </a></li>
-{% endif %}
-    
-    <li><a href="{% url 'accounts:upload-results-list' %}" class="{% if request.resolver_match.url_name == 'upload-results-list' %}active{% endif %}"><i class="fas fa-cloud-upload-alt"></i> Upload Results</a></li>
-    <li><a href="{% url 'accounts:teacher-results' %}" class="{% if request.resolver_match.url_name == 'teacher-results' %}active{% endif %}"><i class="fas fa-chart-line"></i> Student Results</a></li>
-    
-    {% if request.user.is_real_class_teacher %}
-    <li><a href="{% url 'accounts:class_remarks_list' %}" class="{% if request.resolver_match.url_name == 'class_remarks_list' %}active{% endif %}">📝 Write Remarks</a></li>
-    {% endif %}
-    
-    <li><a href="{% url 'accounts:teacher_published_results' %}" class="{% if request.resolver_match.url_name == 'teacher_published_results' %}active{% endif %}"> 📊 Published Results</a></li>
-    <li><a href="{% url 'accounts:teacher_notifications' %}" class="{% if request.resolver_match.url_name == 'teacher_notifications' %}active{% endif %}"> <i class="fas fa-bell"></i> Notifications</a></li>
-    <li><a href="{% url 'accounts:my-attendance' %}" class="{% if request.resolver_match.url_name == 'my-attendance' %}active{% endif %}"> <i class="fas fa-calendar-check"></i> My Attendance</a></li>
-
-  
-    
-{% endwith %}
-
-<!-- Accountant -->
-{% elif request.user.role == "accountant" %}
-<li><a href="{% url 'accounts:accountant_dashboard' %}" class="{% if request.resolver_match.url_name == 'accountant_dashboard' %}active{% endif %}"> <i class="fas fa-home"></i> Dashboard </a></li>
-<li><a href="{% url 'accounts:set_student_fee' %}" class="{% if request.resolver_match.url_name == 'set_student_fee' %}active{% endif %}"><i class="fas fa-money-bill-wave"></i> Fees Structure</a></li>
-<li><a href="{% url 'accounts:all_students_fees_list' %}" class="{% if request.resolver_match.url_name == 'all_students_fees_list' %}active{% endif %}"><i class="fas fa-users"></i> All Defaulters</a></li>
-<li><a href="{% url 'accounts:record_payment_search' %}" class="{% if request.resolver_match.url_name == 'record_payment_search' %}active{% endif %}"><i class="fas fa-cash-register"></i> Collect Fees</a></li>
-<li><a href="{% url 'accounts:pending_payments' %}"class="{% if request.resolver_match.url_name == 'pending_payments' %}active{% endif %}"><i class="fas fa-clock"></i>Pending Payments</a></li>
-<li><a href="{% url 'accounts:payment_history' %}" class="{% if request.resolver_match.url_name == 'payment_history' %}active{% endif %}"><i class="fas fa-history"></i> Payment History</a></li>
- <li><a href="{% url 'accounts:verify_payment' %}" class="{% if request.resolver_match.url_name == 'verify_payment' %}active{% endif %}"><i class="fas fa-search-dollar"></i> Verify Payment</a></li>
-<li><a href="{% url 'accounts:add_expense' %}" class="{% if request.resolver_match.url_name == 'add_expense' %}active{% endif %}"><i class="fas fa-receipt"></i> Add Expense</a></li>
-<li><a href="{% url 'accounts:expense_list' %}" class="{% if request.resolver_match.url_name == 'expense_list' %}active{% endif %}"><i class="fas fa-list-alt"></i> View Expenses</a></li>
-<li><a href="{% url 'accounts:accountant_notifications' %}" class="{% if request.resolver_match.url_name == 'accountant_notifications' %}active{% endif %}"><i class="fas fa-bell"></i> Notification </a></li>
-
-<!-- Parent -->
-{% elif request.user.role == "parent" %}
-
-<li>
-    <a href="{% url 'accounts:parent_dashboard' %}"
-       class="{% if request.resolver_match.url_name == 'parent_dashboard' %}active{% endif %}">
-        <i class="fas fa-home"></i> Dashboard
-    </a>
-</li>
-
-<li>
-    <a href="{% url 'accounts:my-children' %}"class="{% if request.resolver_match.url_name == 'my-children' %}active{% endif %}">
-        <i class="fas fa-children"></i> My Children
-    </a>
-</li>
-
-<li>
-    <a href="{% url 'accounts:view-child-progress' %}"class="{% if request.resolver_match.url_name == 'view-child-progress' %}active{% endif %}">
-        <i class="fas fa-chart-line"></i> Results
-    </a>
-</li>
-
-<li>
-    
-     <a href="{% url 'accounts:view-child-results' %}"class="{% if request.resolver_match.url_name == 'view-child-results' %}active{% endif %}">
-        <i class="fas fa-award"></i> Terminal Report
-    </a>
-</li>
-
-<li>
-    <a href="{% url 'accounts:parent_timetable' %}"class="{% if request.resolver_match.url_name == 'parent_timetable' %}active{% endif %}">
-        <i class="fas fa-calendar-alt"></i> Timetable
-    </a>
-</li>
-
-<li>
-     <a href="{% url 'accounts:view-child-fees' %}"class="{% if request.resolver_match.url_name == 'view-child-fees' %}active{% endif %}">
-        <i class="fas fa-file-invoice-dollar"></i> Fees
-    </a>
-</li>
-
-<li>
-     <a href="{% url 'accounts:parent_payment_history' %}"class="{% if request.resolver_match.url_name == 'parent_payment_history' %}active{% endif %}">
-         <i class="fas fa-history"></i> Payment History
-    </a>
-</li>
-
-
-
-<li>
-<a href="{% url 'accounts:parent_attendance' %}"class="{% if request.resolver_match.url_name == 'parent_attendance' %}active{% endif %}">
-
-    
-        <i class="fas fa-clipboard-check"></i> Attendance
-    </a>
-</li>
-
-<li>
-    <a href="{% url 'accounts:parent_notifications' %}"class="{% if request.resolver_match.url_name == 'parent_notifications' %}active{% endif %}">
-        <i class="fas fa-bell"></i> Notification
-    </a>
-</li>
-<!-- Student -->
-{% elif request.user.role == "student" %}
-<li><a href="{% url 'accounts:student_dashboard' %}" class="{% if request.resolver_match.url_name == 'student_dashboard' %}active{% endif %}"><i class="fas fa-home"></i> Dashboard</a></li>
-<li><a href="{% url 'accounts:view-student-subjects' %}" class="{% if request.resolver_match.url_name == 'view-student-subjects' %}active{% endif %}"><i class="fas fa-book"></i> My Subjects</a></li>
-<li><a href="{% url 'accounts:student_timetable' %}" class="{% if request.resolver_match.url_name == 'student_timetable' %}active{% endif %}"><i class="fas fa-calendar-alt"></i> Timetable</a></li>
-<li><a href="{% url 'accounts:view-student-results' %}" class="{% if request.resolver_match.url_name == 'view-student-results' %}active{% endif %}"><i class="fas fa-award"></i> My Result</a></li>
-<li><a href="{% url 'accounts:my_result'%}" class="{% if request.resolver_match.url_name == 'my_result' %}active{% endif %}"><i class="fas fa-results"></i> Terminal Report</a> </li>
-<li><a href="{% url 'accounts:view-student-fees' %}" class="{% if request.resolver_match.url_name == 'view-student-fees' %}active{% endif %}"><i class="fas fa-file-invoice-dollar"></i> My Fees</a></li>
-<li><a href="{% url 'accounts:student_payment_history' %}" class="{% if request.resolver_match.url_name == 'student_payment_history' %}active{% endif %}"> <i class="fas fa-history"></i> Payment History</a></li>
-<li><a href="{% url 'accounts:student_attendance' %}" class="{% if request.resolver_match.url_name == 'student_attendance' %}active{% endif %}"><i class="fas fa-award"></i> My Attendance</a></li>
-<li><a href="{% url 'accounts:student_notifications' %}" class="{% if request.resolver_match.url_name == 'student_notifications' %}active{% endif %}"><i class="fas fa-bell"></i> Notifications</a></li>
-
-
-{% else %}
-<li>No role assigned.</li>
-{% endif %}
-{% endwith %}
-</ul>
-</div>
-<!-- Main content -->
-<div class="main-content">
-
-
-
-
-<div class="top-bar no-print" style="display:flex; flex-direction:column; padding:12px 20px; gap:12px;">
-
-    {% if active_term %}
-<!-- FIRST ROW (GROUPED CLEANLY) -->
-<div style="display:flex;
-    justify-content:center;
-    align-items:center;
-    flex-wrap:wrap;
-    gap:25px;
-    font-size:14px;
-    font-weight:600;">
-
-    <!-- GROUP 1: TERM + YEAR -->
-    <div style="display:flex; gap:8px; align-items:center;">
-        <span>🟢 Term: {{ active_term.get_term_number_display }}</span>
-        <span>|</span>
-        <span>{{ active_term.academic_year }}</span>
-    </div>
-
-    <!-- GROUP 2: OPEN + REMAINING -->
-<div style="display:flex; gap:8px; align-items:center;">
-    <span>📅 Opened Days: {{ total_open_days }}</span>
-    <span>|</span>
-    <span>
-        {% if remaining_days > 0 %}
-            Remaining: {{ remaining_days }}
-        {% else %}
-            Term Ended
-        {% endif %}
-    </span>
-</div>
-    <!-- GROUP 3: DATES -->
-    <div style="display:flex; gap:8px; align-items:center;">
-        <span>🚀 Start: {{ active_term.start_date|date:"d M Y" }}</span>
-        <span>→</span>
-        <span> End: {{ active_term.end_date|date:"d M Y" }}</span>
-    </div>
-
-</div>
-    {% endif %}
-
-<!-- SECOND ROW (PROPER LEFT / CENTER / RIGHT ALIGNMENT) -->
-<div style="display:flex;
-    align-items:center;
-    justify-content:space-between;
-    width:100%;
-    gap:20px;">
-
-    <!-- LEFT: DATE -->
-    <div style="font-weight:600; min-width:150px;">
-        📅 {{ today|date:"D, d M Y" }}
-    </div>
-
-<!-- CENTER: WEEK NAVIGATION -->
-<div style="display:flex; align-items:center; justify-content:center; gap:18px; flex:1;">
-
-<a href="?top_week={{ prev_week }}&year={{ selected_year }}&term={{ selected_term }}&t_week={{ timetable_active_week }}&attendance_week={{ request.GET.attendance_week }}&att_week={% firstof att_week_offset request.GET.att_week 0 %}&s_week={{ request.GET.s_week|default:0 }}{% if selected_child %}&child={{ selected_child.id }}{% endif %}"
-   style="color:white; text-decoration:none; padding:5px 10px; background:#1abc9c; border-radius:5px; font-size:12px;">
-    Prev
-</a>
-
-    <div style="text-align:center; font-weight:600;">
-        Week {{ active_week|default:1 }}
-        <div style="font-size:12px; opacity:.85;">
-            {{ week_start|date:"d M" }} – {{ week_end|date:"d M" }}
+    <!-- 2. MEDIUM - BELOW LOW (Important) -->
+    {% for ann in medium_priority_announcements %}
+    <div class="alert alert-info announcement-toast" id="ann-{{ ann.id }}">
+        <h5><i class="fas fa-bell"></i> Important: {{ ann.title }}</h5>
+        <p>{{ ann.message|linebreaks }}</p>
+        {% if ann.expiry_date %}<p class="small text-muted">Expires: {{ ann.expiry_date|date:"M d, Y" }}</p>{% endif %}
+        <div class="d-flex gap-2">
+            {% if ann.action_url %}<a href="{% url 'accounts:acknowledge_announcement' ann.pk %}" class="btn btn-primary btn-sm">Take Action</a>{% endif %}
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="markAsRead({{ ann.id }}); document.getElementById('ann-{{ ann.id }}').style.display='none'">Dismiss</button>
         </div>
     </div>
+    {% endfor %}
 
-<a href="?top_week={{ next_week }}&year={{ selected_year }}&term={{ selected_term }}&t_week={{ timetable_active_week }}&attendance_week={{ request.GET.attendance_week }}&att_week={% firstof att_week_offset request.GET.att_week 0 %}&s_week={{ request.GET.s_week|default:0 }}{% if selected_child %}&child={{ selected_child.id }}{% endif %}"
-   style="color:white; text-decoration:none; padding:5px 10px; background:#1abc9c; border-radius:5px; font-size:12px;">
-    Next
-</a>
-
-</div>
-    <!-- RIGHT: WELCOME -->
-<div style="position:relative; min-width:150px; text-align:right;">
-    <span id="profileBtn" style="cursor:pointer; color:white;">
-        Welcome, {{ request.user.first_name }} ▼
-    </span>
-
-    <div id="profileDropdown"
-         style="display:none; position:absolute; right:0; top:30px;
-                background:white; border:1px solid #ccc; border-radius:6px; 
-                min-width:150px; z-index:99999; box-shadow:0 4px 12px rgba(0,0,0,.15);">
-        
-       {% if request.user.role == 'teacher' %}
-    <a href="{% url 'accounts:teacher_profile' request.user.id %}" style="display:block; padding:10px; color:#333; text-decoration:none;">View Profile</a>
-{% elif request.user.role == 'student' %}
-    <a href="{% url 'accounts:student_profile' %}" style="display:block; padding:10px; color:#333; text-decoration:none;">View Profile</a>
-{% elif request.user.role == 'accountant' %}
-    <a href="{% url 'accounts:accountant_profile' %}" style="display:block; padding:10px; color:#333; text-decoration:none;">View Profile</a>
-{% elif request.user.role == 'admin' %}
-    <a href="{% url 'accounts:admin_profile' %}" style="display:block; padding:10px; color:#333; text-decoration:none;">View Profile</a>
-{% endif %}
-        
-        <form method="POST" action="{% url 'accounts:logout' %}" style="margin:0;">
-            {% csrf_token %}
-            <button type="submit" style="background:none;border:none;color:red; padding:10px; width:100%; text-align:left; cursor:pointer;">Logout</button>
-        </form>
+    <!-- 3. CRITICAL - MIDDLE MODAL (red box, must acknowledge) -->
+    {% for ann in critical_announcements %}
+    <div class="modal fade" id="criticalAnn{{ ann.id }}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-danger border-3">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="fas fa-exclamation-triangle"></i> CRITICAL: {{ ann.title }}</h5>
+                </div>
+                <div class="modal-body">
+                    <p class="fs-5">{{ ann.message|linebreaks }}</p>
+                    {% if ann.expiry_date %}<p class="text-muted small">Expires: {{ ann.expiry_date|date:"M d, Y" }}</p>{% endif %}
+                </div>
+                <div class="modal-footer">
+                    <a href="{% url 'accounts:acknowledge_announcement' ann.pk %}" class="btn btn-danger btn-lg w-100"><i class="fas fa-check-circle"></i> I Understand {% if ann.action_url %}& Continue{% endif %}</a>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
+    {% endfor %}
+
+        {% block content %}
+        {% endblock %}
+
+    </main>
 
 </div>
 
+
+<!-- =========================================================
+     MOBILE SIDEBAR OVERLAY
+========================================================= -->
+
+<div id="sidebarOverlay"
+     class="sidebar-overlay">
 </div>
 
-{% block content %}
-{% endblock %}
-</div>
 
+<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
 
-<!-- Put ALL scripts BEFORE </body> -->
 <script src="{% static 'accounts/JS/bootstrap.bundle.min.js' %}"></script>
 
 <script>
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
 
-    sidebar.classList.toggle('open');
-}
+document.addEventListener("DOMContentLoaded", function () {
 
-    // Bootstrap 5 vanilla JS - no jQuery needed
-    document.addEventListener('DOMContentLoaded', function() {
-        var collapseElements = document.querySelectorAll('[data-bs-toggle="collapse"]');
-        
-        collapseElements.forEach(function(element) {
-            var target = document.querySelector(element.getAttribute('href'));
-            var chevron = element.querySelector('.chevron-icon');
-            
-            if (target && target.classList.contains('show') && chevron) {
-                chevron.classList.add('rotated');
-            }
-        });
+    const sidebar = document.getElementById("sidebar");
+    const sidebarToggle = document.getElementById("sidebarToggleBtn");
+    const mobileSidebarBtn = document.getElementById("mobileSidebarBtn");
+    const overlay = document.getElementById("sidebarOverlay");
+
+    const profileBtn = document.getElementById("profileBtn");
+    const profileDropdown = document.getElementById("profileDropdown");
 
 
-        document.querySelectorAll('.collapse').forEach(function(collapse) {
-            collapse.addEventListener('shown.bs.collapse', function() {
-                var trigger = document.querySelector('[href="#' + this.id + '"]');
-                if (trigger) {
-                    var chevron = trigger.querySelector('.chevron-icon');
-                    if (chevron) chevron.classList.add('rotated');
-                }
-            });
-            
-            collapse.addEventListener('hidden.bs.collapse', function() {
-                var trigger = document.querySelector('[href="#' + this.id + '"]');
-                if (trigger) {
-                    var chevron = trigger.querySelector('.chevron-icon');
-                    if (chevron) chevron.classList.remove('rotated');
-                }
-            });
-        });
-    });
+    /* =====================================================
+       SIDEBAR
+    ===================================================== */
 
-    // Auto-hide message box after 3 seconds
-    setTimeout(function () {
-        let msg = document.getElementById("message-box");
-        if (msg) {
-            msg.style.transition = "0.5s";
-            msg.style.opacity = "0";
-            setTimeout(() => msg.remove(), 500);
+    function toggleSidebar() {
+
+        if (window.innerWidth <= 991) {
+
+            sidebar.classList.toggle("mobile-open");
+            overlay.classList.toggle("show");
+
+        } else {
+
+            sidebar.classList.toggle("collapsed");
+            document.body.classList.toggle("sidebar-collapsed");
+
         }
-    }, 3000);
 
-    // Profile dropdown toggle
-
-
-</script>
-<script>
-setTimeout(function () {
-    document.querySelectorAll(".alert-error").forEach(function (box) {
-        box.style.transition = "opacity 0.5s ease";
-        box.style.opacity = "0";
-        setTimeout(() => box.remove(), 500);
-    });
-}, 5000);
-</script>
-
-
-<script>
-document.getElementById('testBtn').onclick = () => {
-  document.getElementById('testBox').style.display = 'block';
-}
-</script>
-<!-- TEST CODE END -->
-<script>
-const btn = document.getElementById('profileBtn');
-const menu = document.getElementById('profileDropdown');
-
-btn.onclick = (e) => {
-    e.stopPropagation(); 
-    menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-}
-
-document.onclick = () => {
-    menu.style.display = 'none'; 
-}
-</script>
-<script>
-document.getElementById('sidebar').classList.add('open');
-</script>
-<script>
-window.addEventListener('load', function() {
-    document.getElementById('sidebar').classList.remove('preload');
-});
-</script>
-<script>
-function dismissLowBanner() {
-    const banner = document.getElementById('lowBanner');
-    if (banner) {
-        banner.style.display = 'none';
     }
-    
-    // Mark ALL low priority announcements as read, not just the first one
+
+
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener("click", toggleSidebar);
+    }
+
+    if (mobileSidebarBtn) {
+        mobileSidebarBtn.addEventListener("click", toggleSidebar);
+    }
+
+
+    if (overlay) {
+
+        overlay.addEventListener("click", function () {
+
+            sidebar.classList.remove("mobile-open");
+            overlay.classList.remove("show");
+
+        });
+
+    }
+
+
+    /* Close mobile sidebar after navigation */
+
+    document.querySelectorAll("#sidebar a").forEach(function (link) {
+
+        link.addEventListener("click", function () {
+
+            if (window.innerWidth <= 991) {
+
+                sidebar.classList.remove("mobile-open");
+                overlay.classList.remove("show");
+
+            }
+
+        });
+
+    });
+
+
+    /* =====================================================
+       PROFILE DROPDOWN
+    ===================================================== */
+
+    if (profileBtn && profileDropdown) {
+
+        profileBtn.addEventListener("click", function (event) {
+
+            event.stopPropagation();
+
+            profileDropdown.classList.toggle("show");
+
+        });
+
+
+        profileDropdown.addEventListener("click", function (event) {
+
+            event.stopPropagation();
+
+        });
+
+
+        document.addEventListener("click", function () {
+
+            profileDropdown.classList.remove("show");
+
+        });
+
+    }
+
+
+    /* =====================================================
+       MESSAGE BOX
+    ===================================================== */
+
+    const messageBox = document.getElementById("message-box");
+
+    if (messageBox) {
+
+        setTimeout(function () {
+
+            messageBox.classList.add("fade-out");
+
+            setTimeout(function () {
+
+                messageBox.remove();
+
+            }, 500);
+
+        }, 3000);
+
+    }
+
+
+    /* =====================================================
+       BOOTSTRAP CHEVRONS
+    ===================================================== */
+
+    document.querySelectorAll(".sidebar-section-toggle, .submenu-parent")
+        .forEach(function (button) {
+
+            const targetSelector = button.getAttribute("data-bs-target");
+            const target = document.querySelector(targetSelector);
+
+            if (!target) return;
+
+            const updateChevron = function () {
+
+                const icon = button.querySelector(
+                    ".section-chevron, .fa-chevron-down"
+                );
+
+                if (!icon) return;
+
+                if (target.classList.contains("show")) {
+
+                    icon.classList.add("rotate");
+
+                } else {
+
+                    icon.classList.remove("rotate");
+
+                }
+
+            };
+
+            target.addEventListener("shown.bs.collapse", updateChevron);
+            target.addEventListener("hidden.bs.collapse", updateChevron);
+
+            updateChevron();
+
+        });
+
+
+    /* =====================================================
+       CRITICAL ANNOUNCEMENTS
+    ===================================================== */
+
+    {% for ann in critical_announcements %}
+
+    const criticalElement{{ ann.id }} =
+        document.getElementById("criticalAnn{{ ann.id }}");
+
+    if (criticalElement{{ ann.id }}) {
+
+        const modal{{ ann.id }} =
+            new bootstrap.Modal(criticalElement{{ ann.id }});
+
+        modal{{ ann.id }}.show();
+
+    }
+
+    {% endfor %}
+
+});
+
+
+/* =========================================================
+   ANNOUNCEMENT FUNCTIONS
+========================================================= */
+
+function markAsRead(announcementId) {
+
+    fetch(
+        "{% url 'accounts:mark_announcements_read' %}?id=" +
+        announcementId,
+        {
+            method: "GET",
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        }
+    );
+
+}
+
+
+function dismissLowBanner() {
+    // Hide instantly
+    const banner = document.getElementById("lowBanner");
+    if (banner) {
+        banner.remove(); // remove completely
+    }
+    // Then tell server in background
     {% for ann in low_priority_announcements %}
-    fetch(`{% url 'accounts:mark_announcements_read' %}?id={{ ann.pk }}`, {
-        method: 'GET',
-        headers: {'X-Requested-With': 'XMLHttpRequest'}
+    fetch("{% url 'accounts:mark_announcements_read' %}?id={{ ann.id }}", {
+        method: "GET",
+        headers: {"X-Requested-With": "XMLHttpRequest"}
     });
     {% endfor %}
 }
 
-function markAsRead(announcementId) {
-    fetch(`{% url 'accounts:mark_announcements_read' %}?id=${announcementId}`, {
-        method: 'GET',
-        headers: {'X-Requested-With': 'XMLHttpRequest'}
-    });
-}
 </script>
+
 </body>
 </html>

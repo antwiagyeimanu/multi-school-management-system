@@ -3,824 +3,927 @@
 {% block content %}
 
 <style>
-
-/* ============================
-   PREMIUM ADMIN DASHBOARD
-============================ */
-
+/* =========================================================
+   PREMIUM ADMIN COMMAND CENTER
+========================================================= */
 .admin-wrapper {
-    padding: 25px;
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 30px 32px 48px;
+    color: #172033;
 }
-
-
-/* HERO HEADER */
-
+/* =========================================================
+   GENERAL
+========================================================= */
+.dashboard-section {
+    margin-bottom: 32px;
+}
+.dashboard-section:last-child {
+    margin-bottom: 0;
+}
+.section-heading {
+    margin-bottom: 16px;
+}
+.section-heading h2 {
+    margin: 0;
+    color: #111827;
+    font-size: 21px;
+    line-height: 1.3;
+    font-weight: 800;
+    letter-spacing: -.35px;
+}
+.section-heading p {
+    margin: 5px 0 0;
+    color: #7b8495;
+    font-size: 14px;
+    line-height: 1.5;
+}
+/* =========================================================
+   HERO
+========================================================= */
 .admin-hero {
-
+    position: relative;
+    overflow: hidden;
+    padding: 34px;
+    margin-bottom: 28px;
+    border-radius: 25px;
+    color: #fff;
     background:
-    linear-gradient(
-        135deg,
-        #041729,
-        #0b3b66
-    );
-
-    border-radius:24px;
-    padding:35px;
-
-    color:white;
-
-    margin-bottom:30px;
-
+        radial-gradient(
+            circle at 88% 12%,
+            rgba(96,165,250,.30),
+            transparent 27%
+        ),
+        radial-gradient(
+            circle at 72% 100%,
+            rgba(139,92,246,.22),
+            transparent 34%
+        ),
+        linear-gradient(
+            135deg,
+            #071827 0%,
+            #0b3155 52%,
+            #123f6d 100%
+        );
     box-shadow:
-    0 15px 35px rgba(0,0,0,.18);
-
-    position:relative;
-    overflow:hidden;
-
+        0 18px 45px rgba(4,23,41,.18);
 }
-
-
+.admin-hero::before {
+    content: "";
+    position: absolute;
+    width: 330px;
+    height: 330px;
+    right: -145px;
+    top: -175px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.055);
+    pointer-events: none;
+}
 .admin-hero::after {
-
-    content:"";
-
-    position:absolute;
-
-    width:250px;
-    height:250px;
-
-    background:
-    rgba(255,255,255,.08);
-
-    border-radius:50%;
-
-    right:-70px;
-    top:-70px;
-
+    content: "";
+    position: absolute;
+    width: 210px;
+    height: 210px;
+    right: 120px;
+    bottom: -145px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.035);
+    pointer-events: none;
+}
+.hero-content {
+    position: relative;
+    z-index: 2;
+}
+.hero-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
 }
 
+.hero-copy {
+    min-width: 0;
+    flex: 1;
+}
 
+.hero-profile {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    min-width: 330px;
+    padding: 18px 20px;
+    border-radius: 22px;
+    background: rgba(255,255,255,.09);
+    border: 1px solid rgba(255,255,255,.14);
+    backdrop-filter: blur(10px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+}
+.hero-profile img,
+.hero-avatar {
+    width: 78px;
+    height: 78px;
+    flex: 0 0 78px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(255,255,255,.85);
+    box-shadow: 0 8px 22px rgba(0,0,0,.22);
+}
 
+.hero-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,.12);
+    color: #fff;
+    font-size: 30px;
+}
+.hero-details {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(100px, 1fr));
+    gap: 14px 22px;
+}
+
+.hero-details span {
+    display: block;
+    margin-bottom: 4px;
+    color: rgba(255,255,255,.55);
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .7px;
+}
+
+.hero-details strong {
+    display: block;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.3;
+}
+.hero-copy {
+    min-width: 0;
+    flex: 1;
+}
+.hero-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    margin-bottom: 14px;
+    border-radius: 30px;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.12);
+    color: rgba(255,255,255,.94);
+    font-size: 13px;
+    font-weight: 750;
+    letter-spacing: .45px;
+    text-transform: uppercase;
+}
+.hero-label i {
+    color: #fbbf24;
+}
 .admin-hero h1 {
-
-    font-size:34px;
-    font-weight:800;
-
-    margin-bottom:10px;
-
+    margin: 0;
+    font-size: clamp(31px, 4vw, 43px);
+    line-height: 1.12;
+    font-weight: 850;
+    letter-spacing: -.9px;
 }
-
-
-.admin-hero p {
-
-    margin:0;
-
-    opacity:.85;
-
-    font-size:16px;
-
+.hero-description {
+    max-width: 700px;
+    margin: 12px 0 0;
+    color: rgba(255,255,255,.78);
+    font-size: 16px;
+    line-height: 1.6;
 }
-
-
-
-/* SCHOOL INFO */
-
-.school-info {
-
-    margin-top:20px;
-
-    display:flex;
-
-    gap:15px;
-
-    flex-wrap:wrap;
-
+.hero-school {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 21px;
+    padding: 11px 16px;
+    border-radius: 14px;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.14);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 750;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
 }
-
-
-.info-pill {
-
-    background:
-    rgba(255,255,255,.12);
-
-    padding:8px 15px;
-
-    border-radius:20px;
-
-    font-size:14px;
-
+.hero-school i {
+    color: #93c5fd;
 }
-
-
-
-/* ALERT */
-
-.expense-alert {
-
-    border-radius:15px;
-
+.hero-status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+}
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 13px;
+    border-radius: 11px;
+    background: rgba(255,255,255,.065);
+    border: 1px solid rgba(255,255,255,.08);
+    color: rgba(255,255,255,.84);
+    font-size: 13px;
+}
+.status-pill .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #34d399;
     box-shadow:
-    0 8px 20px rgba(0,0,0,.12);
-
+        0 0 0 4px rgba(52,211,153,.12);
 }
-
-
-
-
-
-/* QUICK ACTION */
-
-.quick-actions {
-
-    display:grid;
-
+.hero-decoration {
+    position: relative;
+    z-index: 2;
+    width: 105px;
+    height: 105px;
+    flex: 0 0 105px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 28px;
+    background: rgba(255,255,255,.09);
+    border: 1px solid rgba(255,255,255,.13);
+    color: #fff;
+    font-size: 45px;
+    backdrop-filter: blur(10px);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.08),
+        0 15px 35px rgba(0,0,0,.10);
+}
+/* =========================================================
+   SCHOOL AT A GLANCE
+========================================================= */
+.stats-grid {
+    display: grid;
     grid-template-columns:
-    repeat(auto-fit,minmax(180px,1fr));
-
-    gap:18px;
-
-    margin-bottom:30px;
-
+        repeat(6, minmax(0, 1fr));
+    gap: 14px;
 }
-
-
-
-.action-card {
-
-    background:white;
-
-    border-radius:18px;
-
-    padding:18px;
-
-    text-decoration:none;
-
-    color:#111827;
-
+.stat-card {
+    position: relative;
+    overflow: hidden;
+    min-height: 140px;
+    padding: 19px;
+    background: #fff;
+    border: 1px solid #edf0f5;
+    border-radius: 18px;
     box-shadow:
-    0 8px 20px rgba(0,0,0,.07);
-
-    transition:.3s;
-
+        0 6px 20px rgba(15,23,42,.045);
+    transition:
+        transform .22s ease,
+        box-shadow .22s ease,
+        border-color .22s ease;
 }
-
-
-.action-card:hover {
-
-    transform:translateY(-5px);
-
+a.stat-card {
+    color: inherit;
+    text-decoration: none;
+}
+.stat-card::after {
+    content: "";
+    position: absolute;
+    width: 85px;
+    height: 85px;
+    right: -40px;
+    bottom: -40px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: .035;
+}
+.stat-card:hover {
+    transform: translateY(-3px);
+    border-color: #dce3ed;
     box-shadow:
-    0 15px 30px rgba(0,0,0,.15);
-
+        0 13px 30px rgba(15,23,42,.09);
 }
-
-
-
-.action-card i {
-
-    font-size:28px;
-
-    margin-bottom:12px;
-
+.stat-icon {
+    width: 43px;
+    height: 43px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    border-radius: 12px;
+    font-size: 18px;
 }
-
-
-.action-card span {
-
-    display:block;
-
-    font-weight:700;
-
+.stat-title {
+    color: #6f7889;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: .4px;
+    text-transform: uppercase;
 }
-
-
-
-
-/* STAT GRID */
-
-.dashboard-grid {
-
-    display:grid;
-
+.stat-number {
+    margin-top: 5px;
+    color: #111827;
+    font-size: 29px;
+    line-height: 1.1;
+    font-weight: 850;
+    letter-spacing: -.7px;
+}
+/* STAT COLORS */
+.stat-students {
+    color: #2563eb;
+}
+.stat-students .stat-icon {
+    color: #2563eb;
+    background: #eff6ff;
+}
+.stat-teachers {
+    color: #059669;
+}
+.stat-teachers .stat-icon {
+    color: #059669;
+    background: #ecfdf5;
+}
+.stat-parents {
+    color: #dc2626;
+}
+.stat-parents .stat-icon {
+    color: #dc2626;
+    background: #fef2f2;
+}
+.stat-classes {
+    color: #0891b2;
+}
+.stat-classes .stat-icon {
+    color: #0891b2;
+    background: #ecfeff;
+}
+.stat-subjects {
+    color: #7c3aed;
+}
+.stat-subjects .stat-icon {
+    color: #7c3aed;
+    background: #f5f3ff;
+}
+.stat-users {
+    color: #475569;
+}
+.stat-users .stat-icon {
+    color: #475569;
+    background: #f1f5f9;
+}
+/* =========================================================
+   ATTENTION
+========================================================= */
+.attention-grid {
+    display: grid;
     grid-template-columns:
-    repeat(auto-fit,minmax(220px,1fr));
-
-    gap:25px;
-
+        repeat(2, minmax(0, 1fr));
+    gap: 16px;
 }
-
-
-
-/* STAT CARD */
-
-
-.admin-card {
-
-    background:white;
-
-    border-radius:22px;
-
-    padding:25px;
-
-    text-decoration:none;
-
-    color:inherit;
-
-    min-height:170px;
-
-    position:relative;
-
-    overflow:hidden;
-
+.attention-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    min-height: 84px;
+    padding: 15px 17px;
+    border-radius: 17px;
+    background: #fff;
+    border: 1px solid #edf0f5;
     box-shadow:
-
-    0 10px 25px rgba(0,0,0,.08);
-
-    transition:.3s;
-
+        0 6px 20px rgba(15,23,42,.045);
 }
-
-
-
-.admin-card:hover {
-
-    transform:translateY(-8px);
-
-    box-shadow:
-
-    0 18px 40px rgba(0,0,0,.15);
-
+.attention-icon {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-size: 19px;
 }
-
-
-
-
-.admin-card .icon {
-
-    width:65px;
-
-    height:65px;
-
-    border-radius:20px;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    font-size:32px;
-
-    margin-bottom:18px;
-
+.attention-content {
+    min-width: 0;
+    flex: 1;
 }
-
-
-
-.admin-card h3 {
-
-    font-size:17px;
-
-    font-weight:700;
-
-    color:#374151;
-
+.attention-content strong {
+    display: block;
+    color: #172033;
+    font-size: 14px;
+    font-weight: 800;
 }
-
-
-
-.admin-card p {
-
-    font-size:38px;
-
-    font-weight:800;
-
-    color:#041729;
-
-    margin:5px 0 0;
-
+.attention-content span {
+    display: block;
+    margin-top: 4px;
+    color: #7b8495;
+    font-size: 12.5px;
 }
-
-
-
-/* CARD ICON COLORS */
-
-.students .icon {
-
-    background:#dbeafe;
-
-    color:#2563eb;
-
+.attention-action {
+    flex: 0 0 auto;
+    padding: 8px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 750;
 }
-
-
-.teachers .icon {
-
-    background:#dcfce7;
-
-    color:#16a34a;
-
+.expense-attention {
+    background: #fffbeb;
+    border-color: #fde68a;
 }
-
-
-.parents .icon {
-
-    background:#fee2e2;
-
-    color:#dc2626;
-
+.expense-attention .attention-icon {
+    color: #d97706;
+    background: #fef3c7;
 }
-
-
-.accountants .icon {
-
-    background:#fef3c7;
-
-    color:#d97706;
-
+.expense-attention .attention-action {
+    color: #b45309;
+    background: #fef3c7;
 }
-
-
-.subjects .icon {
-
-    background:#ede9fe;
-
-    color:#7c3aed;
-
+.no-attention {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
 }
-
-
-.classes .icon {
-
-    background:#cffafe;
-
-    color:#0891b2;
-
+.no-attention .attention-icon {
+    color: #16a34a;
+    background: #dcfce7;
 }
-
-
-.users .icon {
-
-    background:#e5e7eb;
-
-    color:#374151;
-
+.no-attention .attention-content strong {
+    color: #166534;
 }
-/* RESPONSIVE */
-
-@media(max-width:768px){
-
-    .admin-wrapper{
-        padding:15px;
+.no-attention .attention-content span {
+    color: #4d7c5b;
+}
+/* =========================================================
+   TABLET
+========================================================= */
+@media (max-width: 1200px) {
+    .stats-grid {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
     }
-
-
-    .admin-hero h1{
-        font-size:26px;
+    .stat-card {
+        min-height: 145px;
     }
-
-
-    .admin-card p{
-        font-size:32px;
+    .stat-title {
+        font-size: 14px;
     }
-
+    .stat-number {
+        font-size: 30px;
+    }
 }
-
-
+@media (max-width: 1000px) {
+    .admin-wrapper {
+        padding: 25px 22px 40px;
+    }
+    .admin-hero {
+        padding: 29px;
+    }
+    .hero-description {
+        font-size: 15px;
+    }
+    .section-heading h2 {
+        font-size: 20px;
+    }
+    .section-heading p {
+        font-size: 13px;
+    }
+    .attention-grid {
+        grid-template-columns: 1fr;
+    }
+}
+/* =========================================================
+   MOBILE
+========================================================= */
+@media (max-width: 768px) {
+    .admin-wrapper {
+        padding: 19px 16px 34px;
+    }
+    .dashboard-section {
+        margin-bottom: 27px;
+    }
+    .section-heading {
+        margin-bottom: 14px;
+    }
+    .section-heading h2 {
+        font-size: 19px;
+    }
+    .section-heading p {
+        font-size: 13px;
+    }
+    /* HERO */
+    .admin-hero {
+        padding: 24px 21px;
+        margin-bottom: 23px;
+        border-radius: 21px;
+    }
+    .hero-main {
+        align-items: flex-start;
+        gap: 17px;
+    }
+    .hero-decoration {
+        width: 65px;
+        height: 65px;
+        flex-basis: 65px;
+        border-radius: 18px;
+        font-size: 28px;
+    }
+    .hero-label {
+        padding: 7px 11px;
+        margin-bottom: 11px;
+        font-size: 10.5px;
+    }
+    .admin-hero h1 {
+        font-size: 29px;
+    }
+    .hero-description {
+        font-size: 14px;
+        line-height: 1.6;
+    }
+    .hero-school {
+        width: 100%;
+        margin-top: 16px;
+        font-size: 13px;
+    }
+    .hero-status {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .status-pill {
+        width: 100%;
+        padding: 9px 11px;
+        font-size: 12px;
+    }
+    /* STATS */
+    .stats-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: 11px;
+    }
+    .stat-card {
+        min-height: 125px;
+        padding: 15px;
+        border-radius: 15px;
+    }
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        margin-bottom: 11px;
+        border-radius: 11px;
+        font-size: 17px;
+    }
+    .stat-title {
+        font-size: 11.5px;
+        letter-spacing: .3px;
+    }
+    .stat-number {
+        font-size: 25px;
+    }
+    /* ATTENTION */
+    .attention-grid {
+        grid-template-columns: 1fr;
+        gap: 11px;
+    }
+    .attention-card {
+        min-height: 75px;
+        padding: 13px 14px;
+        border-radius: 15px;
+    }
+    .attention-icon {
+        width: 42px;
+        height: 42px;
+        flex-basis: 42px;
+        border-radius: 11px;
+        font-size: 17px;
+    }
+    .attention-content strong {
+        font-size: 13px;
+    }
+    .attention-content span {
+        font-size: 11.5px;
+    }
+    .attention-action {
+        padding: 7px 10px;
+        font-size: 11px;
+    }
+}
+/* =========================================================
+   SMALL PHONES
+========================================================= */
+@media (max-width: 430px) {
+    .admin-wrapper {
+        padding: 15px 10px 29px;
+    }
+    .dashboard-section {
+        margin-bottom: 24px;
+    }
+    .section-heading {
+        margin-bottom: 12px;
+    }
+    .section-heading h2 {
+        font-size: 18px;
+    }
+    .section-heading p {
+        font-size: 12.5px;
+    }
+    /* HERO */
+    .admin-hero {
+        padding: 21px 16px;
+        border-radius: 18px;
+        margin-bottom: 20px;
+    }
+    .hero-main {
+        display: block;
+    }
+    .hero-decoration {
+        display: none;
+    }
+    .hero-label {
+        font-size: 9.5px;
+    }
+    .admin-hero h1 {
+        font-size: 26px;
+        letter-spacing: -.6px;
+    }
+    .hero-description {
+        font-size: 13px;
+        line-height: 1.6;
+    }
+    .hero-school {
+        padding: 10px 12px;
+        font-size: 12px;
+    }
+    .status-pill {
+        padding: 9px 10px;
+        font-size: 11.5px;
+    }
+    /* STATS */
+    .stats-grid {
+        gap: 9px;
+    }
+    .stat-card {
+        min-height: 116px;
+        padding: 13px;
+        border-radius: 14px;
+    }
+    .stat-icon {
+        width: 37px;
+        height: 37px;
+        margin-bottom: 9px;
+        border-radius: 10px;
+        font-size: 16px;
+    }
+    .stat-title {
+        font-size: 11px;
+    }
+    .stat-number {
+        font-size: 24px;
+    }
+    /* ATTENTION */
+    .attention-card {
+        padding: 12px;
+    }
+    .attention-content strong {
+        font-size: 12.5px;
+    }
+    .attention-content span {
+        font-size: 11px;
+    }
+    .attention-action {
+        padding: 7px 9px;
+        font-size: 10.5px;
+    }
+}
 </style>
-
-
-
 <div class="admin-wrapper">
+<!-- =====================================================
+     HERO
+====================================================== -->
+<section class="admin-hero">
+    <div class="hero-content">
+        <div class="hero-main">
+            <div class="hero-copy">
+                <div class="hero-label">
+                    <i class="fas fa-crown"></i>
+                    {{ request.user.get_role_display }}
+                </div>
+                <h1>
+                    Welcome,
+                    {{user.get_title_display}} {{ user.first_name|default:user.username }}
+                </h1>
+                <p class="hero-description">
+                    Manage your school's people, academics,
+                    finances and daily administration from one
+                    central dashboard.
+                </p>
+                {% if school %}
+                <div class="hero-school">
+                    <i class="fas fa-school"></i>
+                    {{ school.name }}
+                </div>
+                <div class="hero-status">
+                    <div class="status-pill">
+                        <span class="status-dot"></span>
+                        School System Active
+                    </div>
+                    {% if school.phone %}
+                    <div class="status-pill">
+                        <i class="fas fa-phone"></i>
+                        {{ school.phone }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+<div class="hero-profile">
 
+    {% if user.photo %}
+        <img src="{{ user.photo.url }}" alt="{{ user.get_full_name }}">
+    {% else %}
+        <div class="hero-avatar">
+            <i class="fas fa-user-tie"></i>
+        </div>
+    {% endif %}
 
-<!-- EXPENSE ALERT -->
+<div class="hero-details">
 
-{% if pending_count > 0 %}
+    <div>
+        <span>Staff ID</span>
+        <strong>{{ user.staff_id|default:"N/A" }}</strong>
+    </div>
 
-<div class="alert alert-warning alert-dismissible fade show expense-alert"
-role="alert">
+    <div>
+        <span>Username</span>
+        <strong>{{ user.username }}</strong>
+    </div>
 
+    <div>
+        <span>Academic Year</span>
+        <strong>{{ academic_year.name|default:"N/A" }}</strong>
+    </div>
 
-<strong>
-
-⚠️ {{ pending_count }}
-expense{{ pending_count|pluralize }}
-pending verification
-
-</strong>
-
-
-<a href="{% url 'accounts:expense_list' %}"
-class="alert-link ms-2">
-
-Review Now
-
-</a>
-
-
-
-<button type="button"
-class="btn-close"
-data-bs-dismiss="alert">
-
-</button>
-
-
-</div>
-
-
-{% endif %}
-
-
-
-
-
-<!-- HERO HEADER -->
-
-
-<div class="admin-hero">
-
-
-<h1>
-
-Welcome,
-{{ user.first_name|default:user.username }}
-
-</h1>
-
-
-
-<p>
-
-{% if school %}
-
-{{ school.name }} Administration Dashboard
-
-{% else %}
-
-School Management Dashboard
-
-{% endif %}
-
-</p>
-
-
-
-{% if school %}
-
-
-<div class="school-info">
-
-
-<div class="info-pill">
-
-🏫 {{ school.name }}
+    <div>
+        <span>Current Term</span>
+        <strong>{{ current_term.get_term_number_display|default:"N/A" }}</strong>
+    </div>
 
 </div>
-
-
-{% if school.phone %}
-
-<div class="info-pill">
-
-📞 {{ school.phone }}
-
+        </div>
+    </div>
+</section>
+<!-- =====================================================
+     SCHOOL AT A GLANCE
+====================================================== -->
+<section class="dashboard-section">
+    <div class="section-heading">
+        <h2>
+            School at a Glance
+        </h2>
+        <p>
+            Your school's current records
+        </p>
+    </div>
+    <div class="stats-grid">
+        <!-- STUDENTS -->
+        <a href="{% url 'accounts:view-students-by-class' %}"
+           class="stat-card stat-students">
+            <div class="stat-icon">
+                <i class="fas fa-user-graduate"></i>
+            </div>
+            <div class="stat-title">
+                Students
+            </div>
+            <div class="stat-number">
+                {{ total_students }}
+            </div>
+        </a>
+        <!-- TEACHERS -->
+        <a href="{% url 'accounts:manage-teachers-grid' %}"
+           class="stat-card stat-teachers">
+            <div class="stat-icon">
+                <i class="fas fa-chalkboard-teacher"></i>
+            </div>
+            <div class="stat-title">
+                Teachers
+            </div>
+            <div class="stat-number">
+                {{ total_teachers }}
+            </div>
+        </a>
+        <!-- PARENTS -->
+        <a href="{% url 'accounts:manage-parents' %}"
+           class="stat-card stat-parents">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-title">
+                Parents
+            </div>
+            <div class="stat-number">
+                {{ total_parents }}
+            </div>
+        </a>
+        <!-- CLASSES -->
+        <a href="{% url 'accounts:admin_classes' %}"
+           class="stat-card stat-classes">
+            <div class="stat-icon">
+                <i class="fas fa-school"></i>
+            </div>
+            <div class="stat-title">
+                Classes
+            </div>
+            <div class="stat-number">
+                {{ total_classes }}
+            </div>
+        </a>
+        <!-- SUBJECTS -->
+        <a href="{% url 'accounts:subject_list' %}"
+           class="stat-card stat-subjects">
+            <div class="stat-icon">
+                <i class="fas fa-book-open"></i>
+            </div>
+            <div class="stat-title">
+                Subjects
+            </div>
+            <div class="stat-number">
+                {{ total_subjects }}
+            </div>
+        </a>
+        <!-- TOTAL USERS — INFORMATION ONLY -->
+        <div class="stat-card stat-users">
+            <div class="stat-icon">
+                <i class="fas fa-users-cog"></i>
+            </div>
+            <div class="stat-title">
+                Total Users
+            </div>
+            <div class="stat-number">
+                {{ total_users }}
+            </div>
+        </div>
+    </div>
+</section>
+<!-- =====================================================
+     ATTENTION
+====================================================== -->
+<section class="dashboard-section">
+    <div class="section-heading">
+        <h2>
+            Attention
+        </h2>
+        <p>
+            Items that may require your attention
+        </p>
+    </div>
+    <div class="attention-grid">
+        {% if pending_count > 0 %}
+        <div class="attention-card expense-attention">
+            <div class="attention-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="attention-content">
+                <strong>
+                    {{ pending_count }}
+                    expense{{ pending_count|pluralize }}
+                    pending verification
+                </strong>
+                <span>
+                    Review pending expense requests
+                </span>
+            </div>
+            <a href="{% url 'accounts:expense_list' %}"
+               class="attention-action">
+                Review
+            </a>
+        </div>
+        {% else %}
+        <div class="attention-card no-attention">
+            <div class="attention-icon">
+                <i class="fas fa-check"></i>
+            </div>
+            <div class="attention-content">
+                <strong>
+                    Everything looks good
+                </strong>
+                <span>
+                    No pending expense verifications
+                </span>
+            </div>
+        </div>
+        {% endif %}
+        <div class="attention-card">
+            <div class="attention-icon"
+                 style="color:#2563eb;background:#eff6ff;">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <div class="attention-content">
+                <strong>
+                    School system active
+                </strong>
+                <span>
+                    Your administrative dashboard is ready
+                </span>
+            </div>
+        </div>
+    </div>
+</section>
 </div>
-
-{% endif %}
-
-
-
-{% if school.email %}
-
-<div class="info-pill">
-
-✉️ {{ school.email }}
-
-</div>
-
-{% endif %}
-
-
-
-</div>
-
-
-{% endif %}
-
-
-
-</div>
-
-
-
-
-
-
-
-<!-- QUICK ACTIONS -->
-
-
-<div class="quick-actions">
-
-
-<a href="{% url 'accounts:add-student' %}"
-class="action-card">
-
-<i class="fas fa-user-graduate text-primary"></i>
-
-<span>
-Add Student
-</span>
-
-</a>
-
-
-
-
-<a href="{% url 'accounts:add-teacher' %}"
-class="action-card">
-
-<i class="fas fa-chalkboard-teacher text-success"></i>
-
-<span>
-Add Teacher
-</span>
-
-</a>
-
-
-
-
-
-<a href="{% url 'accounts:school_settings' %}"
-class="action-card">
-
-<i class="fas fa-cogs text-warning"></i>
-
-<span>
-School Settings
-</span>
-
-</a>
-
-
-
-
-
-<a href="{% url 'accounts:finance_fee_list' %}"
-class="action-card">
-
-<i class="fas fa-money-bill-wave text-danger"></i>
-
-<span>
-Manage Fees
-</span>
-
-</a>
-
-
-
-</div>
-
-
-
-
-
-
-
-
-<!-- STATISTICS -->
-
-<div class="dashboard-grid">
-
-
-
-
-
-<a href="{% url 'accounts:view-students-by-class' %}"
-class="admin-card students">
-
-
-<div class="icon">
-
-🎓
-
-</div>
-
-
-<h3>
-Students
-</h3>
-
-
-<p>
-
-{{ total_students }}
-
-</p>
-
-
-</a>
-
-
-
-
-
-
-
-<a href="{% url 'accounts:manage-teachers-grid' %}"
-class="admin-card teachers">
-
-
-<div class="icon">
-
-👨‍🏫
-
-</div>
-
-
-<h3>
-Teachers
-</h3>
-
-
-<p>
-
-{{ total_teachers }}
-
-</p>
-
-
-</a>
-
-
-
-
-
-
-
-
-<a href="{% url 'accounts:manage-parents' %}"
-class="admin-card parents">
-
-
-<div class="icon">
-
-👨‍👩‍👧
-
-</div>
-
-
-<h3>
-Parents
-</h3>
-
-
-<p>
-
-{{ total_parents }}
-
-</p>
-
-
-</a>
-
-
-
-
-
-
-
-
-<a href="{% url 'accounts:manage_accountant_grid' %}"
-class="admin-card accountants">
-
-
-<div class="icon">
-
-💰
-
-</div>
-
-
-<h3>
-Accountants
-</h3>
-
-
-<p>
-
-{{ total_accountants }}
-
-</p>
-
-
-</a>
-
-
-
-
-
-
-
-
-<a href="{% url 'accounts:subject_list' %}"
-class="admin-card subjects">
-
-
-<div class="icon">
-
-📚
-
-</div>
-
-
-<h3>
-Subjects
-</h3>
-
-
-<p>
-
-{{ total_subjects }}
-
-</p>
-
-
-</a>
-
-
-
-
-
-
-
-<a href="{% url 'accounts:admin_classes' %}"
-class="admin-card classes">
-
-
-<div class="icon">
-
-🏫
-
-</div>
-
-
-<h3>
-Classes
-</h3>
-
-
-<p>
-
-{{ total_classes }}
-
-</p>
-
-
-</a>
-
-
-
-
-
-
-
-<div class="admin-card users">
-
-
-<div class="icon">
-
-👥
-
-</div>
-
-
-<h3>
-Total Users
-</h3>
-
-
-<p>
-
-{{ total_users }}
-
-</p>
-
-
-</div>
-
-
-
-
-
-</div>
-
-
-
-</div>
-
 
 {% endblock %}

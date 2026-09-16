@@ -1,0 +1,245 @@
+[
+  {
+    "model": "accounts.school",
+    "pk": 3,
+    "fields": {
+      "name": "Enlightened",
+      "allows_student_login": false,
+      "address": "",
+      "phone": "0242730285",
+      "logo": "school_logos/UCC_bmaxuaa.png",
+      "email": null,
+      "gps_address": null,
+      "motto": null,
+      "admission_letter_title": "ADMISSION LETTER",
+      "admission_letter_body": "We are delighted to inform you that following your successful application and interview, you have been offered admission to {school_name} as a pupil of {class_name} for the {academic_year} academic year.\n\nAt {school_name}, we are committed to providing holistic education...",
+      "admission_letter_footer": "We look forward to welcoming you to the {school_name} family.",
+      "academic_year": null,
+      "can_teachers_manage_students": false,
+      "level": "basic",
+      "payment_mode": "disabled",
+      "accept_cash": true,
+      "accept_manual": false,
+      "accept_automatic": false,
+      "accept_momo": false,
+      "accept_bank": false,
+      "sms_enabled": false,
+      "sms_test_mode": true,
+      "sms_provider": "hubtel",
+      "sms_sender_id": null,
+      "mnotify_api_key": null,
+      "mnotify_sender_id": null,
+      "payment_gateway": "hubtel",
+      "accept_hubtel": false,
+      "accept_paystack": true,
+      "accept_flutterwave": false,
+      "momo_number": "",
+      "momo_name": "",
+      "bank_name": "",
+      "account_number": "",
+      "account_name": "",
+      "paystack_public_key": null,
+      "paystack_secret_key": null,
+      "hubtel_client_id": null,
+      "hubtel_client_secret": null,
+      "hubtel_merchant_account": null,
+      "flutterwave_public_key": null,
+      "flutterwave_secret_key": null
+    }
+  },
+  {
+    "model": "accounts.user",
+    "pk": 13,
+    "fields": {
+      "password": "pbkdf2_sha256$1200000$On0Cds1fR3ZmW4tc4H8Fnm$ax1mqk/FHFVGVliHMqKVf0+dlWEhNlKpxLOdwZC6xmk=",
+      "last_login": "2026-09-12T14:40:31.880Z",
+      "is_superuser": false,
+      "username": "owusu.julius",
+      "first_name": "Owusu",
+      "last_name": "Julius",
+      "is_staff": false,
+      "is_active": true,
+      "date_joined": "2026-09-12T14:39:32.147Z",
+      "role": "proprietor",
+      "can_login": true,
+      "gender": "M",
+      "date_of_birth": null,
+      "admission_date": null,
+      "nationality": null,
+      "parent_guardian_name": null,
+      "parent_guardian_phone": null,
+      "title": "Mr",
+      "phone": null,
+      "middle_name": null,
+      "student_number": null,
+      "is_class_teacher": false,
+      "class_teacher_of": null,
+      "staff_id": "E/PRO/CX1Q",
+      "school": 3,
+      "is_password_changed": true,
+      "school_class": null,
+      "parent": null,
+      "photo": "",
+      "email": "",
+      "qualification": null,
+      "department": null,
+      "national_id_card": null,
+      "emergency_contact_name": null,
+      "emergency_contact_phone": null,
+      "emergency_contact_relationship": null,
+      "occupation": null,
+      "address": "",
+      "relationship_type": null,
+      "conduct": "Very Good",
+      "religion": null,
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "accounts.term",
+    "pk": 3,
+    "fields": {
+      "school": 3,
+      "term_number": 1,
+      "academic_year": 3,
+      "start_date": "2026-09-08",
+      "end_date": "2026-12-18",
+      "days_opened": 72,
+      "next_term_begins": "2026-09-08",
+      "ca_total": 50,
+      "exam_total": 50,
+      "is_active": true
+    }
+  },
+  {
+    "model": "accounts.academicyear",
+    "pk": 3,
+    "fields": {
+      "school": 3,
+      "name": "2026/2027",
+      "start_date": null,
+      "end_date": null,
+      "is_active": true
+    }
+  },
+  {
+    "model": "accounts.schoolsetting",
+    "pk": 3,
+    "fields": {
+      "school": 3,
+      "attendance_mode": "class_teacher",
+      "teacher_reporting_time": "07:30:00",
+      "teacher_closing_time": "15:30:00",
+      "late_after_minutes": 15,
+      "class_score_total": 50,
+      "exam_score_total": 50,
+      "email": null,
+      "gps_address": null,
+      "academic_year_start_month": 9
+    }
+  },
+  {
+    "model": "accounts.paymenttype",
+    "pk": 7,
+    "fields": {
+      "school": 3,
+      "code": "tuition_fee",
+      "name": "Tuition fee"
+    }
+  },
+  {
+    "model": "accounts.paymenttype",
+    "pk": 8,
+    "fields": {
+      "school": 3,
+      "code": "pta",
+      "name": "PTA"
+    }
+  },
+  {
+    "model": "accounts.paymenttype",
+    "pk": 9,
+    "fields": {
+      "school": 3,
+      "code": "books",
+      "name": "Books"
+    }
+  },
+  {
+    "model": "accounts.paymenttype",
+    "pk": 10,
+    "fields": {
+      "school": 3,
+      "code": "feeding",
+      "name": "Feeding"
+    }
+  },
+  {
+    "model": "accounts.systemsetting",
+    "pk": 3,
+    "fields": {
+      "school": 3,
+      "site_name": "Enlightened",
+      "max_students": 30,
+      "updated_at": "2026-09-12T14:54:30.320Z"
+    }
+  },
+  {
+    "model": "accounts.dynamicfeestructure",
+    "pk": 3,
+    "fields": {
+      "school": 3,
+      "stage": "jhs",
+      "term": 3,
+      "academic_year": "2026/2027",
+      "due_date": "2026-12-01",
+      "is_published": false,
+      "created_at": "2026-09-12T14:50:05.801Z"
+    }
+  },
+  {
+    "model": "accounts.dynamicfeestructureitem",
+    "pk": 7,
+    "fields": {
+      "school": 3,
+      "fee_structure": 3,
+      "payment_type": 7,
+      "name": "Tuition fee",
+      "amount": "200.00"
+    }
+  },
+  {
+    "model": "accounts.dynamicfeestructureitem",
+    "pk": 8,
+    "fields": {
+      "school": 3,
+      "fee_structure": 3,
+      "payment_type": 8,
+      "name": "PTA",
+      "amount": "70.00"
+    }
+  },
+  {
+    "model": "accounts.dynamicfeestructureitem",
+    "pk": 9,
+    "fields": {
+      "school": 3,
+      "fee_structure": 3,
+      "payment_type": 9,
+      "name": "Books",
+      "amount": "470.00"
+    }
+  },
+  {
+    "model": "accounts.dynamicfeestructureitem",
+    "pk": 10,
+    "fields": {
+      "school": 3,
+      "fee_structure": 3,
+      "payment_type": 10,
+      "name": "Feeding",
+      "amount": "150.00"
+    }
+  }
+]

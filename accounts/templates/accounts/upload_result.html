@@ -4,838 +4,915 @@
 {% block content %}
 
 <style>
-
-/* ==========================
-   RESULT UPLOAD PAGE STYLE
-========================== */
-
+/* =========================================================
+   RESULT UPLOAD PAGE
+========================================================= */
 .result-page{
     background:#f6f8fc;
     min-height:100vh;
-    padding:25px 15px;
+    padding:25px 15px 50px;
 }
-
-
-/* HERO HEADER */
-
+/* =========================================================
+   HERO HEADER
+========================================================= */
 .result-header{
-    background:white;
-    border-radius:22px;
+    background:#fff;
+    border-radius:24px;
     padding:30px;
-    box-shadow:0 10px 30px rgba(0,0,0,.06);
+    box-shadow:0 12px 35px rgba(15,23,42,.07);
     margin-bottom:25px;
+    border:1px solid #eef2f7;
 }
-
-
 .result-title{
     font-size:30px;
-    font-weight:800;
+    font-weight:850;
     color:#1e293b;
+    margin:0;
+    letter-spacing:-.4px;
 }
-
-
 .result-subtitle{
     color:#64748b;
-    margin-top:5px;
+    margin-top:6px;
+    margin-bottom:0;
     font-size:15px;
+    line-height:1.6;
 }
-
-
-/* ICON */
-
+/* =========================================================
+   RESULT ICON
+========================================================= */
 .result-icon{
     width:70px;
     height:70px;
+    flex:0 0 70px;
     border-radius:20px;
     background:linear-gradient(135deg,#16a34a,#22c55e);
-    color:white;
+    color:#fff;
     display:flex;
     align-items:center;
     justify-content:center;
     font-size:32px;
+    box-shadow:0 10px 22px rgba(22,163,74,.22);
 }
-
-
-/* INFO CARDS */
-
+/* =========================================================
+   INFORMATION CARDS
+========================================================= */
 .info-card{
-
-    background:white;
+    background:#fff;
     border-radius:18px;
     padding:20px;
     height:100%;
     border:1px solid #eef2f7;
-    transition:.3s;
-
+    transition:.25s ease;
 }
-
-
 .info-card:hover{
-    transform:translateY(-3px);
-    box-shadow:0 8px 20px rgba(0,0,0,.08);
+    transform:translateY(-2px);
+    box-shadow:0 8px 20px rgba(15,23,42,.08);
 }
-
-
 .info-label{
-    font-size:13px;
+    font-size:12px;
     color:#64748b;
-    font-weight:600;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.35px;
 }
-
-
 .info-value{
-
     font-size:18px;
-    font-weight:800;
+    font-weight:850;
     margin-top:5px;
     color:#0f172a;
-
+    word-break:break-word;
 }
-
-
-/* MAIN CARD */
-
+/* =========================================================
+   MAIN RESULT CARD
+========================================================= */
 .result-card{
-
-    background:white;
-    border-radius:22px;
+    background:#fff;
+    border-radius:24px;
     padding:30px;
-    box-shadow:0 10px 30px rgba(0,0,0,.05);
+    box-shadow:0 12px 35px rgba(15,23,42,.06);
+    border:1px solid #eef2f7;
 }
-
-
-/* FORM */
-
+/* =========================================================
+   FORM
+========================================================= */
 .form-label{
-
-    font-weight:700;
+    font-weight:750;
     color:#334155;
     margin-bottom:8px;
 }
-
-
 .form-control,
 .form-select{
-
-    border-radius:12px!important;
+    border-radius:13px!important;
     padding:13px;
     border:2px solid #e2e8f0;
-
+    min-height:48px;
 }
-
-
 .form-control:focus,
 .form-select:focus{
-
     border-color:#16a34a;
-    box-shadow:0 0 0 3px rgba(22,163,74,.15);
-
+    box-shadow:0 0 0 3px rgba(22,163,74,.12);
 }
-
-
-/* BUTTON */
-
+/* =========================================================
+   SAVE BUTTON
+========================================================= */
 .save-btn{
-
     width:100%;
     border:none;
     padding:15px;
     border-radius:14px;
     background:linear-gradient(135deg,#16a34a,#15803d);
-    color:white;
-    font-weight:800;
+    color:#fff;
+    font-weight:850;
     font-size:17px;
-    transition:.3s;
-
+    transition:.25s ease;
+    box-shadow:0 8px 18px rgba(22,163,74,.16);
 }
-
-
 .save-btn:hover{
-
     transform:translateY(-2px);
-    box-shadow:0 10px 20px rgba(22,163,74,.25);
-
+    box-shadow:0 12px 24px rgba(22,163,74,.25);
 }
-
+/* =========================================================
+   ASSESSMENT CARD
+========================================================= */
+.result-card .card{
+    border:1px solid #eef2f7!important;
+    overflow:hidden;
+}
+.result-card .card-header{
+    background:#fff!important;
+}
+/* =========================================================
+   PROGRESS SUMMARY
+========================================================= */
 .progress-summary{
-
     background:linear-gradient(135deg,#0d6efd,#198754);
-    color:white;
+    color:#fff;
     padding:18px 22px;
     border-radius:16px;
-    font-size:17px;
-    font-weight:700;
+    font-size:16px;
+    font-weight:800;
     cursor:pointer;
     list-style:none;
-
+    box-shadow:0 8px 20px rgba(13,110,253,.14);
+    transition:.2s ease;
 }
-
-
+.progress-summary:hover{
+    transform:translateY(-1px);
+}
 .progress-summary .arrow{
-
     float:right;
-
 }
-
-
-
+/* =========================================================
+   PROGRESS TABLE
+========================================================= */
 .progress-table{
-
     width:100%;
     border-collapse:separate;
-    border-spacing:0 12px;
-
+    border-spacing:0 10px;
 }
-
-
 .progress-table th{
-
-    padding:15px;
+    padding:14px;
     text-align:center;
     background:#f1f5f9;
     font-weight:800;
     color:#334155;
-
+    font-size:13px;
+    white-space:nowrap;
 }
-
-
 .progress-table td{
-
-    background:white;
-    padding:18px 20px;
+    background:#fff;
+    padding:16px 18px;
     text-align:center;
     border:none;
-    box-shadow:0 4px 15px rgba(0,0,0,0.05);
-
+    box-shadow:0 4px 15px rgba(0,0,0,.05);
+    font-size:13px;
 }
-
-
 .progress-table tr td:first-child{
-
     border-radius:14px 0 0 14px;
-
 }
-
-
 .progress-table tr td:last-child{
-
     border-radius:0 14px 14px 0;
-
 }
-
-
 .student-name{
-
     font-weight:800;
     color:#1e293b;
-
 }
-
-
 .student-id{
-
     color:#64748b;
     font-weight:600;
-
 }
-
-
+/* =========================================================
+   SCORE BADGES
+========================================================= */
 .score{
-
-    padding:8px 16px;
+    padding:7px 13px;
     border-radius:20px;
-    font-weight:700;
-    display:inline-block;
-
+    font-weight:800;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    white-space:nowrap;
 }
-
-
 .ca-score{
-
     background:#e0f2fe;
     color:#0369a1;
-
 }
-
-
 .exam-score{
-
     background:#dcfce7;
     color:#15803d;
-
 }
-
-
 .total-score{
-
     background:#dbeafe;
     color:#1d4ed8;
-
 }
-
-
 .status-badge{
-
     background:#dcfce7;
     color:#15803d;
-    padding:8px 16px;
+    padding:7px 13px;
     border-radius:20px;
-    font-weight:700;
-
+    font-weight:800;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    white-space:nowrap;
 }
-
-
+/* =========================================================
+   DESKTOP PROGRESS TABLE SCROLL
+========================================================= */
+.progress-table-wrapper{
+    width:100%;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+}
+/* =========================================================
+   TABLET
+========================================================= */
+@media(max-width:1024px) and (min-width:769px){
+    .result-page{
+        padding:20px 12px 40px;
+    }
+    .result-header{
+        padding:25px;
+    }
+    .result-card{
+        padding:25px;
+    }
+}
+/* =========================================================
+   MOBILE
+========================================================= */
 @media(max-width:768px){
+    .result-page{
+        padding:8px 7px 35px;
+    }
+    /* -----------------------------------------------------
+       HERO
+    ----------------------------------------------------- */
+    .result-header{
+        padding:19px 15px;
+        border-radius:20px;
+        margin-bottom:16px;
+    }
+    .result-header .row{
+        margin-left:0;
+        margin-right:0;
+    }
+    .result-header .col-lg-7,
+    .result-header .col-lg-5{
+        padding-left:0;
+        padding-right:0;
+    }
+    .result-header .d-flex{
+        gap:11px!important;
+        align-items:center!important;
+    }
+    .result-icon{
+        width:50px;
+        height:50px;
+        flex-basis:50px;
+        border-radius:15px;
+        font-size:23px;
+        box-shadow:0 7px 15px rgba(22,163,74,.18);
+    }
+    .result-title{
+        font-size:22px;
+        line-height:1.2;
+    }
+    .result-subtitle{
+        font-size:13px;
+        line-height:1.5;
+        margin-top:5px;
+    }
+    /* -----------------------------------------------------
+       HERO INFORMATION
+    ----------------------------------------------------- */
+    .result-header .row.g-3{
+        --bs-gutter-y:.6rem;
+        --bs-gutter-x:.6rem;
+    }
+    /* =====================================================
+   MOBILE PORTRAIT — TERM / YEAR / CA / EXAM
+===================================================== */
 
-.progress-table{
-
-    min-width:850px;
-
+.result-header .row.g-3.mt-3 > .col-md-3{
+    width:50%;
+    flex:0 0 50%;
 }
 
+
+/* Keep the four cards compact */
+.result-header .row.g-3.mt-3 .info-card{
+    min-height:72px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+}
+
+
+/* Very small phones */
+@media(max-width:380px){
+
+    .result-header .row.g-3.mt-3 > .col-md-3{
+        width:50%;
+        flex:0 0 50%;
+    }
+
+    .result-header .row.g-3.mt-3 .info-card{
+        min-height:68px;
+        padding:10px;
+    }
+
+}
+    .result-header .info-card{
+        padding:12px;
+        border-radius:14px;
+    }
+    .result-header .info-label{
+        font-size:13px;
+    }
+    .result-header .info-value{
+        font-size:13px;
+        margin-top:4px;
+    }
+    /* -----------------------------------------------------
+       MAIN CARD
+    ----------------------------------------------------- */
+    .result-card{
+        padding:13px;
+        border-radius:19px;
+    }
+    /* -----------------------------------------------------
+       FORM
+    ----------------------------------------------------- */
+    .form-label{
+        font-size:15px;
+        text-align: center;
+        margin-bottom:6px;
+    }
+    .form-control,
+    .form-select{
+        min-height:46px;
+        padding:11px;
+        font-size:16px!important;
+        border-radius:12px!important;
+    }
+    /* -----------------------------------------------------
+       ASSESSMENT SECTION
+    ----------------------------------------------------- */
+    .result-card .card{
+        border-radius:16px!important;
+        margin-bottom:16px!important;
+    }
+    .result-card .card-header{
+        padding:14px!important;
+    }
+    .result-card .card-body{
+        padding:12px!important;
+    }
+    .result-card .card-header .d-flex{
+        align-items:flex-start!important;
+    }
+    .result-card .card-header h5{
+        font-size:15px!important;
+        line-height:1.35;
+    }
+    .result-card .card-header p{
+        font-size:13px!important;
+        line-height:1.45;
+    }
+    .result-card .card-header .btn{
+        padding:8px 11px!important;
+        font-size:14px;
+        white-space:nowrap;
+    }
+  /* -----------------------------------------------------
+   MOBILE CONTINUOUS ASSESSMENT TABLE
+----------------------------------------------------- */
+
+.result-card .table-responsive{
+    width:100%;
+    overflow-x:auto;
+    overflow-y:visible;
+    -webkit-overflow-scrolling:touch;
+}
+
+
+/* Keep the CA table wide enough for all controls */
+.result-card .table-responsive .table{
+    width:100%;
+    min-width:0;
+    table-layout:fixed;
+    margin-bottom:0;
+}
+
+
+/* Column widths */
+.result-card .table-responsive .table th:nth-child(1),
+.result-card .table-responsive .table td:nth-child(1){
+    width:55%;
+}
+
+
+.result-card .table-responsive .table th:nth-child(2),
+.result-card .table-responsive .table td:nth-child(2){
+    width:27%;
+}
+
+
+.result-card .table-responsive .table th:nth-child(3),
+.result-card .table-responsive .table td:nth-child(3){
+    width:18%;
+}
+
+
+/* Header */
+.result-card .table-responsive .table th{
+    padding:10px 7px;
+    font-size:11px;
+    white-space:normal;
+    line-height:1.3;
+    vertical-align:middle;
+}
+
+
+/* Cells */
+.result-card .table-responsive .table td{
+    padding:8px 6px;
+    font-size:14px;
+    vertical-align:middle;
+}
+
+
+/* Assessment title input */
+.result-card .table-responsive .ca-title{
+    width:100%;
+    min-width:0;
+
+    padding:9px 7px!important;
+
+    font-size:14px!important;
+
+    text-align:center;
+
+    box-sizing:border-box;
+}
+
+
+/* Score input */
+.result-card .table-responsive .ca-score{
+    width:100%;
+    min-width:0;
+
+    padding:11px 7px!important;
+
+    font-size:14px!important;
+
+    text-align:center;
+
+    box-sizing:border-box;
+}
+
+
+/* Action cell */
+.result-card .table-responsive .table td:last-child{
+    text-align:center!important;
+
+    padding-left:4px;
+    padding-right:4px;
+}
+
+
+/* Remove button */
+.result-card .table-responsive .table td:last-child button{
+    width:34px;
+    height:34px;
+
+    padding:0;
+
+    border:none;
+
+    border-radius:9px;
+
+    background:#fee2e2;
+
+    color:#dc2626;
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:14px;
+
+    line-height:1;
+
+    cursor:pointer;
+}
+
+
+/* Make sure dynamically-created rows don't get clipped */
+#caBody tr{
+    height:auto;
+}
+
+
+#caBody td{
+    overflow:visible;
+}
+/* =========================================================
+   VERY SMALL PHONES
+========================================================= */
+@media(max-width:380px){
+    .result-page{
+        padding-left:5px;
+        padding-right:5px;
+    }
+    .result-header{
+        padding:17px 12px;
+    }
+    .result-icon{
+        width:45px;
+        height:45px;
+        flex-basis:45px;
+        font-size:21px;
+        border-radius:13px;
+    }
+    .result-title{
+        font-size:20px;
+    }
+    .result-subtitle{
+        font-size:10px;
+    }
+    .result-header .info-card{
+        padding:10px;
+    }
+    .result-header .info-value{
+        font-size:12px;
+    }
+    .result-card{
+        padding:10px;
+    }
+    .result-card .card-header{
+        padding:12px!important;
+    }
+    .result-card .card-body{
+        padding:10px!important;
+    }
+    .result-card .card-header .btn{
+        padding:7px 9px!important;
+        font-size:11px;
+    }
+    .progress-summary{
+        font-size:12px;
+        padding:12px;
+    }
+    .progress-table{
+        min-width:620px;
+    }
+    .progress-table th,
+    .progress-table td{
+        padding:9px 7px;
+        font-size:10px;
+    }
 }
 </style>
-
-
 <div class="result-page">
-
-
-<!-- HEADER -->
-
+<!-- =========================================================
+     HEADER
+========================================================= -->
 <div class="result-header">
-
 <div class="row align-items-center">
-
-
-<div class="col-lg-7">
-
-<div class="d-flex align-items-center gap-3">
-
-<div class="result-icon">
-    📝
+    <div class="col-lg-7">
+        <div class="d-flex align-items-center gap-3">
+            <div class="result-icon">
+                📝
+            </div>
+            <div>
+                <h2 class="result-title">
+                    Upload Results
+                </h2>
+                <p class="result-subtitle">
+                    Enter continuous assessment and examination scores for your assigned class.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5 mt-4 mt-lg-0">
+        <div class="row g-3">
+            <div class="col-6">
+                <div class="info-card">
+                    <div class="info-label">
+                        Class
+                    </div>
+                    <div class="info-value">
+                        🏫 {{ school_class.name }}
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="info-card">
+                    <div class="info-label">
+                        Subject
+                    </div>
+                    <div class="info-value">
+                        📘 {{ subject.name }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-
-
-<div>
-
-<h2 class="result-title">
-    Upload Results
-</h2>
-
-
-<p class="result-subtitle">
-Enter continuous assessment and examination scores for your assigned class.
-</p>
-
-
-</div>
-
-</div>
-
-</div>
-
-
-
-<div class="col-lg-5 mt-4 mt-lg-0">
-
-<div class="row g-3">
-
-
-<div class="col-6">
-
-<div class="info-card">
-
-<div class="info-label">
-Class
-</div>
-
-<div class="info-value">
-🏫 {{ school_class.name }}
-</div>
-
-</div>
-
-</div>
-
-
-
-<div class="col-6">
-
-<div class="info-card">
-
-<div class="info-label">
-Subject
-</div>
-
-<div class="info-value">
-📘 {{ subject.name }}
-</div>
-
-</div>
-
-</div>
-
-
-</div>
-
-</div>
-
-
-</div>
-
-
 {% if active_term %}
-
 <div class="row g-3 mt-3">
-
-
-<div class="col-md-3">
-
-<div class="info-card">
-
-<div class="info-label">
-Term
+    <div class="col-md-3">
+        <div class="info-card">
+            <div class="info-label">
+                Term
+            </div>
+            <div class="info-value">
+                {{ active_term.get_term_number_display }}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="info-card">
+            <div class="info-label">
+                Academic Year
+            </div>
+            <div class="info-value">
+                {{ active_term.academic_year }}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="info-card">
+<div class="info-label">Maximum SBA</div>
+<div class="info-value text-warning">
+    {{ active_term.sba_total }}
 </div>
 
-<div class="info-value">
-{{ active_term.get_term_number_display }}
-</div>
-
-</div>
-
-</div>
-
-
-
-<div class="col-md-3">
-
-<div class="info-card">
-
-<div class="info-label">
-Academic Year
-</div>
-
-<div class="info-value">
-{{ active_term.academic_year }}
-</div>
-
-</div>
-
-</div>
-
-
-
-<div class="col-md-3">
-
-<div class="info-card">
-
-<div class="info-label">
-Maximum CA
-</div>
-
+<div class="info-label">Maximum CA</div>
 <div class="info-value text-primary">
-{{ active_term.ca_total }}
+    {{ active_term.ca_total }}
 </div>
 
-</div>
-
-</div>
-
-
-
-<div class="col-md-3">
-
-<div class="info-card">
-
-<div class="info-label">
-Maximum Exam
-</div>
-
+<div class="info-label">Maximum Exam</div>
 <div class="info-value text-success">
-{{ active_term.exam_total }}
+    {{ active_term.exam_total }}
 </div>
-
+        </div>
+    </div>
 </div>
-
-</div>
-
-
-</div>
-
 {% endif %}
-
-
 </div>
-
-   <!-- MAIN RESULT ENTRY CARD -->
-
+<!-- =========================================================
+     MAIN RESULT ENTRY CARD
+========================================================= -->
 <div class="result-card">
-
-
 {% if messages %}
-
-{% for message in messages %}
-
-<div class="alert 
-{% if message.tags == 'success' %}
-alert-success
-{% else %}
-alert-danger
+    {% for message in messages %}
+    <div class="alert
+    {% if message.tags == 'success' %}
+        alert-success
+    {% else %}
+        alert-danger
+    {% endif %}
+    rounded-3">
+        {{ message }}
+    </div>
+    {% endfor %}
 {% endif %}
-rounded-3">
-
-{{ message }}
-
-</div>
-
-{% endfor %}
-
-{% endif %}
-
-
-
 {% if active_term %}
-
-
 <form method="POST" id="resultForm">
-
-{% csrf_token %}
-
-
-
-<!-- STUDENT SELECT -->
-
-<div class="mb-4">
-
-<label class="form-label">
-Select Student
-</label>
-
-
-{{ form.student }}
-
-
-{% if form.student.errors %}
-
-<div class="text-danger small mt-2">
-{{ form.student.errors }}
-</div>
-
-{% endif %}
-
-
-</div>
-
-
-
-
-<!-- CA SECTION -->
-
-<div class="card border-0 shadow-sm rounded-4 mb-4">
-
-
-<div class="card-header bg-white border-0 p-4">
-
-
-<div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-
-
-<div>
-
-<h5 class="fw-bold mb-1">
-📚 Continuous Assessment
-</h5>
-
-
-<p class="text-muted mb-0 small">
-Add quizzes, tests, assignments or any assessment required.
-</p>
-
-
-</div>
-
-
-
-<button type="button"
-onclick="addRow()"
-class="btn btn-primary rounded-pill px-4">
-
-➕ Add Assessment
-
-</button>
-
-
-
-</div>
-
-
-</div>
-
-
-
-<div class="card-body p-4">
-
-
-
-<div id="score-message"
-class="text-danger fw-bold text-center mb-3">
-</div>
-
-
-
-<div class="table-responsive">
-
-
-<table class="table align-middle">
-
-<thead class="table-light">
-
-
-<tr>
-
-<th class="text-center">
-Assessment Title
-</th>
-
-
-<th class="text-center">
-Score
-</th>
-
-
-<th class="text-center">
-Action
-</th>
-
-
-</tr>
-
-
-</thead>
-
-
-
-<tbody id="caBody">
-
-
-</tbody>
-
-
-
-</table>
-
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
-
-<input type="hidden"
-name="ca_data"
-id="caData">
-
-
-
-
-
-<!-- EXAM -->
-
-
-<div class="mb-4">
-
-
-<label class="form-label text-center d-block">
-
-Exam Score 
-(Max {{ active_term.exam_total }})
-
-</label>
-
-
-{{ form.exam_score }}
-
-
-</div>
-
-
-
-
-<button type="submit"
-class="save-btn">
-
-💾 Save Result
-
-</button>
-
-
-
+    {% csrf_token %}
+    <!-- =================================================
+         STUDENT SELECT
+    ================================================= -->
+    <div class="mb-4">
+        <label class="form-label">
+            Select Student
+        </label>
+        {{ form.student }}
+        {% if form.student.errors %}
+        <div class="text-danger small mt-2">
+            {{ form.student.errors }}
+        </div>
+        {% endif %}
+    </div>
+    <!-- =================================================
+         CONTINUOUS ASSESSMENT
+    ================================================= -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-header bg-white border-0 p-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h5 class="fw-bold mb-1">
+                        📚 Continuous Assessment
+                    </h5>
+                    <p class="text-muted mb-0 small">
+                        Add quizzes, tests, assignments or any assessment required.
+                    </p>
+                </div>
+                <button type="button"
+                        onclick="addRow()"
+                        class="btn btn-primary rounded-pill px-4">
+                    ➕ Add Assessment
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-4">
+            <div id="score-message"
+                 class="text-danger fw-bold text-center mb-3">
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center">
+                                Assessment Title
+                            </th>
+                            <th class="text-center">
+                                Score
+                            </th>
+                            <th class="text-center">
+                                Action
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="caBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <input type="hidden"
+           name="ca_data"
+           id="caData">
+    <!-- =================================================
+         EXAM
+    ================================================= -->
+    <div class="mb-4">
+        <label class="form-label text-center d-block">
+            Exam Score
+            (Max {{ 100 }})
+        </label>
+        {{ form.exam_score }}
+    </div>
+    <!-- =================================================
+         SAVE
+    ================================================= -->
+    <button type="submit"
+            class="save-btn">
+        💾 Save Result
+    </button>
 </form>
-
-
 {% endif %}
-
-       <!-- PROGRESS TABLE -->
+<!-- =====================================================
+     PROGRESS
+===================================================== -->
 {% if entered_results %}
-
 <details class="mt-4">
-
-<summary class="progress-summary">
-
-    📊 Progress:
-    {{ entered_results.count }}/{{ students.count }}
-    Students Uploaded
-
-    <span class="arrow">▼</span>
-
-</summary>
-
-
-<div class="table-responsive mt-3">
-
-<table class="progress-table">
-
-<thead>
-
-<tr>
-    <th>Student Name</th>
-    <th>Student ID</th>
-    <th>CA</th>
-    <th>Exam</th>
-    <th>Total Score</th>
-    <th>Status</th>
-</tr>
-
-</thead>
-
-
-<tbody>
-
-{% for result in entered_results %}
-
-<tr>
-
-<td>
-    <div class="student-name">
-        {{ result.student.first_name }}
-        {{ result.student.last_name }}
+    <summary class="progress-summary">
+        📊 Progress:
+        {{ entered_results.count }}/{{ students.count }}
+        Students Uploaded
+        <span class="arrow">
+            ▼
+        </span>
+    </summary>
+    <div class="progress-table-wrapper mt-3">
+        <table class="progress-table">
+            <thead>
+                <tr>
+                    <th>
+                        Student Name
+                    </th>
+                    <th>
+                        Student ID
+                    </th>
+                    <th>
+                        CA
+                    </th>
+                    <th>
+                        Exam
+                    </th>
+                    <th>
+                        Total Score
+                    </th>
+                    <th>
+                        Status
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for result in entered_results %}
+            <tr>
+                <td>
+                    <div class="student-name">
+                        {{ result.student.first_name }}
+                        {{ result.student.last_name }}
+                    </div>
+                </td>
+                <td>
+                    <div class="student-id">
+                        {{ result.student.student_number }}
+                    </div>
+                </td>
+                <td>
+                    <span class="score ca-score">
+                        {{ result.class_score |floatformat:0 }}
+                    </span>
+                </td>
+                <td>
+                    <span class="score exam-score">
+                        {{ result.exam_converted_score|floatformat:0 }}
+                    </span>
+                </td>
+                <td>
+                    <span class="score total-score">
+                        {{ result.total_score |floatformat:0 }}
+                    </span>
+                </td>
+                <td>
+                    <span class="status-badge">
+                        ✓ Saved
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
-</td>
-
-
-<td>
-    <div class="student-id">
-        {{ result.student.student_number }}
-    </div>
-</td>
-
-
-<td>
-    <span class="score ca-score">
-        {{ result.class_score }}
-    </span>
-</td>
-
-
-<td>
-    <span class="score exam-score">
-        {{ result.exam_score }}
-    </span>
-</td>
-
-
-<td>
-    <span class="score total-score">
-        {{ result.class_score|add:result.exam_score }}
-    </span>
-</td>
-
-
-<td>
-    <span class="status-badge">
-        ✓ Saved
-    </span>
-</td>
-
-
-</tr>
-
-{% endfor %}
-
-</tbody>
-
-
-</table>
-
-</div>
-
 </details>
-
 {% else %}
-<p style="margin-top: 25px; text-align: center; color: #666;">No results entered yet for this class.</p>
+<p style="margin-top:25px; text-align:center; color:#666;">
+    No results entered yet for this class.
+</p>
 {% endif %}
-    </div>
 </div>
 </div>
+<!-- =========================================================
+     EXISTING JAVASCRIPT — KEPT INTACT
+========================================================= -->
 <script>
+    const MAX_SBA = {{ active_term.sba_total }};
     const MAX_CA = {{ active_term.ca_total }};
     const MAX_EXAM = {{ active_term.exam_total }};
 </script>
-
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-
     console.log("JS READY");
-
     function addRow() {
-
         let tbody = document.getElementById("caBody");
-
         let row = document.createElement("tr");
-
         row.innerHTML = `
-            <td style="padding-right:20px;">
+            <td>
                 <input type="text"
                     class="ca-title form-control text-center"
                     placeholder="Quiz 1 / Midterm / Test">
             </td>
-
-            <td style="padding-right:20px;">
+            <td>
                 <input type="number"
                     class="ca-score form-control text-center"
                     placeholder="20 / 30 / 10">
             </td>
-
             <td style="text-align:center;">
                 <button type="button" onclick="this.closest('tr').remove()">
                     ❌
                 </button>
             </td>
         `;
-
         tbody.appendChild(row);
     }
-
     window.addRow = addRow;
-
     const form = document.getElementById("resultForm");
-
     form.addEventListener("submit", function (e) {
-
         let rows = document.querySelectorAll("#caBody tr");
-
         let data = [];
-
         rows.forEach(row => {
-
             let title = row.querySelector(".ca-title")?.value;
             let score = row.querySelector(".ca-score")?.value;
-
             if (title && score) {
                 data.push({
                     title: title,
@@ -843,51 +920,44 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
             }
         });
-
         document.getElementById("caData").value = JSON.stringify(data);
     });
-
     // =========================
     // INLINE VALIDATION (FIXED)
     // =========================
     document.addEventListener("input", function (e) {
-
         const msgBox = document.getElementById("score-message");
+    // SBA validation
+    if (e.target.classList.contains("ca-score")) {
+        let totalSBA = 0;
 
-        // CA validation
-        if (e.target.classList.contains("ca-score")) {
+        document.querySelectorAll(".ca-score").forEach(input => {
+            totalSBA += parseFloat(input.value || 0);
+        });
 
-            let value = parseFloat(e.target.value || 0);
+        if (totalSBA > MAX_SBA) {
+            e.target.value = "";
+            msgBox.textContent =
+                "Total SBA cannot be more than " + MAX_SBA;
 
-            if (value > MAX_CA) {
-                e.target.value = MAX_CA;
-
-                msgBox.textContent = "CA cannot be more than " + MAX_CA;
-
-                setTimeout(() => {
-                    msgBox.textContent = "";
-                }, 3000);
-            }
+            setTimeout(() => {
+                msgBox.textContent = "";
+            }, 3000);
         }
-
+    }
         // Exam validation
         if (e.target.name === "exam_score") {
-
             let value = parseFloat(e.target.value || 0);
-
-            if (value > MAX_EXAM) {
-                e.target.value = MAX_EXAM;
-
-                msgBox.textContent = "Exam cannot be more than " + MAX_EXAM;
-
+            if (value > 100) {
+                e.target.value = 100;
+                msgBox.textContent = "Exam cannot be more than 100";
                 setTimeout(() => {
                     msgBox.textContent = "";
                 }, 3000);
             }
         }
-
     });
-
 });
 </script>
+
 {% endblock %}

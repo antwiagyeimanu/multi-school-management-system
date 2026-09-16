@@ -4,128 +4,972 @@
 {% block content %}
 
 <style>
-/* ONLY P and A - FINAL RULE */
-input[type="radio"] {
-    appearance: none !important;
-    -webkit-appearance: none !important;
-    width: 18px;
-    height: 18px;
-    border: 2px solid #999;
-    border-radius: 3px;
-    background: white;
-    cursor: pointer;
-    position: relative;
-    margin: 0;
+/* =========================================================
+   PAGE
+========================================================= */
+.attendance-page{
+    max-width:1100px;
+    margin:0 auto;
+    padding:25px 0 50px;
 }
-input[type="radio"][value="P"]:checked {
-    background: #198754;
-    border-color: #198754;
+/* =========================================================
+   RADIO CHECKBOX
+   ONLY P AND A
+========================================================= */
+input[type="radio"]{
+    appearance:none !important;
+    -webkit-appearance:none !important;
+    width:20px;
+    height:20px;
+    border:2px solid #cbd5e1;
+    border-radius:6px;
+    background:#fff;
+    cursor:pointer;
+    position:relative;
+    margin:0;
+    transition:.18s ease;
 }
-input[type="radio"][value="A"]:checked {
-    background: #dc3545;
-    border-color: #dc3545;
+input[type="radio"][value="P"]:checked{
+    background:#198754;
+    border-color:#198754;
+    box-shadow:0 3px 8px rgba(25,135,84,.25);
 }
-input[type="radio"]:checked::after {
-    content: '✓';
-    color: white;
-    font-size: 14px;
-    font-weight: bold;
-    position: absolute;
-    top: -2px;
-    left: 3px;
+input[type="radio"][value="A"]:checked{
+    background:#dc3545;
+    border-color:#dc3545;
+    box-shadow:0 3px 8px rgba(220,53,69,.25);
+}
+input[type="radio"]:checked::after{
+    content:'✓';
+    color:#fff;
+    font-size:14px;
+    font-weight:900;
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-55%);
+}
+/* =========================================================
+   HERO
+========================================================= */
+.attendance-hero{
+    position:relative;
+    background:linear-gradient(
+        135deg,
+        #2563eb 0%,
+        #1d4ed8 55%,
+        #1e40af 100%
+    );
+    color:#fff;
+    padding:30px;
+    border-radius:24px;
+    margin-bottom:24px;
+    overflow:hidden;
+    box-shadow:
+        0 15px 35px rgba(37,99,235,.20);
+}
+.attendance-hero::before{
+    content:"";
+    position:absolute;
+    width:240px;
+    height:240px;
+    border-radius:50%;
+    background:rgba(255,255,255,.07);
+    right:-80px;
+    top:-120px;
+}
+.attendance-hero::after{
+    content:"";
+    position:absolute;
+    width:140px;
+    height:140px;
+    border-radius:50%;
+    background:rgba(255,255,255,.05);
+    left:-70px;
+    bottom:-80px;
+}
+.attendance-hero-content{
+    position:relative;
+    z-index:2;
+}
+.attendance-hero-title{
+    display:flex;
+    align-items:center;
+    gap:13px;
+    margin:0;
+    font-size:28px;
+    font-weight:850;
+}
+.attendance-hero-icon{
+    width:48px;
+    height:48px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:14px;
+    background:rgba(255,255,255,.15);
+    font-size:22px;
+    backdrop-filter:blur(6px);
+}
+.attendance-hero-subtitle{
+    margin:10px 0 0 61px;
+    font-size:14px;
+    opacity:.9;
+    line-height:1.5;
+}
+/* =========================================================
+   MESSAGES
+========================================================= */
+.attendance-message{
+    border-radius:14px;
+    padding:12px 15px;
+    margin-bottom:18px;
+    font-size:14px;
+    font-weight:600;
+}
+.attendance-message.success{
+    background:#d1e7dd;
+    color:#0f5132;
+    border:1px solid #badbcc;
+}
+/* =========================================================
+   SELECTION CARD
+========================================================= */
+.selection-card{
+    background:#fff;
+    border:1px solid #e5e7eb;
+    border-radius:22px;
+    padding:23px;
+    margin-bottom:24px;
+    box-shadow:
+        0 8px 25px rgba(15,23,42,.07);
+}
+.selection-heading{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:9px;
+    margin:0 0 18px;
+    color:#1e293b;
+    font-size:18px;
+    font-weight:800;
+}
+.selection-heading i{
+    color:#2563eb;
+}
+.selection-form{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 170px auto;
+    gap:12px;
+    align-items:end;
+}
+.selection-field label{
+    display:block;
+    margin-bottom:7px;
+    color:#475569;
+    font-size:12px;
+    font-weight:800;
+}
+.selection-field label i{
+    color:#2563eb;
+    margin-right:5px;
+}
+.selection-field select,
+.selection-field input{
+    width:100%;
+    min-height:45px;
+    padding:9px 12px;
+    border:1px solid #dbe3ef;
+    border-radius:12px;
+    background:#fff;
+    color:#334155;
+    font-size:13px;
+    font-weight:600;
+    outline:none;
+    transition:.2s ease;
+}
+.selection-field select:focus,
+.selection-field input:focus{
+    border-color:#2563eb;
+    box-shadow:
+        0 0 0 3px rgba(37,99,235,.10);
+}
+.load-btn{
+    min-height:45px;
+    border:none;
+    border-radius:12px !important;
+    padding:0 20px;
+    font-weight:800;
+    box-shadow:
+        0 5px 12px rgba(13,110,253,.18);
+}
+/* =========================================================
+   STUDENT ATTENDANCE CARD
+========================================================= */
+.attendance-card{
+    background:#fff;
+    border:1px solid #e5e7eb;
+    border-radius:22px;
+    overflow:hidden;
+    box-shadow:
+        0 10px 28px rgba(15,23,42,.07);
+}
+/* =========================================================
+   ATTENDANCE HEADER
+========================================================= */
+.attendance-card-header{
+    padding:22px 24px;
+    border-bottom:1px solid #eef2f7;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:15px;
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff,
+            #f8fafc
+        );
+}
+.attendance-class-title{
+    margin:0;
+    color:#1e293b;
+    font-size:18px;
+    font-weight:850;
+    line-height:1.5;
+}
+.attendance-class-title i{
+    color:#2563eb;
+}
+.student-count{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:7px 12px;
+    border-radius:30px;
+    background:#e7f3ff;
+    color:#1d4ed8;
+    border:1px solid #d5e8ff;
+    font-size:13px;
+    font-weight:800;
+    white-space:nowrap;
+}
+/* =========================================================
+   TABLE AREA
+========================================================= */
+.attendance-table-wrapper{
+    padding:18px 20px 5px;
+    overflow-x:auto;
+}
+.attendance-table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+}
+.attendance-table thead th{
+    padding:13px 14px;
+    background:#f8fafc;
+    color:#475569;
+    border-bottom:1px solid #e2e8f0;
+    font-size:12px;
+    font-weight:850;
+    text-transform:uppercase;
+    letter-spacing:.3px;
+}
+.attendance-table thead th:first-child{
+    border-radius:10px 0 0 10px;
+}
+.attendance-table thead th:last-child{
+    border-radius:0 10px 10px 0;
+}
+.attendance-table tbody tr{
+    transition:.18s ease;
+}
+.attendance-table tbody tr:hover{
+    background:#f8fafc;
+}
+.attendance-table tbody td{
+    padding:13px 14px;
+    border-bottom:1px solid #f1f5f9;
+    color:#334155;
+    font-size:14px;
+    vertical-align:middle;
+}
+.attendance-table tbody tr:last-child td{
+    border-bottom:none;
+}
+/* =========================================================
+   STUDENT NAME
+========================================================= */
+.student-name{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-weight:650;
+    color:#334155;
+}
+.student-number{
+    color:#64748b;
+    font-size:12px;
+    font-weight:600;
+}
+.student-avatar{
+    width:34px;
+    height:34px;
+    flex:0 0 34px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:10px;
+    background:#eff6ff;
+    color:#2563eb;
+    font-size:14px;
+}
+/* =========================================================
+   PRESENT / ABSENT BUTTON HEADER
+========================================================= */
+.attendance-action-btn{
+    width:100%;
+    min-width:100px;
+    border-radius:10px !important;
+    font-size:12px !important;
+    font-weight:800 !important;
+    padding:8px 10px !important;
+}
+/* =========================================================
+   RADIO CELL
+========================================================= */
+.attendance-radio-cell{
+    text-align:center;
+    width:120px;
+}
+.radio-wrapper{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:30px;
+}
+/* =========================================================
+   FOOTER ACTIONS
+========================================================= */
+.attendance-actions{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    padding:20px;
+    border-top:1px solid #eef2f7;
+    background:#fafcff;
+}
+.save-attendance-btn,
+.report-attendance-btn{
+    min-height:44px;
+    border:none;
+    border-radius:12px !important;
+    padding:0 20px;
+    font-size:14px;
+    font-weight:800;
+}
+.save-attendance-btn{
+    box-shadow:
+        0 5px 14px rgba(25,135,84,.18);
+}
+.report-attendance-btn{
+    box-shadow:
+        0 5px 14px rgba(108,117,125,.12);
+}
+/* =========================================================
+   EMPTY / MOBILE PREP
+========================================================= */
+.mobile-student-list{
+    display:none;
+}
+/* =========================================================
+   TABLET
+========================================================= */
+@media(max-width:1024px) and (min-width:769px){
+    .attendance-page{
+        padding:20px 12px 40px;
+    }
+    .attendance-hero{
+        padding:26px;
+    }
+    .attendance-hero-title{
+        font-size:25px;
+    }
+    .selection-form{
+        grid-template-columns:minmax(0,1fr) 160px auto;
+    }
+    .attendance-table-wrapper{
+        padding:15px;
+    }
+    .attendance-table thead th,
+    .attendance-table tbody td{
+        padding:11px 10px;
+    }
+    .attendance-table tbody td{
+        font-size:13px;
+    }
+}
+/* =========================================================
+   MOBILE
+========================================================= */
+@media(max-width:768px){
+    .attendance-page{
+        width:100%;
+        padding:10px 8px 35px;
+    }
+    /* HERO */
+    .attendance-hero{
+        padding:22px 17px;
+        border-radius:20px;
+        margin-bottom:18px;
+        text-align:center;
+    }
+    .attendance-hero-title{
+        justify-content:center;
+        font-size:26px;
+        font-weight: 900;
+        gap:9px;
+    }
+    .attendance-hero-icon{
+        width:42px;
+        height:42px;
+        border-radius:12px;
+        font-size:19px;
+    }
+    .attendance-hero-subtitle{
+        margin:8px 0 0;
+        font-size:12px;
+    }
+    /* SELECTION */
+    .selection-card{
+        padding:17px;
+        border-radius:18px;
+        margin-bottom:18px;
+    }
+    .selection-heading{
+        font-size:18px;
+        margin-bottom:15px;
+    }
+    .selection-form{
+        grid-template-columns:1fr;
+        gap:11px;
+    }
+    .selection-field select,
+    .selection-field input{
+        min-height:46px;
+        font-size:16px;
+    }
+    .load-btn{
+        width:100%;
+        min-height:46px;
+    }
+    /* ATTENDANCE CARD */
+    .attendance-card{
+        border-radius:18px;
+    }
+    .attendance-card-header{
+        padding:17px 15px;
+        align-items:flex-start;
+        flex-direction:column;
+        gap:10px;
+    }
+    .attendance-class-title{
+        font-size:16px;
+        line-height:1.55;
+    }
+    .student-count{
+        align-self:flex-start;
+        font-size:14px;
+    }
+    /* HIDE DESKTOP TABLE */
+    .attendance-table-wrapper{
+        display:none;
+    }
+    /* MOBILE STUDENT LIST */
+    .mobile-student-list{
+        display:block;
+        padding:10px 12px 5px;
+    }
+    .mobile-student-row{
+        background:#fff;
+        border:1px solid #edf1f5;
+        border-radius:15px;
+        padding:12px;
+        margin-bottom:9px;
+        box-shadow:
+            0 3px 10px rgba(15,23,42,.035);
+    }
+    .mobile-student-info{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        min-width:0;
+        margin-bottom:11px;
+    }
+    .mobile-student-avatar{
+        width:35px;
+        height:35px;
+        flex:0 0 35px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border-radius:10px;
+        background:#eff6ff;
+        color:#2563eb;
+        font-size:16px;
+    }
+    .mobile-student-details{
+        min-width:0;
+    }
+    .mobile-student-name{
+        color:#1e293b;
+        font-size:15px;
+        font-weight:800;
+        line-height:1.35;
+        word-break:break-word;
+    }
+    .mobile-student-number{
+        margin-top:2px;
+        color:#64748b;
+        font-size:13px;
+        font-weight:600;
+    }
+    .mobile-attendance-actions{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:8px;
+    }
+    .mobile-status-option{
+        min-height:42px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        gap:7px;
+        border-radius:11px;
+        background:#f8fafc;
+        border:1px solid #e2e8f0;
+        color:#64748b;
+        font-size:14px;
+        font-weight:800;
+        cursor:pointer;
+        transition:.18s ease;
+    }
+    .mobile-status-option.present-option{
+        color:#198754;
+    }
+    .mobile-status-option.absent-option{
+        color:#dc3545;
+    }
+    .mobile-status-option:has(input[value="P"]:checked){
+        background:#eaf7f0;
+        border-color:#198754;
+        color:#198754;
+    }
+    .mobile-status-option:has(input[value="A"]:checked){
+        background:#fff0f1;
+        border-color:#dc3545;
+        color:#dc3545;
+    }
+    .mobile-status-option input{
+        width:18px;
+        height:18px;
+    }
+    /* FOOTER */
+    .attendance-actions{
+        padding:15px 12px 17px;
+        flex-direction:column;
+        gap:9px;
+    }
+    .save-attendance-btn,
+    .report-attendance-btn{
+        width:100%;
+        min-height:46px;
+    }
+}
+/* =========================================================
+   VERY SMALL PHONES
+========================================================= */
+@media(max-width:380px){
+    .attendance-page{
+        padding-left:5px;
+        padding-right:5px;
+    }
+    .attendance-hero{
+        padding:19px 12px;
+    }
+    .attendance-hero-title{
+        font-size:20px;
+    }
+    .attendance-hero-subtitle{
+        font-size:11px;
+    }
+    .selection-card{
+        padding:14px;
+    }
+    .attendance-card-header{
+        padding:15px 12px;
+    }
+    .attendance-class-title{
+        font-size:14px;
+    }
+    .mobile-student-list{
+        padding:8px 9px 3px;
+    }
+    .mobile-student-row{
+        padding:10px;
+        border-radius:13px;
+    }
+    .mobile-student-name{
+        font-size:12px;
+    }
+    .mobile-status-option{
+        min-height:39px;
+        font-size:11px;
+    }
+}
+/* =========================================================
+   OPTIONAL FALLBACK FOR BROWSERS WITHOUT :has()
+========================================================= */
+@supports not selector(:has(*)){
+    .mobile-status-option{
+        background:#f8fafc;
+    }
 }
 </style>
-
-<div class="container" style="max-width:800px; margin:20px auto;">
-    <!-- HEADER CARD -->
-    <div style="background:#fff; padding:18px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.08); margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
-        <h2 style="margin:0;">📋 Mark Attendance </h2>
+<div class="attendance-page">
+<!-- =====================================================
+     HERO
+===================================================== -->
+<div class="attendance-hero">
+    <div class="attendance-hero-content">
+        <h2 class="attendance-hero-title">
+            <span class="attendance-hero-icon">
+                <i class="fas fa-clipboard-check"></i>
+            </span>
+            Mark Attendance
+        </h2>
+        <p class="attendance-hero-subtitle">
+            Record and manage student attendance for your assigned class or subject.
+        </p>
     </div>
-
-    {% if messages %}
-        {% for message in messages %}
-            <div style="background:#d1e7dd; padding:10px; border-radius:8px; margin-bottom:15px;">{{ message }}</div>
-        {% endfor %}
+</div>
+<!-- =====================================================
+     MESSAGES
+===================================================== -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="attendance-message success">
+            <i class="fas fa-check-circle me-2"></i>
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+<!-- =====================================================
+     SELECTION CARD
+===================================================== -->
+<div class="selection-card">
+    {% if attendance_mode == "class_teacher" %}
+        <h3 class="selection-heading">
+            <i class="fas fa-school"></i>
+            Select Class
+        </h3>
+    {% else %}
+        <h3 class="selection-heading">
+            <i class="fas fa-book-open"></i>
+            Select Class & Subject
+        </h3>
     {% endif %}
-
-    <!-- SELECTION CARD -->
-    <div style="background:#fff; padding:20px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.08); margin-bottom:20px; text-align:center;">
-       {% if attendance_mode == "class_teacher" %}<h3 style="margin-bottom:15px;">📘 Select Class</h3>
-       {% else %}<h3 style="margin-bottom:15px;">📘 Select Class & Subject</h3>{% endif %}
-        <form method="get">
-            <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center; align-items:center;">
-                <select name="tsc" required style="padding:10px; border-radius:8px; width:300px;">
-                    {% if attendance_mode == "class_teacher" %}<option value="">-- Choose Class --</option>
-                    {% else %}<option value="">-- Choose Class & Subject --</option>{% endif %}
+    <form method="get">
+        <div class="selection-form">
+            <!-- CLASS / SUBJECT -->
+            <div class="selection-field">
+                <label>
+                    <i class="fas fa-users"></i>
+                    {% if attendance_mode == "class_teacher" %}
+                        Class
+                    {% else %}
+                        Class & Subject
+                    {% endif %}
+                </label>
+                <select name="tsc" required>
+                    {% if attendance_mode == "class_teacher" %}
+                        <option value="">
+                            -- Choose Class --
+                        </option>
+                    {% else %}
+                        <option value="">
+                            -- Choose Class & Subject --
+                        </option>
+                    {% endif %}
                     {% for tsc in tsc_options %}
-                        <option value="{{ tsc.id }}" {% if selected_tsc.id == tsc.id %}selected{% endif %}>
-                            {% if attendance_mode == "class_teacher" %}{{ tsc.school_class.name }}{% else %}{{ tsc.school_class.name }} - {{ tsc.subject.name }}{% endif %}
+                        <option
+                            value="{{ tsc.id }}"
+                            {% if selected_tsc.id == tsc.id %}
+                                selected
+                            {% endif %}
+                        >
+                            {% if attendance_mode == "class_teacher" %}
+                                {{ tsc.school_class.name }}
+                            {% else %}
+                                {{ tsc.school_class.name }}
+                                -
+                                {{ tsc.subject.name }}
+                            {% endif %}
                         </option>
                     {% endfor %}
                 </select>
-                <input type="date" name="date" value="{{ selected_date }}" id="datePicker" min="{{ min_date }}" max="{{ max_date }}" style="padding:10px; border-radius:8px; font-weight:bold; width:160px;">
-                <button type="submit" style="background:#0d6efd; color:white; border:none; padding:10px 15px; border-radius:8px; cursor:pointer;">📥 Load Students</button>
+            </div>
+            <!-- DATE -->
+            <div class="selection-field">
+                <label>
+                    <i class="fas fa-calendar-day"></i>
+                    Date
+                </label>
+                <input
+                    type="date"
+                    name="date"
+                    value="{{ selected_date }}"
+                    id="datePicker"
+                    min="{{ min_date }}"
+                    max="{{ max_date }}"
+                >
+            </div>
+            <!-- LOAD -->
+            <button
+                type="submit"
+                class="btn btn-primary load-btn"
+            >
+                <i class="fas fa-download me-1"></i>
+                Load Students
+            </button>
+        </div>
+    </form>
+</div>
+<!-- =====================================================
+     STUDENTS
+===================================================== -->
+{% if students %}
+    <div class="attendance-card">
+        <!-- =================================================
+             CARD HEADER
+        ================================================= -->
+        <div class="attendance-card-header">
+            <h3 class="attendance-class-title">
+                {% if attendance_mode == "class_teacher" %}
+                    <i class="fas fa-chalkboard-teacher me-1"></i>
+                    {{ selected_tsc.school_class.name }}
+                {% else %}
+                    <i class="fas fa-book me-1"></i>
+                    {{ selected_tsc.subject.name }}
+                    <span class="mx-1">•</span>
+                    <i class="fas fa-school me-1"></i>
+                    {{ selected_tsc.school_class.name }}
+                {% endif %}
+                <span class="text-muted mx-1">|</span>
+                <i class="fas fa-calendar-day me-1"></i>
+                <strong>{{ selected_date }}</strong>
+            </h3>
+            <span class="student-count">
+                <i class="fas fa-users"></i>
+                {{ students|length }} Students
+            </span>
+        </div>
+        <!-- =================================================
+             DESKTOP / TABLET TABLE
+        ================================================= -->
+        <form method="post" id="attendanceForm">
+            {% csrf_token %}
+            <div class="attendance-table-wrapper">
+                <table class="attendance-table">
+                    <thead>
+                        <tr>
+                            <th>
+                                Student Name
+                            </th>
+                            <th class="attendance-radio-cell">
+                                <button
+                                    type="button"
+                                    onclick="markAll('P')"
+                                    class="btn btn-success btn-sm attendance-action-btn"
+                                >
+                                    <i class="fas fa-user-check me-1"></i>
+                                    Present
+                                </button>
+                            </th>
+                            <th class="attendance-radio-cell">
+                                <button
+                                    type="button"
+                                    onclick="markAll('A')"
+                                    class="btn btn-danger btn-sm attendance-action-btn"
+                                >
+                                    <i class="fas fa-user-times me-1"></i>
+                                    Absent
+                                </button>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                            {% with status=attendance_dict|get_item:student.id %}
+                                <tr>
+                                    <td>
+                                        <div class="student-name">
+                                            <span class="student-avatar">
+                                                <i class="fas fa-user"></i>
+                                            </span>
+                                            <div>
+                                                <div>
+                                                    {{ forloop.counter }}.
+                                                    {{ student.get_full_name|default:student.username }}
+                                                </div>
+                                                <div class="student-number">
+                                                    {{ student.student_number }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <!-- PRESENT -->
+                                    <td class="attendance-radio-cell">
+                                        <div class="radio-wrapper">
+                                            <input
+                                                type="radio"
+                                                name="status_{{ student.id }}"
+                                                value="P"
+                                                {% if status == 'P' %}
+                                                    checked
+                                                {% endif %}
+                                            >
+                                        </div>
+                                    </td>
+                                    <!-- ABSENT -->
+                                    <td class="attendance-radio-cell">
+                                        <div class="radio-wrapper">
+                                            <input
+                                                type="radio"
+                                                name="status_{{ student.id }}"
+                                                value="A"
+                                                {% if status == 'A' %}
+                                                    checked
+                                                {% endif %}
+                                            >
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endwith %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- =================================================
+                 MOBILE STUDENT LIST
+            ================================================= -->
+            <div class="mobile-student-list">
+                {% for student in students %}
+                    {% with status=attendance_dict|get_item:student.id %}
+                        <div class="mobile-student-row">
+                            <div class="mobile-student-info">
+                                <span class="mobile-student-avatar">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                                <div class="mobile-student-details">
+                                    <div class="mobile-student-name">
+                                        {{ forloop.counter }}.
+                                        {{ student.get_full_name|default:student.username }}
+                                    </div>
+                                    <div class="mobile-student-number">
+                                        {{ student.student_number }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mobile-attendance-actions">
+                                <!-- PRESENT -->
+                                <label class="mobile-status-option present-option">
+                                    <input
+                                        type="radio"
+                                        name="status_{{ student.id }}"
+                                        value="P"
+                                        {% if status == 'P' %}
+                                            checked
+                                        {% endif %}
+                                    >
+                                    <i class="fas fa-check-circle"></i>
+                                    Present
+                                </label>
+                                <!-- ABSENT -->
+                                <label class="mobile-status-option absent-option">
+                                    <input
+                                        type="radio"
+                                        name="status_{{ student.id }}"
+                                        value="A"
+                                        {% if status == 'A' %}
+                                            checked
+                                        {% endif %}
+                                    >
+                                    <i class="fas fa-times-circle"></i>
+                                    Absent
+                                </label>
+                            </div>
+                        </div>
+                    {% endwith %}
+                {% endfor %}
+            </div>
+            <!-- =================================================
+                 ACTIONS
+            ================================================= -->
+            <div class="attendance-actions">
+                <button
+                    type="submit"
+                    class="btn btn-success save-attendance-btn"
+                >
+                    <i class="fas fa-save me-1"></i>
+                    Save Attendance
+                </button>
+                <a
+                    href="{% url 'accounts:attendance_report' %}?tsc={{ selected_tsc.id }}&start_date={{ selected_date }}"
+                    style="text-decoration:none; width:auto;"
+                >
+                    <button
+                        type="button"
+                        class="btn btn-secondary report-attendance-btn"
+                    >
+                        <i class="fas fa-chart-bar me-1"></i>
+                        View Report
+                    </button>
+                </a>
             </div>
         </form>
     </div>
-
-   {% if students %}
-<div style="background:#fff; padding:20px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h3 style="margin:0;">
-            {% if attendance_mode == "class_teacher" %}👨‍🏫 {{ selected_tsc.school_class.name }} | 📅 <strong>{{ selected_date }}</strong>
-            {% else %}👨‍🏫 {{ selected_tsc.subject.name }} - {{ selected_tsc.school_class.name }} | 📅 <strong>{{ selected_date }}</strong>{% endif %}
-        </h3>
-        <span style="background:#e7f3ff; padding:6px 12px; border-radius:20px; font-size:14px;"><strong>{{ students|length }}</strong> Students</span>
-    </div>
-
-<form method="post" id="attendanceForm">
-    {% csrf_token %}
-    <table style="width:100%; border-collapse:collapse; min-width:600px;">
-        <thead>
-            <tr style="background:#f8f9fa; border-bottom:2px solid #dee2e6;">
-                <th style="padding:12px; text-align:left; width:60%;">Student Name</th>
-                <th style="padding:12px; text-align:center; width:20%;">
-                    <button type="button" onclick="markAll('P')" class="btn btn-success btn-sm w-100 fw-semibold"><i class="fas fa-user-check me-1"></i> Present</button>
-                </th>
-                <th style="padding:12px; text-align:center; width:20%;">
-                    <button type="button" onclick="markAll('A')" class="btn btn-danger btn-sm w-100 fw-semibold"><i class="fas fa-user-times me-1"></i> Absent</button>
-                </th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for student in students %}
-            {% with status=attendance_dict|get_item:student.id %}
-            <tr style="border-bottom:1px solid #e9ecef;">
-                <td style="padding:10px; font-weight:500;">{{ forloop.counter }}. 👤 {{ student.get_full_name|default:student.username }} - {{ student.student_number }}</td>
-                <td style="padding:10px; text-align:center;"><input type="radio" name="status_{{ student.id }}" value="P" {% if status == 'P' %}checked{% endif %} style="width:18px; height:18px; cursor:pointer; accent-color:#198754;"></td>
-                <td style="padding:10px; text-align:center;"><input type="radio" name="status_{{ student.id }}" value="A" {% if status == 'A' %}checked{% endif %} style="width:18px; height:18px; cursor:pointer; accent-color:#dc3545;"></td>
-            </tr>
-            {% endwith %}
-            {% endfor %}
-        </tbody>
-    </table>
-    <br>
-    <div style="text-align:center;">
-        <button type="submit" style="background:#198754; color:white; border:none; padding:12px 24px; border-radius:8px; cursor:pointer; font-size:15px;">💾 Save Attendance</button>
-        <a href="{% url 'accounts:attendance_report' %}?tsc={{ selected_tsc.id }}&start_date={{ selected_date }}" style="text-decoration:none;">
-            <button type="button" style="background:#6c757d; color:white; border:none; padding:12px 18px; border-radius:8px; margin-left:10px; cursor:pointer;">📊 View Report</button>
-        </a>
-    </div>
-</form>
-
+{% endif %}
+</div>
+<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
 <script>
 function markAll(status) {
-    document.querySelectorAll(`input[type="radio"][value="${status}"]`).forEach(radio => { radio.checked = true; });
+    document
+        .querySelectorAll(`input[type="radio"][value="${status}"]`)
+        .forEach(radio => {
+            radio.checked = true;
+        });
 }
-document.getElementById('datePicker').addEventListener('change', function(e) {
-    const selectedDate = new Date(this.value + 'T00:00:00'); 
-    const day = selectedDate.getDay();
-    if (day === 0 || day === 6) {
-        alert('Attendance cannot be marked on weekends. Please select a weekday.');
-        this.value = '{{ today|date:"Y-m-d" }}';
-    }
-});
+const datePicker = document.getElementById('datePicker');
+if (datePicker) {
+    datePicker.addEventListener('change', function(e) {
+        const selectedDate = new Date(
+            this.value + 'T00:00:00'
+        );
+        const day = selectedDate.getDay();
+        if (day === 0 || day === 6) {
+            alert(
+                'Attendance cannot be marked on weekends. Please select a weekday.'
+            );
+            this.value = '{{ today|date:"Y-m-d" }}';
+        }
+    });
+}
 </script>
-{% endif %}
+
 {% endblock %}

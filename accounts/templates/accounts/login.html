@@ -1,118 +1,796 @@
-<!-- accounts/templates/accounts/login.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Login</title>
-
-    <style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login</title>
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+    :root {
+        --primary: #4f46e5;
+        --primary-dark: #3730a3;
+        --text-dark: #172033;
+        --text-muted: #718096;
+        --border: #e5e7eb;
+        --white: #ffffff;
+    }
+    body {
+        font-family:
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            Roboto,
+            Helvetica,
+            Arial,
+            sans-serif;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background:
+            radial-gradient(
+                circle at 10% 10%,
+                rgba(99, 102, 241, 0.30),
+                transparent 35%
+            ),
+            radial-gradient(
+                circle at 90% 90%,
+                rgba(79, 70, 229, 0.25),
+                transparent 35%
+            ),
+            linear-gradient(
+                135deg,
+                #0f172a 0%,
+                #172554 50%,
+                #312e81 100%
+            );
+        overflow-x: hidden;
+    }
+    body::before,
+    body::after {
+        content: "";
+        position: fixed;
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    body::before {
+        width: 280px;
+        height: 280px;
+        top: -100px;
+        left: -100px;
+        background: rgba(129, 140, 248, 0.18);
+    }
+    body::after {
+        width: 320px;
+        height: 320px;
+        right: -130px;
+        bottom: -130px;
+        background: rgba(99, 102, 241, 0.20);
+    }
+    /* ================================
+       MAIN CONTAINER
+    ================================= */
+    .login-wrapper {
+        width: 100%;
+        max-width: 1050px;
+        min-height: 620px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        background: rgba(255, 255, 255, 0.10);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 28px;
+        overflow: hidden;
+        box-shadow:
+            0 30px 80px rgba(0, 0, 0, 0.35),
+            0 10px 30px rgba(0, 0, 0, 0.15);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+    }
+    /* ================================
+       DESKTOP WELCOME PANEL
+    ================================= */
+    .welcome-panel {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 60px;
+        color: white;
+        background:
+            linear-gradient(
+                145deg,
+                rgba(79, 70, 229, 0.92),
+                rgba(30, 41, 99, 0.92)
+            );
+    }
+    .welcome-panel::after {
+        content: "";
+        position: absolute;
+        width: 260px;
+        height: 260px;
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 50%;
+        right: -110px;
+        top: -80px;
+    }
+    /* ================================
+       BRAND
+    ================================= */
+    .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 55px;
+    }
+    .brand-icon {
+        width: 52px;
+        height: 52px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 16px;
+        background: rgba(255,255,255,0.15);
+        border: 1px solid rgba(255,255,255,0.20);
+        font-size: 25px;
+        box-shadow:
+            0 10px 25px rgba(0,0,0,0.12);
+    }
+    .brand-name {
+        font-size: 22px;
+        font-weight: 700;
+    }
+    .brand-subtitle {
+        margin-top: 3px;
+        font-size: 12px;
+        color: rgba(255,255,255,0.70);
+    }
+    /* ================================
+       WELCOME TEXT
+    ================================= */
+    .welcome-panel h1 {
+        max-width: 420px;
+        font-size: clamp(38px, 4vw, 54px);
+        line-height: 1.05;
+        letter-spacing: -2px;
+        margin-bottom: 22px;
+    }
+    .welcome-panel h1 span {
+        color: #c7d2fe;
+    }
+    .welcome-text {
+        max-width: 430px;
+        font-size: 16px;
+        line-height: 1.75;
+        color: rgba(255,255,255,0.76);
+    }
+    /* ================================
+       FEATURES
+    ================================= */
+    .features {
+        display: flex;
+        gap: 12px;
+        margin-top: 38px;
+        flex-wrap: wrap;
+    }
+    .feature {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 13px;
+        border-radius: 30px;
+        background: rgba(255,255,255,0.10);
+        border: 1px solid rgba(255,255,255,0.12);
+        font-size: 12px;
+        color: rgba(255,255,255,0.85);
+    }
+    .feature-check {
+        width: 18px;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.18);
+        font-size: 14px;
+    }
+    /* ================================
+       MOBILE WELCOME
+    ================================= */
+    .mobile-welcome {
+        display: none;
+    }
+    /* ================================
+       LOGIN PANEL
+    ================================= */
+    .login-panel {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 55px;
+        background: rgba(255,255,255,0.96);
+    }
+    .login-content {
+        width: 100%;
+        max-width: 390px;
+    }
+    .login-heading {
+        margin-bottom: 32px;
+    }
+    .login-heading h2 {
+        color: var(--text-dark);
+        font-size: 30px;
+        letter-spacing: -0.8px;
+        margin-bottom: 8px;
+    }
+    .login-heading p {
+        color: var(--text-muted);
+        font-size: 14px;
+        line-height: 1.6;
+    }
+    /* ================================
+       MESSAGES
+    ================================= */
+    .messages {
+        margin-bottom: 22px;
+    }
+    .message {
+        padding: 12px 14px;
+        border-radius: 12px;
+        font-size: 13px;
+        line-height: 1.5;
+        background: #fff1f2;
+        color: #be123c;
+        border: 1px solid #fecdd3;
+    }
+    /* ================================
+       FORM
+    ================================= */
+    .form-group {
+        margin-bottom: 21px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #374151;
+        font-size: 16px;
+        font-weight: 600;
+    }
+    .input-wrapper {
+        position: relative;
+    }
+    .input-icon {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 18px;
+        height: 18px;
+        color: #9ca3af;
+        pointer-events: none;
+    }
+    .form-control {
+        width: 100%;
+        height: 52px;
+        padding: 0 16px 0 46px;
+        border-radius: 13px;
+        border: 1px solid var(--border);
+        background: #f9fafb;
+        color: var(--text-dark);
+        font-size: 16px;
+        outline: none;
+        transition:
+            border-color 0.2s ease,
+            box-shadow 0.2s ease,
+            background 0.2s ease;
+    }
+    .form-control::placeholder {
+        color: #a1a1aa;
+    }
+    .form-control:focus {
+        background: white;
+        border-color: var(--primary);
+        box-shadow:
+            0 0 0 4px rgba(79,70,229,0.10);
+    }
+    /* ================================
+       PASSWORD
+    ================================= */
+    .password-input {
+        padding-right: 50px;
+    }
+    .toggle-password {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        background: transparent;
+        color: #9ca3af;
+        cursor: pointer;
+        border-radius: 8px;
+        font-size: 17px;
+        transition:
+            background 0.2s ease,
+            color 0.2s ease;
+    }
+    .toggle-password:hover {
+        background: #f3f4f6;
+        color: var(--primary);
+    }
+    /* ================================
+       LOGIN BUTTON
+    ================================= */
+    .login-button {
+        width: 100%;
+        height: 53px;
+        border: none;
+        border-radius: 13px;
+        background:
+            linear-gradient(
+                135deg,
+                #4f46e5,
+                #6366f1
+            );
+        color: white;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow:
+            0 10px 22px rgba(79,70,229,0.25);
+        transition:
+            transform 0.2s ease,
+            box-shadow 0.2s ease;
+    }
+    .login-button:hover {
+        transform: translateY(-1px);
+        box-shadow:
+            0 14px 28px rgba(79,70,229,0.32);
+    }
+    .login-button:active {
+        transform: translateY(0);
+    }
+    /* ================================
+       SIGNUP
+    ================================= */
+    .signup {
+        margin-top: 25px;
+        text-align: center;
+        font-size: 16px;
+        color: var(--text-muted);
+    }
+    .signup a {
+        color: var(--primary);
+        font-weight: 700;
+        text-decoration: none;
+    }
+    .signup a:hover {
+        text-decoration: underline;
+    }
+    /* ================================
+       SECURITY NOTE
+    ================================= */
+    .secure-note {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        margin-top: 28px;
+        color: #9ca3af;
+        font-size: 16px;
+    }
+    /* ================================
+       TABLET / MOBILE
+    ================================= */
+    @media (max-width: 850px) {
         body {
-            font-family: Arial;
-            background-color: #f4f6f9;
-            margin: 0;
+            padding: 16px;
         }
-
-        .container {
-            width: 100%;
-            max-width: 400px;
-            margin: 80px auto;
+        .login-wrapper {
+            max-width: 520px;
+            min-height: auto;
+            display: block;
+            border-radius: 24px;
         }
-
-        .card {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        /* Hide desktop version */
+        .welcome-panel {
+            display: none;
         }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        label {
-            font-weight: bold;
-        }
-
-        input {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            margin-bottom: 15px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-        }
-
-        button {
-            width: 100%;
-            padding: 10px;
-            background: #007bff;
+        /* Show mobile welcome */
+        .mobile-welcome {
+            display: block;
+            padding: 30px 25px 27px;
             color: white;
-            border: none;
-            border-radius: 5px;
+            background:
+                linear-gradient(
+                    145deg,
+                    #4f46e5,
+                    #312e81
+                );
+        }
+        .mobile-brand {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            margin-bottom: 25px;
+        }
+        .mobile-brand-icon {
+            width: 43px;
+            height: 43px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 13px;
+            background: rgba(255,255,255,0.14);
+            border: 1px solid rgba(255,255,255,0.16);
+            font-size: 21px;
+        }
+        .mobile-brand-name {
             font-size: 16px;
-            cursor: pointer;
+            font-weight: 700;
         }
-
-        button:hover {
-            background: #0056b3;
+        .mobile-brand-subtitle {
+            margin-top: 2px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.68);
         }
-
-        p {
-            text-align: center;
+        .mobile-welcome h1 {
+            font-size: 34px;
+            line-height: 1.1;
+            letter-spacing: -1.2px;
+            margin-bottom: 9px;
         }
-    </style>
+        .mobile-welcome h1 span {
+            color: #c7d2fe;
+        }
+        .mobile-welcome p {
+            max-width: 390px;
+            font-size: 16px;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.74);
+        }
+        .login-panel {
+            padding: 35px 27px 30px;
+        }
+        .login-content {
+            max-width: 420px;
+        }
+    }
+    /* ================================
+       SMALL PHONES
+    ================================= */
+    @media (max-width: 480px) {
+        body {
+            padding: 10px;
+        }
+        .login-wrapper {
+            border-radius: 20px;
+        }
+        .mobile-welcome {
+            padding: 27px 21px 25px;
+        }
+        .mobile-brand {
+            margin-bottom: 22px;
+        }
+        .mobile-welcome h1 {
+            font-size: 31px;
+        }
+        .mobile-welcome p {
+            font-size: 15px;
+        }
+        .login-panel {
+            padding: 30px 20px 27px;
+        }
+        .login-heading {
+            margin-bottom: 25px;
+        }
+        .login-heading h2 {
+            font-size: 26px;
+        }
+        .login-heading p {
+            font-size: 16px;
+        }
+        .form-control {
+            height: 51px;
+        }
+        .login-button {
+            height: 52px;
+        }
+        .secure-note {
+            margin-top: 22px;
+        }
+    }
+    @media (max-height: 700px) and (min-width: 851px) {
+        .login-wrapper {
+            min-height: 560px;
+        }
+        .welcome-panel {
+            padding: 42px;
+        }
+        .brand {
+            margin-bottom: 35px;
+        }
+    }
 
+</style>
 </head>
-
 <body>
-
-<div class="container">
-    <div class="card">
-
-        <h1>Login</h1>
-
-        <form method="post">
-            {% csrf_token %}
-
-            <label for="{{ form.username.id_for_label }}">
-                Username / Staff ID / Student ID:
-            </label>
-<input type="text" name="username" placeholder="Username / Staff ID / Student ID" required>
-
-            <label for="{{ form.password.id_for_label }}">
-                Password:
-            </label>
-<div style="position: relative;">
-    <input type="password" id="password" name="password" placeholder="Password" required>
-
-    <span onclick="togglePassword()" 
-          style="position: absolute; right: 10px; top: 8px; cursor: pointer;">
-        👁️
-    </span>
+<div class="login-wrapper">
+<!-- =========================================
+     MOBILE WELCOME
+========================================== -->
+<div class="mobile-welcome">
+    <div class="mobile-brand">
+        <div class="mobile-brand-icon">
+            🎓
+        </div>
+        <div>
+            <div class="mobile-brand-name">
+                School Management System
+            </div>
+            <div class="mobile-brand-subtitle">
+                Smart • Simple • Connected
+            </div>
+        </div>
+    </div>
+    <h1 id="mobileWelcomeTitle">
+        Welcome<br>
+        <span>to your school.</span>
+    </h1>
+    <p>
+        Manage your school, connect with your students,
+        and keep everything organized from one secure platform.
+    </p>
 </div>
-            <button type="submit">Login</button>
-
-        </form>
-
-        <p>
-            Don't have an account?
-            <a href="{% url 'accounts:signup' %}">Signup here</a>
-        </p>
-
+<!-- =========================================
+     DESKTOP WELCOME
+========================================== -->
+<div class="welcome-panel">
+    <div class="brand">
+        <div class="brand-icon">
+            🎓
+        </div>
+        <div>
+            <div class="brand-name">
+                School Management System
+            </div>
+            <div class="brand-subtitle">
+                Smart • Simple • Connected
+            </div>
+        </div>
+    </div>
+    <h1 id="desktopWelcomeTitle">
+        Welcome<br>
+        <span>to your school.</span>
+    </h1>
+    <p class="welcome-text">
+        Manage your school, connect with your students,
+        and keep everything organized from one secure platform.
+    </p>
+    <div class="features">
+        <div class="feature">
+            <span class="feature-check">✓</span>
+            Secure access
+        </div>
+        <div class="feature">
+            <span class="feature-check">✓</span>
+            School management
+        </div>
+        <div class="feature">
+            <span class="feature-check">✓</span>
+            Easy to use
+        </div>
     </div>
 </div>
+<!-- =========================================
+     LOGIN PANEL
+========================================== -->
+<div class="login-panel">
+    <div class="login-content">
+        <div class="login-heading">
+            <h2>Sign in</h2>
+            <p>
+                Enter your details to access your account.
+            </p>
+        </div>
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="message">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            <!-- USERNAME -->
+            <div class="form-group">
+                <label for="username">
+                    Username / Staff ID / Student ID
+                </label>
+                <div class="input-wrapper">
+                    <svg
+                        class="input-icon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path
+                            d="M20 21a8 8 0 0 0-16 0"
+                        />
+                        <circle
+                            cx="12"
+                            cy="7"
+                            r="4"
+                        />
+                    </svg>
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        class="form-control"
+                        placeholder="Enter your username or ID"
+                        autocomplete="username"
+                        required
+                    >
+                </div>
+            </div>
+            <!-- PASSWORD -->
+            <div class="form-group">
+                <label for="password">
+                    Password
+                </label>
+                <div class="input-wrapper">
+                    <svg
+                        class="input-icon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <rect
+                            x="3"
+                            y="11"
+                            width="18"
+                            height="10"
+                            rx="2"
+                        />
+                        <path
+                            d="M7 11V7a5 5 0 0 1 10 0v4"
+                        />
+                    </svg>
+<input
+    type="text"
+    id="passwordDisplay"
+    class="form-control password-input"
+    placeholder="Enter your password"
+    autocomplete="off"
+    autocapitalize="off"
+    autocorrect="off"
+    spellcheck="false"
+    required
+>
 
+<input
+    type="hidden"
+    id="password"
+    name="password"
+>
+
+<button
+    type="button"
+    class="toggle-password"
+    onclick="togglePassword()"
+    aria-label="Show password"
+    id="togglePasswordButton"
+>
+    👁
+</button>
+                </div>
+            </div>
+            <!-- LOGIN BUTTON -->
+            <button
+                type="submit"
+                class="login-button"
+            >
+                Sign In
+            </button>
+        </form>
+        <!-- SIGNUP -->
+        <div class="signup">
+            Don't have an account?
+            <a href="{% url 'accounts:signup' %}">
+                Create an account
+            </a>
+        </div>
+        <!-- SECURITY -->
+        <div class="secure-note">
+            🔒 Your account information is protected
+        </div>
+    </div>
+</div>
+</div>
+<script>
+/* =========================================
+   PASSWORD TOGGLE
+========================================= */
+let realPassword = "";
+let passwordVisible = false;
+
+const passwordDisplay = document.getElementById("passwordDisplay");
+const passwordHidden = document.getElementById("password");
+const toggleButton = document.getElementById("togglePasswordButton");
+
+passwordDisplay.addEventListener("input", function () {
+    if (passwordVisible) {
+        realPassword = this.value;
+    } else {
+        const bullets = this.value;
+
+        if (bullets.length > realPassword.length) {
+            realPassword += bullets.slice(realPassword.length);
+        } else {
+            realPassword = realPassword.slice(0, bullets.length);
+        }
+
+        this.value = "•".repeat(realPassword.length);
+    }
+
+    passwordHidden.value = realPassword;
+});
+
+function togglePassword() {
+    passwordVisible = !passwordVisible;
+
+    if (passwordVisible) {
+        passwordDisplay.value = realPassword;
+        toggleButton.textContent = "🙈";
+        toggleButton.setAttribute("aria-label", "Hide password");
+    } else {
+        passwordDisplay.value = "•".repeat(realPassword.length);
+        toggleButton.textContent = "👁";
+        toggleButton.setAttribute("aria-label", "Show password");
+    }
+
+    passwordHidden.value = realPassword;
+}
+/* =========================================
+   FIRST VISIT / RETURNING VISITOR
+========================================= */
+document.addEventListener("DOMContentLoaded", function () {
+    const desktopTitle =
+        document.getElementById("desktopWelcomeTitle");
+    const mobileTitle =
+        document.getElementById("mobileWelcomeTitle");
+    const hasVisited =
+        localStorage.getItem("school_sms_login_visited");
+    if (hasVisited) {
+        const welcomeBackHTML =
+            'Welcome back.<br><span>Good to see you.</span>';
+        if (desktopTitle) {
+            desktopTitle.innerHTML = welcomeBackHTML;
+        }
+        if (mobileTitle) {
+            mobileTitle.innerHTML = welcomeBackHTML;
+        }
+    } else {
+        localStorage.setItem(
+            "school_sms_login_visited",
+            "true"
+        );
+    }
+});
+</script>
 </body>
 </html>
-<script>
-function togglePassword() {
-    var passwordField = document.getElementById("password");
-
-    if (passwordField.type === "password") {
-        passwordField.type = "text";
-    } else {
-        passwordField.type = "password";
-    }
-}
-</script>

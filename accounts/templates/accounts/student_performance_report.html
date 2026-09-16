@@ -1,127 +1,1685 @@
 {% extends "accounts/dashboard_base.html" %}
 {% block content %}
+
 <style>
-:root{ --primary:#4f46e5; --success:#10b981; --warning:#f59e0b; --danger:#ef4444; --dark:#111827; --light:#f8fafc; }
-body{ background:#f5f7fb; }
-.page-header{ background:linear-gradient(135deg,#4f46e5,#2563eb); border-radius:22px; padding:28px; color:#fff; margin-bottom:25px; box-shadow:0 15px 35px rgba(79,70,229,.25); }
-.page-header h3{ font-weight:700; margin-bottom:5px; } .page-header p{ opacity:.9; margin:0; }
-.filter-card{ background:#fff; border:none; border-radius:18px; box-shadow:0 10px 30px rgba(0,0,0,.06); margin-bottom:25px; }
-.filter-card .card-body{ padding:20px; }
-.form-select{ border-radius:12px; min-height:48px; }
-.filter-btn{ border-radius:12px; min-height:48px; background:linear-gradient(135deg,#4f46e5,#2563eb); border:none; font-weight:600; }
-.stat-card{ border:none; border-radius:20px; overflow:hidden; color:#fff; transition:.3s; height:100%; }
-.stat-card:hover{ transform:translateY(-6px); }
-.bg-green{ background:linear-gradient(135deg,#10b981,#059669); }
-.bg-blue{ background:linear-gradient(135deg,#3b82f6,#2563eb); }
-.bg-orange{ background:linear-gradient(135deg,#f59e0b,#d97706); }
-.bg-red{ background:linear-gradient(135deg,#ef4444,#dc2626); }
-.stat-body{ padding:24px; } .stat-title{ font-size:14px; opacity:.9; } .stat-value{ font-size:30px; font-weight:700; margin-top:6px; }
-.icon-box{ width:60px; height:60px; border-radius:16px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.18); font-size:28px; }
-.stat-small{ font-size:13px; opacity:.9; }
-.report-card{ border:none; border-radius:20px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.06); }
-.report-card .card-header{ background:#111827; color:#fff; padding:18px 22px; font-weight:700; border:none; cursor:pointer; }
-.table{ margin-bottom:0; } .table thead th{ background:#f3f4f6; border:none; padding:15px; font-weight:700; color:#374151; }
-.table tbody td{ padding:15px; vertical-align:middle; border-color:#eef2f7; } .table tbody tr:hover{ background:#f9fafb; }
-.badge-rank{ background:#111827; color:#fff; padding:7px 14px; border-radius:20px; }
-.grade-badge{ padding:7px 14px; border-radius:20px; font-weight:600; }
-.print-btn{ border-radius:12px; padding:10px 20px; }
-@media print { .filter-card, .print-btn, .pagination, .page-header .btn { display: none !important; } body { background: #fff !important; } .report-card { box-shadow: none !important; } .stat-card { break-inside: avoid; } .collapse{ display:block !important; } }
+
+/* =========================================================
+   PAGE
+========================================================= */
+
+:root{
+    --primary:#4f46e5;
+    --primary-dark:#3730a3;
+    --success:#10b981;
+    --warning:#f59e0b;
+    --danger:#ef4444;
+    --dark:#111827;
+    --muted:#64748b;
+    --light:#f8fafc;
+    --border:#e5e7eb;
+}
+
+body{
+    background:#f5f7fb;
+}
+
+
+/* =========================================================
+   PAGE HEADER
+========================================================= */
+
+.page-header{
+    background:linear-gradient(135deg,#4f46e5,#2563eb);
+    border-radius:22px;
+    padding:28px;
+    color:#fff;
+    margin-bottom:25px;
+    margin-top:25px;
+    box-shadow:0 18px 40px rgba(79,70,229,.22);
+}
+
+.page-header h3{
+    font-weight:800;
+    margin-bottom:6px;
+    letter-spacing:-.3px;
+}
+
+.page-header p{
+    opacity:.9;
+    margin:0;
+}
+
+
+/* =========================================================
+   FILTER
+========================================================= */
+
+.filter-card{
+    background:#fff;
+    border:none;
+    border-radius:20px;
+    box-shadow:0 10px 30px rgba(15,23,42,.06);
+    margin-bottom:25px;
+}
+
+.filter-card .card-body{
+    padding:20px;
+}
+
+.form-select{
+    border-radius:13px;
+    min-height:48px;
+    border:1px solid #e2e8f0;
+    box-shadow:none;
+}
+
+.form-select:focus{
+    border-color:var(--primary);
+    box-shadow:0 0 0 3px rgba(79,70,229,.10);
+}
+
+.filter-btn{
+    border-radius:13px;
+    min-height:48px;
+    background:linear-gradient(135deg,#4f46e5,#2563eb);
+    border:none;
+    font-weight:700;
+    box-shadow:0 8px 18px rgba(79,70,229,.18);
+}
+
+
+/* =========================================================
+   STAT CARDS
+========================================================= */
+
+.stat-card{
+    border:none;
+    border-radius:20px;
+    overflow:hidden;
+    color:#fff;
+    transition:transform .25s ease,box-shadow .25s ease;
+    height:100%;
+    box-shadow:0 12px 28px rgba(15,23,42,.08);
+}
+
+.stat-card:hover{
+    transform:translateY(-5px);
+    box-shadow:0 18px 35px rgba(15,23,42,.12);
+}
+
+.bg-green{
+    background:linear-gradient(135deg,#10b981,#059669);
+}
+
+.bg-blue{
+    background:linear-gradient(135deg,#3b82f6,#2563eb);
+}
+
+.bg-orange{
+    background:linear-gradient(135deg,#f59e0b,#d97706);
+}
+
+.bg-red{
+    background:linear-gradient(135deg,#ef4444,#dc2626);
+}
+
+.stat-body{
+    padding:24px;
+}
+
+.stat-title{
+    font-size:13px;
+    font-weight:600;
+    opacity:.88;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+}
+
+.stat-value{
+    font-size:30px;
+    font-weight:800;
+    margin-top:6px;
+    letter-spacing:-.5px;
+}
+
+.icon-box{
+    width:58px;
+    height:58px;
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,.18);
+    font-size:27px;
+    flex-shrink:0;
+}
+
+.stat-small{
+    font-size:12px;
+    opacity:.9;
+}
+
+
+/* =========================================================
+   REPORT CARD
+========================================================= */
+
+.report-card{
+    border:none;
+    border-radius:20px;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(15,23,42,.07);
+    background:#fff;
+}
+
+
+/* =========================================================
+   REPORT HEADER
+========================================================= */
+
+.report-card .card-header{
+    background:#111827;
+    color:#fff;
+    padding:18px 22px;
+    font-weight:700;
+    border:none;
+    cursor:pointer;
+}
+
+.report-card .card-header:hover{
+    background:#0f172a;
+}
+
+
+/* =========================================================
+   IMPORTANT MOBILE OVERFLOW FIX
+========================================================= */
+
+/*
+   These rules are important because dashboard_base.html
+   may contain parent containers that interfere with
+   horizontal scrolling.
+*/
+
+.report-card,
+.report-card .card-body,
+.report-card .collapse,
+.report-card .collapsing{
+    min-width:0;
+    max-width:100%;
+}
+
+
+/*
+   This is the actual horizontal viewport.
+
+   IMPORTANT:
+   Do NOT put overflow-x:auto on the table.
+   The wrapper must be the scrolling element.
+*/
+
+.table-scroll{
+    width:100%;
+    max-width:100%;
+    display:block;
+
+    overflow-x:auto;
+    overflow-y:hidden;
+
+    -webkit-overflow-scrolling:touch;
+
+    overscroll-behavior-x:contain;
+
+    touch-action:pan-x;
+
+    scrollbar-width:thin;
+
+    position:relative;
+}
+
+
+/*
+   Prevent Bootstrap / parent containers from clipping
+   the wide table.
+*/
+
+.table-scroll > table{
+    margin:0;
+}
+
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+.table-scroll::-webkit-scrollbar{
+    height:8px;
+}
+
+.table-scroll::-webkit-scrollbar-track{
+    background:#e2e8f0;
+    border-radius:20px;
+}
+
+.table-scroll::-webkit-scrollbar-thumb{
+    background:#94a3b8;
+    border-radius:20px;
+}
+
+.table-scroll::-webkit-scrollbar-thumb:hover{
+    background:#64748b;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.performance-table{
+    width:100%;
+    margin-bottom:0;
+    border-collapse:separate;
+    border-spacing:0;
+
+    /*
+       Desktop can use the available width.
+       Mobile overrides this with a fixed minimum width.
+    */
+
+    table-layout:auto;
+}
+
+.performance-table thead th{
+    background:#f1f5f9;
+    border:none;
+    border-bottom:1px solid #e2e8f0;
+
+    padding:15px 16px;
+
+    font-weight:800;
+    font-size:13px;
+
+    color:#334155;
+
+    white-space:nowrap;
+    vertical-align:middle;
+}
+
+.performance-table tbody td{
+    padding:15px 16px;
+
+    vertical-align:middle;
+
+    border-bottom:1px solid #eef2f7;
+
+    color:#334155;
+
+    white-space:nowrap;
+}
+
+.performance-table tbody tr:last-child td{
+    border-bottom:none;
+}
+
+.performance-table tbody tr{
+    transition:background .2s ease;
+}
+
+.performance-table tbody tr:hover{
+    background:#f8fafc;
+}
+
+
+/* =========================================================
+   STUDENT CELLS
+========================================================= */
+
+.student-name-cell{
+    min-width:220px;
+}
+
+.student-number-cell{
+    min-width:140px;
+}
+
+.remark-cell{
+    min-width:180px;
+}
+
+
+/* =========================================================
+   RANK
+========================================================= */
+
+.badge-rank{
+    background:#111827;
+    color:#fff;
+
+    padding:7px 13px;
+
+    border-radius:20px;
+
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+
+    font-weight:800;
+    font-size:12px;
+
+    white-space:nowrap;
+}
+
+
+/* =========================================================
+   GRADE
+========================================================= */
+
+.grade-badge{
+    padding:7px 13px;
+    border-radius:20px;
+    font-weight:700;
+    display:inline-block;
+    white-space:nowrap;
+}
+
+
+/* =========================================================
+   PRINT
+========================================================= */
+
+.print-btn{
+    border-radius:12px;
+    padding:10px 20px;
+    font-weight:700;
+}
+
+@media print{
+
+    .filter-card,
+    .print-btn,
+    .pagination,
+    .page-header .btn{
+        display:none !important;
+    }
+
+    body{
+        background:#fff !important;
+    }
+
+    .report-card{
+        box-shadow:none !important;
+    }
+
+    .stat-card{
+        break-inside:avoid;
+    }
+
+    .collapse{
+        display:block !important;
+    }
+
+    .table-scroll{
+        overflow:visible !important;
+        width:100% !important;
+        max-width:none !important;
+    }
+
+    .performance-table{
+        min-width:0 !important;
+        width:100% !important;
+    }
+
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media(max-width:768px){
+
+    .page-header{
+        padding:20px;
+        border-radius:18px;
+        margin-top:12px;
+    }
+
+    .page-header h3{
+        font-size:21px;
+    }
+
+    .page-header p{
+        font-size:13px;
+    }
+
+
+    /* =====================================================
+       FILTER — 2 COLUMNS ON MOBILE
+    ===================================================== */
+
+    .filter-card .card-body{
+        padding:15px;
+    }
+
+    .filter-card form{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:12px;
+    }
+
+    .filter-card form > div{
+        width:100% !important;
+        padding-left:0 !important;
+        padding-right:0 !important;
+    }
+
+    .filter-card .form-select,
+    .filter-card .filter-btn{
+        width:100%;
+    }
+
+
+    /* =====================================================
+       STATISTICS — 2 CARDS PER ROW
+    ===================================================== */
+
+    .row.g-4{
+        --bs-gutter-x:12px;
+        --bs-gutter-y:12px;
+    }
+
+    .row.g-4 > .col-xl-3,
+    .row.g-4 > .col-md-6{
+        width:50%;
+        flex:0 0 50%;
+        max-width:50%;
+    }
+
+    .stat-body{
+        padding:20px;
+    }
+
+
+    /* =====================================================
+       REPORT CARD
+    ===================================================== */
+
+    .report-card{
+        max-width:100%;
+    }
+
+
+    /* =====================================================
+       TABLE SCROLL
+    ===================================================== */
+
+    .table-scroll{
+        width:100%;
+        max-width:100%;
+
+        overflow-x:scroll;
+        overflow-y:hidden;
+
+        display:block;
+
+        -webkit-overflow-scrolling:touch;
+
+        touch-action:pan-x;
+
+        padding-bottom:8px;
+
+        contain:layout paint;
+    }
+
+    .performance-table{
+        width:900px !important;
+        min-width:900px !important;
+        max-width:none !important;
+
+        table-layout:auto;
+    }
+
+
+    .performance-table thead th{
+        padding:13px 16px;
+        font-size:14px;
+    }
+
+    .performance-table tbody td{
+        padding:14px 16px;
+        font-size:15px;
+    }
+
+
+    .student-name-cell{
+        min-width:220px;
+    }
+
+    .student-number-cell{
+        min-width:140px;
+    }
+
+    .remark-cell{
+        min-width:180px;
+    }
+
+
+    /* =====================================================
+       REPORT HEADER
+    ===================================================== */
+
+    .report-card .card-header{
+        padding:15px;
+        font-size:13px;
+    }
+
+    .report-card .card-header > span:last-child{
+        display:flex;
+        align-items:center;
+        gap:5px;
+    }
+
+    .report-card .card-header .badge{
+        font-size:13px;
+    }
+
+}
+
+
+/* =========================================================
+   SMALL PHONES
+========================================================= */
+
+@media(max-width:420px){
+
+    .page-header{
+        padding:17px;
+    }
+
+    .page-header h3{
+        font-size:19px;
+    }
+
+    .page-header p{
+        font-size:14px;
+    }
+
+
+    /* =====================================================
+       FILTER — STILL 2 COLUMNS
+    ===================================================== */
+
+    .filter-card{
+        padding:0;
+    }
+
+    .filter-card .card-body{
+        padding:14px;
+    }
+
+    .filter-card form{
+        grid-template-columns:1fr 1fr;
+        gap:10px;
+    }
+
+
+    /* =====================================================
+       STAT CARDS — 2 PER ROW
+    ===================================================== */
+
+    .row.g-4{
+        --bs-gutter-x:10px;
+        --bs-gutter-y:10px;
+    }
+
+    .row.g-4 > .col-xl-3,
+    .row.g-4 > .col-md-6{
+        width:50%;
+        flex:0 0 50%;
+        max-width:50%;
+    }
+
+    .stat-body{
+        padding:18px;
+    }
+
+    .stat-value{
+        font-size:26px;
+    }
+
+
+    /* =====================================================
+       TABLE — KEEP HORIZONTAL SCROLL
+    ===================================================== */
+
+    .table-scroll{
+        width:100%;
+        max-width:100%;
+
+        overflow-x:scroll;
+        overflow-y:hidden;
+
+        -webkit-overflow-scrolling:touch;
+
+        touch-action:pan-x;
+    }
+
+    .performance-table{
+        width:900px !important;
+        min-width:900px !important;
+        max-width:none !important;
+    }
+
+    .performance-table thead th{
+        padding:12px 14px;
+        font-size:15px;
+    }
+
+    .performance-table tbody td{
+        padding:12px 14px;
+        font-size:15px;
+    }
+
+}
+
+/* =========================================================
+   SMALL PHONES
+========================================================= */
+
+@media(max-width:420px){
+
+    .page-header{
+        padding:17px;
+    }
+
+    .page-header h3{
+        font-size:19px;
+    }
+
+    .page-header p{
+        font-size:14px;
+    }
+
+
+    .stat-body{
+        padding:18px;
+    }
+
+
+    .stat-value{
+        font-size:26px;
+    }
+
+
+    /*
+       Keep the table wide.
+
+       This is intentional.
+    */
+
+    .table-scroll{
+        width:100%;
+        max-width:100%;
+
+        overflow-x:scroll;
+        overflow-y:hidden;
+
+        -webkit-overflow-scrolling:touch;
+
+        touch-action:pan-x;
+    }
+
+
+    .performance-table{
+        width:900px !important;
+        min-width:900px !important;
+        max-width:none !important;
+    }
+
+
+    .performance-table thead th{
+        padding:12px 14px;
+        font-size:15px;
+    }
+
+    .performance-table tbody td{
+        padding:12px 14px;
+        font-size:15px;
+    }
+
+}
+
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+.report-card .text-center h5{
+    font-weight:700;
+    color:#334155;
+}
+
+
+/* =========================================================
+   PAGINATION
+========================================================= */
+
+.pagination .page-link{
+    border-radius:10px;
+    margin:0 3px;
+    border:1px solid #e2e8f0;
+    color:#334155;
+}
+
+.pagination .page-item.active .page-link{
+    background:#4f46e5;
+    border-color:#4f46e5;
+}
+
+
+/* =========================================================
+   MOBILE SAFETY
+========================================================= */
+
+/*
+   Prevent accidental horizontal overflow on the page itself.
+   The ONLY element allowed to scroll horizontally is
+   .table-scroll.
+*/
+
+html,
+body{
+    max-width:100%;
+}
+
+@media(max-width:768px){
+
+    body{
+        overflow-x:hidden;
+    }
+
+    .page-header,
+    .filter-card,
+    .stat-card,
+    .report-card{
+        max-width:100%;
+    }
+
+}
+
 </style>
 
-<div class="page-header d-flex justify-content-between align-items-center flex-wrap">
-    <div><h3>📊 Student Performance Report</h3><p>View student rankings, averages, grades and overall academic performance.</p></div>
-    <button onclick="printDirect()" class="btn btn-light print-btn">🖨 Print All ({{ total_students }})</button>
-    <iframe id="printFrame" style="display:none;"></iframe>
+
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+    <div>
+
+        <h3>
+            📊 Student Performance Report
+        </h3>
+
+        <p>
+            View student rankings, averages, grades and overall academic performance.
+        </p>
+
+    </div>
+
+
+    {% if request.user.role != 'teacher' %}
+
+    <button
+        onclick="printDirect()"
+        class="btn btn-light print-btn">
+
+        🖨 Print All ({{ total_students }})
+
+    </button>
+
+    {% endif %}
+
+
+    <iframe
+        id="printFrame"
+        style="display:none;">
+    </iframe>
+
 </div>
 
-<div class="card filter-card"><div class="card-body">
-    <form method="get" class="row g-3">
-        <div class="col-lg-4"><select name="class" class="form-select"><option value="">All Classes</option>{% for c in classes %}<option value="{{ c.id }}" {% if selected_class == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></div>
-        <div class="col-lg-4"><select name="term" class="form-select"><option value="">All Terms</option>{% for t in terms %}<option value="{{ t.id }}" {% if selected_term == t.id|stringformat:"s" %}selected{% endif %}>{{ t }}</option>{% endfor %}</select></div>
-        <div class="col-lg-4"><button class="btn filter-btn text-white w-100">🔍 Filter Report</button></div>
-    </form>
-</div></div>
+
+
+<!-- =========================================================
+     FILTER
+========================================================= -->
+
+<div class="card filter-card">
+
+    <div class="card-body">
+
+        <form method="get" class="row g-3">
+
+            <div class="col-lg-3">
+
+                <select
+                    name="class"
+                    class="form-select">
+
+                    <option value="">
+                        All Classes
+                    </option>
+
+                    {% for c in classes %}
+
+                    <option
+                        value="{{ c.id }}"
+                        {% if selected_class == c.id|stringformat:"s" %}
+                            selected
+                        {% endif %}>
+
+                        {{ c.name }}
+
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <div class="col-lg-3">
+
+                <select
+                    name="term"
+                    class="form-select">
+
+                    <option value="">
+                        All Terms
+                    </option>
+
+                    {% for t in terms %}
+
+                    <option
+                        value="{{ t.id }}"
+                        {% if selected_term == t.id|stringformat:"s" %}
+                            selected
+                        {% endif %}>
+
+                        {{ t.get_term_number_display }}
+
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <div class="col-lg-3">
+
+                <select
+                    name="year"
+                    class="form-select">
+
+                    <option value="">
+                        All Years
+                    </option>
+
+                    {% for y in academic_years %}
+
+                    <option
+                        value="{{ y.id }}"
+                        {% if selected_year == y.id|stringformat:"s" %}
+                            selected
+                        {% endif %}>
+
+                        {{ y.name }}
+
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <div class="col-lg-3">
+
+                <button
+                    class="btn filter-btn text-white w-100">
+
+                    🔍 Filter Report
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     STATISTICS
+========================================================= -->
 
 <div class="row g-4 mb-4">
-  <div class="col-xl-3 col-md-6"><div class="stat-card bg-green"><div class="stat-body"><div class="d-flex justify-content-between"><div><div class="stat-title">Total Students</div><div class="stat-value">{{ total_students }}</div></div><div class="icon-box">👨‍🎓</div></div><hr class="border-light"><div class="stat-small">In selected filter</div></div></div></div>
-  <div class="col-xl-3 col-md-6"><div class="stat-card bg-blue"><div class="stat-body"><div class="d-flex justify-content-between"><div><div class="stat-title">Class Average</div><div class="stat-value">{{ avg_score|floatformat:1 }}%</div></div><div class="icon-box">📈</div></div><hr class="border-light"><div class="stat-small">Average performance</div></div></div></div>
-  <div class="col-xl-3 col-md-6"><div class="stat-card bg-orange"><div class="stat-body"><div class="d-flex justify-content-between"><div><div class="stat-title">Top Student</div><div class="stat-value" style="font-size:18px">{% if top_student %}{{ top_student.student.first_name }}{% else %}-{% endif %}</div></div><div class="icon-box">🏆</div></div><hr class="border-light"><div class="stat-small">{% if top_student %}{{ top_student.term_average }}% - Rank {{ top_student.rank }}{% else %}No data{% endif %}</div></div></div></div>
-  <div class="col-xl-3 col-md-6"><div class="stat-card bg-red"><div class="stat-body"><div class="d-flex justify-content-between"><div><div class="stat-title">Pass Rate</div><div class="stat-value">{{ pass_rate }}%</div></div><div class="icon-box">✅</div></div><hr class="border-light"><div class="stat-small">50% and above</div></div></div></div>
+
+
+    <div class="col-xl-3 col-md-6">
+
+        <div class="stat-card bg-green">
+
+            <div class="stat-body">
+
+                <div class="d-flex justify-content-between">
+
+                    <div>
+
+                        <div class="stat-title">
+                            Total Students
+                        </div>
+
+                        <div class="stat-value">
+                            {{ total_students }}
+                        </div>
+
+                    </div>
+
+                    <div class="icon-box">
+                        👨‍🎓
+                    </div>
+
+                </div>
+
+                <hr class="border-light">
+
+                <div class="stat-small">
+                    In selected filter
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <div class="col-xl-3 col-md-6">
+
+        <div class="stat-card bg-blue">
+
+            <div class="stat-body">
+
+                <div class="d-flex justify-content-between">
+
+                    <div>
+
+                        <div class="stat-title">
+                            Class Average
+                        </div>
+
+                        <div class="stat-value">
+                            {{ avg_score|floatformat:0 }}%
+                        </div>
+
+                    </div>
+
+                    <div class="icon-box">
+                        📈
+                    </div>
+
+                </div>
+
+                <hr class="border-light">
+
+                <div class="stat-small">
+                    Average performance
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <div class="col-xl-3 col-md-6">
+
+        <div class="stat-card bg-orange">
+
+            <div class="stat-body">
+
+                <div class="d-flex justify-content-between">
+
+                    <div>
+
+                        <div class="stat-title">
+                            Top Student
+                        </div>
+
+                        <div
+                            class="stat-value"
+                            style="font-size:18px">
+
+                            {% if top_student %}
+
+                                {{ top_student.student.first_name }} -
+                                {{ top_student.school_class.name }}
+
+                            {% else %}
+
+                                -
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                    <div class="icon-box">
+                        🏆
+                    </div>
+
+                </div>
+
+                <hr class="border-light">
+
+                <div class="stat-small">
+
+                    {% if top_student %}
+
+                        {{ top_student.term_average|floatformat:0 }}%
+                        - Rank {{ top_student.rank }}
+
+                    {% else %}
+
+                        No data
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <div class="col-xl-3 col-md-6">
+
+        <div class="stat-card bg-red">
+
+            <div class="stat-body">
+
+                <div class="d-flex justify-content-between">
+
+                    <div>
+
+                        <div class="stat-title">
+                            Pass Rate
+                        </div>
+
+                        <div class="stat-value">
+                            {{ pass_rate }}%
+                        </div>
+
+                    </div>
+
+                    <div class="icon-box">
+                        ✅
+                    </div>
+
+                </div>
+
+                <hr class="border-light">
+
+                <div class="stat-small">
+                    50% and above
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
 
+
+
+<!-- =========================================================
+     GROUPED RESULTS
+========================================================= -->
+
 {% if grouped_summaries %}
-<div class="accordion" id="allClassesAccordion">
-{% for group in grouped_summaries %}
-<div class="card report-card mb-3">
-    <div class="card-header d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}">
-        <span>📚 {{ group.class_obj.name }} - Student Rankings</span>
-        <span><span class="badge bg-white text-dark me-2">{{ group.total_students }} Students - Avg: {{ group.class_avg }}%</span><span class="badge bg-primary">▼</span></span>
+
+<div
+    class="accordion"
+    id="allClassesAccordion">
+
+
+    {% for group in grouped_summaries %}
+
+    <div class="card report-card mb-3">
+
+
+        <!-- CLASS HEADER -->
+
+        <div
+            class="card-header d-flex justify-content-between align-items-center"
+            data-bs-toggle="collapse"
+            data-bs-target="#collapse{{ forloop.counter }}">
+
+
+            <span>
+
+                📚 {{ group.class_obj.name }}
+                - Student Rankings
+
+            </span>
+
+
+            <span>
+
+                <span class="badge bg-white text-dark me-2">
+
+                    {{ group.total_students }}
+                    Students
+                    -
+                    Avg: {{ group.class_avg|floatformat:0 }}%
+
+                </span>
+
+
+                <span class="badge bg-primary">
+                    ▼
+                </span>
+
+            </span>
+
+        </div>
+
+
+
+        <div
+            id="collapse{{ forloop.counter }}"
+            class="collapse {% if forloop.first %}show{% endif %}"
+            data-bs-parent="#allClassesAccordion">
+
+
+            <div class="card-body p-0">
+
+
+                <div class="table-scroll">
+
+
+                    <table
+                        class="table performance-table align-middle">
+
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Rank
+                                </th>
+
+                                <th>
+                                    Student Name
+                                </th>
+
+                                <th>
+                                    Student No.
+                                </th>
+
+                                <th>
+                                    Total
+                                </th>
+
+                                <th>
+                                    Average
+                                </th>
+
+                                <th>
+                                    Grade
+                                </th>
+
+                                <th>
+                                    Remark
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+
+                        {% for s in group.students %}
+
+                        <tr>
+
+
+                            <td>
+
+                                <span class="badge-rank">
+
+                                    #{{ s.rank }}
+
+                                </span>
+
+                            </td>
+
+
+
+                            <td class="student-name-cell">
+
+                                <strong>
+
+                                    {{ s.student.get_full_name }}
+
+                                </strong>
+
+                            </td>
+
+
+
+                            <td class="student-number-cell">
+
+                                {{ s.student.student_number }}
+
+                            </td>
+
+
+
+                            <td>
+
+                                <strong>
+
+                                    {{ s.term_total|floatformat:0 }}
+
+                                </strong>
+
+                            </td>
+
+
+
+                            <td>
+
+                                <span class="text-success fw-bold">
+
+                                    {{ s.term_average|floatformat:0 }}%
+
+                                </span>
+
+                            </td>
+
+
+
+                            <td>
+
+                                <span
+                                    class="badge bg-primary grade-badge">
+
+                                    {{ s.term_grade }}
+
+                                </span>
+
+                            </td>
+
+
+
+                            <td class="remark-cell">
+
+                                {{ s.term_remark }}
+
+                            </td>
+
+
+                        </tr>
+
+                        {% endfor %}
+
+
+                        </tbody>
+
+                    </table>
+
+
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
-    <div id="collapse{{ forloop.counter }}" class="collapse {% if forloop.first %}show{% endif %}" data-bs-parent="#allClassesAccordion">
-        <div class="card-body p-0"><div class="table-responsive">
-            <table class="table align-center">
-                <thead><tr><th>Rank</th><th>Student Name</th><th>Student No.</th><th>Total</th><th>Average</th><th>Grade</th><th>Remark</th></tr></thead>
-                <tbody>
-                {% for s in group.students %}
-                <tr>
-                    <td><span class="badge-rank">#{{ s.rank }}</span></td>
-                    <td><strong>{{ s.student.get_full_name }}</strong></td>
-                    <td>{{ s.student.student_number }}</td>
-                    <td><strong>{{ s.term_total }}</strong></td>
-                    <td><span class="text-success fw-bold">{{ s.term_average }}%</span></td>
-                    <td><span class="badge bg-primary grade-badge">{{ s.term_grade }}</span></td>
-                    <td>{{ s.term_remark }}</td>
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div></div>
+
+
+    {% empty %}
+
+    <div class="card report-card">
+
+        <div class="card-body text-center py-5">
+
+            <h5>
+                No performance records found
+            </h5>
+
+        </div>
+
     </div>
+
+    {% endfor %}
+
+
 </div>
-{% empty %}
-<div class="card report-card"><div class="card-body text-center py-5"><h5>No performance records found</h5></div></div>
-{% endfor %}
-</div>
+
+
+
 {% else %}
+
+
+
+<!-- =========================================================
+     NORMAL RESULTS TABLE
+========================================================= -->
+
 <div class="card report-card">
-    <div class="card-header">Student Rankings</div>
-    <div class="card-body p-0"><div class="table-responsive">
-        <table class="table align-middle">
-            <thead><tr><th>Rank</th><th>Student Name</th><th>Student No.</th><th>Class</th><th>Total</th><th>Average</th><th>Grade</th><th>Remark</th></tr></thead>
-            <tbody>
-            {% for s in summaries %}
-            <tr>
-                <td><span class="badge-rank">#{{ s.rank }}</span></td>
-                <td><strong>{{ s.student.get_full_name }}</strong></td>
-                <td>{{ s.student.student_number }}</td>
-                <td>{{ s.school_class.name }}</td>
-                <td><strong>{{ s.term_total }}</strong></td>
-                <td><span class="text-success fw-bold">{{ s.term_average }}%</span></td>
-                <td><span class="badge bg-primary grade-badge">{{ s.term_grade }}</span></td>
-                <td>{{ s.term_remark }}</td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="8" class="text-center py-5"><h5>No performance records found</h5><small class="text-muted">Try selecting another class or term.</small></td></tr>
-            {% endfor %}
-            </tbody>
-        </table>
+
+
+    <div class="card-header">
+
+        Student Rankings
+
+    </div>
+
+
+    <div class="card-body p-0">
+
+
+        <div class="table-scroll">
+
+
+            <table
+                class="table performance-table align-middle">
+
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Rank
+                        </th>
+
+                        <th>
+                            Student Name
+                        </th>
+
+                        <th>
+                            Student No.
+                        </th>
+
+                        <th>
+                            Class
+                        </th>
+
+                        <th>
+                            Total
+                        </th>
+
+                        <th>
+                            Average
+                        </th>
+
+                        <th>
+                            Grade
+                        </th>
+
+                        <th>
+                            Remark
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+
+                {% for s in summaries %}
+
+                <tr>
+
+
+                    <td>
+
+                        <span class="badge-rank">
+
+                            #{{ s.rank }}
+
+                        </span>
+
+                    </td>
+
+
+
+                    <td class="student-name-cell">
+
+                        <strong>
+
+                            {{ s.student.get_full_name }}
+
+                        </strong>
+
+                    </td>
+
+
+
+                    <td class="student-number-cell">
+
+                        {{ s.student.student_number }}
+
+                    </td>
+
+
+
+                    <td>
+
+                        {{ s.school_class.name }}
+
+                    </td>
+
+
+
+                    <td>
+
+                        <strong>
+
+                            {{ s.term_total|floatformat:0 }}
+
+                        </strong>
+
+                    </td>
+
+
+
+                    <td>
+
+                        <span class="text-success fw-bold">
+
+                            {{ s.term_average|floatformat:0 }}%
+
+                        </span>
+
+                    </td>
+
+
+
+                    <td>
+
+                        <span
+                            class="badge bg-primary grade-badge">
+
+                            {{ s.term_grade }}
+
+                        </span>
+
+                    </td>
+
+
+
+                    <td class="remark-cell">
+
+                        {{ s.term_remark }}
+
+                    </td>
+
+
+                </tr>
+
+
+                {% empty %}
+
+
+                <tr>
+
+                    <td
+                        colspan="8"
+                        class="text-center py-5">
+
+                        <h5>
+                            No performance records found
+                        </h5>
+
+                        <small class="text-muted">
+
+                            Try selecting another class or term.
+
+                        </small>
+
+                    </td>
+
+                </tr>
+
+
+                {% endfor %}
+
+
+                </tbody>
+
+            </table>
+
+
+        </div>
+
+
+
+        <!-- =================================================
+             PAGINATION
+        ================================================== -->
+
         {% if summaries.has_other_pages %}
-        <div class="d-flex justify-content-center p-3"><nav><ul class="pagination">
-            {% if summaries.has_previous %}<li class="page-item"><a class="page-link" href="?class={{ selected_class }}&term={{ selected_term }}&page={{ summaries.previous_page_number }}">Previous</a></li>{% endif %}
-            <li class="page-item active"><span class="page-link">Page {{ summaries.number }} of {{ summaries.paginator.num_pages }}</span></li>
-            {% if summaries.has_next %}<li class="page-item"><a class="page-link" href="?class={{ selected_class }}&term={{ selected_term }}&page={{ summaries.next_page_number }}">Next</a></li>{% endif %}
-        </ul></nav></div>
+
+        <div class="d-flex justify-content-center p-3">
+
+            <nav>
+
+                <ul class="pagination">
+
+
+                    {% if summaries.has_previous %}
+
+                    <li class="page-item">
+
+                        <a
+                            class="page-link"
+                            href="?class={{ selected_class }}&term={{ selected_term }}&year={{ selected_year }}&page={{ summaries.previous_page_number }}">
+
+                            Previous
+
+                        </a>
+
+                    </li>
+
+                    {% endif %}
+
+
+
+                    <li class="page-item active">
+
+                        <span class="page-link">
+
+                            Page {{ summaries.number }}
+                            of
+                            {{ summaries.paginator.num_pages }}
+
+                        </span>
+
+                    </li>
+
+
+
+                    {% if summaries.has_next %}
+
+                    <li class="page-item">
+
+                        <a
+                            class="page-link"
+                            href="?class={{ selected_class }}&term={{ selected_term }}&year={{ selected_year }}&page={{ summaries.next_page_number }}">
+
+                            Next
+
+                        </a>
+
+                    </li>
+
+                    {% endif %}
+
+
+                </ul>
+
+            </nav>
+
+        </div>
+
         {% endif %}
-    </div></div>
+
+
+    </div>
+
 </div>
+
+
 {% endif %}
+
+
+
 <script>
+
 function printDirect(){
-    var url = "?class={{ selected_class }}&term={{ selected_term }}&print=1";
-    var iframe = document.getElementById('printFrame');
+
+    var url =
+        "?class={{ selected_class }}&term={{ selected_term }}&year={{ selected_year }}&print=1";
+
+    var iframe =
+        document.getElementById('printFrame');
+
     iframe.src = url;
-    // NO print here - print page will print itself
+
 }
+
 </script>
 
 

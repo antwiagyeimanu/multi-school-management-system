@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Teacher Attendance Report</title>
+
+<style>
+@page{
+    size:A4 landscape;
+    margin:8mm;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Inter,"Segoe UI",Arial,sans-serif;
+    background:#f4f7fb;
+    color:#1f2937;
+    font-size:12px;
+}
+
+.print-wrap{
+    width:100%;
+    background:#fff;
+    padding:12px;
+}
+
+/* =========================
+   SCHOOL HEADER
+========================= */
+
+.school-header{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    padding:16px 20px;
+    border-radius:16px;
+    background:linear-gradient(135deg,#0f172a,#1e40af);
+    color:#fff;
+}
+
+.school-logo{
+    width:120px;
+    height:120px;
+    object-fit:contain;
+    background:#fff;
+    border-radius:14px;
+    padding:8px;
+    flex-shrink:0;
+}
+
+.school-logo-text{
+    width:90px;
+    height:90px;
+    background:#fff;
+    color:#1e3a8a;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:25px;
+    font-weight:900;
+    flex-shrink:0;
+}
+
+.school-details{
+    flex:1;
+    text-align:center;
+}
+
+.school-details h1{
+    font-size:25px;
+    font-weight:900;
+    letter-spacing:.5px;
+    margin-bottom:5px;
+}
+
+.school-details p{
+    margin:3px 0;
+    color:#dbeafe;
+    font-size:14px;
+}
+
+.report-badge{
+    display:inline-block;
+    margin-top:8px;
+    padding:7px 18px;
+    border-radius:30px;
+    background:#fff;
+    color:#1e3a8a;
+    font-size:14px;
+    font-weight:900;
+    letter-spacing:.7px;
+}
+
+/* =========================
+   REPORT INFORMATION
+========================= */
+
+.report-info{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:12px;
+    margin:12px 0;
+}
+
+.info-box{
+    min-width:160px;
+    padding:8px 16px;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:10px;
+    text-align:center;
+}
+
+.info-label{
+    display:block;
+    color:#64748b;
+    font-size:12px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+}
+
+.info-value{
+    display:block;
+    margin-top:3px;
+    color:#1e3a8a;
+    font-size:13px;
+    font-weight:900;
+}
+
+/* =========================
+   SUMMARY CARDS
+========================= */
+
+.summary{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:9px;
+    margin-bottom:16px;
+}
+
+.summary-card{
+    padding:11px 6px;
+    border-radius:12px;
+    color:#fff;
+    text-align:center;
+}
+
+.summary-label{
+    font-size:10px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.3px;
+    opacity:.92;
+}
+
+.summary-value{
+    font-size:20px;
+    font-weight:900;
+    margin-top:3px;
+}
+
+.total{
+    background:linear-gradient(135deg,#334155,#1e293b);
+}
+
+.present{
+    background:linear-gradient(135deg,#16a34a,#15803d);
+}
+
+.absent{
+    background:linear-gradient(135deg,#dc2626,#991b1b);
+}
+
+.late{
+    background:linear-gradient(135deg,#f59e0b,#d97706);
+}
+
+.leave{
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+}
+
+.sick{
+    background:linear-gradient(135deg,#9333ea,#7e22ce);
+}
+
+.excused{
+    background:linear-gradient(135deg,#64748b,#475569);
+}
+
+/* =========================
+   REPORT TABLE
+========================= */
+
+.table-wrapper{
+    width:100%;
+    overflow:hidden;
+    border:1px solid #dbe3ef;
+    border-radius:14px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+}
+
+thead th{
+    background:linear-gradient(135deg,#0f172a,#1e3a8a);
+    color:#fff;
+    padding:10px 7px;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+    text-align:center;
+    border-right:1px solid rgba(255,255,255,.15);
+}
+
+thead th:nth-child(1){
+    width:25%;
+    text-align:left;
+}
+
+thead th:nth-child(2){
+    width:12%;
+}
+
+thead th:nth-child(n+3){
+    width:9%;
+}
+
+tbody td{
+    padding:10px 7px;
+    border-bottom:1px solid #e5e7eb;
+    border-right:1px solid #edf2f7;
+    text-align:center;
+    vertical-align:middle;
+    font-size:14px;
+}
+
+tbody tr:nth-child(even){
+    background:#f8fafc;
+}
+
+tbody tr:last-child td{
+    border-bottom:none;
+}
+
+.teacher-cell{
+    text-align:left !important;
+}
+
+.teacher-name{
+    font-weight:800;
+    color:#111827;
+    font-size:14px;
+}
+
+.staff-id{
+    color:#64748b;
+    font-size:12px;
+    margin-top:3px;
+}
+
+.number{
+    font-weight:800;
+    color:#334155;
+}
+
+.present-number{
+    color:#15803d;
+}
+
+.absent-number{
+    color:#b91c1c;
+}
+
+.late-number{
+    color:#c2410c;
+}
+
+.leave-number{
+    color:#1d4ed8;
+}
+
+.sick-number{
+    color:#7e22ce;
+}
+
+.excused-number{
+    color:#475569;
+}
+
+.rate{
+    font-weight:900;
+    color:#1e3a8a;
+    font-size:11px;
+}
+
+.rate-badge{
+    display:inline-block;
+    padding:5px 9px;
+    border-radius:20px;
+    background:#eff6ff;
+    color:#1e3a8a;
+    font-weight:900;
+}
+
+/* =========================
+   FOOTER
+========================= */
+
+.footer{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:14px;
+    padding-top:9px;
+    border-top:1px dashed #cbd5e1;
+    color:#64748b;
+    font-size:10px;
+}
+
+.no-print{
+    text-align:center;
+    margin-top:20px;
+}
+
+.print-button{
+    border:none;
+    background:#1e3a8a;
+    color:#fff;
+    padding:10px 25px;
+    border-radius:25px;
+    font-weight:800;
+    cursor:pointer;
+}
+
+/* =========================
+   PRINT
+========================= */
+
+@media print{
+
+    body{
+        background:#fff;
+    }
+
+    .print-wrap{
+        padding:0;
+    }
+
+    .no-print{
+        display:none !important;
+    }
+
+    .school-header,
+    .summary-card,
+    thead th{
+        -webkit-print-color-adjust:exact;
+        print-color-adjust:exact;
+    }
+
+    table{
+        page-break-inside:auto;
+    }
+
+    tr{
+        page-break-inside:avoid;
+        page-break-after:auto;
+    }
+
+    thead{
+        display:table-header-group;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="print-wrap">
+
+    <!-- =========================
+         SCHOOL HEADER
+    ========================== -->
+
+    <div class="school-header">
+
+        {% if school.logo %}
+
+            <img
+                src="{{ school.logo.url }}"
+                class="school-logo"
+                alt="{{ school.name }}"
+            >
+
+        {% else %}
+
+            <div class="school-logo-text">
+                {{ school.name|slice:":2"|upper }}
+            </div>
+
+        {% endif %}
+
+        <div class="school-details">
+
+            <h1>{{ school.name|upper }}</h1>
+
+            <p>
+                {{ school.address|default:"" }}
+
+                {% if school.gps_address %}
+                    | {{ school.gps_address }}
+                {% endif %}
+            </p>
+
+            <p>
+
+                {% if school.phone %}
+                    Tel: {{ school.phone }}
+                {% endif %}
+
+                {% if school.email %}
+                    | {{ school.email }}
+                {% endif %}
+
+            </p>
+
+            <div class="report-badge">
+                TEACHER ATTENDANCE REPORT
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         REPORT INFORMATION
+    ========================== -->
+
+    <div class="report-info">
+
+        <div class="info-box">
+
+            <span class="info-label">
+                Academic Year
+            </span>
+
+            <span class="info-value">
+                {{ year_name|default:"All Years" }}
+            </span>
+
+        </div>
+
+
+        <div class="info-box">
+
+            <span class="info-label">
+                Term
+            </span>
+
+            <span class="info-value">
+                {{ term_name|default:"All Terms" }}
+            </span>
+
+        </div>
+
+
+        <div class="info-box">
+
+            <span class="info-label">
+                Report Period
+            </span>
+
+            <span class="info-value">
+                Full Term
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         TERM SUMMARY
+    ========================== -->
+
+    <div class="summary">
+
+        <div class="summary-card total">
+            <div class="summary-label">
+                Total Teachers
+            </div>
+            <div class="summary-value">
+                {{ total_teachers }}
+            </div>
+        </div>
+
+
+        <div class="summary-card present">
+            <div class="summary-label">
+                Present
+            </div>
+            <div class="summary-value">
+                {{ total_present }}
+            </div>
+        </div>
+
+
+        <div class="summary-card absent">
+            <div class="summary-label">
+                Absent
+            </div>
+            <div class="summary-value">
+                {{ total_absent }}
+            </div>
+        </div>
+
+
+        <div class="summary-card late">
+            <div class="summary-label">
+                Late
+            </div>
+            <div class="summary-value">
+                {{ total_late }}
+            </div>
+        </div>
+
+
+        <div class="summary-card leave">
+            <div class="summary-label">
+                Leave
+            </div>
+            <div class="summary-value">
+                {{ total_leave }}
+            </div>
+        </div>
+
+
+        <div class="summary-card sick">
+            <div class="summary-label">
+                Sick
+            </div>
+            <div class="summary-value">
+                {{ total_sick }}
+            </div>
+        </div>
+
+
+        <div class="summary-card excused">
+            <div class="summary-label">
+                Excused
+            </div>
+            <div class="summary-value">
+                {{ total_excused }}
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         TEACHER TERM SUMMARY TABLE
+    ========================== -->
+
+    <div class="table-wrapper">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Teacher
+                    </th>
+
+                    <th>
+                        Staff ID
+                    </th>
+
+                    <th>
+                        Present
+                    </th>
+
+                    <th>
+                        Absent
+                    </th>
+
+                    <th>
+                        Late
+                    </th>
+
+                    <th>
+                        Leave
+                    </th>
+
+                    <th>
+                        Sick
+                    </th>
+
+                    <th>
+                        Excused
+                    </th>
+
+                    <th>
+                        Attendance Rate
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for item in report %}
+
+                <tr>
+
+                    <td class="teacher-cell">
+
+                        <div class="teacher-name">
+                            {{ item.teacher.get_full_name }}
+                        </div>
+
+                    </td>
+
+
+                    <td>
+
+                        <span class="staff-id">
+                            {{ item.teacher.staff_id|default:"—" }}
+                        </span>
+
+                    </td>
+
+
+                    <td class="number present-number">
+                        {{ item.present }}
+                    </td>
+
+
+                    <td class="number absent-number">
+                        {{ item.absent }}
+                    </td>
+
+
+                    <td class="number late-number">
+                        {{ item.late }}
+                    </td>
+
+
+                    <td class="number leave-number">
+                        {{ item.leave }}
+                    </td>
+
+
+                    <td class="number sick-number">
+                        {{ item.sick }}
+                    </td>
+
+
+                    <td class="number excused-number">
+                        {{ item.excused }}
+                    </td>
+
+
+                    <td class="rate">
+
+                        <span class="rate-badge">
+                            {{ item.attendance_rate }}%
+                        </span>
+
+                    </td>
+
+                </tr>
+
+                {% empty %}
+
+                <tr>
+
+                    <td colspan="9" style="padding:20px;">
+                        No teacher attendance records found.
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <!-- =========================
+         FOOTER
+    ========================== -->
+
+    <div class="footer">
+
+        <span>
+            Authorized Signature: ______________________
+        </span>
+
+        <span>
+            Printed: {% now "d M Y h:i A" %}
+        </span>
+
+        <span>
+            School Stamp: __________________
+        </span>
+
+    </div>
+
+
+
+
+</div>
+
+</body>
+</html>

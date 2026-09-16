@@ -1,0 +1,1253 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block content %}
+
+<style>
+/* =========================================================
+   PREMIUM headmaster PERMISSIONS
+========================================================= */
+
+.permissions-page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 10px 0 40px;
+    color: #172033;
+}
+
+/* HERO */
+.permissions-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 30px;
+    margin-bottom: 18px;
+    border-radius: 22px;
+    background:
+        radial-gradient(circle at top right,
+            rgba(255,255,255,.15),
+            transparent 32%),
+        linear-gradient(135deg, #172554, #1e3a8a 55%, #4338ca);
+    color: white;
+    box-shadow: 0 18px 45px rgba(30,58,138,.18);
+}
+
+.permissions-hero::after {
+    content: "";
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    right: -60px;
+    bottom: -90px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.07);
+}
+
+.hero-icon {
+    width: 54px;
+    height: 54px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+    border-radius: 15px;
+    background: rgba(255,255,255,.13);
+    font-size: 23px;
+}
+
+.permissions-hero h2 {
+    margin: 0 0 7px;
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: -.4px;
+}
+
+.permissions-hero p {
+    margin: 0;
+    max-width: 700px;
+    color: rgba(255,255,255,.78);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.school-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 18px;
+    padding: 8px 13px;
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 30px;
+    background: rgba(255,255,255,.10);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+/* =========================================================
+   TABS
+========================================================= */
+
+.permission-tabs-wrapper {
+    margin-bottom: 18px;
+    padding: 7px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(15,23,42,.06);
+}
+
+.permission-tabs {
+    display: flex;
+    gap: 5px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.permission-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.permission-tab {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 43px;
+    padding: 9px 15px;
+    border: 1px solid transparent;
+    border-radius: 11px;
+    background: transparent;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all .22s ease;
+}
+
+.permission-tab i {
+    font-size: 13px;
+}
+
+.permission-tab:hover {
+    background: #f8fafc;
+    color: #1e3a8a;
+}
+
+.permission-tab.active {
+    color: white;
+    background: linear-gradient(135deg, #1e3a8a, #4338ca);
+    box-shadow: 0 6px 15px rgba(30,58,138,.20);
+}
+
+/* =========================================================
+   CONTENT CARD
+========================================================= */
+
+.permissions-card {
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    box-shadow: 0 12px 35px rgba(15,23,42,.07);
+}
+
+.permissions-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, #f8faff, #eef2ff);
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.section-icon {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: #e0e7ff;
+    color: #3730a3;
+    font-size: 17px;
+}
+
+.section-title h3 {
+    margin: 0;
+    color: #172554;
+    font-size: 17px;
+    font-weight: 900;
+}
+
+.section-title p {
+    margin: 3px 0 0;
+    color: #64748b;
+    font-size: 11px;
+}
+
+.permission-count {
+    padding: 7px 11px;
+    border-radius: 20px;
+    background: #fff;
+    border: 1px solid #dbe4f5;
+    color: #3730a3;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+/* =========================================================
+   TAB PANELS
+========================================================= */
+
+.permission-panel {
+    display: none;
+    padding: 22px;
+    animation: panelFade .25s ease;
+}
+
+.permission-panel.active {
+    display: block;
+}
+
+@keyframes panelFade {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =========================================================
+   PERMISSION ITEMS
+========================================================= */
+
+.permission-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.permission-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    min-height: 72px;
+    padding: 13px 15px;
+    background: #fff;
+    border: 1px solid #e5eaf1;
+    border-radius: 14px;
+    transition: all .2s ease;
+}
+
+.permission-item:hover {
+    border-color: #c7d2fe;
+    background: #fafbff;
+    transform: translateY(-1px);
+    box-shadow: 0 7px 18px rgba(30,58,138,.07);
+}
+
+.permission-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.permission-item-icon {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 14px;
+}
+
+.permission-name {
+    color: #172033;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.permission-description {
+    margin-top: 3px;
+    color: #94a3b8;
+    font-size: 10px;
+}
+
+/* =========================================================
+   PREMIUM SWITCH
+========================================================= */
+
+.permission-switch {
+    position: relative;
+    width: 45px;
+    height: 25px;
+    flex: 0 0 45px;
+}
+
+.permission-switch input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.switch-slider {
+    position: absolute;
+    inset: 0;
+    cursor: pointer;
+    border-radius: 30px;
+    background: #cbd5e1;
+    transition: .25s;
+}
+
+.switch-slider::before {
+    content: "";
+    position: absolute;
+    width: 19px;
+    height: 19px;
+    left: 3px;
+    top: 3px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,.18);
+    transition: .25s;
+}
+
+.permission-switch input:checked + .switch-slider {
+    background: linear-gradient(135deg, #1e3a8a, #4338ca);
+}
+
+.permission-switch input:checked + .switch-slider::before {
+    transform: translateX(20px);
+}
+
+/* =========================================================
+   SAVE BAR
+========================================================= */
+
+.save-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-top: 18px;
+    padding: 17px 20px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+}
+
+.save-message {
+    color: #64748b;
+    font-size: 11px;
+}
+
+.save-message strong {
+    color: #334155;
+}
+
+.save-permissions-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 20px;
+    border: 0;
+    border-radius: 11px;
+    color: white;
+    background: linear-gradient(135deg, #15803d, #16a34a);
+    font-size: 12px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 7px 15px rgba(21,128,61,.18);
+    transition: all .2s ease;
+}
+
+.save-permissions-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 9px 20px rgba(21,128,61,.25);
+}
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+    .permissions-page {
+        padding: 5px 0 30px;
+    }
+
+    .permission-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .permissions-hero {
+        padding: 25px;
+    }
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+    .permissions-page {
+        padding: 0 0 25px;
+    }
+
+    .permissions-hero {
+        padding: 22px 18px;
+        border-radius: 18px;
+    }
+
+    .permissions-hero h2 {
+        font-size: 21px;
+    }
+
+    .permissions-hero p {
+        font-size: 11px;
+    }
+
+    .permission-tabs-wrapper {
+        border-radius: 13px;
+    }
+
+    .permission-tab {
+        min-height: 39px;
+        padding: 8px 12px;
+        font-size: 10.5px;
+    }
+
+    .permissions-card-header {
+        padding: 16px;
+    }
+
+    .section-title h3 {
+        font-size: 15px;
+    }
+
+    .permission-panel {
+        padding: 13px;
+    }
+
+    .permission-item {
+        min-height: 67px;
+        padding: 11px;
+    }
+
+    .permission-name {
+        font-size: 12px;
+    }
+
+    .permission-description {
+        display: none;
+    }
+
+    .save-bar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .save-permissions-btn {
+        width: 100%;
+    }
+}
+</style>
+
+
+<div class="permissions-page">
+
+    <!-- =====================================================
+         HERO
+    ====================================================== -->
+
+    <div class="permissions-hero">
+
+        <div class="hero-icon">
+            <i class="fas fa-user-shield"></i>
+        </div>
+
+        <h2>headmaster Permissions</h2>
+
+        <p>
+            Control exactly what the headmaster of this school can
+            access and manage. Each permission grants full
+            Add, Edit, Delete and View access for that area.
+        </p>
+
+        <div class="school-badge">
+            <i class="fas fa-school"></i>
+            {{ school.name }}
+        </div>
+
+    </div>
+
+
+    <form method="POST">
+        {% csrf_token %}
+
+
+        <!-- =====================================================
+             TABS
+        ====================================================== -->
+
+        <div class="permission-tabs-wrapper">
+            <div class="permission-tabs">
+
+                <button type="button"
+                        class="permission-tab active"
+                        data-tab="academics">
+                    <i class="fas fa-graduation-cap"></i>
+                    Academics
+                </button>
+
+                <button type="button"
+                        class="permission-tab"
+                        data-tab="people">
+                    <i class="fas fa-users"></i>
+                    People
+                </button>
+
+                <button type="button"
+                        class="permission-tab"
+                        data-tab="operations">
+                    <i class="fas fa-clipboard-check"></i>
+                    Operations
+                </button>
+
+                <button type="button"
+                        class="permission-tab"
+                        data-tab="finance">
+                    <i class="fas fa-coins"></i>
+                    Finance
+                </button>
+
+                <button type="button"
+                        class="permission-tab"
+                        data-tab="communication">
+                    <i class="fas fa-comments"></i>
+                    Communication
+                </button>
+
+                <button type="button"
+                        class="permission-tab"
+                        data-tab="reports">
+                    <i class="fas fa-chart-pie"></i>
+                    Reports
+                </button>
+
+                <button type="button"
+                        class="permission-tab"
+                        data-tab="settings">
+                    <i class="fas fa-cog"></i>
+                    Settings
+                </button>
+
+            </div>
+        </div>
+
+
+        <!-- =====================================================
+             MAIN PERMISSIONS CARD
+        ====================================================== -->
+
+        <div class="permissions-card">
+
+            <!-- =================================================
+                 ACADEMICS
+            ================================================== -->
+
+            <div class="permission-panel active" id="academics">
+
+                <div class="permissions-card-header">
+                    <div class="section-title">
+                        <div class="section-icon">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+
+                        <div>
+                            <h3>Academics</h3>
+                            <p>Academic structure and teaching management</p>
+                        </div>
+                    </div>
+
+                    <div class="permission-count">
+                        6 Permissions
+                    </div>
+                </div>
+
+                <div class="permission-grid">
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-school"></i>
+                            </div>
+                            <div>
+                                <div class="permission-name">Manage Classes</div>
+                                <div class="permission-description">
+                                    Add, edit, delete and view classes
+                                </div>
+                            </div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox"
+                                   name="can_add_class"
+                                   {% if perm.can_add_class %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <div>
+                                <div class="permission-name">Manage Subjects</div>
+                                <div class="permission-description">
+                                    Manage school subjects
+                                </div>
+                            </div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox"
+                                   name="can_add_subject"
+                                   {% if perm.can_add_subject %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                            </div>
+                            <div>
+                                <div class="permission-name">Assigned Teachers</div>
+                                <div class="permission-description">
+                                    Manage teacher assignments
+                                </div>
+                            </div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox"
+                                   name="can_assigned_teachers"
+                                   {% if perm.can_assigned_teachers %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div>
+                                <div class="permission-name">Create Timetable</div>
+                                <div class="permission-description">
+                                    Create school timetables
+                                </div>
+                            </div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox"
+                                   name="can_create_timetable"
+                                   {% if perm.can_create_timetable %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div>
+                                <div class="permission-name">Manage Timetable</div>
+                                <div class="permission-description">
+                                    Edit and manage timetables
+                                </div>
+                            </div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox"
+                                   name="can_manage_timetable"
+                                   {% if perm.can_manage_timetable %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-calendar-plus"></i>
+                            </div>
+                            <div>
+                                <div class="permission-name">Calendar Event</div>
+                                <div class="permission-description">
+                                    Manage school calendar events
+                                </div>
+                            </div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox"
+                                   name="can_calendar"
+                                   {% if perm.can_calendar %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+                </div>
+            </div>
+
+
+            <!-- =================================================
+                 PEOPLE
+            ================================================== -->
+
+            <div class="permission-panel" id="people">
+
+                <div class="permissions-card-header">
+                    <div class="section-title">
+                        <div class="section-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+
+                        <div>
+                            <h3>People</h3>
+                            <p>Manage people within the school</p>
+                        </div>
+                    </div>
+
+                    <div class="permission-count">
+                        5 Permissions
+                    </div>
+                </div>
+
+                <div class="permission-grid">
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-user-graduate"></i>
+                            </div>
+                            <div class="permission-name">Manage Students</div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox" name="can_add_student"
+                                   {% if perm.can_add_student %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-user-friends"></i>
+                            </div>
+                            <div class="permission-name">Manage Parents</div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox" name="can_add_parent"
+                                   {% if perm.can_add_parent %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                            </div>
+                            <div class="permission-name">Manage Teachers</div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox" name="can_add_teacher"
+                                   {% if perm.can_add_teacher %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-calculator"></i>
+                            </div>
+                            <div class="permission-name">Manage Accountants</div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox" name="can_add_accountant"
+                                   {% if perm.can_add_accountant %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-user-tie"></i>
+                            </div>
+                            <div class="permission-name">Manage headmasters</div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox" name="can_add_headmaster"
+                                   {% if perm.can_add_headmaster %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+                </div>
+            </div>
+
+
+            <!-- =================================================
+                 OPERATIONS
+            ================================================== -->
+
+            <div class="permission-panel" id="operations">
+
+                <div class="permissions-card-header">
+                    <div class="section-title">
+                        <div class="section-icon">
+                            <i class="fas fa-clipboard-check"></i>
+                        </div>
+
+                        <div>
+                            <h3>Operations</h3>
+                            <p>Daily school operations and academic processes</p>
+                        </div>
+                    </div>
+
+                    <div class="permission-count">4 Permissions</div>
+                </div>
+
+                <div class="permission-grid">
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div class="permission-name">Attendance</div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox" name="can_attendance"
+                                   {% if perm.can_attendance %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-user-clock"></i>
+                            </div>
+                            <div class="permission-name">Teacher Attendance</div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox" name="can_teacher_attendance"
+                                   {% if perm.can_teacher_attendance %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div class="permission-name">Review Results</div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox" name="can_review_results"
+                                   {% if perm.can_review_results %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="permission-name">Published Results</div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox" name="can_published_results"
+                                   {% if perm.can_published_results %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+                </div>
+            </div>
+
+
+            <!-- =================================================
+                 FINANCE
+            ================================================== -->
+
+            <div class="permission-panel" id="finance">
+
+                <div class="permissions-card-header">
+                    <div class="section-title">
+                        <div class="section-icon">
+                            <i class="fas fa-coins"></i>
+                        </div>
+
+                        <div>
+                            <h3>Finance</h3>
+                            <p>Financial and fee management permissions</p>
+                        </div>
+                    </div>
+
+                    <div class="permission-count">4 Permissions</div>
+                </div>
+
+                <div class="permission-grid">
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <div class="permission-name">Fees</div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox" name="can_fees"
+                                   {% if perm.can_fees %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-edit"></i>
+                            </div>
+                            <div class="permission-name">Edit Student Fees</div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox" name="can_edit_student_fees"
+                                   {% if perm.can_edit_student_fees %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-receipt"></i>
+                            </div>
+                            <div class="permission-name">Expenses</div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox" name="can_expenses"
+                                   {% if perm.can_expenses %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="permission-name">Fee Monitoring</div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox" name="can_fee_monitoring"
+                                   {% if perm.can_fee_monitoring %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+                </div>
+            </div>
+
+
+            <!-- =================================================
+                 COMMUNICATION
+            ================================================== -->
+
+            <div class="permission-panel" id="communication">
+
+                <div class="permissions-card-header">
+                    <div class="section-title">
+                        <div class="section-icon">
+                            <i class="fas fa-comments"></i>
+                        </div>
+
+                        <div>
+                            <h3>Communication</h3>
+                            <p>School announcements and notifications</p>
+                        </div>
+                    </div>
+
+                    <div class="permission-count">2 Permissions</div>
+                </div>
+
+                <div class="permission-grid">
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-bullhorn"></i>
+                            </div>
+                            <div class="permission-name">Create Announcements</div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox" name="can_create_announcements"
+                                   {% if perm.can_create_announcements %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-bell"></i>
+                            </div>
+                            <div class="permission-name">Notifications</div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox" name="can_notifications"
+                                   {% if perm.can_notifications %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+                </div>
+            </div>
+
+
+            <!-- =================================================
+                 REPORTS
+            ================================================== -->
+
+            <div class="permission-panel" id="reports">
+
+                <div class="permissions-card-header">
+                    <div class="section-title">
+                        <div class="section-icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+
+                        <div>
+                            <h3>Reports</h3>
+                            <p>Reporting and academic remarks</p>
+                        </div>
+                    </div>
+
+                    <div class="permission-count">2 Permissions</div>
+                </div>
+
+                <div class="permission-grid">
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <div class="permission-name">View Reports</div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox" name="can_view_reports"
+                                   {% if perm.can_view_reports %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-comment-alt"></i>
+                            </div>
+                            <div class="permission-name">Head Teacher Remarks</div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox" name="can_headmaster_remarks"
+                                   {% if perm.can_headmaster_remarks %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+                </div>
+            </div>
+
+
+            <!-- =================================================
+                 SETTINGS
+            ================================================== -->
+
+            <div class="permission-panel" id="settings">
+
+                <div class="permissions-card-header">
+                    <div class="section-title">
+                        <div class="section-icon">
+                            <i class="fas fa-cog"></i>
+                        </div>
+
+                        <div>
+                            <h3>Settings</h3>
+                            <p>System and school configuration</p>
+                        </div>
+                    </div>
+
+                    <div class="permission-count">3 Permissions</div>
+                </div>
+
+                <div class="permission-grid">
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-school"></i>
+                            </div>
+                            <div class="permission-name">School Settings</div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox" name="can_school_settings"
+                                   {% if perm.can_school_settings %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-users-cog"></i>
+                            </div>
+                            <div class="permission-name">User Management</div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox" name="can_user_management"
+                                   {% if perm.can_user_management %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+                    <label class="permission-item">
+                        <div class="permission-info">
+                            <div class="permission-item-icon">
+                                <i class="fas fa-sliders-h"></i>
+                            </div>
+                            <div class="permission-name">System Settings</div>
+                        </div>
+
+                        <span class="permission-switch">
+                            <input type="checkbox" name="can_system_settings"
+                                   {% if perm.can_system_settings %}checked{% endif %}>
+                            <span class="switch-slider"></span>
+                        </span>
+                    </label>
+
+                </div>
+            </div>
+
+
+            <!-- =================================================
+                 SAVE
+            ================================================== -->
+
+            <div class="save-bar">
+
+                <div class="save-message">
+                    <strong>Permission changes</strong><br>
+                    Save after reviewing all permission tabs.
+                </div>
+
+                <button class="save-permissions-btn" type="submit">
+                    <i class="fas fa-save"></i>
+                    Save Permissions
+                </button>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const tabs = document.querySelectorAll(".permission-tab");
+    const panels = document.querySelectorAll(".permission-panel");
+
+    tabs.forEach(function (tab) {
+
+        tab.addEventListener("click", function () {
+
+            const target = this.dataset.tab;
+
+            tabs.forEach(function (item) {
+                item.classList.remove("active");
+            });
+
+            panels.forEach(function (panel) {
+                panel.classList.remove("active");
+            });
+
+            this.classList.add("active");
+
+            const targetPanel = document.getElementById(target);
+
+            if (targetPanel) {
+                targetPanel.classList.add("active");
+            }
+
+        });
+
+    });
+
+});
+</script>
+
+{% endblock %}

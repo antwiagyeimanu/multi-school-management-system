@@ -1,5 +1,5 @@
 from datetime import date
-from .utils import get_active_term  
+from .utils import get_active_term, is_basic_school
 from .models import SchoolSetting
 from datetime import date, timedelta
 from .models import Term  # adjust if needed
@@ -9,6 +9,7 @@ from .models import AcademicCalendar
 from .models import Announcement, AnnouncementRead
 from django.db.models import Q
 from .utils import get_active_week
+from accounts.utils import get_weeks_for_term, get_active_week
 
 def active_term(request):
     if request.user.is_authenticated and hasattr(request.user, 'school'):
@@ -65,92 +66,91 @@ def week_info(request):
         return {}
 
     try:
-        active_term = Term.objects.get(
-            school=request.user.school,
-            is_active=True
-        )
+        active_term = Term.objects.get(school=request.user.school, is_active=True)
+
     except Term.DoesNotExist:
         return {}
 
     except Term.MultipleObjectsReturned:
-            active_term = (
-                Term.objects
-                .filter(school=request.user.school, is_active=True)
-                .order_by("-start_date")
-                .first()
-            )
-            if not active_term: # <-- ADD THIS 2 LINES
-                return {}
+        active_term = (
+            Term.objects.filter(school=request.user.school, is_active=True)
+            .order_by("-start_date")
+            .first()
+        )
+
+        if not active_term:
+            return {}
+
+    if not active_term.start_date or not active_term.end_date:
+        return {}
 
     today = date.today()
-    if not active_term.start_date: # <-- AND THIS
-            return {}
-    school_start = active_term.start_date
 
+    # Use the Admin-defined school calendar
+    weeks = get_weeks_for_term(active_term)
 
+    if not weeks:
+        return {}
 
-    def get_week_range(start_date, week_number):
-        current_start = start_date
-        for _ in range(week_number - 1):
-            friday = current_start + timedelta(days=(4 - current_start.weekday()))
-            current_start = friday + timedelta(days=3)
-        week_start = current_start
-        week_end = week_start + timedelta(days=(4 - week_start.weekday()))
-        return week_start, week_end
+    total_weeks = len(weeks)
 
-    def get_total_weeks(start_date, end_date):
-        week = 1
-        current_start = start_date
-        while current_start <= end_date:
-            friday = current_start + timedelta(days=(4 - current_start.weekday()))
-            current_start = friday + timedelta(days=3)
-            week += 1
-        return week - 1
+    # -----------------------------------------
+    # GLOBAL TOP-BAR WEEK
+    # -----------------------------------------
 
-    total_weeks = get_total_weeks(school_start, active_term.end_date)
+    term_key = f"top_week_term_{active_term.id}"
 
-    # READ BOTH week AND top_week - so top bar works!
-    week_param =  request.GET.get("top_week")
+    week_param = request.GET.get("top_week")
+
     if week_param:
         try:
             active_week = int(week_param)
-        except:
-            active_week = get_active_week(school_start, today)
+
+            # Remember the selected top-bar week
+            request.session[term_key] = active_week
+            request.session.modified = True
+
+        except (ValueError, TypeError):
+            active_week = request.session.get(term_key)
+
     else:
-        active_week = get_active_week(school_start, today)
+        # Use the remembered top-bar week for this term
+        active_week = request.session.get(term_key)
 
-    if active_week < 1:
-        active_week = 1
-    if active_week > total_weeks:
-        active_week = total_weeks
+        # If nothing has been selected yet, use the actual current week
+        if active_week is None:
+            active_week = get_active_week(
+                active_term.start_date, today, active_term.end_date
+            )
 
-    prev_week = active_week - 1
-    next_week = active_week + 1
-    if prev_week < 1:
-        prev_week = 1
-    if next_week > total_weeks:
-        next_week = total_weeks
+            request.session[term_key] = active_week
+            request.session.modified = True
 
-    week_start, week_end = get_week_range(school_start, active_week)
+    # Keep the week inside the current term
+    active_week = max(1, min(active_week, total_weeks))
+
+    week_start, week_end = weeks[active_week - 1]
 
     return {
-        "today": date.today(),
+        "today": today,
         "active_week": active_week,
         "week_start": week_start,
         "week_end": week_end,
         "active_term": active_term,
-        "prev_week": prev_week,
-        "next_week": next_week,
-        "top_week_offset": active_week,  # for parent page
-        "week": active_week,  # compatibility
+        "prev_week": max(1, active_week - 1),
+        "next_week": min(total_weeks, active_week + 1),
+        "top_week_offset": active_week,
+        "week": active_week,
     }
 
 
 def global_context(request):
     return {
-        'today_date': timezone.now().date(),
-        'current_time': timezone.now(),
+        "today_date": timezone.now().date(),
+        "current_time": timezone.now(),
+        "is_basic_school": is_basic_school(request.user),
     }
+
 
 def calculate_total_school_days(start_date, end_date, school):
     
@@ -212,10 +212,15 @@ def announcements_processor(request):
             show = True
         elif 'support_staff' in roles and user_role in ['support_staff', 'staff', 'non_teaching', 'kitchen', 'cleaner', 'driver']:
             show = True
-        elif 'specific_class' in roles:
-            if user_class and ann.target_class_id and user_class.id == ann.target_class_id:
-                show = True
-        
+        elif 'specific_class' in roles or 'specific class' in roles:
+                    if user_class:
+                        # check new many-to-many
+                        if ann.target_classes.filter(id=user_class.id).exists():
+                            show = True
+                        # fallback old field
+                        elif ann.target_class_id and user_class.id == ann.target_class_id:
+                            show = True
+                
         # Also handle old plural names just in case
         if not show:
             if user_role == 'student' and 'students' in roles:

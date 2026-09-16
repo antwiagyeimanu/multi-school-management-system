@@ -1,0 +1,794 @@
+{% extends "accounts/dashboard_base.html" %}
+
+{% block content %}
+
+<style>
+.grading-wrapper {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px 28px 40px;
+}
+
+.grading-header {
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    border-radius: 20px;
+    color: #fff;
+    background: linear-gradient(135deg, #0f172a, #2563eb);
+    box-shadow: 0 15px 35px rgba(15,23,42,.15);
+}
+
+.grading-header h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 850;
+}
+
+.grading-header p {
+    margin: 7px 0 0;
+    color: #dbeafe;
+    font-size: 12px;
+}
+
+.grading-card {
+    background: #fff;
+    border: 1px solid #e6ebf2;
+    border-radius: 20px;
+    padding: 26px;
+    margin-bottom: 18px;
+    box-shadow: 0 8px 25px rgba(15,23,42,.055);
+}
+
+.grading-card-title {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding-bottom: 16px;
+    margin-bottom: 23px;
+    border-bottom: 1px solid #edf1f6;
+    color: #111827;
+    font-size: 17px;
+    font-weight: 850;
+}
+
+.grading-icon {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+.grading-label {
+    display: block;
+    margin-bottom: 7px;
+    color: #374151;
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.grading-form-control,
+.grading-form-select {
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 13px;
+    border: 1px solid #dce3ed;
+    border-radius: 11px;
+    background: #fff;
+    color: #111827;
+    font-size: 13px;
+}
+
+.grading-form-control:focus,
+.grading-form-select:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 4px rgba(79,70,229,.09);
+}
+
+.grading-help {
+    margin-top: 6px;
+    color: #7b8495;
+    font-size: 11px;
+}
+
+.grading-save {
+    min-height: 48px;
+    padding: 10px 22px;
+    border: 0;
+    border-radius: 11px;
+    color: #fff;
+    background: linear-gradient(135deg, #2563eb, #4f46e5);
+    font-size: 13px;
+    font-weight: 750;
+    box-shadow: 0 8px 20px rgba(37,99,235,.20);
+}
+
+.grading-table-wrapper {
+    overflow-x: auto;
+}
+
+.grading-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.grading-table th {
+    padding: 13px 14px;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 800;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.grading-table td {
+    padding: 15px 14px;
+    border-top: 1px solid #edf1f6;
+    color: #334155;
+    font-size: 12px;
+}
+
+.grade-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: #eef2ff;
+    color: #4338ca;
+    font-weight: 850;
+}
+
+.scope-badge {
+    display: inline-flex;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.empty-grading {
+    padding: 45px 20px;
+    text-align: center;
+    border: 1px dashed #d8dee8;
+    border-radius: 15px;
+    background: #fafbfd;
+    color: #7b8495;
+    font-size: 12px;
+}
+
+@media (max-width: 768px) {
+    .grading-wrapper {
+        padding: 13px;
+    }
+
+    .grading-header {
+        padding: 23px;
+        border-radius: 18px;
+    }
+
+    .grading-header h1 {
+        font-size: 22px;
+    }
+
+    .grading-card {
+        padding: 19px;
+        border-radius: 17px;
+    }
+
+    .grading-save {
+        width: 100%;
+    }
+}
+.grading-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(15, 23, 42, .55);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.grading-modal.show {
+    display: flex;
+}
+
+.grading-modal-box {
+    width: 100%;
+    max-width: 650px;
+    background: #fff;
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 25px 60px rgba(15, 23, 42, .25);
+}
+
+.grading-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+}
+
+.grading-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 850;
+    color: #111827;
+}
+
+.grading-modal-close {
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 10px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.grading-modal-close:hover {
+    background: #e2e8f0;
+}
+.delete-modal-box {
+    max-width: 430px;
+    text-align: center;
+}
+
+.delete-icon {
+    width: 58px;
+    height: 58px;
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #fee2e2;
+    color: #dc2626;
+    font-size: 22px;
+}
+
+.delete-modal-box h3 {
+    margin: 0 0 8px;
+    color: #111827;
+    font-size: 19px;
+    font-weight: 850;
+}
+
+.delete-modal-box p {
+    margin: 0 0 24px;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.delete-modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.delete-cancel-btn,
+.delete-confirm-btn {
+    min-height: 44px;
+    padding: 9px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 750;
+    cursor: pointer;
+}
+
+.delete-cancel-btn {
+    border: 1px solid #dbe1ea;
+    background: #fff;
+    color: #475569;
+}
+
+.delete-confirm-btn {
+    border: 0;
+    background: #dc2626;
+    color: #fff;
+}
+</style>
+
+
+<div class="grading-wrapper">
+
+    <!-- HEADER -->
+
+    <div class="grading-header">
+
+        <h1>
+            🎓 Grading Settings
+        </h1>
+
+        <p>
+            Configure grade ranges and remarks for your school's results.
+        </p>
+
+    </div>
+
+
+    <!-- ADD GRADING SCALE -->
+
+    <div class="grading-card">
+
+        <h3 class="grading-card-title">
+
+            <span class="grading-icon">
+                <i class="fas fa-plus"></i>
+            </span>
+
+            {% if editing_grading %}
+    Edit Grading Scale
+{% else %}
+    Add Grading Scale
+{% endif %}
+
+        </h3>
+
+
+        <form method="POST">
+
+            {% csrf_token %}
+            {% if editing_grading %}
+    <input type="hidden" name="grading_id" value="{{ editing_grading.id }}">
+{% endif %}
+
+            <div class="row g-3">
+
+                <div class="col-md-4">
+
+                    <label class="grading-label">
+                        Term
+                    </label>
+
+                    {{ form.term }}
+
+                    <div class="grading-help">
+                        Leave as All Terms for a school-wide default.
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-2">
+
+                    <label class="grading-label">
+                        Grade
+                    </label>
+
+                    {{ form.grade }}
+
+                </div>
+
+
+                <div class="col-md-3">
+
+                    <label class="grading-label">
+                        Minimum Score
+                    </label>
+
+                    {{ form.min_score }}
+
+                </div>
+
+
+                <div class="col-md-3">
+
+                    <label class="grading-label">
+                        Maximum Score
+                    </label>
+
+                    {{ form.max_score }}
+
+                </div>
+
+
+                <div class="col-md-9">
+
+                    <label class="grading-label">
+                        Remark
+                    </label>
+
+                    {{ form.remark }}
+
+                </div>
+
+
+                <div class="col-md-3 d-flex align-items-end">
+
+                    <button
+                        type="submit"
+                        class="grading-save w-100">
+
+                       <i class="fas fa-save me-1"></i>
+
+{% if editing_grading %}
+    Save Changes
+{% else %}
+    Save Grade
+{% endif %}
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- CURRENT GRADING SCALE -->
+
+    <div class="grading-card">
+
+        <h3 class="grading-card-title">
+
+            <span class="grading-icon">
+                <i class="fas fa-layer-group"></i>
+            </span>
+
+            Current Grading Scale
+
+        </h3>
+
+
+        {% if grading_scales %}
+
+        <div class="grading-table-wrapper">
+
+            <table class="grading-table">
+
+                <thead>
+
+                    <tr>
+                        <th>Scope</th>
+                        <th>Grade</th>
+                        <th>Score Range</th>
+                        <th>Remark</th>
+                        <th>Actions</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for grading in grading_scales %}
+
+                    <tr>
+
+                        <td>
+
+                            {% if grading.term %}
+
+                                <span class="scope-badge">
+                                    {{ grading.term }}
+                                </span>
+
+                            {% else %}
+
+                                <span class="scope-badge">
+                                    All Terms
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="grade-badge">
+                                {{ grading.grade }}
+                            </span>
+
+                        </td>
+
+
+                        <td>
+                            {{ grading.min_score }}
+                            –
+                            {{ grading.max_score }}
+                        </td>
+
+
+                        <td>
+                            {{ grading.remark }}
+                        </td>
+                        <td>
+<button
+    type="button"
+    class="btn btn-sm btn-outline-primary"
+    onclick="openEditGradingModal(
+        '{{ grading.id }}',
+        '{{ grading.term.id|default:"" }}',
+        '{{ grading.grade|escapejs }}',
+        '{{ grading.min_score }}',
+        '{{ grading.max_score }}',
+        '{{ grading.remark|escapejs }}'
+    )">
+    <i class="fas fa-edit"></i>
+    Edit
+</button>
+<button
+    type="button"
+    class="btn btn-sm btn-outline-danger ms-1"
+    onclick="deleteGradingScale('{{ grading.id }}')">
+    <i class="fas fa-trash"></i>
+    Delete
+</button>
+</td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+        <div class="empty-grading">
+
+            <div style="font-size:28px; margin-bottom:8px;">
+                🎓
+            </div>
+
+            No grading scale has been configured yet.
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+<div id="gradingModal" class="grading-modal">
+
+    <div class="grading-modal-box">
+
+        <div class="grading-modal-header">
+
+            <h3 id="gradingModalTitle">
+                Edit Grading Scale
+            </h3>
+
+            <button
+                type="button"
+                class="grading-modal-close"
+                onclick="closeGradingModal()">
+                &times;
+            </button>
+
+        </div>
+
+
+        <form method="POST">
+
+            {% csrf_token %}
+
+            <input
+                type="hidden"
+                name="grading_id"
+                id="grading_id">
+
+
+            <div class="mb-3">
+
+                <label class="grading-label">
+                    Term
+                </label>
+
+                {{ form.term }}
+
+            </div>
+
+
+            <div class="mb-3">
+
+                <label class="grading-label">
+                    Grade
+                </label>
+
+                {{ form.grade }}
+
+            </div>
+
+
+            <div class="row g-3">
+
+                <div class="col-6">
+
+                    <label class="grading-label">
+                        Minimum Score
+                    </label>
+
+                    {{ form.min_score }}
+
+                </div>
+
+
+                <div class="col-6">
+
+                    <label class="grading-label">
+                        Maximum Score
+                    </label>
+
+                    {{ form.max_score }}
+
+                </div>
+
+            </div>
+
+
+            <div class="mb-3 mt-3">
+
+                <label class="grading-label">
+                    Remark
+                </label>
+
+                {{ form.remark }}
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="grading-save w-100">
+
+                <i class="fas fa-save me-1"></i>
+                Save Changes
+
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+<div id="deleteGradingModal" class="grading-modal">
+
+    <div class="grading-modal-box delete-modal-box">
+
+        <div class="delete-icon">
+            <i class="fas fa-trash"></i>
+        </div>
+
+        <h3>Delete Grading Scale?</h3>
+
+        <p>
+            Are you sure you want to delete this grading scale?
+            This action cannot be undone.
+        </p>
+
+        <div class="delete-modal-actions">
+
+            <button
+                type="button"
+                class="delete-cancel-btn"
+                onclick="closeDeleteGradingModal()">
+                Cancel
+            </button>
+
+            <button
+                type="button"
+                class="delete-confirm-btn"
+                onclick="confirmDeleteGrading()">
+                <i class="fas fa-trash me-1"></i>
+                Delete
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+<script>
+
+function openEditGradingModal(id, termId, grade, minScore, maxScore, remark) {
+
+    document.getElementById("grading_id").value = id;
+
+    document.getElementById("id_term").value = termId;
+
+    document.getElementById("id_grade").value = grade;
+
+    document.getElementById("id_min_score").value = minScore;
+
+    document.getElementById("id_max_score").value = maxScore;
+
+    document.getElementById("id_remark").value = remark;
+
+    document.getElementById("gradingModalTitle").textContent =
+        "Edit Grading Scale";
+
+    document.getElementById("gradingModal").classList.add("show");
+}
+
+
+function closeGradingModal() {
+
+    document.getElementById("gradingModal").classList.remove("show");
+
+}
+
+
+document.getElementById("gradingModal").addEventListener("click", function(event) {
+
+    if (event.target === this) {
+        closeGradingModal();
+    }
+
+});
+let gradingToDelete = null;
+
+function deleteGradingScale(id) {
+
+    gradingToDelete = id;
+
+    document
+        .getElementById("deleteGradingModal")
+        .classList.add("show");
+}
+
+
+function closeDeleteGradingModal() {
+
+    gradingToDelete = null;
+
+    document
+        .getElementById("deleteGradingModal")
+        .classList.remove("show");
+}
+
+
+function confirmDeleteGrading() {
+
+    if (!gradingToDelete) {
+        return;
+    }
+
+    const form = document.createElement("form");
+
+    form.method = "POST";
+    form.action = window.location.href.split("?")[0];
+
+    const csrf = document.createElement("input");
+    csrf.type = "hidden";
+    csrf.name = "csrfmiddlewaretoken";
+    csrf.value = "{{ csrf_token }}";
+
+    const deleteInput = document.createElement("input");
+    deleteInput.type = "hidden";
+    deleteInput.name = "delete_id";
+    deleteInput.value = gradingToDelete;
+
+    form.appendChild(csrf);
+    form.appendChild(deleteInput);
+
+    document.body.appendChild(form);
+
+    form.submit();
+}
+
+</script>
+
+{% endblock %}

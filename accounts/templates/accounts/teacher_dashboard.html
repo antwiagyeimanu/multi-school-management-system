@@ -146,52 +146,283 @@
   }
 }
 
-/* ========== MOBILE: below 768px ========== */
-@media (max-width: 768px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-    max-width: 100%;
-    padding: 0 16px;
-    margin-bottom: 24px;
-  }
-  
-  .week-nav-container {
-    justify-content: center;
-  }
-  
-  .stat-card {
-    padding: 18px 16px;
-    border-radius: 10px;
-    min-height: auto;
-  }
-  
-  .stat-card-title {
-    font-size: 13px;
-  }
-  
-  .stat-period {
-    font-size: 11px;
-    margin: 2px 0 8px 0;
-  }
-  
-  .stat-percent {
-    font-size: 30px;
-    margin-bottom: 4px;
-  }
-  
-  .stat-breakdown {
-    font-size: 13px;
-    line-height: 1.4;
-    gap: 4px 8px;
-  }
-  
-  .stat-card-icon {
-    font-size: 20px;
-    top: 14px;
-    right: 14px;
-    opacity: 1
-  }
+/* ================= MOBILE OPTIMIZATION ================= */
+
+@media (max-width: 768px){
+
+    /* DASHBOARD */
+    .dashboard-container{
+        width:100%;
+        padding:0 8px;
+    }
+
+
+    /* WEEK NAVIGATION */
+    .week-nav-container{
+        justify-content:center;
+        margin-bottom:15px;
+    }
+
+    .week-nav{
+        width:100%;
+        justify-content:space-between;
+        gap:6px;
+        padding:7px 9px;
+        font-size:12px;
+    }
+
+    .week-nav-btn{
+        padding:6px 9px;
+        font-size:11px;
+        white-space:nowrap;
+    }
+
+    .week-nav-label{
+        font-size:11px;
+        text-align:center;
+    }
+
+
+    /* ================= HERO ================= */
+
+    .hero-banner{
+        margin-top:15px;
+        margin-bottom:20px;
+        padding:22px 18px;
+        border-radius:20px;
+    }
+
+    .hero-content{
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        text-align:center;
+        gap:18px;
+    }
+
+    .hero-profile{
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        gap:12px;
+        width:100%;
+    }
+
+    .hero-avatar,
+    .hero-avatar-placeholder{
+        width:72px;
+        height:72px;
+    }
+
+    .hero-avatar-placeholder{
+        font-size:24px;
+    }
+
+    .hero-text{
+        width:100%;
+    }
+
+    .hero-text h2{
+        font-size:23px;
+        line-height:1.25;
+        margin-bottom:8px;
+    }
+
+    .hero-text p{
+        font-size:20px;
+        font-weight: 900;
+        line-height:1.7;
+        margin:0;
+    }
+
+    .hero-date{
+        width:100%;
+        text-align:center;
+        padding-top:12px;
+        border-top:1px solid rgba(255,255,255,.18);
+    }
+
+    .hero-date h4{
+        font-size:18px;
+    }
+
+    .hero-date p{
+        font-size:13px;
+        margin-top:4px;
+    }
+
+
+    /* ================= KPI CARDS ================= */
+
+    .kpi-grid{
+        grid-template-columns:1fr;
+        gap:14px;
+        margin-bottom:25px;
+    }
+
+    .kpi-card{
+        padding:19px;
+        border-radius:17px;
+        min-height:125px;
+    }
+
+    .kpi-icon{
+        width:48px;
+        height:48px;
+        border-radius:14px;
+        font-size:21px;
+        margin-bottom:13px;
+    }
+
+    .kpi-title{
+        font-size:12px;
+        margin-bottom:6px;
+    }
+
+    .kpi-value{
+        font-size:29px;
+    }
+
+    .kpi-sub{
+        font-size:12px;
+        margin-top:8px;
+    }
+
+
+    /* ================= ATTENDANCE ================= */
+
+    .attendance-widget{
+        padding:18px 15px;
+        border-radius:18px;
+        margin-bottom:22px;
+        border-left-width:4px;
+    }
+
+    .attendance-header{
+        margin-bottom:18px;
+        gap:10px;
+    }
+
+    .attendance-header h4{
+        font-size:17px !important;
+        line-height:1.35;
+    }
+
+    .attendance-header p{
+        font-size:12px !important;
+    }
+
+
+    /* ATTENDANCE SUMMARY */
+
+    .attendance-summary{
+        grid-template-columns:1fr;
+        gap:11px;
+        margin-bottom:20px;
+    }
+
+    .summary-card{
+        padding:15px 12px;
+        border-radius:14px;
+    }
+
+    .summary-card i{
+        font-size:21px;
+        margin-bottom:7px;
+    }
+
+    .summary-card small{
+        font-size:12px;
+        margin-bottom:5px;
+    }
+
+    .summary-card h5{
+        font-size:15px;
+    }
+
+
+    /* ATTENDANCE STATUS */
+
+    .attendance-status{
+        padding:8px 14px;
+        font-size:13px;
+    }
+
+
+    /* ================= ACTION BUTTONS ================= */
+
+    .action-row{
+        flex-direction:column;
+        align-items:stretch;
+        gap:12px;
+    }
+
+    .action-buttons{
+        width:100%;
+        display:flex;
+        flex-direction:column;
+        gap:9px;
+    }
+
+    .action-buttons .btn{
+        width:100%;
+        padding:11px 15px;
+        border-radius:35px;
+        font-size:13px;
+    }
+
+    .action-row > div:last-child{
+        width:100%;
+        text-align:center;
+    }
+
+    .status-pill{
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        width:100%;
+        padding:10px 12px;
+        font-size:12px;
+    }
+
+}
+
+
+/* ================= SMALL PHONES ================= */
+
+@media (max-width: 400px){
+
+    .hero-banner{
+        padding:19px 14px;
+        border-radius:18px;
+    }
+
+    .hero-text h2{
+        font-size:21px;
+    }
+
+    .hero-text p{
+        font-size:12px;
+    }
+
+    .hero-avatar,
+    .hero-avatar-placeholder{
+        width:66px;
+        height:66px;
+    }
+
+    .kpi-card{
+        padding:17px;
+    }
+
+    .kpi-value{
+        font-size:27px;
+    }
+
+    .attendance-widget{
+        padding:16px 12px;
+    }
+
 }
 /* ===== PREMIUM TODAY ATTENDANCE ===== */
 
@@ -594,8 +825,152 @@
     color:#b91c1c;
 }
 
+.hero-info{
+    display:flex;
+    align-items:center;
+    gap:25px;
+    margin-top:8px;
+}
+
+.hero-info-item{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+}
+
+.hero-info-item strong{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    opacity:.7;
+}
+
+.hero-info-item span{
+    font-size:14px;
+    font-weight:700;
+}
 
 
+/* MOBILE */
+
+@media(max-width:768px){
+
+    .hero-info{
+        justify-content:center;
+        gap:28px;
+        flex-wrap:wrap;
+    }
+
+    .hero-info-item strong{
+        font-size:12px;
+    }
+
+    .hero-info-item span{
+        font-size:13px;
+    }
+
+}
+/* =====================================================
+   FINAL MOBILE LAYOUT
+   ONLY CHANGES MOBILE CARD/BUTTON ARRANGEMENT
+===================================================== */
+
+@media (max-width: 768px) {
+
+    /* KPI CARDS — 2 SIDE BY SIDE */
+    .kpi-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 12px !important;
+    }
+
+    .kpi-card {
+        min-width: 0 !important;
+        width: 100% !important;
+    }
+
+
+    /* ATTENDANCE SUMMARY — 2 SIDE BY SIDE */
+    .attendance-summary {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 11px !important;
+    }
+
+    .summary-card {
+        min-width: 0 !important;
+        width: 100% !important;
+    }
+
+
+    /* CHECK IN / CHECK OUT / MY ATTENDANCE */
+    .action-row {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 12px !important;
+    }
+
+    .action-buttons {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        width: 100% !important;
+        gap: 9px !important;
+    }
+
+    .action-buttons .btn {
+        width: 100% !important;
+        min-width: 0 !important;
+        padding: 11px 8px !important;
+        font-size: 12px !important;
+        white-space: nowrap;
+    }
+
+    /* My Attendance naturally takes the second row */
+    .action-buttons .btn:last-child {
+        grid-column: 1 / -1;
+    }
+
+    /* STATUS */
+    .action-row > div:last-child {
+        width: 100% !important;
+        text-align: center !important;
+    }
+
+    .status-pill {
+        width: 100% !important;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+    }
+}
+
+
+/* SMALL PHONES */
+@media (max-width: 400px) {
+
+    .kpi-grid {
+        gap: 9px !important;
+    }
+
+    .attendance-summary {
+        gap: 9px !important;
+    }
+
+    .kpi-card {
+        padding: 15px !important;
+    }
+
+    .summary-card {
+        padding: 13px 8px !important;
+    }
+
+    .action-buttons .btn {
+        font-size: 11px !important;
+        padding: 10px 5px !important;
+    }
+}
 </style>
 
 <div class="hero-banner">
@@ -616,18 +991,22 @@
 
 <h2>
 {{ greeting }},
-Mr. {{ request.user.first_name|default:request.user.username }} 👋
+{{ user.get_title_display }} {{ request.user.first_name|default:request.user.username }} 👋
 </h2>
 
-<p>
+<p class="hero-info">
 
-<strong>Staff ID:</strong>
-{{ request.user.staff_id }}
+    <span class="hero-info-item">
+        <strong>Staff ID</strong>
+        <span>{{ request.user.staff_id }}</span>
+    </span>
 
-{% if request.user.school %}
-&nbsp;&nbsp;•&nbsp;&nbsp;
-<strong>{{ request.user.school.name }}</strong>
-{% endif %}
+    {% if request.user.school %}
+    <span class="hero-info-item">
+        <strong>School</strong>
+        <span>{{ request.user.school.name }}</span>
+    </span>
+    {% endif %}
 
 </p>
 
@@ -822,18 +1201,18 @@ Not Marked
 <small>Recorded By</small>
 
 <h5>
-
-{% if today_attendance and today_attendance.marked_by %}
-{{ today_attendance.marked_by.username }}
-
-{% elif today_attendance %}
-Self
-
-{% else %}
---
-
-{% endif %}
-
+    {% if today_attendance and today_attendance.marked_by %}
+        {% if today_attendance.marked_by.first_name or today_attendance.marked_by.last_name %}
+            {{ today_attendance.marked_by.first_name }} {{ today_attendance.marked_by.last_name }}
+        {% else %}
+            {{ today_attendance.marked_by.username }}
+        {% endif %}
+        ({{ today_attendance.marked_by.get_role_display }})
+    {% elif today_attendance %}
+        Self
+    {% else %}
+        --
+    {% endif %}
 </h5>
 
 </div>

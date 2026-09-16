@@ -405,6 +405,79 @@ footer {
 .action-login.allow {
     background:#16a34a;
 }
+.cred-mini{
+  background:#f0fdf4;
+  border:1px solid #bbf7d0;
+  border-radius:14px;
+  padding:12px;
+  margin-bottom:18px;
+  max-width:650px;
+}
+.cred-mini-header{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-weight:800;
+  color:#166534;
+  font-size:14px;
+  margin-bottom:10px;
+}
+.cred-mini-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:8px;
+}
+.cred-item{
+  background:white;
+  border:1px solid #e5e7eb;
+  border-radius:10px;
+  padding:8px 10px;
+}
+.cred-item small{
+  display:block;
+  font-size:10px;
+  color:#6b7280;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+}
+.cred-item b{
+  display:block;
+  font-size:13px;
+  color:#111827;
+  word-break:break-all;
+  margin-top:2px;
+}
+.cred-actions{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  justify-content:center;
+  margin-top:10px;
+  flex-wrap:wrap;
+}
+.cred-btn{
+  background:#2563eb;
+  color:white;
+  border:none;
+  padding:8px 14px;
+  border-radius:20px;
+  font-size:12px;
+  font-weight:700;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+}
+.cred-note{
+  font-size:11px;
+  color:#991b1b;
+  text-align:center;
+  margin-top:6px;
+}
+@media(max-width:600px){
+  .cred-mini-grid{ grid-template-columns:1fr; }
+  .cred-mini{ max-width:100%; }
+}
 
 </style>
 
@@ -419,58 +492,40 @@ footer {
 {% endif %}
 
 
-{% if credentials %}
-<div class="card border-0 shadow-lg rounded-4 mb-4 overflow-hidden">
-
-    <div class="card-body p-4"
-         style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);">
-
-        <h4 class="fw-bold text-success mb-3">
-            ✅ {{ credentials.title }}
-        </h4>
-
-        <div class="row g-3">
-
-            <div class="col-md-4">
-                <div class="bg-white rounded-3 p-3 shadow-sm">
-                    <small class="text-muted">Username</small>
-                    <h6 class="fw-bold mb-0">
-                        {{ credentials.username }}
-                    </h6>
-                </div>
-            </div>
-
-
-            <div class="col-md-4">
-                <div class="bg-white rounded-3 p-3 shadow-sm">
-                    <small class="text-muted">Student ID</small>
-                    <h6 class="fw-bold mb-0">
-                        {{ credentials.student_number }}
-                    </h6>
-                </div>
-            </div>
-
-
-            <div class="col-md-4">
-                <div class="bg-white rounded-3 p-3 shadow-sm">
-                    <small class="text-muted">Password</small>
-                    <h6 class="fw-bold mb-0">
-                        {{ credentials.password }}
-                    </h6>
-                </div>
-            </div>
-
-        </div>
-
-        <small class="text-success d-block mt-3">
-            Save these details. They will not be shown again.
-        </small>
-
+{% if credentials and show_credentials %}
+<div class="cred-mini">
+  <div class="cred-mini-header">✅ Created: {{ credentials.username }}</div>
+  
+  <div class="cred-mini-grid">
+    <div class="cred-item">
+      <small>Username</small>
+      <b>{{ credentials.username }}</b>
     </div>
 
+    <div class="cred-item">
+      <small>Student ID</small>
+      <b>{{ credentials.student_number }}</b>
+    </div>
+
+    <div class="cred-item">
+      <small>Password</small>
+      <b>{{ credentials.password }}</b>
+    </div>
+  </div>
+
+  <div class="cred-actions">
+    <a href="{% url 'accounts:print_admission_letter' credentials.student_id %}?pwd={{ credentials.password|urlencode }}"
+       target="_blank"
+       rel="noopener"
+       onclick="window.open(this.href, '_blank'); return false;"
+       class="cred-btn">
+       🖨️ Print Admission Letter
+    </a>
+  </div>
+
+  <div class="cred-note">Save now - won't show again</div>
 </div>
 {% endif %}
-
 
 
 <div class="container-fluid px-0">
@@ -561,11 +616,14 @@ footer {
 
 
 </div>
-
-<a href="{% url 'accounts:deactivated-students' school_class.id %}"
+{% if school_class and school_class.id %}
+<a href="{% url 'accounts:deactivated-students' school_class.id %}" 
    class="btn btn-danger">
     🚫 Deactivated Students
 </a>
+{% endif %}
+
+
 
     <!-- BIG WIDE HORIZONTAL CARDS -->
     <div class="student-grid-big">
@@ -618,24 +676,26 @@ footer {
         </div>
 
 
-        <div class="detail-item">
-            <strong>Portal Access</strong>
+{% if school_class.school.allows_student_login %}
+<div class="detail-item">
+    <strong>Portal Access</strong>
 
-            {% if student.can_login %}
+    {% if student.can_login %}
 
-            <span class="status-active">
-                Allowed
-            </span>
+    <span class="status-active">
+        Allowed
+    </span>
 
-            {% else %}
+    {% else %}
 
-            <span class="status-blocked">
-                Blocked
-            </span>
+    <span class="status-blocked">
+        Blocked
+    </span>
 
-            {% endif %}
+    {% endif %}
 
-        </div>
+</div>
+{% endif %}
 
 
     </div>
@@ -643,66 +703,60 @@ footer {
 
 
     <!-- ACTION BUTTONS -->
-<div class="student-actions">
+<div class="student-actions" style="display:flex; gap:8px; flex-wrap:wrap;">
 
-    <a href="{% url 'accounts:view-student' student.id %}"
-       class="action-view">
+    <a href="{% url 'accounts:view-student' student.id %}" 
+       style="min-width:95px; height:38px; display:inline-flex; align-items:center; justify-content:center; background:#2563eb; color:white; border-radius:8px; text-decoration:none; font-size:13px; font-weight:600;">
         👁️ View
-
     </a>
 
-
-    <a href="{% url 'accounts:edit-student' student.id %}"
-       class="action-edit">
-         ✏️ Edit
-
+    <a href="{% url 'accounts:edit-student' student.id %}" 
+       style="min-width:95px; height:38px; display:inline-flex; align-items:center; justify-content:center; background:#f97316; color:white; border-radius:8px; text-decoration:none; font-size:13px; font-weight:600;">
+        ✏️ Edit
     </a>
 
+    <a href="{% url 'accounts:print_admission_letter' student.id %}" target="_blank"
+       style="min-width:95px; height:38px; display:inline-flex; align-items:center; justify-content:center; background:#10b981; color:white; border-radius:8px; text-decoration:none; font-size:13px; font-weight:600;">
+        🖨️ Print
+    </a>
 
     <button type="button"
-            class="action-delete"
-            onclick="openDeleteModal(
-            '{% url 'accounts:delete-student' student.id %}',
-            '{{ student.get_full_name }}',
-            'Student')">
-
-                    🚫Deactivate
-
+            onclick="openDeleteModal('{% url 'accounts:delete-student' student.id %}','{{ student.get_full_name }}','Student')"
+            style="min-width:95px; height:38px; display:inline-flex; align-items:center; justify-content:center; background:#ef4444; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
+        🚫 Deactivate
     </button>
 
+{% if school_class.school.allows_student_login %}
+<form method="POST" action="{% url 'accounts:toggle-student-login' student.id %}" style="margin:0;">
+    {% csrf_token %}
 
-    <form method="POST"
-          action="{% url 'accounts:toggle-student-login' student.id %}">
-        {% csrf_token %}
+    {% if student.can_login %}
 
- {% if student.can_login %}
+    <button type="submit"
+            style="min-width:95px; height:38px; display:inline-flex; align-items:center; justify-content:center; background:#dc2626; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
+        🔒 Block
+    </button>
 
-<button type="submit"
-        class="action-login block">
-    🔒 Block Login
-</button>
+    {% else %}
 
-{% else %}
+    <button type="submit"
+            style="min-width:95px; height:38px; display:inline-flex; align-items:center; justify-content:center; background:#16a34a; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
+        🔑 Allow
+    </button>
 
-<button type="submit"
-        class="action-login allow">
-    🔑 Allow Login
-</button>
-
+    {% endif %}
+</form>
 {% endif %}
 
-    </form>
-
-
 </div>
+
+
+
         </div>
         {% empty %}
         <div style="grid-column:1/-1; text-align:center; padding:80px 20px; background:white; border-radius:20px;">
             <p style="font-size:28px; color:#6b7280; margin:0 0 20px 0; font-weight:600;">No students in this class yet</p>
-            <a href="{% url 'accounts:add-student' %}" 
-               style="display:inline-block; padding:18px 36px; background:#3b82f6; color:white; text-decoration:none; border-radius:12px; font-weight:700; font-size:20px;">
-                + Add First Student
-            </a>
+     
         </div>
         {% endfor %}
     </div>
@@ -738,23 +792,78 @@ footer {
             </button>
           </div>
 
-          <!-- THIS MAKES IT SCROLL + 1 COLUMN -->
-        <div style="max-height:280px; overflow-y:auto; padding-right:8px;">
-  {% if all_subjects %}
-    {% for subject in all_subjects %}
-    <div class="form-check" style="padding:8px 12px; background:#ffffff; border-radius:8px; border:2px solid #d1d5db; display:inline-flex; align-items:center; width:fit-content; margin-bottom:8px;">
-      <input class="form-check-input subject-checkbox" type="checkbox" name="subject_ids" value="{{ subject.id }}" id="allsub{{ subject.id }}" style="width:18px; height:18px; margin:0; cursor:pointer; accent-color:#3b82f6;">
-      <label class="form-check-label" for="allsub{{ subject.id }}" style="margin-left:10px; font-weight:700; color:#111827; cursor:pointer; font-size:15px; white-space:nowrap;">
-        {{ subject.name }}
-      </label>
-    </div>
-    <br>
-    {% endfor %}
-  {% else %}
-    <div style="padding:20px; text-align:center; background:#f0f9ff; border-radius:8px; color:#0369a1; font-weight:600;">
-      All students already have all available subjects.
-    </div>
-  {% endif %}
+  <div style="max-height:280px; overflow-y:auto; padding-right:8px;">
+
+    {% if all_subjects %}
+
+        <div style="
+            display:grid;
+            grid-template-columns:repeat(2, minmax(0, 1fr));
+            gap:10px;
+        ">
+
+            {% for subject in all_subjects %}
+
+                <label
+                    for="allsub{{ subject.id }}"
+                    style="
+                        display:flex;
+                        align-items:center;
+                        gap:10px;
+                        width:100%;
+                        min-height:48px;
+                        padding:10px 12px;
+                        margin:0;
+                        background:#ffffff;
+                        border:2px solid #d1d5db;
+                        border-radius:10px;
+                        cursor:pointer;
+                        font-weight:700;
+                        color:#111827;
+                        font-size:14px;
+                    "
+                >
+
+                    <input
+                        class="form-check-input subject-checkbox"
+                        type="checkbox"
+                        name="subject_ids"
+                        value="{{ subject.id }}"
+                        id="allsub{{ subject.id }}"
+                        style="
+                            width:18px;
+                            height:18px;
+                            margin:0;
+                            flex-shrink:0;
+                            cursor:pointer;
+                        "
+                    >
+
+                    <span>
+                        {{ subject.name }}
+                    </span>
+
+                </label>
+
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <div style="
+            padding:20px;
+            text-align:center;
+            background:#f0f9ff;
+            border-radius:8px;
+            color:#0369a1;
+            font-weight:600;
+        ">
+            All students already have all available subjects.
+        </div>
+
+    {% endif %}
+
 </div>
         </div>
 

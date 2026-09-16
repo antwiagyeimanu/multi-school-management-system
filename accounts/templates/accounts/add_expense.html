@@ -1,259 +1,220 @@
-{% extends "accounts/dashboard_base.html" %}
+{% extends 'accounts/dashboard_base.html' %}
 {% block title %}Add Expense{% endblock %}
 
 {% block content %}
+
 <style>
 /* Cursor Fix */
-.card-body, label, p, div{
-    cursor:default;
+.card-body,
+label,
+p,
+div {
+    cursor: default;
 }
-
 input,
-select,
-textarea,
-button,
-.btn{
-    cursor:pointer;
+textarea {
+    cursor: text;
 }
-
+select,
+button,
+.btn,
+a {
+    cursor: pointer;
+}
 /* HERO */
 .expense-hero{
-
     background:linear-gradient(135deg,#0f172a,#2563eb);
-
     color:white;
-
     border-radius:24px;
-
     padding:24px 30px;
-
     margin-bottom:25px;
      margin-top:25px;
-
     box-shadow:0 12px 30px rgba(0,0,0,.12);
-
 }
-
 .expense-hero h2{
-
     margin:0;
-
     font-weight:800;
-
 }
-
 .expense-hero p{
-
     margin-top:8px;
-
     opacity:.85;
-
 }
-
 /* CARD */
-
 .expense-card{
-
     border:none;
-
     border-radius:22px;
-
     overflow:hidden;
-
     box-shadow:0 10px 25px rgba(0,0,0,.08);
-
 }
-
 .expense-card .card-header{
-
     background:linear-gradient(135deg,#2563eb,#3b82f6);
-
     color:white;
-
     padding:18px 24px;
-
     font-weight:700;
-
     border:none;
-
 }
-
 /* FORM */
-
 .form-label{
-
     font-weight:700;
-
     color:#1e293b;
-
 }
-
 .form-control,
 .form-select{
-
     border-radius:12px;
-
     padding:12px 15px;
-
     border:1px solid #dbe3ef;
-
     box-shadow:none;
-
 }
-
 .form-control:focus,
 .form-select:focus{
-
     border-color:#2563eb;
-
     box-shadow:0 0 0 .18rem rgba(37,99,235,.15);
-
 }
-
 /* Upload */
-
 input[type=file]{
-
     padding:10px;
-
 }
-
 /* Buttons */
-
 .btn-save{
-
     background:linear-gradient(135deg,#10b981,#059669);
-
     color:white;
-
     border:none;
-
     border-radius:30px;
-
     padding:12px 28px;
-
     font-weight:700;
-
 }
-
 .btn-save:hover{
-
     color:white;
-
     transform:translateY(-2px);
-
 }
-
 .btn-cancel{
-
     border-radius:30px;
-
     padding:12px 28px;
-
 }
-
 /* Mobile */
 
 @media(max-width:768px){
 
     .expense-hero{
-
         padding:20px;
+    }
 
+    /* ACTION BUTTONS */
+    .btn-save,
+    .btn-cancel{
+        width:100%;
+        min-height:48px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border-radius:14px;
+        font-size:inherit;
+        font-weight:700;
+        box-sizing:border-box;
+    }
+
+    .btn-save{
+        box-shadow:0 6px 16px rgba(5,150,105,.18);
+    }
+
+    .btn-cancel{
+        margin-left:0 !important;
+        margin-top:10px;
+        background:#fff;
+        box-shadow:0 5px 14px rgba(15,23,42,.06);
+    }
+
+    .btn-save:hover,
+    .btn-cancel:hover{
+        transform:translateY(-1px);
     }
 
 }
 </style>
 <div class="container-fluid px-4">
 <div class="expense-hero">
-
     <h2>
         <i class="fas fa-receipt me-2"></i>
         Add School Expense
     </h2>
-
     <p>
         Record school expenses and upload supporting receipts for proper financial tracking.
     </p>
-
 </div>
-   
-
-    <div class="row">
-        <div class="col-xl-10">
-            <div class="card expense-card mb-4">
+<div class="row">
+    <div class="col-xl-10">
+        <div class="card expense-card mb-4">
             <div class="card-header">
-
-    <i class="fas fa-wallet me-2"></i>
-
-    Expense Details
-
-</div>
-                <div class="card-body">
-                   <form method="POST" enctype="multipart/form-data">
-    {% csrf_token %}
-    
-    <!-- Row 1: Category | Description -->
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <label class="form-label text-dark">Category</label>
-            {{ form.category }}
-        </div>
-        <div class="col-md-6">
-            <label class="form-label text-dark">Description</label>
-            {{ form.description }}
-        </div>
-    </div>
-
-    <!-- Row 2: Amount | Expense Date -->
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <label class="form-label text-dark">Amount (GH₵ )</label>
-            {{ form.amount }}
-        </div>
-        <div class="col-md-6">
-            <label class="form-label text-dark">Expense Date</label>
-            {{ form.expense_date }}
-        </div>
-    </div>
-
-    <!-- Row 3: Receipt Number | Receipt File -->
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <label class="form-label text-dark">Receipt Number</label>
-            {{ form.receipt_number }}
-        </div>
-        <div class="col-md-6">
-            <label class="form-label text-dark">Receipt File</label>
-            {{ form.receipt_file }}
-            <small class="form-text text-muted">Upload image or PDF. Optional.</small>
-        </div>
-    </div>
-
-<div class="mt-4">
-
-    <button type="submit" class="btn btn-save">
-
-        <i class="fas fa-save me-2"></i>
-
-        Save Expense
-
-    </button>
-
-    <a href="{% url 'accounts:accountant_dashboard' %}"
-       class="btn btn-outline-secondary btn-cancel ms-2">
-
-        <i class="fas fa-times me-2"></i>
-
-        Cancel
-
-    </a>
-
-</div>
-</form>
-                </div>
+                <i class="fas fa-wallet me-2"></i>
+                Expense Details
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <!-- Row 1: Category | Description -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-dark">
+                                Category
+                            </label>
+                            {{ form.category }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-dark">
+                                Description
+                            </label>
+                            {{ form.description }}
+                        </div>
+                    </div>
+                    <!-- Row 2: Amount | Expense Date -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-dark">
+                                Amount (GH₵ )
+                            </label>
+                            {{ form.amount }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-dark">
+                                Expense Date
+                            </label>
+                            {{ form.expense_date }}
+                        </div>
+                    </div>
+                    <!-- Row 3: Receipt Number | Receipt File -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-dark">
+                                Receipt Number
+                            </label>
+                            {{ form.receipt_number }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-dark">
+                                Receipt File
+                            </label>
+                            {{ form.receipt_file }}
+                            <small class="form-text text-muted">
+                                Upload image or PDF. Optional.
+                            </small>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-save">
+                            <i class="fas fa-save me-2"></i>
+                            Save Expense
+                        </button>
+                        <a href="{% url 'accounts:accountant_dashboard' %}"
+                           class="btn btn-outline-secondary btn-cancel ms-2">
+                            <i class="fas fa-times me-2"></i>
+                            Cancel
+                        </a>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
+</div>
+
 {% endblock %}

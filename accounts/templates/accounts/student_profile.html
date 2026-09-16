@@ -1,289 +1,130 @@
 {% extends "accounts/dashboard_base.html" %}
 {% block title %}My Profile{% endblock %}
-
 {% block content %}
 <style>
-.student-profile-wrapper {
-    background: #f4f6f9;
-    padding: 40px 15px 60px 15px;
-    min-height: 100vh;
+.student-profile-wrapper{background:#f4f6f9;padding:40px 15px 60px 15px;min-height:100vh}
+.student-profile-card{max-width:1200px;margin:0 auto;background:white;border-radius:20px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden;border:2px solid #e5e7eb}
+.profile-header{padding:30px 40px;text-align:center;background:linear-gradient(135deg,#3b82f6 0%,#1d4ed8 100%);color:white}
+.profile-header .avatar{width:120px;height:120px;border-radius:50%;background:white;color:#1d4ed8;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:800;margin:0 auto 16px auto;border:5px solid white}
+.profile-header h1{margin:0;font-size:36px;font-weight:800}
+.profile-header p{margin:8px 0 0 0;font-size:18px;opacity:0.9}
+.profile-body{padding:40px}
+.info-section{background:#f9fafb;padding:24px;border-radius:16px;border:1px solid #e5e7eb;margin-bottom:25px}
+.info-section h3{margin:0 0 20px 0;font-size:22px;font-weight:700;color:#1f2937;border-bottom:2px solid #3b82f6;padding-bottom:10px}
+.info-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.info-row{display:grid;grid-template-columns:auto 1fr;column-gap:12px;align-items:baseline}
+.info-row .label{font-weight:700;color:#6b7280;white-space:nowrap}
+.info-row .value{font-weight:600;color:#111827}
+.avatar{width:120px;height:120px;border-radius:50%;overflow:hidden;margin:0 auto 15px}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* === MOBILE SIDE-BY-SIDE SAME AS ACCOUNTANT - IPHONE 11 === */
+@media(max-width:767px){
+.student-profile-wrapper{padding:16px 10px 40px}
+.student-profile-card{border-radius:16px;border-width:1px}
+.profile-header{padding:22px 14px!important}
+.profile-header .avatar,.avatar{width:90px!important;height:90px!important;margin-bottom:12px}
+.profile-header h1{font-size:22px!important;line-height:1.3}
+.profile-header p{font-size:14px!important}
+.profile-body{padding:14px 10px!important}
+.info-section{padding:14px 12px!important;margin-bottom:14px!important;border-radius:14px!important}
+.info-section h3{font-size:16px!important;margin-bottom:14px!important;padding-bottom:8px!important}
+
+/* ALL GRIDS = 2 PER ROW SIDE BY SIDE */
+.info-grid{
+  grid-template-columns:repeat(2,1fr)!important;
+  gap:10px!important;
+}
+.info-grid[style*="column-gap: 80px"]{
+  column-gap:10px!important;
+  grid-template-columns:repeat(2,1fr)!important;
+}
+.info-section > div[style*="repeat(3, 1fr)"]{
+  grid-template-columns:repeat(2,1fr)!important;
+  gap:10px!important;
+  margin-bottom:14px!important;
 }
 
-/* MAIN CARD */
-.student-profile-card {
-    max-width: 1200px;
-    margin: 0 auto;
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    overflow: hidden;
-    border: 2px solid #e5e7eb;
+/* BOX STYLE - LABEL TOP, VALUE UNDER */
+.info-row{
+  display:flex!important;
+  flex-direction:column!important;
+  background:#fff!important;
+  border:1px solid #e5e7eb!important;
+  border-radius:12px!important;
+  padding:11px 10px!important;
+  margin-bottom:0!important;
+  gap:4px!important;
+  min-width:0!important;
 }
-
-/* HEADER (MATCH TEACHER STYLE) */
-.profile-header {
-    padding: 30px 40px;
-    text-align: center;
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    color: white;
+.info-row .label{
+  display:block!important;
+  font-size:11px!important;
+  font-weight:800!important;
+  text-transform:uppercase!important;
+  letter-spacing:.5px!important;
+  color:#64748b!important;
+  white-space:normal!important;
+  margin-bottom:0!important;
 }
-
-.profile-header .avatar {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    background: white;
-    color: #1d4ed8;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 42px;
-    font-weight: 800;
-    margin: 0 auto 16px auto;
-    border: 5px solid white;
+.info-row .value{
+  display:block!important;
+  font-size:14px!important;
+  font-weight:800!important;
+  color:#0f172a!important;
+  line-height:1.3!important;
+  overflow-wrap:anywhere!important;
+  word-break:break-word!important;
 }
-
-.profile-header h1 {
-    margin: 0;
-    font-size: 36px;
-    font-weight: 800;
 }
-
-.profile-header p {
-    margin: 8px 0 0 0;
-    font-size: 18px;
-    opacity: 0.9;
-}
-
-/* CARD SECTIONS */
-.profile-body {
-    padding: 40px;
-}
-
-.info-section {
-    background: #f9fafb;
-    padding: 24px;
-    border-radius: 16px;
-    border: 1px solid #e5e7eb;
-    margin-bottom: 25px;
-}
-
-.info-section h3 {
-    margin: 0 0 20px 0;
-    font-size: 22px;
-    font-weight: 700;
-    color: #1f2937;
-    border-bottom: 2px solid #3b82f6;
-    padding-bottom: 10px;
-}
-
-/* GRID */
-.info-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-}
-
-@media (max-width: 768px) {
-    .info-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-.info-row {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    column-gap: 12px;
-    align-items: baseline;
-}
-
-.info-row .label {
-    font-weight: 700;
-    color: #6b7280;
-    white-space: nowrap;
-}
-
-.info-row .value {
-    font-weight: 600;
-    color: #111827;
-}
-.avatar{
-    width:120px;
-    height:120px;
-    border-radius:50%;
-    overflow:hidden;
-    margin:0 auto 15px;
-}
-
-.avatar img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    display:block;
+@media(max-width:380px){
+.info-grid{grid-template-columns:1fr 1fr!important;gap:8px!important}
+.info-row .value{font-size:13px!important}
 }
 </style>
 
 <div class="student-profile-wrapper">
-    <div class="student-profile-card">
-
-        <!-- HEADER -->
-        <div class="profile-header">
-            <!-- AVATAR -->
-            <div class="avatar">
-                {% if student.photo %}
-                    <img src="{{ student.photo.url }}" alt="{{ student.get_full_name }}">
-                {% else %}
-                    {{ student.first_name.0 }}{{ student.last_name.0 }}
-                {% endif %}
-            </div>
-            <h1>{{ student.first_name|default:"" }} {{ student.last_name|default:student.username }}</h1>
-            <p>{{ student.school_class.name|default:"" }}</p>
-        </div>
-
- <!-- BODY -->
+<div class="student-profile-card">
+<div class="profile-header">
+<div class="avatar">{% if student.photo %}<img src="{{ student.photo.url }}" alt="{{ student.get_full_name }}">{% else %}{{ student.first_name.0 }}{{ student.last_name.0 }}{% endif %}</div>
+<h1>{{ student.first_name|default:"" }} {{ student.last_name|default:student.username }}</h1>
+</div>
 <div class="profile-body">
+<div class="info-section"><h3>School Information</h3><div class="info-grid">
+<div class="info-row"><span class="label">School:</span><span class="value">{{ student.school.name|default:"Not assigned" }}</span></div>
+<div class="info-row"><span class="label">Class:</span><span class="value">{{ student.school_class.name|default:"Not assigned" }}</span></div>
+<div class="info-row"><span class="label">Student Number:</span><span class="value">{{ student.student_number|default:"Not assigned" }}</span></div>
+<div class="info-row"><span class="label">Current Term:</span><span class="value">{% if active_term %}{{ active_term.get_term_number_display }}{% else %}Not Set{% endif %}</span></div>
+<div class="info-row"><span class="label">Academic Year:</span><span class="value">{% if active_term %}{{ active_term.academic_year.name }}{% else %}Not Set{% endif %}</span></div>
+<div class="info-row"><span class="label">Admission Date:</span><span class="value">{{ student.admission_date|default:"Not set" }}</span></div>
+<div class="info-row"><span class="label">Status:</span><span class="value" style="color:{% if student.is_active %}#16a34a{% else %}#dc2626{% endif %};font-weight:800;">{% if student.is_active %}Active{% else %}Inactive{% endif %}</span></div>
+</div></div>
 
-    <!-- SCHOOL INFORMATION -->
-    <div class="info-section">
-        <h3>School Information</h3>
-        <div class="info-grid">
-            <div class="info-row">
-                <span class="label">School: </span>
-                <span class="value">{{ student.school.name|default:"Not assigned" }}</span>
-            </div>
-            <div class="info-row">
-                <span class="label">Class: </span>
-                <span class="value">{{ student.school_class.name|default:"Not assigned" }}</span>
-            </div>
-            <div class="info-row">
-                <span class="label">Student Number: </span>
-                <span class="value">{{ student.student_number|default:"Not assigned" }}</span>
-            </div>
-            <div class="info-row">
-                <span class="label">Current Term: </span>
-                <span class="value">
-                    {% if active_term %}
-                        {{ active_term.get_term_number_display }}
-                    {% else %}
-                        Not Set
-                    {% endif %}
-                </span>
-            </div>
-            <div class="info-row">
-                <span class="label">Academic Year: </span>
-                <span class="value">
-                    {% if active_term %}
-                        {{ active_term.academic_year.name }}
-                    {% else %}
-                        Not Set
-                    {% endif %}
-                </span>
-            </div>
-            <div class="info-row">
-                <span class="label">Admission Date: </span>
-                <span class="value">{{ student.admission_date|default:"Not set" }}</span>
-            </div>
-            <div class="info-row">
-                <span class="label">Status:</span>
-                <span class="value" style="color:{% if student.is_active %}#16a34a{% else %}#dc2626{% endif %}; font-weight:800;">
-                    {% if student.is_active %}Active{% else %}Inactive{% endif %}
-                </span>
-            </div>
-        </div>
-    </div>
-
-<!-- PERSONAL INFORMATION -->
-<div class="info-section">
-    <h3>Personal Information</h3>
-    <!-- NAMES - 3 across the top -->
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-bottom: 24px;">
-        <div class="info-row">
-            <span class="label">First Name: </span>
-            <span class="value">{{ student.first_name|default:"Not set" }}</span>
-        </div>
-        <div class="info-row">
-            <span class="label">Middle Name: </span>
-            <span class="value">{{ student.middle_name|default:"Not set" }}</span>
-        </div>
-        <div class="info-row">
-            <span class="label">Last Name: </span>
-            <span class="value">{{ student.last_name|default:"Not set" }}</span>
-        </div>
-    </div>
-
-    <!-- REST - 2 per row -->
-    <div class="info-grid" style="column-gap: 80px;">
-        <div class="info-row">
-            <span class="label">Email: </span>
-            <span class="value">{{ student.email|default:"Not set" }}</span>
-        </div>
-        <div class="info-row">
-            <span class="label">Username: </span>
-            <span class="value">{{ student.username }}</span>
-        </div>
-        <div class="info-row">
-            <span class="label">Phone: </span>
-            <span class="value">{{ student.phone|default:"Not set" }}</span>
-        </div>
-        <div class="info-row">
-            <span class="label">Religion: </span>
-            <span class="value">{{ student.get_religion_display }}</span>
-        </div>
-        <div class="info-row">
-            <span class="label">Gender: </span>
-            <span class="value">{{ student.get_gender_display }}</span>
-        </div>
-        <div class="info-row">
-            <span class="label">Date of Birth: </span>
-            <span class="value">{{ student.date_of_birth|default:"Not set" }}</span>
-        </div>
-    </div>
+<div class="info-section"><h3>Personal Information</h3>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:30px;margin-bottom:24px;">
+<div class="info-row"><span class="label">First Name:</span><span class="value">{{ student.first_name|default:"Not set" }}</span></div>
+<div class="info-row"><span class="label">Middle Name:</span><span class="value">{{ student.middle_name|default:"Not set" }}</span></div>
+<div class="info-row"><span class="label">Last Name:</span><span class="value">{{ student.last_name|default:"Not set" }}</span></div>
 </div>
+<div class="info-grid" style="column-gap:80px;">
+<div class="info-row"><span class="label">Email:</span><span class="value">{{ student.email|default:"Not set" }}</span></div>
+<div class="info-row"><span class="label">Username:</span><span class="value">{{ student.username }}</span></div>
+<div class="info-row"><span class="label">Phone:</span><span class="value">{{ student.phone|default:"Not set" }}</span></div>
+<div class="info-row"><span class="label">Religion:</span><span class="value">{{ student.get_religion_display }}</span></div>
+<div class="info-row"><span class="label">Gender:</span><span class="value">{{ student.get_gender_display }}</span></div>
+<div class="info-row"><span class="label">Date of Birth:</span><span class="value">{{ student.date_of_birth|default:"Not set" }}</span></div>
+</div></div>
 
-<!-- PARENT INFORMATION -->
-<div class="info-section">
-    <h3>Guardian Information</h3>
-    <div class="info-grid">
-        {% for link in student.parent_links.all %}
-            <div class="info-row">
-                <span class="label">Guardian Name: </span>
-                <span class="value">{{ link.parent.get_full_name }}</span>
-            </div>
-            <div class="info-row">
-                <span class="label">Phone: </span>
-                <span class="value">{{ link.parent.phone }}</span>
-            </div>
-            <div class="info-row">
-                <span class="label">Relationship: </span>
-                <span class="value">{{ link.relationship|default:"Not set" }}</span>
-            </div>
-            <hr>
-        {% empty %}
-            <p>No parent linked.</p>
-        {% endfor %}
-    </div>
-</div>
+<div class="info-section"><h3>Guardian Information</h3><div class="info-grid">{% for link in student.parent_links.all %}
+<div class="info-row"><span class="label">Guardian Name:</span><span class="value">{{ link.parent.get_full_name }}</span></div>
+<div class="info-row"><span class="label">Phone:</span><span class="value">{{ link.parent.phone }}</span></div>
+<div class="info-row"><span class="label">Relationship:</span><span class="value">{{ link.relationship|default:"Not set" }}</span></div>
+{% empty %}<p>No parent linked.</p>{% endfor %}</div></div>
 
-<!-- EMERGENCY CONTACT -->
-<div class="info-section">
-    <h3>Emergency Contact</h3>
-    <div class="info-grid">
-        <div class="info-row">
-            <span class="label">Name: </span>
-            <span class="value">{{ student.emergency_contact_name|default:"Not set" }}</span>
-        </div>
-        <div class="info-row">
-            <span class="label">Phone: </span>
-            <span class="value">{{ student.emergency_contact_phone|default:"Not set" }}</span>
-        </div>
-        <div class="info-row">
-            <span class="label">Relationship: </span>
-            <span class="value">{{ student.emergency_contact_relationship|default:"Not set" }}</span>
-        </div>
-    </div>
-</div>
-
-        </div>
-    </div>
-</div>
+<div class="info-section"><h3>Emergency Contact</h3><div class="info-grid">
+<div class="info-row"><span class="label">Name:</span><span class="value">{{ student.emergency_contact_name|default:"Not set" }}</span></div>
+<div class="info-row"><span class="label">Phone:</span><span class="value">{{ student.emergency_contact_phone|default:"Not set" }}</span></div>
+<div class="info-row"><span class="label">Relationship:</span><span class="value">{{ student.emergency_contact_relationship|default:"Not set" }}</span></div>
+</div></div>
+</div></div></div>
 {% endblock %}

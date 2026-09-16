@@ -1,563 +1,856 @@
 {% extends 'accounts/base.html' %}
-
 {% block title %}View Parent{% endblock %}
-
 {% block content %}
 
 <style>
-
-/* PAGE */
-
+/* =========================================================
+   PAGE
+========================================================= */
 .parent-profile-page{
     background:#f8fafc;
     min-height:100vh;
-    padding:30px 15px;
+    padding:25px;
 }
 
-
-
-/* MAIN CARD */
-
+/* =========================================================
+   MAIN CARD
+========================================================= */
 .parent-profile-card{
-
     max-width:1100px;
     margin:auto;
-    background:white;
-    border-radius:28px;
+    background:#fff;
+    border-radius:24px;
     overflow:hidden;
-    box-shadow:0 15px 40px rgba(0,0,0,.08);
-
+    box-shadow:0 12px 35px rgba(0,0,0,.07);
 }
 
-
-
-/* HEADER */
-
+/* =========================================================
+   HERO
+========================================================= */
 .parent-profile-header{
-
-    background:linear-gradient(
-        135deg,
-        #2563eb,
-        #1e40af
-    );
-
-    padding:40px;
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:#fff;
+    padding:34px 25px;
     text-align:center;
-    color:white;
-
 }
 
-
-
-.parent-profile-header img{
-
-    width:130px;
-    height:130px;
+.parent-photo{
+    width:120px;
+    height:120px;
     border-radius:50%;
     object-fit:cover;
-    border:5px solid white;
-    box-shadow:0 8px 20px rgba(0,0,0,.2);
-
+    border:5px solid rgba(255,255,255,.95);
+    box-shadow:0 8px 22px rgba(0,0,0,.2);
 }
 
-
+.parent-photo-placeholder{
+    width:120px;
+    height:120px;
+    margin:auto;
+    border-radius:50%;
+    background:rgba(255,255,255,.16);
+    border:5px solid rgba(255,255,255,.95);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:48px;
+    box-shadow:0 8px 22px rgba(0,0,0,.15);
+}
 
 .parent-profile-header h1{
-
-    margin-top:20px;
-    margin-bottom:5px;
-    font-size:36px;
-    font-weight:900;
-
+    margin:17px 0 5px;
+    font-size:30px;
+    font-weight:800;
+    letter-spacing:-.4px;
 }
-
-
 
 .parent-profile-header p{
-
     margin:0;
-    opacity:.85;
-    font-size:16px;
-
+    font-size:14px;
+    opacity:.88;
 }
 
-
-
-/* BODY */
-
+/* =========================================================
+   BODY
+========================================================= */
 .parent-profile-body{
-
-    padding:35px;
-
+    padding:27px;
 }
 
-
-
-/* SECTIONS */
-
+/* =========================================================
+   SECTION
+========================================================= */
 .profile-section{
-
     background:#f8fafc;
-    border-radius:20px;
-    padding:25px;
-    margin-bottom:25px;
-    border:1px solid #e5e7eb;
-
+    border:1px solid #eef2f7;
+    border-radius:18px;
+    padding:22px;
+    margin-bottom:20px;
 }
-
-
 
 .profile-section-title{
-
-    font-size:22px;
-    font-weight:900;
-    color:#111827;
-    margin-bottom:20px;
-    border-bottom:3px solid #2563eb;
-    padding-bottom:10px;
-
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color:#1f2937;
+    font-size:17px;
+    font-weight:800;
+    margin-bottom:18px;
+    padding-bottom:13px;
+    border-bottom:1px solid #e5e7eb;
 }
 
+.section-icon{
+    width:34px;
+    height:34px;
+    border-radius:10px;
+    background:#eff6ff;
+    color:#2563eb;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:16px;
+}
 
-
-/* INFO GRID */
-
+/* =========================================================
+   INFO GRID
+   DESKTOP = 3 ACROSS
+========================================================= */
 .info-grid{
-
     display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:20px;
-
+    grid-template-columns:repeat(3,1fr);
+    gap:14px;
 }
 
-
-
-@media(max-width:768px){
-
-    .info-grid{
-
-        grid-template-columns:1fr;
-
-    }
-
-
-    .parent-profile-body{
-
-        padding:20px;
-
-    }
-
-
-    .parent-profile-header h1{
-
-        font-size:28px;
-
-    }
-
-}
-
-
-
-/* INFO ITEM */
-
+/* =========================================================
+   INFO CARD
+========================================================= */
 .info-card{
-
-    background:white;
-    padding:18px;
-    border-radius:15px;
+    background:#fff;
     border:1px solid #e5e7eb;
-
+    border-radius:14px;
+    padding:15px;
+    min-width:0;
 }
-
-
 
 .info-label{
-
     display:block;
-    font-size:13px;
-    font-weight:800;
     color:#6b7280;
-    margin-bottom:6px;
-
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+    margin-bottom:5px;
 }
-
-
 
 .info-value{
-
-    font-size:16px;
-    font-weight:700;
+    display:block;
     color:#111827;
+    font-size:14px;
+    font-weight:700;
     word-break:break-word;
-
+    line-height:1.45;
 }
 
+/* =========================================================
+   STATUS
+========================================================= */
+.status-active{
+    color:#16a34a;
+}
 
+.status-inactive{
+    color:#dc2626;
+}
 
-/* STUDENTS */
+/* =========================================================
+   EMERGENCY CONTACT
+========================================================= */
+.emergency-section .section-icon{
+    background:#fff7ed;
+    color:#ea580c;
+}
 
+.emergency-section{
+    background:#fffaf5;
+    border-color:#fed7aa;
+}
+
+/* =========================================================
+   LINKED STUDENTS
+========================================================= */
 .student-list{
-
     display:grid;
-    gap:15px;
-
+    grid-template-columns:repeat(3,1fr);
+    gap:14px;
 }
-
-
 
 .student-card{
-
-    background:white;
-    padding:18px;
-    border-radius:15px;
+    background:#fff;
     border:1px solid #e5e7eb;
+    border-radius:15px;
+    padding:16px;
     display:flex;
-    justify-content:space-between;
-    align-items:center;
-
+    flex-direction:column;
+    gap:8px;
 }
-
-
 
 .student-name{
-
-    font-weight:800;
     color:#111827;
-
+    font-size:14px;
+    font-weight:800;
+    line-height:1.4;
 }
-
-
 
 .student-number{
+    color:#6b7280;
+    font-size:12px;
+    font-weight:600;
+}
 
+.student-relationship{
+    display:inline-block;
+    width:max-content;
+    max-width:100%;
+    padding:5px 9px;
+    border-radius:8px;
+    background:#eff6ff;
+    color:#2563eb;
+    font-size:11px;
+    font-weight:700;
+    margin-top:2px;
+}
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+.empty-state{
+    background:#fff;
+    border:1px dashed #cbd5e1;
+    border-radius:14px;
+    padding:22px;
+    text-align:center;
     color:#6b7280;
     font-size:14px;
-
 }
 
-
-
-@media(max-width:600px){
-
-.student-card{
-
-    flex-direction:column;
-    align-items:flex-start;
-    gap:8px;
-
+/* =========================================================
+   BACK BUTTON
+========================================================= */
+.back-wrapper{
+    text-align:center;
+    padding-top:2px;
 }
-
-}
-
-
-
-/* BUTTON */
 
 .back-btn{
-
-    display:inline-block;
-    margin-top:15px;
-    padding:14px 30px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    padding:12px 24px;
     background:#111827;
-    color:white;
+    color:#fff;
     text-decoration:none;
-    border-radius:14px;
-    font-weight:800;
-
+    border-radius:12px;
+    font-size:14px;
+    font-weight:700;
+    transition:.2s ease;
 }
-
 
 .back-btn:hover{
-
     background:#000;
-
+    color:#fff;
+    transform:translateY(-1px);
 }
 
+/* =========================================================
+   MOBILE
+   2 CARDS ACROSS
+========================================================= */
+@media(max-width:768px){
 
+    .parent-profile-page{
+        padding:15px;
+    }
+
+    .parent-profile-card{
+        border-radius:19px;
+    }
+
+    .parent-profile-header{
+        padding:26px 18px;
+    }
+
+    .parent-photo,
+    .parent-photo-placeholder{
+        width:95px;
+        height:95px;
+    }
+
+    .parent-photo-placeholder{
+        font-size:38px;
+    }
+
+    .parent-profile-header h1{
+        font-size:24px;
+        line-height:1.3;
+    }
+
+    .parent-profile-body{
+        padding:17px;
+    }
+
+    .profile-section{
+        padding:17px;
+        border-radius:16px;
+        margin-bottom:15px;
+    }
+
+    .profile-section-title{
+        font-size:16px;
+    }
+
+    .info-grid{
+        grid-template-columns:repeat(2,1fr);
+        gap:10px;
+    }
+
+    .info-card{
+        padding:12px 10px;
+        border-radius:12px;
+    }
+
+    .info-label{
+        font-size:10px;
+    }
+
+    .info-value{
+        font-size:13px;
+    }
+
+    .student-list{
+        grid-template-columns:repeat(2,1fr);
+        gap:10px;
+    }
+
+    .student-card{
+        padding:13px;
+        border-radius:13px;
+    }
+
+    .student-name{
+        font-size:13px;
+    }
+}
+
+/* =========================================================
+   SMALL PHONES
+========================================================= */
+@media(max-width:380px){
+
+    .parent-profile-header h1{
+        font-size:21px;
+    }
+
+    .info-card{
+        padding:11px 9px;
+    }
+
+    .info-value{
+        font-size:12px;
+    }
+
+    .student-card{
+        padding:11px;
+    }
+}
 </style>
-
 
 
 <div class="parent-profile-page">
 
+    <div class="parent-profile-card">
 
-<div class="parent-profile-card">
+        <!-- =================================================
+             HERO
+        ================================================== -->
+        <div class="parent-profile-header">
+
+            {% if parent.photo %}
+
+                <img
+                    src="{{ parent.photo.url }}"
+                    class="parent-photo"
+                    alt="Parent Photo"
+                >
+
+            {% else %}
+
+                <div class="parent-photo-placeholder">
+                    👤
+                </div>
+
+            {% endif %}
+
+            <h1>
+                {{ parent.get_title_display }}
+                {{ parent.first_name }}
+
+                {% if parent.middle_name %}
+                    {{ parent.middle_name }}
+                {% endif %}
+
+                {{ parent.last_name }}
+            </h1>
+
+            <p>
+                Parent Profile
+            </p>
+
+        </div>
 
 
-
-<!-- HEADER -->
-
-<div class="parent-profile-header">
-
-
-{% if parent.photo %}
-
-<img src="{{ parent.photo.url }}">
+        <!-- =================================================
+             BODY
+        ================================================== -->
+        <div class="parent-profile-body">
 
 
-{% else %}
+            <!-- =================================================
+                 ACCOUNT INFORMATION
+            ================================================== -->
+            <div class="profile-section">
 
-<img src="https://ui-avatars.com/api/?name={{ parent.first_name }}+{{ parent.last_name }}&background=ffffff&color=2563eb">
+                <div class="profile-section-title">
+
+                    <div class="section-icon">
+                        🔐
+                    </div>
+
+                    Account Information
+
+                </div>
 
 
-{% endif %}
+                <div class="info-grid">
+
+                    <div class="info-card">
+
+                        <span class="info-label">
+                            Username
+                        </span>
+
+                        <span class="info-value">
+                            {{ parent.username }}
+                        </span>
+
+                    </div>
 
 
+                    <div class="info-card">
 
-<h1>
-{{ parent.first_name }} {{ parent.last_name }}
-</h1>
+                        <span class="info-label">
+                            Role
+                        </span>
+
+                        <span class="info-value">
+                            Parent
+                        </span>
+
+                    </div>
 
 
-<p>
-Parent Profile
-</p>
+                    <div class="info-card">
 
+                        <span class="info-label">
+                            Status
+                        </span>
+
+                        <span class="info-value
+                            {% if parent.is_active %}
+                                status-active
+                            {% else %}
+                                status-inactive
+                            {% endif %}
+                        ">
+
+                            {% if parent.is_active %}
+                                Active
+                            {% else %}
+                                Inactive
+                            {% endif %}
+
+                        </span>
+
+                    </div>
+
+
+                    <div class="info-card">
+
+                        <span class="info-label">
+                            Date Joined
+                        </span>
+
+                        <span class="info-value">
+                            {{ parent.date_joined|date:"M d, Y" }}
+                        </span>
+
+                    </div>
+
+
+                    <div class="info-card">
+
+                        <span class="info-label">
+                            Linked Students
+                        </span>
+
+                        <span class="info-value">
+                            {{ children.count }}
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 PERSONAL INFORMATION
+            ================================================== -->
+            <div class="profile-section">
+
+                <div class="profile-section-title">
+
+                    <div class="section-icon">
+                        👤
+                    </div>
+
+                    Personal Information
+
+                </div>
+
+
+                <div class="info-grid">
+
+                    <div class="info-card">
+
+                        <span class="info-label">
+                            Title
+                        </span>
+
+                        <span class="info-value">
+                            {{ parent.get_title_display|default:"N/A" }}
+                        </span>
+
+                    </div>
+
+
+                    <div class="info-card">
+
+                        <span class="info-label">
+                            First Name
+                        </span>
+
+                        <span class="info-value">
+                            {{ parent.first_name|default:"N/A" }}
+                        </span>
+
+                    </div>
+
+
+                    <div class="info-card">
+
+                        <span class="info-label">
+                            Middle Name
+                        </span>
+
+                        <span class="info-value">
+                            {{ parent.middle_name|default:"N/A" }}
+                        </span>
+
+                    </div>
+
+
+                    <div class="info-card">
+
+                        <span class="info-label">
+                            Last Name
+                        </span>
+
+                        <span class="info-value">
+                            {{ parent.last_name|default:"N/A" }}
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 CONTACT INFORMATION
+            ================================================== -->
+            <div class="profile-section">
+
+                <div class="profile-section-title">
+
+                    <div class="section-icon">
+                        📞
+                    </div>
+
+                    Contact Information
+
+                </div>
+
+
+                <div class="info-grid">
+
+                    <div class="info-card">
+
+                        <span class="info-label">
+                            Phone
+                        </span>
+
+                        <span class="info-value">
+                            {{ parent.phone|default:"N/A" }}
+                        </span>
+
+                    </div>
+
+
+                    <div class="info-card">
+
+                        <span class="info-label">
+                            Email
+                        </span>
+
+                        <span class="info-value">
+                            {{ parent.email|default:"N/A" }}
+                        </span>
+
+                    </div>
+
+
+                    <div class="info-card">
+
+                        <span class="info-label">
+                            Address
+                        </span>
+
+                        <span class="info-value">
+                            {{ parent.address|default:"N/A" }}
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 ADDITIONAL INFORMATION
+            ================================================== -->
+            <div class="profile-section">
+
+                <div class="profile-section-title">
+
+                    <div class="section-icon">
+                        📋
+                    </div>
+
+                    Additional Information
+
+                </div>
+
+
+                <div class="info-grid">
+
+                    <div class="info-card">
+
+                        <span class="info-label">
+                            Occupation
+                        </span>
+
+                        <span class="info-value">
+                            {{ parent.occupation|default:"N/A" }}
+                        </span>
+
+                    </div>
+
+
+                    <div class="info-card">
+
+                        <span class="info-label">
+                            Relationship
+                        </span>
+
+                        <span class="info-value">
+                            {{ parent.relationship_type|default:"N/A" }}
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 EMERGENCY CONTACT
+            ================================================== -->
+            <div class="profile-section emergency-section">
+
+                <div class="profile-section-title">
+
+                    <div class="section-icon">
+                        🚨
+                    </div>
+
+                    Emergency Contact
+
+                </div>
+
+
+                <div class="info-grid">
+
+                    <div class="info-card">
+
+                        <span class="info-label">
+                            Contact Name
+                        </span>
+
+                        <span class="info-value">
+                            {{ parent.emergency_contact_name|default:"N/A" }}
+                        </span>
+
+                    </div>
+
+
+                    <div class="info-card">
+
+                        <span class="info-label">
+                            Phone Number
+                        </span>
+
+                        <span class="info-value">
+                            {{ parent.emergency_contact_phone|default:"N/A" }}
+                        </span>
+
+                    </div>
+
+
+                    <div class="info-card">
+
+                        <span class="info-label">
+                            Relationship
+                        </span>
+
+                        <span class="info-value">
+                            {{ parent.emergency_contact_relationship|default:"N/A" }}
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 LINKED STUDENTS
+            ================================================== -->
+            <div class="profile-section">
+
+                <div class="profile-section-title">
+
+                    <div class="section-icon">
+                        🎓
+                    </div>
+
+                    Linked Students
+
+                </div>
+
+
+                {% if children %}
+
+                    <div class="student-list">
+
+                        {% for link in children %}
+
+                            <div class="student-card">
+
+                                <div class="student-name">
+
+                                    {{ link.student.first_name }}
+
+                                    {% if link.student.middle_name %}
+                                        {{ link.student.middle_name }}
+                                    {% endif %}
+
+                                    {{ link.student.last_name }}
+
+                                </div>
+
+
+                                <div class="student-number">
+
+                                    Student No:
+                                    {{ link.student.student_number }}
+
+                                </div>
+
+
+                                {% if link.relationship %}
+
+                                    <div class="student-relationship">
+
+                                        {{ link.relationship }}
+
+                                    </div>
+
+                                {% endif %}
+
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% else %}
+
+                    <div class="empty-state">
+
+                        No students linked yet.
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+
+            <!-- =================================================
+                 BACK
+            ================================================== -->
+            <div class="back-wrapper">
+
+                <a
+                    href="{% url 'accounts:manage-parents' %}"
+                    class="back-btn"
+                >
+                    ← Back to Parents
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
 
 </div>
-
-
-
-
-
-<div class="parent-profile-body">
-
-
-
-
-
-<!-- INFORMATION -->
-
-<div class="profile-section">
-
-
-<div class="profile-section-title">
-
-Parent Information
-
-</div>
-
-
-
-<div class="info-grid">
-
-
-<div class="info-card">
-
-<span class="info-label">
-Username
-</span>
-
-<span class="info-value">
-{{ parent.username }}
-</span>
-
-</div>
-
-
-
-<div class="info-card">
-
-<span class="info-label">
-Phone
-</span>
-
-<span class="info-value">
-{{ parent.phone|default:"N/A" }}
-</span>
-
-</div>
-
-
-
-
-<div class="info-card">
-
-<span class="info-label">
-Email
-</span>
-
-<span class="info-value">
-{{ parent.email|default:"N/A" }}
-</span>
-
-</div>
-
-
-
-
-<div class="info-card">
-
-<span class="info-label">
-Status
-</span>
-
-<span class="info-value"
-style="color:{% if parent.is_active %}#16a34a{% else %}#dc2626{% endif %};">
-
-{% if parent.is_active %}
-Active
-{% else %}
-Inactive
-{% endif %}
-
-</span>
-
-</div>
-
-
-
-
-<div class="info-card">
-
-<span class="info-label">
-Date Joined
-</span>
-
-<span class="info-value">
-{{ parent.date_joined|date:"M d, Y" }}
-</span>
-
-</div>
-
-
-
-
-<div class="info-card">
-
-<span class="info-label">
-Linked Students
-</span>
-
-<span class="info-value">
-{{ children.count }}
-</span>
-
-</div>
-
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-<!-- STUDENTS -->
-
-
-<div class="profile-section">
-
-
-<div class="profile-section-title">
-
-Linked Students
-
-</div>
-
-
-
-{% if children %}
-
-
-<div class="student-list">
-
-
-{% for link in children %}
-
-
-<div class="student-card">
-
-
-<div>
-
-<div class="student-name">
-
-{{ link.student.first_name }} {{ link.student.middle_name }} {{ link.student.last_name }}
-
-</div>
-
-
-<div class="student-number">
-
-{{ link.student.student_number }}
-
-</div>
-
-
-</div>
-
-
-
-{% if link.relationship %}
-
-<div>
-
-{{ link.relationship }}
-
-</div>
-
-{% endif %}
-
-
-
-</div>
-
-
-{% endfor %}
-
-
-</div>
-
-
-{% else %}
-
-
-<p>
-No students linked yet.
-</p>
-
-
-{% endif %}
-
-
-
-</div>
-
-
-
-
-
-
-<div style="text-align:center;">
-
-
-<a href="{% url 'accounts:manage-parents' %}" class="back-btn">
-
-← Back to Parents
-
-</a>
-
-
-</div>
-
-
-
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
 
 {% endblock %}

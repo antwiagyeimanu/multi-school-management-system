@@ -91,117 +91,99 @@
 }
 
 
-
-/* HERO CARD */
+/* =========================================================
+   STUDENT HERO CARD
+========================================================= */
 
 .student-hero{
-
-    background:
-    linear-gradient(135deg,#071952,#088395);
-
+    background:linear-gradient(135deg,#071952,#088395);
     border-radius:25px;
     padding:30px;
     color:white;
-
-    box-shadow:
-    0 15px 35px rgba(0,0,0,.15);
-
+    box-shadow:0 15px 35px rgba(0,0,0,.15);
     margin-bottom:25px;
-
 }
-
 
 .hero-content{
-
     display:flex;
     align-items:center;
-    gap:20px;
+    gap:22px;
 }
 
-
-
 .student-avatar{
-
     width:100px;
     height:100px;
-
+    flex-shrink:0;
     border-radius:50%;
-
-    background:
-    linear-gradient(135deg,#22c55e,#16a34a);
-
+    background:linear-gradient(135deg,#22c55e,#16a34a);
     display:flex;
     align-items:center;
     justify-content:center;
-
     overflow:hidden;
-
     font-size:45px;
     font-weight:800;
-
     border:4px solid rgba(255,255,255,.35);
-
-    box-shadow:
-    0 8px 20px rgba(0,0,0,.25);
-
+    box-shadow:0 8px 20px rgba(0,0,0,.25);
 }
-
 
 .student-avatar img{
-
     width:100%;
     height:100%;
-
     object-fit:cover;
-
 }
-
-
 
 .student-hero h1{
-
     margin:0;
     font-size:30px;
-    font-weight:800;
-
+    line-height:1.25;
+    font-weight:850;
 }
-
-
 
 .student-hero p{
-
-    margin:6px 0;
+    margin:7px 0 0;
     opacity:.9;
-    font-size:16px;
-
+    font-size:15px;
 }
 
+/* INFORMATION AREA */
 
 .student-tags{
-
-    display:flex;
-    flex-wrap:wrap;
+    display:grid;
+    grid-template-columns:repeat(5, minmax(120px,1fr));
     gap:10px;
-    margin-top:15px;
-
+    margin-top:18px;
+    width:100%;
 }
-
 
 .student-tag{
-
-    background:rgba(255,255,255,.15);
-
-    padding:7px 15px;
-
-    border-radius:50px;
-
-    font-size:13px;
-
-    font-weight:700;
-
+    background:rgba(255,255,255,.13);
+    border:1px solid rgba(255,255,255,.12);
+    padding:10px 12px;
+    border-radius:14px;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    line-height:1.25;
+    backdrop-filter:blur(5px);
 }
 
+.student-tag-label{
+    font-size:10px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    opacity:.72;
+    margin-bottom:4px;
+}
 
+.student-tag-value{
+    font-size:13px;
+    font-weight:850;
+    word-break:break-word;
+}
 
 /* SUMMARY GRID */
 
@@ -356,43 +338,103 @@
 
 
 /* MOBILE */
-
 @media(max-width:768px){
 
     .student-hero{
-
-        padding:22px;
-
+        padding:22px 16px;
+        border-radius:20px;
     }
-
 
     .hero-content{
-
         flex-direction:column;
-
+        align-items:center;
         text-align:center;
-
+        gap:15px;
     }
 
+    .student-avatar{
+        width:82px;
+        height:82px;
+        font-size:36px;
+    }
 
     .student-hero h1{
-
-        font-size:24px;
-
+        font-size:23px;
+        line-height:1.3;
     }
 
+    .student-hero p{
+        font-size:13px;
+        margin-top:6px;
+        font-weight: 900;
+    }
 
     .student-tags{
+        grid-template-columns:1fr 1fr;
+        gap:8px;
+        margin-top:16px;
+    }
+    .summary-grid{
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:12px;
+}
 
-        justify-content:center;
+.summary-card{
+    padding:16px 12px;
+    border-radius:17px;
+}
 
+.summary-icon{
+    width:44px;
+    height:44px;
+    border-radius:13px;
+    font-size:21px;
+    margin-bottom:11px;
+}
+
+.summary-title{
+    font-size:10px;
+    line-height:1.3;
+}
+
+.summary-value{
+    font-size:24px;
+    margin-top:6px;
+}
+
+.summary-note{
+    font-size:11px;
+    line-height:1.3;
+    margin-top:5px;
+}
+
+    .student-tag{
+        min-height:65px;
+        padding:9px 7px;
+        border-radius:12px;
     }
 
+    .student-tag-label{
+        font-size:11px;
+        font-weight: 700;
+        letter-spacing:.3px;
+    }
+
+    .student-tag-value{
+        font-size:12px;
+        font-weight: 900;
+    }
+
+    /* Make the term card full width */
+    .student-tag:last-child{
+        grid-column:1 / -1;
+    }
 
 }
 
 
 </style>
+
 
 
 
@@ -449,26 +491,40 @@
 
 <div class="student-tags">
 
+    <div class="student-tag">
+        <div class="student-tag-label">🎓 Student ID</div>
+        <div class="student-tag-value">
+            {{ student.student_number }}
+        </div>
+    </div>
 
-<span class="student-tag">
-🎓 {{ student.student_number }}
-</span>
+    <div class="student-tag">
+        <div class="student-tag-label">🏫 School</div>
+        <div class="student-tag-value">
+            {{ student.school.name|default:"No School" }}
+        </div>
+    </div>
 
+    <div class="student-tag">
+        <div class="student-tag-label">📚 Class</div>
+        <div class="student-tag-value">
+            {{ student_class.name|default:"No Class" }}
+        </div>
+    </div>
 
-<span class="student-tag">
-🏫 {{ student.school.name }}
-</span>
+    <div class="student-tag">
+        <div class="student-tag-label">📅 Academic Year</div>
+        <div class="student-tag-value">
+            {{ current_term.academic_year }}
+        </div>
+    </div>
 
-
-<span class="student-tag">
-📚 {{ student_class.name }}
-</span>
-
-
-<span class="student-tag">
-📅 {{ current_term.get_term_number_display }}
-</span>
-
+    <div class="student-tag">
+        <div class="student-tag-label">🗓️ Term</div>
+        <div class="student-tag-value">
+            {{ current_term.get_term_number_display }}
+        </div>
+    </div>
 
 </div>
 
@@ -697,6 +753,7 @@
 
 
 </div>
+
 {% else %}
 
 <!-- NO ACTIVE TERM -->

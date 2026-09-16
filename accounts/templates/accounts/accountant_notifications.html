@@ -1,230 +1,107 @@
 {% extends 'accounts/dashboard_base.html' %}
 {% block content %}
-<style>.notif-card{border:none;border-radius:22px;box-shadow:0 12px 30px rgba(0,0,0,.07);background:#fff;overflow:hidden;margin-bottom:20px;}.notif-top{height:5px;background:linear-gradient(90deg,#11998e,#38ef7d);}.label{font-weight:800;font-size:13px;}
+<style>
+.notif-card{border:none;border-radius:22px;box-shadow:0 12px 30px rgba(0,0,0,.07);background:#fff;overflow:hidden;margin-bottom:20px}
+.notif-top{height:5px;background:linear-gradient(90deg,#11998e,#38ef7d)}
+.label{font-weight:900;font-size:15px}
+.hero-card{background:linear-gradient(135deg,#0f172a,#2563eb);color:#fff;border-radius:22px;padding:28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:25px;margin-top:25px}
+.hero-card h2{font-weight:800;margin-bottom:6px}
+.hero-card p{opacity:.85;margin:0}
+.hero-badge{background:rgba(255,255,255,.15);padding:12px 20px;border-radius:30px;font-weight:700;font-size:15px}
+.filter-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.filter-bar .btn{border-radius:30px;padding:8px 18px;font-weight:700}
+.notif-card{transition:.25s ease}
+.notif-card:hover{transform:translateY(-3px);box-shadow:0 18px 35px rgba(0,0,0,.10)}
 
-.hero-card{
-    background:linear-gradient(135deg,#0f172a,#2563eb);
-    color:#fff;
-    border-radius:22px;
-    padding:28px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    flex-wrap:wrap;
-    margin-bottom:25px;
-    margin-top:25px;
-}
-
-.hero-card h2{
-    font-weight:800;
-    margin-bottom:6px;
-}
-
-.hero-card p{
-    opacity:.85;
-    margin:0;
-}
-
-.hero-badge{
-    background:rgba(255,255,255,.15);
-    padding:12px 20px;
-    border-radius:30px;
-    font-weight:700;
-    font-size:15px;
-}
-
-.filter-bar{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-    margin-bottom:20px;
-}
-
-.filter-bar .btn{
-    border-radius:30px;
-    padding:8px 18px;
-    font-weight:700;
-}
-
-.notif-card{
-    transition:.25s ease;
-}
-
-.notif-card:hover{
-    transform:translateY(-3px);
-    box-shadow:0 18px 35px rgba(0,0,0,.10);
-}
-
+/* ===== MOBILE ONLY - IPHONE 11 FIX ===== */
 @media(max-width:768px){
+.hero-card{flex-direction:column;align-items:flex-start;gap:15px;padding:20px 18px;border-radius:18px}
+.hero-card h2{font-size:21px}
+.hero-card p{font-size:14px}
+.hero-badge{width:100%;text-align:center;font-size:14px;padding:10px 16px}
 
-.hero-card{
-    flex-direction:column;
-    align-items:flex-start;
-    gap:15px;
+/* 3 FILTERS ON SAME LINE HORIZONTALLY */
+.filter-bar{
+  flex-wrap:nowrap!important;
+  display:flex!important;
+  flex-direction:row!important;
+  gap:8px!important;
+  width:100%!important;
 }
-
-.hero-badge{
-    width:100%;
-    text-align:center;
+.filter-bar .btn{
+  flex:1 1 0!important;
+  width:33.33%!important;
+  min-width:0!important;
+  padding:10px 6px!important;
+  font-size:13px!important;
+  font-weight:800!important;
+  white-space:nowrap!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border-radius:20px!important;
 }
+.filter-bar .btn .badge{
+  font-size:10px!important;
+  padding:3px 6px!important;
+  margin-left:4px!important;
+}
+.notif-card{border-radius:16px!important}
+.notif-card .p-4{padding:16px!important}
+}
+@media(max-width:380px){
+.filter-bar .btn{font-size:12px!important;padding:9px 4px!important}
+.filter-bar .btn i{margin-right:3px!important}
+}
+</style>
 
-}</style>
 <div class="container py-4" style="max-width:900px;">
-  <div class="hero-card">
-
+<div class="hero-card">
     <div>
-        <h2>
-            <i class="fas fa-bell me-2"></i>
-            Accountant Notifications
-        </h2>
-
-        <p>
-            Stay updated with announcements, reminders and finance-related notices.
-        </p>
+        <h2><i class="fas fa-bell me-2"></i>Accountant Notifications</h2>
+        <p>Stay updated with announcements, reminders and finance-related notices.</p>
     </div>
-
-    <div class="hero-badge">
-        {{ announcements|length }} Notification{{ announcements|length|pluralize }}
-    </div>
-
+    <div class="hero-badge">{{ announcements|length }} Notification{{ announcements|length|pluralize }}</div>
 </div>
-<!-- Filter Buttons -->
+
+<!-- Filter Buttons - 3 ON SAME LINE -->
 <div class="filter-bar d-flex flex-wrap gap-2 mb-4">
-    <a href="?filter=all"
-       class="btn btn-sm px-4 {% if filter == 'all' %}btn-dark{% else %}btn-outline-dark{% endif %}">
-        <i class="fas fa-list me-1"></i>
-        All <span class="badge bg-light text-dark ms-1">{{ total }}</span>
+    <a href="?filter=all" class="btn btn-sm px-4 {% if filter == 'all' %}btn-dark{% else %}btn-outline-dark{% endif %}">
+        <i class="fas fa-list me-1"></i>All <span class="badge bg-light text-dark ms-1">{{ total }}</span>
     </a>
-
-    <a href="?filter=today"
-       class="btn btn-sm px-4 {% if filter == 'today' %}btn-success{% else %}btn-outline-success{% endif %}">
-        <i class="fas fa-calendar-day me-1"></i>
-        Today
+    <a href="?filter=today" class="btn btn-sm px-4 {% if filter == 'today' %}btn-success{% else %}btn-outline-success{% endif %}">
+        <i class="fas fa-calendar-day me-1"></i>Today
     </a>
-
-    <a href="?filter=week"
-       class="btn btn-sm px-4 {% if filter == 'week' %}btn-primary{% else %}btn-outline-primary{% endif %}">
-        <i class="fas fa-calendar-week me-1"></i>
-        This Week
+    <a href="?filter=week" class="btn btn-sm px-4 {% if filter == 'week' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+        <i class="fas fa-calendar-week me-1"></i>This Week
     </a>
 </div>
 
 {% for ann in announcements %}
 <div class="notif-card mb-4">
-
     <div class="notif-top"></div>
-
     <div class="p-4">
-
         <div class="d-flex justify-content-between align-items-start flex-wrap mb-3">
-
-            <div>
-                <small class="text-muted fw-semibold">📌 TITLE</small>
-
-                <h5 class="fw-bold mb-0 mt-1">
-                    {{ ann.title }}
-                </h5>
-            </div>
-
-            <span class="badge rounded-pill bg-success px-3 py-2">
-                {{ ann.created_at|timesince }} ago
-            </span>
-
+            <div><small class="text-muted fw-semibold">📌 TITLE</small><h5 class="fw-bold mb-0 mt-1">{{ ann.title }}</h5></div>
+            <span class="badge rounded-pill bg-success px-3 py-2">{{ ann.created_at|timesince }} ago</span>
         </div>
-
-        <div class="mb-4">
-
-            <small class="text-muted fw-semibold">
-                💬 MESSAGE
-            </small>
-
-            <div class="mt-2 p-3 rounded-4"
-                 style="background:#f6fffb;border-left:5px solid #16a34a;line-height:1.8;">
-                {{ ann.message }}
-            </div>
-
-        </div>
-
+        <div class="mb-4"><small class="text-muted fw-semibold">💬 MESSAGE</small><div class="mt-2 p-3 rounded-4" style="background:#f6fffb;border-left:5px solid #16a34a;line-height:1.8;">{{ ann.message }}</div></div>
         <div class="row g-3 border-top pt-3">
-
-            <div class="col-md-6">
-
-                <small class="text-muted d-block">
-                    <i class="fas fa-clock me-1"></i>
-                    Date & Time
-                </small>
-
-                <strong>
-                    {{ ann.created_at|date:"M d, Y • h:i A" }}
-                </strong>
-
-            </div>
-
-            <div class="col-md-6 text-md-end">
-
-                <small class="text-muted d-block">
-                    <i class="fas fa-user-circle me-1"></i>
-                    Created By
-                </small>
-
-                <span class="badge rounded-pill bg-light text-success border px-3 py-2">
-                    {{ ann.created_by.get_full_name|default:ann.created_by.username }}
-                    ({{ ann.created_by.role|title }})
-                </span>
-
-            </div>
-
+            <div class="col-md-6"><small class="text-muted d-block"><i class="fas fa-clock me-1"></i>Date & Time</small><strong>{{ ann.created_at|date:"M d, Y • h:i A" }}</strong></div>
+            <div class="col-md-6 text-md-end"><small class="text-muted d-block"><i class="fas fa-user-circle me-1"></i>Created By</small><span class="badge rounded-pill bg-light text-success border px-3 py-2">{{ ann.created_by.get_full_name|default:ann.created_by.username }} ({{ ann.created_by.role|title }})</span></div>
         </div>
-
     </div>
-
 </div>
-
 {% empty %}
-
-<div class="notif-card p-5 text-center">
-
-    <i class="fas fa-bell-slash fa-4x text-muted mb-3"></i>
-
-    <h5 class="fw-bold">
-        No Notifications
-    </h5>
-
-    <p class="text-muted mb-0">
-        There are currently no announcements available.
-    </p>
-
-</div>
-
+<div class="notif-card p-5 text-center"><i class="fas fa-bell-slash fa-4x text-muted mb-3"></i><h5 class="fw-bold">No Notifications</h5><p class="text-muted mb-0">There are currently no announcements available.</p></div>
 {% endfor %}
 
-<!-- Premium Pagination -->
 {% if page_obj.has_other_pages %}
-
 <div class="d-flex justify-content-center align-items-center mt-5 gap-2 flex-wrap">
-
-    {% if page_obj.has_previous %}
-        <a href="?filter={{ filter }}&page={{ page_obj.previous_page_number }}"
-           class="btn btn-outline-secondary rounded-pill px-4">
-            <i class="fas fa-chevron-left me-1"></i>
-            Previous
-        </a>
-    {% endif %}
-
-    <span class="btn btn-dark rounded-pill px-4 disabled">
-        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-    </span>
-
-    {% if page_obj.has_next %}
-        <a href="?filter={{ filter }}&page={{ page_obj.next_page_number }}"
-           class="btn btn-outline-secondary rounded-pill px-4">
-            Next
-            <i class="fas fa-chevron-right ms-1"></i>
-        </a>
-    {% endif %}
-
+    {% if page_obj.has_previous %}<a href="?filter={{ filter }}&page={{ page_obj.previous_page_number }}" class="btn btn-outline-secondary rounded-pill px-4"><i class="fas fa-chevron-left me-1"></i>Previous</a>{% endif %}
+    <span class="btn btn-dark rounded-pill px-4 disabled">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a href="?filter={{ filter }}&page={{ page_obj.next_page_number }}" class="btn btn-outline-secondary rounded-pill px-4">Next<i class="fas fa-chevron-right ms-1"></i></a>{% endif %}
 </div>
-
 {% endif %}
+</div>
 {% endblock %}
-

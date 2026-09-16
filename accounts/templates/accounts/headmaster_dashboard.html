@@ -1,0 +1,327 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block content %}
+<!-- Copy your admin CSS here - same as you pasted -->
+<style>
+/* PASTE SAME CSS FROM admin_dashboard.html HERE - keep all */
+.admin-wrapper { max-width:1500px; margin:0 auto; padding:26px 28px 40px; }
+.dashboard-section{margin-bottom:30px}
+.section-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:15px;margin-bottom:15px}
+.section-heading h2{margin:0;color:#111827;font-size:18px;font-weight:800}
+.section-heading p{margin:4px 0 0;color:#7b8495;font-size:12px}
+.admin-hero{position:relative;overflow:hidden;padding:32px;margin-bottom:28px;border-radius:24px;color:#fff;background:linear-gradient(135deg,#071827 0%,#0b3155 52%,#123f6d 100%);box-shadow:0 18px 45px rgba(4,23,41,.18)}
+.hero-label{display:inline-flex;align-items:center;gap:8px;padding:7px 13px;margin-bottom:13px;border-radius:30px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.92);font-size:11px;font-weight:750;letter-spacing:.5px;text-transform:uppercase}
+.admin-hero h1{margin:0;font-size:clamp(28px,4vw,40px);line-height:1.12;font-weight:850;letter-spacing:-.9px}
+.admin-hero .hero-description{margin:11px 0 0;max-width:650px;color:rgba(255,255,255,.76);font-size:14px;line-height:1.6}
+.hero-school {
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    margin-top:21px;
+    padding:11px 16px;
+    border-radius:14px;
+    background:rgba(255,255,255,.10);
+    border:1px solid rgba(255,255,255,.14);
+    color:#fff;
+    font-size:13px;
+    font-weight:750;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+}
+.quick-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px}
+.action-card{position:relative;overflow:hidden;display:flex;align-items:center;min-height:86px;padding:15px 17px;gap:13px;color:#172033;text-decoration:none;background:#fff;border:1px solid #e8edf3;border-radius:17px;box-shadow:0 6px 20px rgba(15,23,42,.055);transition:.25s}
+.action-icon{width:48px;height:48px;flex:0 0 48px;display:flex;align-items:center;justify-content:center;border-radius:14px;font-size:20px}
+.action-text strong{display:block;color:#172033;font-size:13px;font-weight:800}
+.action-text small{display:block;margin-top:4px;color:#7b8495;font-size:10.5px}
+.dashboard-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.admin-card{position:relative;min-height:165px;padding:20px;overflow:hidden;text-decoration:none;background:#fff;border:1px solid #edf0f5;border-radius:19px;box-shadow:0 7px 22px rgba(15,23,42,.055);transition:.22s}
+.admin-card .icon{width:50px;height:50px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;border-radius:14px;font-size:23px}
+.admin-card h3{margin:0;color:#7b8494;font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase}
+.admin-card p{margin:5px 0 0;color:#111827;font-size:32px;line-height:1.1;font-weight:850}
+.students .icon{color:#2563eb;background:#dbeafe}.teachers .icon{color:#16a34a;background:#dcfce7}.parents .icon{color:#dc2626;background:#fee2e2}.accountants .icon{color:#d97706;background:#fef3c7}.subjects .icon{color:#7c3aed;background:#ede9fe}.classes .icon{color:#0891b2;background:#cffafe}
+.users .icon {
+    color:#475569;
+    background:#e2e8f0;
+}
+/* =========================
+   HEAD TEACHER HERO PROFILE
+   ========================= */
+
+.admin-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+}
+
+.hero-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.hero-profile {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    min-width: 330px;
+    padding: 18px 20px;
+    border-radius: 22px;
+    background: rgba(255,255,255,.09);
+    border: 1px solid rgba(255,255,255,.14);
+    backdrop-filter: blur(10px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+.hero-profile img,
+.hero-avatar {
+    width: 78px;
+    height: 78px;
+    flex: 0 0 78px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(255,255,255,.85);
+    box-shadow: 0 8px 22px rgba(0,0,0,.22);
+}
+
+.hero-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,.12);
+    color: #fff;
+    font-size: 30px;
+}
+
+.hero-details {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(100px, 1fr));
+    gap: 14px 22px;
+}
+
+.hero-details span {
+    display: block;
+    margin-bottom: 4px;
+    color: rgba(255,255,255,.55);
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .7px;
+}
+
+.hero-details strong {
+    display: block;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.3;
+}
+
+@media (max-width: 800px) {
+    .admin-hero {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .hero-profile {
+        min-width: 0;
+        width: 100%;
+    }
+}
+</style>
+
+<section class="admin-hero">
+
+    <div class="hero-main">
+
+        <div class="hero-label">
+            <i class="fas fa-user-tie"></i>
+           {{ user.get_role_display }} Dashboard
+        </div>
+
+        <h1>
+            Welcome, {{ user.get_title_display }} {{ user.first_name|default:user.username }}
+        </h1>
+
+        <p class="hero-description">
+            Manage your school based on the permissions granted to you by the Administrator.
+        </p>
+
+        <div class="hero-school">
+            <i class="fas fa-building"></i>
+            {{ school.name }}
+        </div>
+
+    </div>
+
+
+    <div class="hero-profile">
+
+        {% if user.photo %}
+            <img src="{{ user.photo.url }}" alt="{{ user.get_full_name }}">
+        {% else %}
+            <div class="hero-avatar">
+                <i class="fas fa-user-tie"></i>
+            </div>
+        {% endif %}
+
+<div class="hero-details">
+
+    <div>
+        <span>Staff ID</span>
+        <strong>{{ user.staff_id|default:"N/A" }}</strong>
+    </div>
+
+    <div>
+        <span>Username</span>
+        <strong>{{ user.username }}</strong>
+    </div>
+
+    <div>
+        <span>Academic Year</span>
+        <strong>{{ academic_year.name|default:"N/A" }}</strong>
+    </div>
+
+    <div>
+        <span>Current Term</span>
+        <strong>{{ current_term.get_term_number_display|default:"N/A" }}</strong>
+    </div>
+
+</div>
+
+    </div>
+
+</section>
+
+
+
+<div class="dashboard-grid">
+
+    {% if perms.can_add_student %}
+    <a href="{% url 'accounts:view-students-by-class' %}"
+       class="admin-card students">
+
+        <div class="icon">
+            <i class="fas fa-user-graduate"></i>
+        </div>
+
+        <h3>
+             Student{{ total_students|pluralize }}
+        </h3>
+
+        <p>{{ total_students }}</p>
+
+    </a>
+    {% endif %}
+
+
+    {% if perms.can_add_teacher %}
+    <a href="{% url 'accounts:manage-teachers-grid' %}"
+       class="admin-card teachers">
+
+        <div class="icon">
+            <i class="fas fa-chalkboard-teacher"></i>
+        </div>
+
+        <h3>
+            Teacher{{ total_teachers|pluralize }}
+        </h3>
+
+        <p>{{ total_teachers }}</p>
+
+    </a>
+    {% endif %}
+
+
+    {% if perms.can_add_parent and not is_basic_school %}
+    <a href="{% url 'accounts:manage-parents' %}"
+       class="admin-card parents">
+
+        <div class="icon">
+            <i class="fas fa-users"></i>
+        </div>
+
+        <h3>
+             Parent{{ total_parents|pluralize }}
+        </h3>
+
+        <p>{{ total_parents }}</p>
+
+    </a>
+    {% endif %}
+
+
+    {% if perms.can_add_accountant and not is_basic_school %}
+    <a href="{% url 'accounts:manage_accountant_grid' %}"
+       class="admin-card accountants">
+
+        <div class="icon">
+            <i class="fas fa-calculator"></i>
+        </div>
+
+        <h3>
+            Accountant{{ total_accountants|pluralize }}
+        </h3>
+
+        <p>{{ total_accountants }}</p>
+
+    </a>
+    {% endif %}
+
+
+    {% if perms.can_add_subject %}
+    <a href="{% url 'accounts:subject_list' %}"
+       class="admin-card subjects">
+
+        <div class="icon">
+            <i class="fas fa-book-open"></i>
+        </div>
+
+        <h3>
+            Subject{{ total_subjects|pluralize }}
+        </h3>
+
+        <p>{{ total_subjects }}</p>
+
+    </a>
+    {% endif %}
+
+
+    {% if perms.can_add_class %}
+    <a href="{% url 'accounts:admin_classes' %}"
+       class="admin-card classes">
+
+        <div class="icon">
+            <i class="fas fa-school"></i>
+        </div>
+
+        <h3>
+            Class{{ total_classes|pluralize }}
+        </h3>
+
+        <p>{{ total_classes }}</p>
+
+    </a>
+    {% endif %}
+
+
+    <!-- ALL USERS -->
+
+      <div class="admin-card users">
+
+        <div class="icon">
+            <i class="fas fa-users-cog"></i>
+        </div>
+
+        <h3>
+            User{{ total_users|pluralize }}
+        </h3>
+
+        <p>{{ total_users }}</p>
+
+    </div>
+
+</div>
+
+  {% if not perms %}
+    <p style="margin-top:20px;color:red">No permission found for {{ school.name }} - ask admin to save permission</p>
+  {% endif %}
+</div>
+{% endblock %}

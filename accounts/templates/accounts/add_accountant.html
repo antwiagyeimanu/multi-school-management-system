@@ -5,45 +5,68 @@
 {% block content %}
 
 <style>
-
 /* ==========================
-   ADD STAFF PAGE HEADER
+   ADD ACCOUNTANT PAGE
 ========================== */
 
-.page-hero {
-    background: linear-gradient(135deg,#2563eb,#1d4ed8);
-    color:white;
-    padding:35px;
-    border-radius:24px;
-    margin-bottom:30px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    box-shadow:0 12px 30px rgba(37,99,235,.25);
+.staff-page{
+    max-width:1100px;
+    margin:0 auto;
+    padding:30px 20px 50px;
 }
 
-.page-hero h1 {
-    margin:0;
+/* ==========================
+   PAGE HERO
+========================== */
+
+.page-header{
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:#fff;
+    padding:28px;
+    border-radius:22px;
+    margin-bottom:30px;
+    box-shadow:0 10px 30px rgba(37,99,235,.25);
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:20px;
+}
+
+.page-header-left{
+    display:flex;
+    align-items:center;
+    gap:20px;
+}
+
+.page-header-icon{
+    width:72px;
+    height:72px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:18px;
+    background:rgba(255,255,255,.15);
     font-size:34px;
+}
+
+.page-title{
+    margin:0;
+    font-size:32px;
     font-weight:800;
 }
 
-.page-hero p {
+.page-subtitle{
     margin:8px 0 0;
-    opacity:.9;
-    font-size:16px;
+    color:rgba(255,255,255,.9);
+    font-size:15px;
 }
-
-.hero-icon {
-    font-size:65px;
-}
-
 
 /* ==========================
-   ALERT CARDS
+   ALERTS
 ========================== */
 
-.alert-success {
+.alert-success{
     background:#ecfdf5;
     border:1px solid #10b981;
     color:#065f46;
@@ -52,8 +75,7 @@
     margin-bottom:25px;
 }
 
-
-.alert-error {
+.alert-error{
     background:#fef2f2;
     border:1px solid #ef4444;
     color:#991b1b;
@@ -62,107 +84,232 @@
     margin-bottom:25px;
 }
 
+/* ==========================
+   SUCCESS CARD
+========================== */
+
+.success-card{
+    display:flex;
+    align-items:flex-start;
+    gap:18px;
+    background:#ecfdf5;
+    border-left:6px solid #10b981;
+    padding:20px;
+    border-radius:18px;
+    margin-bottom:25px;
+}
+
+.success-icon{
+    font-size:34px;
+}
+
+.success-content h3{
+    margin:0 0 10px;
+    color:#065f46;
+}
+
+.success-content p{
+    margin:6px 0;
+}
+
+.success-content small{
+    display:block;
+    margin-top:10px;
+    color:#047857;
+}
 
 /* ==========================
    FORM CONTAINER
 ========================== */
 
-.staff-form-container {
-    background:white;
+.staff-form-container{
+    background:#fff;
     border-radius:24px;
     padding:30px;
+    border:1px solid #e5e7eb;
     box-shadow:0 8px 25px rgba(0,0,0,.06);
 }
 
-
-.form-grid {
+.form-grid{
     display:grid;
     grid-template-columns:1fr 1fr;
-    gap:30px;
+    gap:25px;
 }
 
-
-.form-card {
+.form-card{
     background:#f8fafc;
     border:1px solid #e5e7eb;
     border-radius:20px;
     padding:25px;
 }
 
-
-.form-card h3 {
-    margin-bottom:20px;
+.form-card h3{
+    margin:0 0 22px;
     color:#111827;
     font-size:20px;
     font-weight:800;
 }
 
+/* ==========================
+   FORM FIELDS
+========================== */
 
-.form-group {
+.form-group{
     margin-bottom:18px;
 }
 
-
-.form-group label {
+.form-group label{
     display:block;
-    font-weight:700;
     margin-bottom:7px;
     color:#374151;
+    font-size:14px;
+    font-weight:700;
 }
-
 
 .form-group input,
-.form-group select {
+.form-group select,
+.form-group textarea{
     width:100%;
     padding:12px 14px;
-    border-radius:12px;
     border:1px solid #d1d5db;
+    border-radius:12px;
+    background:#fff;
     font-size:15px;
-    background:white;
+    box-sizing:border-box;
 }
 
+.form-group textarea{
+    min-height:90px;
+    resize:vertical;
+}
 
 .form-group input:focus,
-.form-group select:focus {
+.form-group select:focus,
+.form-group textarea:focus{
     outline:none;
     border-color:#2563eb;
     box-shadow:0 0 0 3px rgba(37,99,235,.15);
 }
 
+/* ==========================
+   ACTIONS
+========================== */
+
+.form-actions{
+    margin-top:30px;
+    display:flex;
+    gap:15px;
+}
+
+.save-btn{
+    background:#2563eb;
+    color:#fff;
+    border:none;
+    padding:14px 28px;
+    border-radius:12px;
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.2s ease;
+}
+
+.save-btn:hover{
+    background:#1d4ed8;
+    transform:translateY(-1px);
+}
+
+.cancel-btn{
+    background:#6b7280;
+    color:#fff;
+    padding:14px 28px;
+    border-radius:12px;
+    text-decoration:none;
+    font-weight:700;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.cancel-btn:hover{
+    background:#4b5563;
+}
+
+.text-danger{
+    color:#dc2626;
+    font-size:13px;
+    margin-top:5px;
+}
+
+/* ==========================
+   MOBILE
+========================== */
 
 @media(max-width:768px){
 
-.form-grid {
-    grid-template-columns:1fr;
-}
+    .staff-page{
+        padding:20px 12px 40px;
+    }
 
-.page-hero {
-    flex-direction:column;
-    text-align:center;
-    gap:20px;
-}
+    .page-header{
+        flex-direction:column;
+        text-align:center;
+        padding:22px;
+    }
 
-.page-hero h1 {
-    font-size:28px;
-}
+    .page-header-left{
+        flex-direction:column;
+        text-align:center;
+    }
 
-}
+    .page-title{
+        font-size:26px;
+    }
 
+    .form-grid{
+        grid-template-columns:1fr;
+    }
+
+    .staff-form-container{
+        padding:20px 16px;
+    }
+
+    .form-card{
+        padding:20px;
+    }
+
+    .form-actions{
+        flex-direction:column;
+    }
+
+    .save-btn,
+    .cancel-btn{
+        width:100%;
+        box-sizing:border-box;
+        text-align:center;
+    }
+}
 </style>
 
+<div class="staff-page">
 
-<div class="page-hero">
+    <div class="page-header">
 
-    <div>
-        <h1>👨‍💼 Add Accountant</h1>
-        <p>Create accountant profile and manage finance access.</p>
+        <div class="page-header-left">
+
+            <div class="page-header-icon">
+                💼
+            </div>
+
+            <div>
+                <h1 class="page-title">Add Accountant</h1>
+                <p class="page-subtitle">
+                    Create accountant profile and manage finance access.
+                </p>
+            </div>
+
+        </div>
+
     </div>
-
-    <div class="hero-icon">
-        💼
-    </div>
-
-</div>
 
 
 {% if messages %}
@@ -261,6 +408,18 @@ Save these details. They will not be shown again.
 </div>
 
 
+
+<div class="form-group">
+<label>Phone Number *</label>
+{{ form.phone }}
+</div>
+
+<div class="form-group">
+<label>Email *</label>
+{{ form.email }}
+</div>
+
+
 <div class="form-group">
 <label>Gender</label>
 {{ form.gender }}
@@ -297,24 +456,12 @@ Save these details. They will not be shown again.
 
 <div class="form-card">
 
-<h3>Contact & Employment Information</h3>
+<h3>Employment Information</h3>
 
 
 <div class="form-group">
 <label>Religion</label>
 {{ form.religion }}
-</div>
-
-
-<div class="form-group">
-<label>Phone Number *</label>
-{{ form.phone }}
-</div>
-
-
-<div class="form-group">
-<label>Email</label>
-{{ form.email }}
 </div>
 
 
@@ -333,6 +480,30 @@ Save these details. They will not be shown again.
 <div class="form-group">
 <label>Department</label>
 {{ form.department }}
+</div>
+
+
+<div class="form-group">
+<label>Address</label>
+{{ form.address }}
+</div>
+
+
+<div class="form-group">
+<label>Emergency Contact Name</label>
+{{ form.emergency_contact_name }}
+</div>
+
+
+<div class="form-group">
+<label>Emergency Contact Phone</label>
+{{ form.emergency_contact_phone }}
+</div>
+
+
+<div class="form-group">
+<label>Emergency Contact Relationship</label>
+{{ form.emergency_contact_relationship }}
 </div>
 
 
@@ -365,6 +536,7 @@ Save these details. They will not be shown again.
 
 </form>
 
+</div>
 </div>
     
 <script>
@@ -407,280 +579,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<style>
 
-form input {
-    font-size: 16px;
-    padding: 1px;
-    width: 100%;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    border: 2px solid hsl(0, 3%, 35%);
-}
-
-form button {
-    font-size: 16px;
-    padding: 10px 20px;
-    border-radius: 5px;
-    background-color: hsl(120, 5%, 4%);
-    color: white;
-    border: none;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-form button:hover {
-    background-color: hsl(254, 60%, 35%);
-    color: white;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    transform: translateY(-2px);
-}
-
-
-select {
-    width: 100%;
-    padding: 5px;
-    font-size: 16px;
-    border-radius: 5px;
-    border: 2px solid hsl(0, 3%, 35%);
-    margin-bottom: 10px;
-}
-form label {
-    display: block;
-    margin-bottom: 3px;  /* smaller space */
-    font-weight: bold;
-}
-
-form input,
-select {
-    margin-bottom: 30px;  /* reduce space between fields */
-    padding: 6px;        /* make input comfortable */
-}
-body {
-    padding-bottom: 20px; /* You can reduce this now */
-}
-
-.pagination {
-    text-align: center;
-    margin: 40px 0 20px 0;
-}
-
-.pagination a {
-    display: inline-block;
-    padding: 10px 20px;
-    margin: 0 5px;
-    background: #007bff;
-    color: white;
-    text-decoration: none;
-    border-radius: 5px;
-    font-weight: bold;
-}
-
-.pagination .current, .pagination span {
-    background: #6c757d;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 5px;
-}
-
-footer {
-    position: relative;
-    margin-top: 60px;
-    width: 100%;
-    background: #0d1b2a;
-    color: white;
-    text-align: center;
-    padding: 15px 0;
-}
-.page-header{
-    display:flex;
-    align-items:center;
-    gap:20px;
-    background:linear-gradient(135deg,#2563eb,#1d4ed8);
-    color:#fff;
-    padding:28px;
-    border-radius:22px;
-    margin-bottom:30px;
-     margin-top:30px;
-    box-shadow:0 10px 30px rgba(37,99,235,.25);
-}
-
-.page-header-icon{
-    width:72px;
-    height:72px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border-radius:18px;
-    background:rgba(255,255,255,.15);
-    font-size:34px;
-}
-
-.page-title{
-    margin:0;
-    font-size:32px;
-    font-weight:800;
-}
-
-.page-subtitle{
-    margin-top:8px;
-    margin-bottom:0;
-    color:rgba(255,255,255,.9);
-    font-size:15px;
-}
-
-@media(max-width:768px){
-
-.page-header{
-    flex-direction:column;
-    text-align:center;
-    padding:22px;
-}
-
-.page-title{
-    font-size:26px;
-}
-
-.page-header-icon{
-    width:64px;
-    height:64px;
-    font-size:30px;
-}
-
-}
-.page-header{
-    justify-content:space-between;
-}
-
-.page-header-left{
-    display:flex;
-    align-items:center;
-    gap:20px;
-}
-
-.hero-stat{
-    background:rgba(255,255,255,.15);
-    padding:18px 28px;
-    border-radius:18px;
-    text-align:center;
-    min-width:160px;
-}
-
-.hero-stat-number{
-    display:block;
-    font-size:32px;
-    font-weight:800;
-}
-
-.hero-stat-text{
-    font-size:14px;
-    opacity:.95;
-}
-
-@media(max-width:768px){
-
-.page-header{
-    flex-direction:column;
-}
-
-.page-header-left{
-    flex-direction:column;
-    text-align:center;
-}
-
-.hero-stat{
-    width:100%;
-}
-
-}
-.success-card{
-    display:flex;
-    align-items:flex-start;
-    gap:18px;
-    background:#ecfdf5;
-    border-left:6px solid #10b981;
-    padding:20px;
-    border-radius:18px;
-    margin-bottom:25px;
-}
-
-.success-icon{
-    font-size:34px;
-}
-
-.success-content h3{
-    margin:0 0 10px;
-    color:#065f46;
-}
-
-.success-content p{
-    margin:6px 0;
-}
-
-.success-content small{
-    color:#047857;
-    display:block;
-    margin-top:10px;
-}
-.form-actions{
-    margin-top:30px;
-    display:flex;
-    gap:15px;
-}
-
-
-.save-btn{
-    background:#2563eb;
-    color:white;
-    border:none;
-    padding:14px 28px;
-    border-radius:12px;
-    font-weight:700;
-    font-size:16px;
-    cursor:pointer;
-}
-
-
-.save-btn:hover{
-    background:#1d4ed8;
-}
-
-
-.cancel-btn{
-    background:#6b7280;
-    color:white;
-    padding:14px 28px;
-    border-radius:12px;
-    text-decoration:none;
-    font-weight:700;
-}
-
-
-.cancel-btn:hover{
-    background:#4b5563;
-}
-
-
-.text-danger{
-    color:#dc2626;
-    font-size:13px;
-    margin-top:5px;
-}
-
-
-@media(max-width:768px){
-
-.form-actions{
-    flex-direction:column;
-}
-
-
-.save-btn,
-.cancel-btn{
-    width:100%;
-    text-align:center;
-}
-
-}
-</style>
 {% endblock %}

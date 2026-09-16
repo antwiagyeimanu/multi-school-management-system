@@ -168,7 +168,31 @@
 
 }
 
+/* =========================================================
+   MOBILE — TWO ASSIGNMENT CARDS SIDE BY SIDE
+   Layout only — existing styling preserved
+========================================================= */
 
+@media(max-width:768px){
+
+    .assignments-page{
+        width:100%;
+        max-width:100%;
+        padding:0 10px;
+        box-sizing:border-box;
+    }
+
+    .assignment-grid{
+        grid-template-columns:1fr 1fr;
+        gap:14px;
+    }
+
+    .assignment-card{
+        width:100%;
+        box-sizing:border-box;
+    }
+
+}
 
 </style>
 

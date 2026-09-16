@@ -591,11 +591,11 @@
                   </td>
                   <td class="text-center">
                     <div class="score-total">
-                        {{ r.total_score }}
+                        {{ r.total_score|floatformat:0 }}%
                     </div>
                     <small class="score-breakdown">
-                        CA: {{ r.class_score }} |
-                        Exam: {{ r.exam_score }}
+                      CA: {{ r.review_ca|floatformat:0 }} |
+                    Exam: {{ r.review_exam|floatformat:0 }}
                     </small>
                   </td>
                   <td class="text-center">
@@ -603,6 +603,7 @@
                       {% if r.grade == 'A' %}bg-success
                       {% elif r.grade == 'B' %}bg-primary
                       {% elif r.grade == 'C' %}bg-warning text-dark
+                      {% elif r.grade == 'D' %}bg-warning text-dark
                       {% else %}bg-danger{% endif %}">
                       {{ r.grade }}
                     </span>

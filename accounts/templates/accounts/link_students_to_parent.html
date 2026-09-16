@@ -1,100 +1,998 @@
 {% extends "accounts/dashboard_base.html" %}
 {% block content %}
-<div style="max-width:1000px; margin:30px auto; font-family:system-ui;">
 
-  <div style="background:white; padding:20px; border-radius:16px; margin-bottom:20px; box-shadow:0 4px 12px rgba(0,0,0,0.05);">
-    <h2 style="margin:0;">Link Students to {{ parent.get_full_name }}</h2>
-    <p style="color:#64748b; margin:5px 0 0;">Already linked: <strong>{{ total_linked }}</strong> student(s)</p>
-  </div>
+<style>
+/* =========================================================
+   PREMIUM LINK STUDENTS
+========================================================= */
 
-  <!-- CLASS CARDS -->
-  <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:12px; margin-bottom:20px;">
-    {% for cls in classes %}
-    <a href="?class_id={{ cls.id }}" style="text-decoration:none; background:{% if selected_class_id == cls.id|stringformat:'s' %}#2563eb{% else %}white{% endif %}; color:{% if selected_class_id == cls.id|stringformat:'s' %}white{% else %}#111827{% endif %}; padding:18px; border-radius:12px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.05); border:2px solid {% if selected_class_id == cls.id|stringformat:'s' %}#2563eb{% else %}#e5e7eb{% endif %}; font-weight:600;">
-      {{ cls.name }} <br><small style="opacity:0.8;">{{ cls.student_count }}</small>
-    </a>
-    {% endfor %}
-  </div>
+.link-students-page {
+    width: 100%;
+    max-width: 1200px;
+    margin: 25px auto 50px;
+    padding: 0 18px;
+    color: #0f172a;
+}
 
-  {% if not selected_class_id %}
-    <div style="background:#f8fafc; padding:40px; border-radius:16px; text-align:center; color:#64748b; border:2px dashed #e2e8f0;">
-      👆 Select a class above to see students in that class
+/* =========================================================
+   HERO
+========================================================= */
+
+.link-hero {
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 90% 10%, rgba(255,255,255,.14), transparent 25%),
+        linear-gradient(135deg, #0f172a, #172554 55%, #2563eb);
+    color: #fff;
+    border-radius: 26px;
+    padding: 28px 30px;
+    margin-bottom: 22px;
+    box-shadow: 0 16px 40px rgba(15,23,42,.13);
+}
+
+.link-hero::after {
+    content: "";
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    right: -80px;
+    top: -110px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.06);
+}
+
+.link-hero-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.link-hero-left {
+    display: flex;
+    align-items: center;
+    gap: 17px;
+}
+
+.link-parent-icon {
+    width: 68px;
+    height: 68px;
+    flex: 0 0 68px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 19px;
+    background: rgba(255,255,255,.14);
+    border: 1px solid rgba(255,255,255,.16);
+    font-size: 27px;
+}
+
+.link-hero h2 {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(22px, 3vw, 31px);
+    font-weight: 900;
+    letter-spacing: -.8px;
+}
+
+.link-hero p {
+    margin: 6px 0 0;
+    color: rgba(255,255,255,.72);
+    font-size: 13px;
+}
+
+.link-hero-pill {
+    position: relative;
+    z-index: 2;
+    padding: 11px 17px;
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 30px;
+    background: rgba(255,255,255,.10);
+    backdrop-filter: blur(10px);
+    color: rgba(255,255,255,.92);
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+/* =========================================================
+   CLASS SECTION
+========================================================= */
+
+.class-section {
+    background: #fff;
+    border: 1px solid #e8edf5;
+    border-radius: 22px;
+    padding: 22px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 25px rgba(15,23,42,.055);
+}
+
+.section-heading {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin-bottom: 17px;
+}
+
+.section-heading-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.section-heading h5 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 850;
+}
+
+.section-heading small {
+    display: block;
+    margin-top: 2px;
+    color: #94a3b8;
+    font-size: 10px;
+}
+
+/* CLASS CARDS */
+
+.class-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+    gap: 13px;
+}
+
+.class-link {
+    position: relative;
+    display: block;
+    min-height: 92px;
+    padding: 17px;
+    border-radius: 17px;
+    text-align: center;
+    text-decoration: none !important;
+    transition: .25s ease;
+}
+
+.class-link:hover {
+    transform: translateY(-4px);
+}
+
+.class-link-active {
+    background: linear-gradient(135deg,#2563eb,#3b82f6);
+    border: 2px solid #2563eb;
+    color: #fff !important;
+    box-shadow: 0 10px 25px rgba(37,99,235,.22);
+}
+
+.class-link-normal {
+    background: #fff;
+    border: 2px solid #e7ebf1;
+    color: #111827 !important;
+}
+
+.class-link-normal:hover {
+    border-color: #93c5fd;
+    box-shadow: 0 10px 24px rgba(15,23,42,.08);
+}
+
+.class-name {
+    display: block;
+    font-size: 14px;
+    font-weight: 850;
+}
+
+.class-count {
+    display: inline-flex;
+    margin-top: 9px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.class-link-active .class-count {
+    background: rgba(255,255,255,.18);
+    color: #fff;
+}
+
+/* =========================================================
+   EMPTY CLASS STATE
+========================================================= */
+
+.class-empty {
+    padding: 42px 20px;
+    text-align: center;
+    color: #64748b;
+    border: 2px dashed #dbe3ef;
+    border-radius: 20px;
+    background: #f8fafc;
+}
+
+.class-empty-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 18px;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 23px;
+}
+
+.class-empty strong {
+    display: block;
+    color: #334155;
+    font-size: 14px;
+}
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+.student-search-card {
+    background: #fff;
+    border: 1px solid #e8edf5;
+    border-radius: 20px;
+    padding: 18px;
+    margin-bottom: 18px;
+    box-shadow: 0 8px 24px rgba(15,23,42,.055);
+}
+
+.student-search-form {
+    display: flex;
+    gap: 10px;
+}
+
+.student-search-input {
+    flex: 1;
+    min-width: 0;
+    height: 52px;
+    padding: 0 17px;
+    border: 1px solid #dbe3ef;
+    border-radius: 14px;
+    outline: none;
+    font-size: 14px;
+    color: #111827;
+    background: #fff;
+    transition: .2s;
+}
+
+.student-search-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37,99,235,.10);
+}
+
+.student-search-btn {
+    height: 52px;
+    padding: 0 23px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg,#0f172a,#2563eb);
+    color: #fff;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+/* =========================================================
+   STUDENT LIST
+========================================================= */
+
+.students-card {
+    background: #fff;
+    border: 1px solid #e8edf5;
+    border-radius: 22px;
+    padding: 22px;
+    box-shadow: 0 9px 28px rgba(15,23,42,.06);
+}
+
+.students-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 18px;
+}
+
+.students-header h4 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 850;
+}
+
+.students-count-badge {
+    padding: 7px 12px;
+    border-radius: 30px;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 10px;
+    font-weight: 850;
+}
+
+/* STUDENT GRID */
+
+.student-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap: 14px;
+}
+
+.student-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    padding: 15px;
+    border: 1px solid #e7ecf3;
+    border-radius: 17px;
+    background: #fff;
+    transition: .25s ease;
+}
+
+.student-item:hover {
+    border-color: #bfdbfe;
+    transform: translateY(-2px);
+    box-shadow: 0 9px 22px rgba(15,23,42,.07);
+}
+
+.student-checkbox {
+    width: 19px !important;
+    height: 19px !important;
+    flex: 0 0 19px;
+    accent-color: #2563eb;
+    cursor: pointer;
+}
+
+.student-avatar-box {
+    width: 47px;
+    height: 47px;
+    flex: 0 0 47px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 18px;
+}
+
+.student-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.student-name {
+    color: #111827;
+    font-size: 13px;
+    font-weight: 850;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.student-number {
+    margin-top: 3px;
+    color: #94a3b8;
+    font-size: 10px;
+}
+
+.relationship-select {
+    width: 125px !important;
+    flex: 0 0 125px;
+    height: 38px;
+    padding: 0 8px;
+    border: 1px solid #dbe3ef !important;
+    border-radius: 10px !important;
+    background: #fff !important;
+    color: #334155 !important;
+    font-size: 11px !important;
+    outline: none;
+}
+
+.relationship-select:focus {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.08);
+}
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.student-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid #edf1f6;
+}
+
+.save-links-btn {
+    padding: 12px 22px;
+    border: none;
+    border-radius: 13px;
+    background: linear-gradient(135deg,#2563eb,#3b82f6);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(37,99,235,.20);
+}
+
+.back-parent-link {
+    color: #64748b;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.back-parent-link:hover {
+    color: #2563eb;
+}
+
+/* =========================================================
+   PAGINATION
+========================================================= */
+
+.pagination-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 22px;
+}
+
+.pagination-wrap a {
+    min-width: 38px;
+    height: 38px;
+    padding: 0 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #334155;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.pagination-wrap a.active-page {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #fff;
+}
+
+.pagination-info {
+    text-align: center;
+    color: #94a3b8;
+    font-size: 11px;
+    margin-top: 9px;
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media(max-width:768px){
+
+    .link-students-page {
+        margin-top: 12px;
+        padding: 0 10px;
+    }
+
+    .link-hero {
+        padding: 21px;
+        border-radius: 21px;
+    }
+
+    .link-hero-content {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .link-parent-icon {
+        width: 57px;
+        height: 57px;
+        flex-basis: 57px;
+        border-radius: 16px;
+        font-size: 22px;
+    }
+
+    .link-hero h2 {
+        font-size: 23px;
+    }
+
+    .link-hero p {
+        font-size: 11px;
+    }
+
+    .link-hero-pill {
+        width: 100%;
+        text-align: center;
+    }
+
+    .class-section,
+    .students-card {
+        padding: 15px;
+        border-radius: 18px;
+    }
+
+    .class-grid {
+        grid-template-columns: repeat(2,1fr);
+        gap: 9px;
+    }
+
+    .class-link {
+        min-height: 78px;
+        padding: 14px 8px;
+    }
+
+    .class-name {
+        font-size: 12px;
+    }
+
+    .student-search-card {
+        padding: 13px;
+        border-radius: 17px;
+    }
+
+    .student-search-form {
+        flex-direction: column;
+    }
+
+    .student-search-btn {
+        width: 100%;
+    }
+
+    .student-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .student-item {
+        padding: 13px;
+    }
+
+    .relationship-select {
+        width: 110px !important;
+        flex-basis: 110px;
+    }
+
+    .student-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .save-links-btn {
+        width: 100%;
+    }
+
+    .back-parent-link {
+        text-align: center;
+    }
+}
+
+/* =========================================================
+   SMALL PHONES
+========================================================= */
+
+@media(max-width:480px){
+
+    .student-item {
+        display: grid;
+        grid-template-columns: auto 42px 1fr;
+        gap: 9px;
+    }
+
+    .student-details {
+        min-width: 0;
+    }
+
+    .relationship-select {
+        grid-column: 2 / 4;
+        width: 100% !important;
+    }
+
+    .student-avatar-box {
+        width: 42px;
+        height: 42px;
+        flex-basis: 42px;
+        border-radius: 12px;
+        font-size: 16px;
+    }
+
+    .students-header {
+        align-items: flex-start;
+    }
+
+    .students-header h4 {
+        font-size: 15px;
+    }
+}
+</style>
+
+
+<div class="link-students-page">
+
+    <!-- =====================================================
+         HERO
+    ====================================================== -->
+
+    <div class="link-hero">
+
+        <div class="link-hero-content">
+
+            <div class="link-hero-left">
+
+                <div class="link-parent-icon">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+
+                <div>
+                    <h2>
+                        Link Students
+                    </h2>
+
+                    <p>
+                        Manage students connected to
+                        <strong>{{ parent.get_full_name }}</strong>
+                    </p>
+                </div>
+
+            </div>
+
+            <div class="link-hero-pill">
+                <i class="fas fa-users me-2"></i>
+                {{ total_linked }} Student(s) Linked
+            </div>
+
+        </div>
+
     </div>
-  {% else %}
-  <!-- SEARCH -->
-  <form method="GET" style="margin-bottom:15px; display:flex; gap:10px;">
-    <input type="hidden" name="class_id" value="{{ selected_class_id }}">
-    <input type="text" name="q" value="{{ search_q }}" placeholder="Search student name..." style="flex:1; padding:10px 14px; border:1px solid #d1d5db; border-radius:10px;">
-    <button type="submit" style="padding:10px 20px; background:#111827; color:white; border-radius:10px; border:none; cursor:pointer;">Search</button>
-  </form>
 
-  <form method="POST">
-    {% csrf_token %}
-    <input type="hidden" name="selected_class_id" value="{{ selected_class_id }}">
-    <div style="background:white; padding:20px; border-radius:16px; box-shadow:0 4px 12px rgba(0,0,0,0.05);">
-      <h4 style="margin:0 0 15px;">Students in selected class ({{ students|length }})</h4>
-      
-<!-- BEFORE: style="max-height:500px; overflow-y:auto;" -->
-<!-- AFTER: GRID 2 per row -->
 
-<div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px;">
+    <!-- =====================================================
+         CLASS CARDS
+    ====================================================== -->
 
-  {% for student in students %}
-  <div style="display:flex; align-items:center; gap:10px; padding:12px; border:1px solid #e5e7eb; border-radius:10px; background:#fafafa;">
-    
-    <input type="checkbox" name="students" value="{{ student.id }}" id="s{{ student.id }}" {% if student.link_relationship %}checked{% endif %} style="width:18px; height:18px; flex-shrink:0;">
+    <div class="class-section">
 
-    <label for="s{{ student.id }}" style="flex:1; cursor:pointer; min-width:0;">
-      <div style="font-weight:600; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ student.get_full_name }}</div>
-      <div style="font-size:11px; color:#6b7280;">{{ student.student_number }}</div>
-    </label>
+        <div class="section-heading">
 
-    <!-- Relationship now CLOSE to name, not far -->
-    <select name="relationship_{{ student.id }}" style="padding:6px 8px; border:1px solid #d1d5db; border-radius:8px; background:white; font-size:13px; width:110px; flex-shrink:0;">
-      <option value="">Relationship</option>
-      <option value="Father" {% if student.link_relationship == 'Father' %}selected{% endif %}>Father</option>
-      <option value="Mother" {% if student.link_relationship == 'Mother' %}selected{% endif %}>Mother</option>
-      <option value="Brother" {% if student.link_relationship == 'Brother' %}selected{% endif %}>Brother</option>
-      <option value="Sister" {% if student.link_relationship == 'Sister' %}selected{% endif %}>Sister</option>
-      <option value="Uncle" {% if student.link_relationship == 'Uncle' %}selected{% endif %}>Uncle</option>
-      <option value="Aunt" {% if student.link_relationship == 'Aunt' %}selected{% endif %}>Aunt</option>
-      <option value="Guardian" {% if student.link_relationship == 'Guardian' %}selected{% endif %}>Guardian</option>
-    </select>
-  </div>
-  {% endfor %}
+            <div class="section-heading-icon">
+                <i class="fas fa-school"></i>
+            </div>
 
-</div>
+            <div>
+                <h5>Select Class</h5>
+                <small>Choose a class to view and link students</small>
+            </div>
 
-      <div style="margin-top:20px; border-top:1px solid #e5e7eb; padding-top:15px;">
-        <button type="submit" style="padding:11px 22px; background:#2563eb; color:white; border:none; border-radius:10px; font-weight:600; cursor:pointer;">Save Links for This Class</button>
-        <a href="{% url 'accounts:manage-parents' %}" style="margin-left:10px; color:#6b7280; text-decoration:none;">Back to Parents</a>
-      </div>
+        </div>
+
+        <div class="class-grid">
+
+            {% for cls in classes %}
+
+            <a
+                href="?class_id={{ cls.id }}"
+                class="class-link {% if selected_class_id == cls.id|stringformat:'s' %}class-link-active{% else %}class-link-normal{% endif %}"
+            >
+
+                <span class="class-name">
+                    {{ cls.name }}
+                </span>
+
+                <span class="class-count">
+                    <i class="fas fa-user-graduate me-1"></i>
+                    {{ cls.student_count }}
+                </span>
+
+            </a>
+
+            {% endfor %}
+
+        </div>
+
     </div>
-  </form>
-  {% endif %}
-</div>
-<!-- PAGINATION -->
-<div style="display:flex; justify-content:center; gap:6px; margin-top:20px;">
-  {% if students.has_previous %}
-    <a href="?class_id={{ selected_class_id }}&q={{ search_q }}&page={{ students.previous_page_number }}" style="padding:8px 14px; background:white; border:1px solid #e5e7eb; border-radius:8px; text-decoration:none;">Prev</a>
-  {% endif %}
 
-  {% for num in students.paginator.page_range %}
-    <a href="?class_id={{ selected_class_id }}&q={{ search_q }}&page={{ num }}" 
-       style="padding:8px 14px; border-radius:8px; text-decoration:none; 
-       background:{% if students.number == num %}#2563eb{% else %}white{% endif %};
-       color:{% if students.number == num %}white{% else %}#111827{% endif %};
-       border:1px solid {% if students.number == num %}#2563eb{% else %}#e5e7eb{% endif %};">
-       {{ num }}
-    </a>
-  {% endfor %}
 
-  {% if students.has_next %}
-    <a href="?class_id={{ selected_class_id }}&q={{ search_q }}&page={{ students.next_page_number }}" style="padding:8px 14px; background:white; border:1px solid #e5e7eb; border-radius:8px; text-decoration:none;">Next</a>
-  {% endif %}
+    {% if not selected_class_id %}
+
+        <!-- =================================================
+             EMPTY STATE
+        ================================================== -->
+
+        <div class="class-empty">
+
+            <div class="class-empty-icon">
+                <i class="fas fa-hand-pointer"></i>
+            </div>
+
+            <strong>Select a class above</strong>
+
+            <span>
+                to see students in that class
+            </span>
+
+        </div>
+
+    {% else %}
+
+        <!-- =================================================
+             SEARCH
+        ================================================== -->
+
+        <div class="student-search-card">
+
+            <form method="GET" class="student-search-form">
+
+                <input
+                    type="hidden"
+                    name="class_id"
+                    value="{{ selected_class_id }}"
+                >
+
+                <input
+                    type="text"
+                    name="q"
+                    value="{{ search_q }}"
+                    class="student-search-input"
+                    placeholder="Search student name..."
+                >
+
+                <button
+                    type="submit"
+                    class="student-search-btn"
+                >
+                    <i class="fas fa-search me-2"></i>
+                    Search
+                </button>
+
+            </form>
+
+        </div>
+
+
+        <!-- =================================================
+             STUDENTS
+        ================================================== -->
+
+        <form method="POST">
+
+            {% csrf_token %}
+
+            <input
+                type="hidden"
+                name="selected_class_id"
+                value="{{ selected_class_id }}"
+            >
+
+            <div class="students-card">
+
+                <div class="students-header">
+
+                    <div>
+                        <h4>
+                            <i class="fas fa-user-graduate text-primary me-2"></i>
+                            Students in Selected Class
+                        </h4>
+                    </div>
+
+                    <span class="students-count-badge">
+                        {{ students|length }} Students
+                    </span>
+
+                </div>
+
+
+                <div class="student-grid">
+
+                    {% for student in students %}
+
+                    <div class="student-item">
+
+                        <input
+                            type="checkbox"
+                            name="students"
+                            value="{{ student.id }}"
+                            id="s{{ student.id }}"
+                            {% if student.link_relationship %}checked{% endif %}
+                            class="student-checkbox"
+                        >
+
+
+                        <div class="student-avatar-box">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+
+
+                        <label
+                            for="s{{ student.id }}"
+                            class="student-details"
+                            style="cursor:pointer;"
+                        >
+
+                            <div class="student-name">
+                                {{ student.get_full_name }}
+                            </div>
+
+                            <div class="student-number">
+                                <i class="fas fa-id-card me-1"></i>
+                                {{ student.student_number }}
+                            </div>
+
+                        </label>
+
+
+                        <select
+                            name="relationship_{{ student.id }}"
+                            class="relationship-select"
+                        >
+
+                            <option value="">
+                                Relationship
+                            </option>
+
+                            <option
+                                value="Father"
+                                {% if student.link_relationship == 'Father' %}selected{% endif %}
+                            >
+                                Father
+                            </option>
+
+                            <option
+                                value="Mother"
+                                {% if student.link_relationship == 'Mother' %}selected{% endif %}
+                            >
+                                Mother
+                            </option>
+
+                            <option
+                                value="Brother"
+                                {% if student.link_relationship == 'Brother' %}selected{% endif %}
+                            >
+                                Brother
+                            </option>
+
+                            <option
+                                value="Sister"
+                                {% if student.link_relationship == 'Sister' %}selected{% endif %}
+                            >
+                                Sister
+                            </option>
+
+                            <option
+                                value="Uncle"
+                                {% if student.link_relationship == 'Uncle' %}selected{% endif %}
+                            >
+                                Uncle
+                            </option>
+
+                            <option
+                                value="Aunt"
+                                {% if student.link_relationship == 'Aunt' %}selected{% endif %}
+                            >
+                                Aunt
+                            </option>
+
+                            <option
+                                value="Guardian"
+                                {% if student.link_relationship == 'Guardian' %}selected{% endif %}
+                            >
+                                Guardian
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- =================================================
+                     ACTIONS
+                ================================================== -->
+
+                <div class="student-actions">
+
+                    <button
+                        type="submit"
+                        class="save-links-btn"
+                    >
+                        <i class="fas fa-link me-2"></i>
+                        Save Links for This Class
+                    </button>
+
+
+                    <a
+                        href="{% url 'accounts:manage-parents' %}"
+                        class="back-parent-link"
+                    >
+                        <i class="fas fa-arrow-left me-1"></i>
+                        Back to Parents
+                    </a>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    {% endif %}
+
+
+    <!-- =====================================================
+         PAGINATION
+    ====================================================== -->
+
+    <div class="pagination-wrap">
+
+        {% if students.has_previous %}
+
+            <a
+                href="?class_id={{ selected_class_id }}&q={{ search_q }}&page={{ students.previous_page_number }}"
+            >
+                <i class="fas fa-chevron-left me-1"></i>
+                Prev
+            </a>
+
+        {% endif %}
+
+
+        {% for num in students.paginator.page_range %}
+
+            <a
+                href="?class_id={{ selected_class_id }}&q={{ search_q }}&page={{ num }}"
+                class="{% if students.number == num %}active-page{% endif %}"
+            >
+                {{ num }}
+            </a>
+
+        {% endfor %}
+
+
+        {% if students.has_next %}
+
+            <a
+                href="?class_id={{ selected_class_id }}&q={{ search_q }}&page={{ students.next_page_number }}"
+            >
+                Next
+                <i class="fas fa-chevron-right ms-1"></i>
+            </a>
+
+        {% endif %}
+
+    </div>
+
+
+    <div class="pagination-info">
+
+        Showing
+        {{ students.start_index }}-{{ students.end_index }}
+        of
+        {{ students.paginator.count }}
+        students
+
+    </div>
+
 </div>
 
-<div style="text-align:center; color:#64748b; font-size:13px; margin-top:8px;">
-  Showing {{ students.start_index }}-{{ students.end_index }} of {{ students.paginator.count }} students
-</div>
 {% endblock %}

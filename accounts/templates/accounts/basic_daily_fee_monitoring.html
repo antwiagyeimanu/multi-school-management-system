@@ -1,0 +1,873 @@
+{% extends "accounts/dashboard_base.html" %}
+
+{% block content %}
+
+<style>
+    .daily-fee-page {
+        padding-bottom: 30px;
+    }
+
+    .fee-page-header {
+        background: linear-gradient(135deg, #111827, #1f2937);
+        color: #fff;
+        border-radius: 18px;
+        padding: 26px 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 10px 30px rgba(0,0,0,.10);
+    }
+
+    .fee-page-header h4 {
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+
+    .fee-page-header p {
+        color: rgba(255,255,255,.65);
+        margin: 0;
+    }
+
+    .fee-page-header-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        background: rgba(255,255,255,.10);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+
+    .fee-filter-card {
+        background: #fff;
+        border: 1px solid #eef0f3;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 6px 20px rgba(0,0,0,.05);
+        margin-bottom: 24px;
+    }
+
+    .fee-filter-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        margin-bottom: 7px;
+    }
+
+    .fee-filter-card .form-control {
+        height: 45px;
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+    }
+
+    .fee-filter-card .btn {
+        height: 45px;
+        border-radius: 10px;
+        font-weight: 600;
+        padding: 0 20px;
+    }
+
+    .date-navigation {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .date-navigation .date-display {
+        text-align: center;
+        flex: 1;
+    }
+
+    .date-display strong {
+        display: block;
+        font-size: 16px;
+        color: #111827;
+    }
+
+    .date-display span {
+        font-size: 12px;
+        color: #9ca3af;
+    }
+
+    .date-nav-btn {
+        height: 42px;
+        border-radius: 10px;
+        padding: 0 16px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .fee-stat-card {
+        background: #fff;
+        border: 1px solid #eef0f3;
+        border-radius: 16px;
+        padding: 22px;
+        height: 100%;
+        box-shadow: 0 6px 20px rgba(0,0,0,.05);
+    }
+
+    .fee-stat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: #f3f4f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        margin-bottom: 16px;
+    }
+
+    .fee-stat-label {
+        font-size: 13px;
+        color: #6b7280;
+        margin-bottom: 5px;
+    }
+
+    .fee-stat-value {
+        font-size: 25px;
+        font-weight: 750;
+        color: #111827;
+    }
+
+    .fee-stat-sub {
+        font-size: 12px;
+        color: #9ca3af;
+        margin-top: 4px;
+    }
+
+    .premium-card {
+        background: #fff;
+        border: 1px solid #eef0f3;
+        border-radius: 16px;
+        box-shadow: 0 6px 20px rgba(0,0,0,.05);
+        overflow: hidden;
+    }
+
+    .premium-card-header {
+        padding: 20px 22px;
+        border-bottom: 1px solid #f0f1f3;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .premium-card-header h5 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .premium-card-header span {
+        font-size: 12px;
+        color: #9ca3af;
+    }
+
+    /* CLASS ACCORDION */
+
+    .class-accordion {
+        border-bottom: 1px solid #f0f1f3;
+    }
+
+    .class-accordion:last-child {
+        border-bottom: 0;
+    }
+
+    .class-accordion-header {
+        width: 100%;
+        border: 0;
+        background: #fff;
+        padding: 18px 22px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .class-accordion-header:hover {
+        background: #fafafa;
+    }
+
+    .class-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-width: 0;
+    }
+
+    .class-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: #f3f4f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #374151;
+        flex-shrink: 0;
+    }
+
+    .class-title {
+        font-weight: 700;
+        color: #111827;
+        font-size: 14px;
+    }
+
+    .class-subtitle {
+        font-size: 12px;
+        color: #9ca3af;
+        margin-top: 2px;
+    }
+
+    .class-summary {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+    }
+
+    .class-summary-item {
+        text-align: right;
+    }
+
+    .class-summary-item strong {
+        display: block;
+        font-size: 13px;
+        color: #111827;
+    }
+
+    .class-summary-item span {
+        font-size: 10px;
+        color: #9ca3af;
+        text-transform: uppercase;
+    }
+
+    .class-arrow {
+        transition: transform .2s ease;
+        color: #9ca3af;
+        margin-left: 10px;
+    }
+
+    .class-accordion-header[aria-expanded="true"] .class-arrow {
+        transform: rotate(180deg);
+    }
+
+    .class-accordion-body {
+        background: #fafafa;
+        border-top: 1px solid #f0f1f3;
+        padding: 18px 22px 22px;
+    }
+
+    .class-payment-table {
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #eef0f3;
+    }
+
+    .class-payment-table table {
+        margin: 0;
+    }
+
+    .class-payment-table th {
+        background: #f8f9fb;
+        color: #6b7280;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        padding: 12px 15px;
+        border-bottom: 1px solid #eef0f3;
+    }
+
+    .class-payment-table td {
+        padding: 13px 15px;
+        font-size: 13px;
+        color: #374151;
+        border-bottom: 1px solid #f1f2f4;
+    }
+
+    .class-payment-table tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .student-name {
+        font-weight: 650;
+        color: #111827;
+    }
+
+    .amount {
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .paid-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: #ecfdf5;
+        color: #047857;
+        border-radius: 20px;
+        padding: 5px 10px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .empty-class {
+        padding: 25px;
+        text-align: center;
+        color: #9ca3af;
+        font-size: 13px;
+    }
+
+    .empty-class i {
+        display: block;
+        font-size: 24px;
+        margin-bottom: 8px;
+        color: #d1d5db;
+    }
+
+    .empty-school {
+        padding: 45px 20px;
+        text-align: center;
+        color: #9ca3af;
+    }
+
+    .empty-school i {
+        display: block;
+        font-size: 30px;
+        margin-bottom: 10px;
+        color: #d1d5db;
+    }
+
+    @media (max-width: 767px) {
+
+        .fee-page-header {
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .fee-page-header-icon {
+            width: 42px;
+            height: 42px;
+        }
+
+        .date-navigation {
+            gap: 7px;
+        }
+
+        .date-nav-btn {
+            padding: 0 10px;
+            font-size: 12px;
+        }
+
+        .class-accordion-header {
+            padding: 16px;
+        }
+
+        .class-summary {
+            gap: 8px;
+        }
+
+        .class-summary-item:nth-child(1) {
+            display: none;
+        }
+
+        .class-summary-item strong {
+            font-size: 12px;
+        }
+
+        .class-summary-item span {
+            font-size: 9px;
+        }
+
+        .class-accordion-body {
+            padding: 14px;
+        }
+
+        .class-payment-table {
+            overflow-x: auto;
+        }
+
+        .class-payment-table table {
+            min-width: 520px;
+        }
+
+        .fee-stat-value {
+            font-size: 22px;
+        }
+    }
+</style>
+
+
+<div class="container-fluid daily-fee-page">
+
+    <!-- HEADER -->
+    <div class="fee-page-header">
+
+        <div class="d-flex align-items-center gap-3">
+
+            <div class="fee-page-header-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+
+            <div>
+                <h4>Daily Fee Monitoring</h4>
+
+                <p>
+                    Monitor daily fee collections across the school.
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- DATE FILTER -->
+    <div class="fee-filter-card">
+
+        <form method="get">
+
+            <div class="row g-3 align-items-end">
+
+                <div class="col-md-4">
+
+                    <div class="fee-filter-label">
+                        Collection Date
+                    </div>
+
+                    <input
+                        type="date"
+                        name="date"
+                        value="{{ selected_date|date:'Y-m-d' }}"
+                        class="form-control"
+                    >
+
+                </div>
+
+                <div class="col-md-auto">
+
+                    <button
+                        type="submit"
+                        class="btn btn-dark"
+                    >
+                        <i class="fas fa-filter me-2"></i>
+                        View Collection
+                    </button>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- DATE NAVIGATION -->
+    <div class="date-navigation">
+
+        <a
+            href="?date={{ previous_date|date:'Y-m-d' }}"
+            class="btn btn-outline-dark date-nav-btn"
+        >
+            <i class="fas fa-chevron-left me-1"></i>
+            Previous
+        </a>
+
+
+        <div class="date-display">
+
+            <strong>
+                {{ selected_date|date:"l, d F Y" }}
+            </strong>
+
+            <span>
+                Daily Collection
+            </span>
+
+        </div>
+
+
+        <a
+            href="?date={{ next_date|date:'Y-m-d' }}"
+            class="btn btn-outline-dark date-nav-btn"
+        >
+            Next
+            <i class="fas fa-chevron-right ms-1"></i>
+        </a>
+
+    </div>
+
+
+    <!-- SUMMARY -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-4">
+
+            <div class="fee-stat-card">
+
+                <div class="fee-stat-icon">
+                    <i class="fas fa-coins"></i>
+                </div>
+
+                <div class="fee-stat-label">
+                    Total Collected
+                </div>
+
+                <div class="fee-stat-value">
+                    GH₵ {{ total_collected|floatformat:2 }}
+                </div>
+
+                <div class="fee-stat-sub">
+                    {{ selected_date|date:"d M Y" }}
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-4">
+
+            <div class="fee-stat-card">
+
+                <div class="fee-stat-icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+
+                <div class="fee-stat-label">
+                    Payments Recorded
+                </div>
+
+                <div class="fee-stat-value">
+                    {{ collections|length }}
+                </div>
+
+                <div class="fee-stat-sub">
+                    Successful collections
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-4">
+
+            <div class="fee-stat-card">
+
+                <div class="fee-stat-icon">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+
+                <div class="fee-stat-label">
+                    Collection Date
+                </div>
+
+                <div class="fee-stat-value">
+                    {{ selected_date|date:"d M" }}
+                </div>
+
+                <div class="fee-stat-sub">
+                    Daily fee monitoring
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- CLASS ACCORDION -->
+    <div class="premium-card">
+
+        <div class="premium-card-header">
+
+            <div>
+                <h5>Collection by Class</h5>
+
+                <span>
+                    Tap a class to view its payment records
+                </span>
+            </div>
+
+            <i class="fas fa-school text-muted"></i>
+
+        </div>
+
+
+        {% for item in class_totals %}
+
+        <div class="class-accordion">
+
+            <button
+                class="class-accordion-header"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#class{{ item.school_class.id }}"
+                aria-expanded="false"
+                aria-controls="class{{ item.school_class.id }}"
+            >
+
+                <div class="class-left">
+
+                    <div class="class-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+
+                    <div>
+
+                        <div class="class-title">
+                            {{ item.school_class.name }}
+                        </div>
+
+                        <div class="class-subtitle">
+                            {{ item.total_students }} student{{ item.total_students|pluralize }}
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="class-summary">
+
+                    <div class="class-summary-item">
+
+                        <strong>
+                            {{ item.total_students }}
+                        </strong>
+
+                        <span>
+                            Students
+                        </span>
+
+                    </div>
+
+
+                    <div class="class-summary-item">
+
+                        <strong>
+                            {{ item.paid_count }}
+                        </strong>
+
+                        <span>
+                            Paid
+                        </span>
+
+                    </div>
+
+
+                    <div class="class-summary-item">
+
+                        <strong>
+                            {{ item.unpaid_count }}
+                        </strong>
+
+                        <span>
+                            Unpaid
+                        </span>
+
+                    </div>
+
+
+                    <div class="class-summary-item">
+
+                        <strong>
+                            GH₵ {{ item.total|floatformat:2 }}
+                        </strong>
+
+                        <span>
+                            Collected
+                        </span>
+
+                    </div>
+
+
+                    <i class="fas fa-chevron-down class-arrow"></i>
+
+                </div>
+
+            </button>
+
+
+            <div
+                id="class{{ item.school_class.id }}"
+                class="collapse"
+            >
+
+                <div class="class-accordion-body">
+
+                    {% if item.collections %}
+
+                    <div class="class-payment-table">
+
+                        <table class="table align-middle">
+
+                            <thead>
+
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Status</th>
+                                    <th>Amount</th>
+                                    <th>Collected By</th>
+                                    <th>Time</th>
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                {% for collection in item.collections %}
+
+                                <tr>
+
+                                    <td>
+                                       <span class="student-name">
+                                        {{ collection.student.get_full_name }}
+                                    </span>
+
+                                    <div style="font-size:11px; color:#9ca3af; margin-top:2px;">
+                                        ID: {{ collection.student.student_number|default:"—" }}
+                                    </div>
+                                    </td>
+
+                                    <td>
+
+                                        <span class="paid-badge">
+                                            <i class="fas fa-check-circle"></i>
+                                            Paid
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+
+                                        <span class="amount">
+                                            GH₵ {{ collection.amount|floatformat:2 }}
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+                                        {{ collection.collected_by.get_full_name|default:"—" }}
+                                    </td>
+
+                                    <td>
+                                        {{ collection.created_at|date:"h:i A" }}
+                                    </td>
+
+                                </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+{% else %}
+
+<div class="empty-class">
+
+    <i class="fas fa-receipt"></i>
+
+    No payments recorded for this class on this date.
+
+</div>
+
+{% endif %}
+
+
+{% if item.unpaid_students %}
+
+<div class="mt-4">
+
+    <div class="mb-2">
+        <strong style="font-size:13px; color:#111827;">
+            Unpaid Students
+        </strong>
+
+<span style="font-size:12px; color:#9ca3af;">
+    — {{ item.unpaid_count }} unpaid student{{ item.unpaid_count|pluralize }}
+</span>
+    </div>
+
+    <div class="class-payment-table">
+
+        <table class="table align-middle mb-0">
+
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for student in item.unpaid_students %}
+
+                <tr>
+
+                    <td>
+                        <span class="student-name">
+                    {{ student.get_full_name }}
+                </span>
+
+                <div style="font-size:11px; color:#9ca3af; margin-top:2px;">
+                    ID: {{ student.student_number|default:"—" }}
+                </div>
+                    </td>
+
+                    <td>
+                        <span class="unpaid-badge">
+                            <i class="fas fa-clock"></i>
+                            Unpaid
+                        </span>
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        {% empty %}
+
+        <div class="empty-school">
+
+            <i class="fas fa-school"></i>
+
+            No classes found for this school.
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+{% endblock %}

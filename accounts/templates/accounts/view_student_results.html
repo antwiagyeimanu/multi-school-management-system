@@ -4,11 +4,9 @@
 {% block content %}
 
 <style>
-
 /* =========================
    PAGE WRAPPER
 ========================= */
-
 .results-page {
     max-width: 1200px;
     margin: auto;
@@ -17,12 +15,9 @@
     background: #f8fafc;
     min-height: 100vh;
 }
-
-
 /* =========================
    HEADER
 ========================= */
-
 .results-header {
     background: linear-gradient(135deg,#111827,#1e3a8a);
     border-radius: 24px;
@@ -31,71 +26,50 @@
     margin-bottom:25px;
     box-shadow:0 15px 35px rgba(15,23,42,.15);
 }
-
 .results-header h1 {
     margin:0;
     font-size:32px;
     font-weight:800;
 }
-
 .results-header p {
     margin-top:8px;
     opacity:.85;
     font-size:16px;
 }
-
-
 /* =========================
    FILTER CARD
 ========================= */
-
 .filter-card {
-
     background:white;
     border-radius:22px;
     padding:25px;
     margin-bottom:25px;
     box-shadow:0 10px 25px rgba(0,0,0,.06);
 }
-
-
 .filter-title {
-
     font-size:18px;
     font-weight:800;
     color:#111827;
     margin-bottom:15px;
 }
-
-
 .filter-form {
-
     display:flex;
     gap:15px;
     flex-wrap:wrap;
     align-items:end;
 }
-
-
 .filter-group {
-
     flex:1;
     min-width:220px;
 }
-
-
 .filter-group label {
-
     display:block;
     font-weight:700;
     font-size:13px;
     margin-bottom:7px;
     color:#475569;
 }
-
-
 .filter-group select {
-
     width:100%;
     padding:12px 14px;
     border-radius:12px;
@@ -103,10 +77,7 @@
     background:white;
     font-size:15px;
 }
-
-
 .filter-btn {
-
     background:linear-gradient(135deg,#667eea,#764ba2);
     color:white;
     border:none;
@@ -115,25 +86,16 @@
     font-weight:700;
     cursor:pointer;
 }
-
-
 /* =========================
    SUMMARY CARDS
 ========================= */
-
 .summary-grid {
-
     display:grid;
-    grid-template-columns:
-    repeat(5,1fr);
-
+    grid-template-columns:repeat(5,1fr);
     gap:15px;
     margin-bottom:30px;
 }
-
-
 .summary-card {
-
     border-radius:20px;
     padding:20px;
     color:white;
@@ -141,1055 +103,899 @@
     display:flex;
     flex-direction:column;
     justify-content:center;
-    box-shadow:
-    0 12px 25px rgba(0,0,0,.12);
-
+    box-shadow:0 12px 25px rgba(0,0,0,.12);
     transition:.3s ease;
 }
-
-
 .summary-card:hover {
-
     transform:translateY(-5px);
 }
-
-
 .summary-label {
-
     font-size:12px;
     font-weight:800;
     text-transform:uppercase;
     opacity:.85;
 }
-
-
 .summary-value {
-
     margin-top:10px;
     font-size:25px;
     font-weight:900;
 }
-
-
 .summary-small {
-
     margin-top:5px;
     font-size:13px;
     font-weight:600;
 }
-
-
 /* COLORS */
-
 .grade-card {
-
-    background:
-    linear-gradient(135deg,#111827,#374151);
+    background:linear-gradient(135deg,#111827,#374151);
 }
-
-
 .average-card {
-
-    background:
-    linear-gradient(135deg,#f59e0b,#d97706);
+    background:linear-gradient(135deg,#f59e0b,#d97706);
 }
-
-
 .position-card {
-
-    background:
-    linear-gradient(135deg,#047857,#065f46);
+    background:linear-gradient(135deg,#047857,#065f46);
 }
-
-
 .status-card {
-
-    background:
-    linear-gradient(135deg,#2563eb,#1d4ed8);
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
 }
-
-
 .subject-card {
-
-    background:
-    linear-gradient(135deg,#7c3aed,#5b21b6);
+    background:linear-gradient(135deg,#7c3aed,#5b21b6);
 }
-
-
 /* =========================
- MOBILE
+   RESULTS CONTAINER
 ========================= */
-
-@media(max-width:900px){
-
+.results-container {
+    background:white;
+    border-radius:24px;
+    padding:25px;
+    box-shadow:0 10px 30px rgba(0,0,0,.06);
+}
+.results-title {
+    font-size:20px;
+    font-weight:900;
+    text-align:center;
+    margin-bottom:25px;
+    color:#111827;
+}
+/* =========================
+   DESKTOP TABLE
+========================= */
+.results-table {
+    width:100%;
+    border-collapse:collapse;
+}
+.results-table thead th {
+    background:#111827;
+    color:white;
+    padding:15px;
+    font-size:13px;
+    text-align:center;
+}
+.results-table td {
+    padding:14px;
+    text-align:center;
+    border-bottom:1px solid #e5e7eb;
+}
+.subject-cell {
+    text-align:left!important;
+    font-weight:800;
+}
+.subject-cell a {
+    color:#111827;
+    text-decoration:none;
+}
+.subject-cell a:hover {
+    color:#667eea;
+}
+.score-box {
+    font-weight:700;
+}
+.percentage-pill {
+    padding:7px 14px;
+    border-radius:999px;
+    font-weight:800;
+    font-size:13px;
+}
+.excellent {
+    background:#dcfce7;
+    color:#166534;
+}
+.good {
+    background:#dbeafe;
+    color:#1e40af;
+}
+.average {
+    background:#fef3c7;
+    color:#92400e;
+}
+.poor {
+    background:#fee2e2;
+    color:#991b1b;
+}
+.grade-pill {
+    padding:7px 15px;
+    border-radius:999px;
+    font-weight:900;
+}
+.grade-a {
+    background:#16a34a;
+    color:white;
+}
+.grade-b {
+    background:#2563eb;
+    color:white;
+}
+.grade-c {
+    background:#eab308;
+    color:#111;
+}
+.grade-d {
+    background:#f97316;
+    color:white;
+}
+.grade-f {
+    background:#dc2626;
+    color:white;
+}
+.results-table tfoot {
+    background:#374151;
+    color:white;
+    font-weight:800;
+}
+/* =========================
+   MOBILE RESULTS
+========================= */
+.mobile-results {
+    display:none;
+}
+.result-mobile-card {
+    background:#f8fafc;
+    border-radius:18px;
+    padding:18px;
+    margin-bottom:15px;
+    border:1px solid #e5e7eb;
+    box-shadow:0 6px 18px rgba(15,23,42,.05);
+}
+/* SUBJECT */
+.mobile-subject {
+    font-size:18px;
+    font-weight:900;
+    margin-bottom:15px;
+}
+.mobile-subject a {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    text-decoration:none;
+    color:#111827;
+}
+/* SCORE ROWS */
+.mobile-row {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:15px;
+    padding:10px 0;
+    border-bottom:1px dashed #dbe1e8;
+}
+.mobile-row span {
+    color:#475569;
+    font-size:13px;
+    font-weight:800;
+}
+.mobile-row strong {
+    color:#111827;
+    font-size:14px;
+    font-weight:900;
+    text-align:right;
+    white-space:nowrap;
+}
+/* TOTAL */
+.mobile-row.total-row {
+    padding-top:12px;
+    padding-bottom:12px;
+}
+.mobile-row.total-row span {
+    color:#111827;
+    font-weight:900;
+}
+.mobile-row.total-row strong {
+    color:#2563eb;
+    font-size:15px;
+    font-weight:900;
+}
+/* =========================
+   GRADE + REMARK
+========================= */
+.mobile-bottom {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:15px;
+}
+.mobile-info-box {
+    min-width:0;
+    padding:11px 12px;
+    border-radius:12px;
+    background:#fff;
+    border:1px solid #e5e7eb;
+}
+.mobile-info-label {
+    display:block;
+    margin-bottom:6px;
+    color:#64748b;
+    font-size:11px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+}
+.mobile-info-value {
+    display:block;
+    color:#111827;
+    font-size:14px;
+    font-weight:900;
+    line-height:1.3;
+    word-break:break-word;
+}
+.mobile-grade-value {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:42px;
+    padding:6px 11px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:900;
+}
+/* =========================
+   MOBILE TOTAL
+========================= */
+.mobile-results-total {
+    margin-top:20px;
+    overflow:hidden;
+    border-radius:18px;
+    background:#111827;
+    color:white;
+    box-shadow:0 10px 25px rgba(15,23,42,.12);
+}
+.mobile-results-total-header {
+    padding:15px 17px;
+    background:#374151;
+    font-size:14px;
+    font-weight:900;
+}
+.mobile-total-row {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:15px;
+    padding:13px 17px;
+    border-bottom:1px solid rgba(255,255,255,.10);
+}
+.mobile-total-row:last-child {
+    border-bottom:none;
+}
+.mobile-total-label {
+    font-size:12px;
+    font-weight:800;
+    color:rgba(255,255,255,.72);
+}
+.mobile-total-value {
+    font-size:13px;
+    font-weight:900;
+    color:white;
+    text-align:right;
+    white-space:nowrap;
+}
+.mobile-total-row.overall-total {
+    background:rgba(255,255,255,.06);
+}
+.mobile-total-row.overall-total .mobile-total-label {
+    color:white;
+    font-size:13px;
+}
+.mobile-total-row.overall-total .mobile-total-value {
+    font-size:16px;
+}
+/* =========================
+   EMPTY
+========================= */
+.empty-results {
+    text-align:center;
+    padding:50px;
+    background:#f8fafc;
+    border-radius:20px;
+}
+/* =========================
+   TABLET
+========================= */
+@media(max-width:900px) {
 .summary-grid {
-
-grid-template-columns:
-repeat(2,1fr);
-
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:10px;
 }
-
-}
-
-
-@media(max-width:600px){
-
-.results-page {
-
-padding:15px 10px;
-
-}
-
-
-.results-header {
-
-padding:22px;
-border-radius:18px;
-
-}
-
-
-.results-header h1 {
-
-font-size:24px;
-
-}
-
-
-.filter-form {
-
-flex-direction:column;
-
-}
-
-
-.filter-group {
-
-width:100%;
-
-}
-
-
-.filter-btn {
-
-width:100%;
-
-}
-
-
-.summary-grid {
-
-grid-template-columns:1fr;
-
-}
-
 
 .summary-card {
-
-min-height:110px;
-
+    min-height:115px;
+    padding:16px 13px;
 }
 
+.summary-value {
+    font-size:23px;
 }
 
-</style>
-
-
-<div class="results-page">
-
-
-<!-- HEADER -->
-
-<div class="results-header">
-
-<h1>
-📊 My Results
-</h1>
-
-<p>
-{{ current_term_display }} Results Report
-</p>
-
-</div>
-
-
-
-<!-- FILTER -->
-
-<div class="filter-card">
-
-
-<div class="filter-title">
-🔎 Select Result Period
-</div>
-
-
-<form method="get" class="filter-form">
-
-<div class="filter-group">
-<label>Academic Term</label>
-<select name="term">
-{% for t in terms %}
-<option value="{{ t.term_number }}" {% if selected_term == t.term_number|stringformat:"s" %}selected{% endif %}>
-{{ t.get_term_number_display }}
-</option>
-{% endfor %}
-</select>
-</div>
-
-<div class="filter-group">
-<label>Academic Year</label>
-<select name="year">
-{% for y in years %}
-<option value="{{ y.id }}" {% if selected_year == y.id|stringformat:"s" %}selected{% endif %}>
-{{ y.name }}
-</option>
-{% endfor %}
-</select>
-</div>
-
-<button class="filter-btn">
-View Results
-</button>
-
-</form>
-
-
-</div>
-
-
-
-
-<!-- SUMMARY -->
-
-<div class="summary-grid">
-
-
-
-<div class="summary-card grade-card">
-
-<div class="summary-label">
-🏆 Overall Grade
-</div>
-
-<div class="summary-value">
-
-{{ overall_grade }}
-
-</div>
-
-<div class="summary-small">
-
-{{ overall_remark }}
-
-</div>
-
-</div>
-
-
-
-<div class="summary-card average-card">
-
-<div class="summary-label">
-📈 Average Score
-</div>
-
-<div class="summary-value">
-
-{{ average_score }}%
-
-</div>
-
-</div>
-
-
-
-
-<div class="summary-card position-card">
-
-<div class="summary-label">
-🥇 Class Position
-</div>
-
-<div class="summary-value">
-
-{{ position }}
-
-</div>
-
-<div class="summary-small">
-
-Out of {{ total_students }} Students
-
-</div>
-
-</div>
-
-
-
-
-<div class="summary-card status-card">
-
-<div class="summary-label">
-✅ Result Status
-</div>
-
-<div class="summary-value">
-
-Published
-
-</div>
-
-</div>
-
-
-
-
-<div class="summary-card subject-card">
-
-<div class="summary-label">
-📚 Subjects
-</div>
-
-<div class="summary-value">
-
-{{ results|length }}
-
-</div>
-
-</div>
-
-</div>
-
-<!-- =========================
-     RESULTS SECTION
-========================= -->
-
-<div class="results-container">
-
-
-<div class="results-title">
-📚 Subject Performance Breakdown
-</div>
-
-
-{% if results %}
-
-
-<!-- DESKTOP TABLE -->
-
-<div class="desktop-results">
-
-
-<table class="results-table">
-
-
-<thead>
-
-<tr>
-
-<th>Subject</th>
-<th>Class Score</th>
-<th>Exam Score</th>
-<th>Total</th>
-<th>Grade</th>
-<th>Remark</th>
-
-</tr>
-
-</thead>
-
-
-<tbody>
-
-
-{% for result in results %}
-
-
-<tr>
-
-
-<td class="subject-cell">
-
-<a href="{% url 'accounts:student_subject_progress' result.subject.id %}">
-
-{{ result.subject.name }}
-
-</a>
-
-</td>
-
-
-
-<td>
-
-<div class="score-box">
-
-{{ result.class_score|floatformat:0 }}
-
-/
-
-{{ result.term.ca_total }}
-
-</div>
-
-</td>
-
-
-
-
-<td>
-
-<div class="score-box">
-
-{{ result.exam_score|floatformat:0 }}
-
-/
-
-{{ result.term.exam_total }}
-
-</div>
-
-</td>
-
-
-
-
-<td>
-
-
-<span class="percentage-pill
-
-{% if result.percentage >= 80 %}
-excellent
-
-{% elif result.percentage >= 70 %}
-good
-
-{% elif result.percentage >= 50 %}
-average
-
-{% else %}
-poor
-
-{% endif %}
-
-">
-
-
-{{ result.total|floatformat:0 }}
-/
-{{ result.total_max|floatformat:0 }}
-
-
-</span>
-
-
-</td>
-
-
-
-
-<td>
-
-
-<span class="grade-pill
-
-
-{% if result.grade == 'A' %}
-grade-a
-
-{% elif result.grade == 'B' %}
-grade-b
-
-{% elif result.grade == 'C' %}
-grade-c
-
-{% elif result.grade == 'D' %}
-grade-d
-
-{% else %}
-grade-f
-
-{% endif %}
-
-">
-
-
-{{ result.grade }}
-
-
-</span>
-
-
-</td>
-
-
-
-
-<td>
-
-<span class="remark-text">
-
-{{ result.remark }}
-
-</span>
-
-</td>
-
-
-</tr>
-
-
-{% endfor %}
-
-
-
-</tbody>
-
-
-
-<tfoot>
-
-
-<tr>
-
-<td>
-<strong>Total</strong>
-</td>
-
-
-<td>
-
-{{ grand_class_score|floatformat:0 }}
-
-/
-
-{{ grand_class_max|floatformat:0 }}
-
-</td>
-
-
-
-<td>
-
-{{ grand_exam_score|floatformat:0 }}
-
-/
-
-{{ grand_exam_max|floatformat:0 }}
-
-</td>
-
-
-
-<td colspan="3">
-
-
-{{ grand_total_score|floatformat:0 }}
-
-/
-
-{{ grand_total_max|floatformat:0 }}
-
-
-</td>
-
-
-</tr>
-
-
-</tfoot>
-
-
-
-</table>
-
-
-</div>
-
-
-
-
-
-
-<!-- MOBILE CARDS -->
-
-
-<div class="mobile-results">
-
-
-{% for result in results %}
-
-
-<div class="result-mobile-card">
-
-
-<div class="mobile-subject">
-
-
-<a href="{% url 'accounts:student_subject_progress' result.subject.id %}">
-
-📘 {{ result.subject.name }}
-
-</a>
-
-
-</div>
-
-
-
-<div class="mobile-row">
-
-<span>
-Class Score
-</span>
-
-<strong>
-
-{{ result.class_score|floatformat:0 }}
-/
-{{ result.term.ca_total }}
-
-</strong>
-
-</div>
-
-
-
-
-<div class="mobile-row">
-
-<span>
-Exam Score
-</span>
-
-<strong>
-
-{{ result.exam_score|floatformat:0 }}
-/
-{{ result.term.exam_total }}
-
-</strong>
-
-</div>
-
-
-
-
-
-<div class="mobile-row">
-
-<span>
-Total
-</span>
-
-
-<strong>
-
-{{ result.total|floatformat:0 }}
-/
-{{ result.total_max|floatformat:0 }}
-
-</strong>
-
-
-</div>
-
-
-
-
-
-<div class="mobile-bottom">
-
-
-<span class="grade-pill
-
-{% if result.grade == 'A' %}
-grade-a
-
-{% elif result.grade == 'B' %}
-grade-b
-
-{% elif result.grade == 'C' %}
-grade-c
-
-{% elif result.grade == 'D' %}
-grade-d
-
-{% else %}
-grade-f
-
-{% endif %}
-
-">
-
-
-{{ result.grade }}
-
-</span>
-
-
-
-<span>
-
-{{ result.remark }}
-
-</span>
-
-
-</div>
-
-
-
-</div>
-
-
-{% endfor %}
-
-
-</div>
-
-
-
-{% else %}
-
-
-<div class="empty-results">
-
-📄
-
-<h4>No Results Published Yet</h4>
-
-<p>
-No results available for {{ current_term_display }}.
-</p>
-
-</div>
-
-
-{% endif %}
-
-
-</div>
-
-
-
-
-
-
-<style>
-
-
+.summary-label {
+    font-size:10px;
+}
+
+.summary-small {
+    font-size:11px;
+}
+}
 /* =========================
- RESULTS CONTAINER
+   MOBILE
 ========================= */
-
-
-.results-container {
-
-background:white;
-border-radius:24px;
-padding:25px;
-box-shadow:
-0 10px 30px rgba(0,0,0,.06);
-
+@media(max-width:768px) {
+    .results-page {
+        padding:15px 10px;
+    }
+    .results-header {
+        padding:22px;
+        border-radius:18px;
+    }
+    .results-header h1 {
+        font-size:24px;
+    }
+    .results-header p {
+        font-size:14px;
+    }
+.filter-form {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
 }
 
-
-
-.results-title {
-
-font-size:20px;
-font-weight:900;
-text-align:center;
-margin-bottom:25px;
-color:#111827;
-
+.filter-group {
+    width:auto;
+    min-width:0;
 }
 
-
-
-
-/* TABLE */
-
-
-.results-table {
-
-width:100%;
-border-collapse:collapse;
-
+.filter-btn {
+    width:100%;
+    grid-column:1 / -1;
+}
+.summary-grid {
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:10px;
+    margin-bottom:25px;
 }
 
-
-
-.results-table thead th {
-
-background:#111827;
-color:white;
-padding:15px;
-font-size:13px;
-text-align:center;
-
+.summary-card {
+    min-height:115px;
+    padding:16px 12px;
+    border-radius:16px;
 }
 
-
-.results-table td {
-
-padding:14px;
-text-align:center;
-border-bottom:1px solid #e5e7eb;
-
+.summary-label {
+    font-size:10px;
+    line-height:1.3;
 }
 
-
-
-.subject-cell {
-
-text-align:left!important;
-font-weight:800;
-
+.summary-value {
+    margin-top:7px;
+    font-size:22px;
+    line-height:1.1;
 }
 
+.summary-small {
+    margin-top:5px;
+    font-size:11px;
+    line-height:1.3;
+}
+    .results-container {
+        padding:18px;
+        border-radius:18px;
+    }
+    .results-title {
+        font-size:19px;
+        font-weight:900;
+        margin-bottom:20px;
+    }
+    /* Hide desktop table */
+    .desktop-results {
+        display:none;
+    }
+/* =========================================================
+   MOBILE RESULTS TABLE
+========================================================= */
 
-.subject-cell a {
-
-color:#111827;
-text-decoration:none;
-
+.desktop-results{
+    display:block;
+    width:100%;
+    overflow-x:auto;
+    overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
 }
 
-
-
-.subject-cell a:hover {
-
-color:#667eea;
-
+.results-table{
+    min-width:850px;
 }
 
-
-
-
-.score-box {
-
-font-weight:700;
-
+/* Keep subject column visible while scrolling */
+.results-table th:first-child,
+.results-table td:first-child{
+    position:sticky;
+    left:0;
+    z-index:3;
 }
 
-
-
-.percentage-pill {
-
-padding:7px 14px;
-border-radius:999px;
-font-weight:800;
-font-size:13px;
-
+/* Header subject cell */
+.results-table thead th:first-child{
+    background:#111827;
+    z-index:5;
 }
 
-
-.excellent {
-
-background:#dcfce7;
-color:#166534;
-
+/* Subject cells */
+.results-table tbody td:first-child{
+    background:#fff;
 }
 
-
-.good {
-
-background:#dbeafe;
-color:#1e40af;
-
+/* Total row subject cell */
+.results-table tfoot td:first-child{
+    background:#374151;
+    z-index:4;
 }
 
-
-.average {
-
-background:#fef3c7;
-color:#92400e;
-
-}
-
-
-.poor {
-
-background:#fee2e2;
-color:#991b1b;
-
-}
-
-
-
-
-.grade-pill {
-
-padding:7px 15px;
-border-radius:999px;
-font-weight:900;
-
-}
-
-
-
-.grade-a {
-
-background:#16a34a;
-color:white;
-
-}
-
-
-.grade-b {
-
-background:#2563eb;
-color:white;
-
-}
-
-
-.grade-c {
-
-background:#eab308;
-color:#111;
-
-}
-
-
-.grade-d {
-
-background:#f97316;
-color:white;
-
-}
-
-
-.grade-f {
-
-background:#dc2626;
-color:white;
-
-}
-
-
-
-.results-table tfoot {
-
-background:#374151;
-color:white;
-font-weight:800;
-
-}
-
-
-
-
-
-/* MOBILE CARDS */
-
-
-.mobile-results {
-
-display:none;
-
-}
-
-
-
-.result-mobile-card {
-
-background:#f8fafc;
-border-radius:18px;
-padding:18px;
-margin-bottom:15px;
-border:1px solid #e5e7eb;
-
-}
-
-
-
-.mobile-subject {
-
-font-size:18px;
-font-weight:900;
-margin-bottom:15px;
-
-}
-
-
-.mobile-subject a {
-
-text-decoration:none;
-color:#111827;
-
-}
-
-
-
-.mobile-row {
-
-display:flex;
-justify-content:space-between;
-padding:8px 0;
-border-bottom:1px dashed #ddd;
-
-}
-
-
-
-.mobile-bottom {
-
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-top:15px;
-font-weight:700;
-
-}
-
-
-
-
-.empty-results {
-
-text-align:center;
-padding:50px;
-background:#f8fafc;
-border-radius:20px;
-
-}
-
-
-
-
+/* =========================================================
+   MOBILE
+========================================================= */
 
 @media(max-width:768px){
 
+    .results-table{
+        min-width:850px;
+    }
 
-.desktop-results {
+    .results-table thead th{
+        padding:12px 13px;
+        font-size:15px;
+        white-space:nowrap;
+    }
 
-display:none;
+    .results-table td{
+        padding:12px 13px;
+        font-size:15px;
+        white-space:nowrap;
+    }
+
+    .subject-cell{
+        min-width:145px;
+        max-width:145px;
+        width:145px;
+        white-space:normal!important;
+    }
 
 }
-
-
-.mobile-results {
-
-display:block;
-
+/* =========================
+   VERY SMALL PHONES
+========================= */
+@media(max-width:390px) {
+    .results-page {
+        padding:12px 8px;
+    }
+    .results-header {
+        padding:19px;
+    }
+    .result-mobile-card {
+        padding:16px;
+    }
+    .mobile-subject {
+        font-size:17px;
+    }
+    .mobile-row span {
+        font-size:12px;
+    }
+    .mobile-row strong {
+        font-size:13px;
+    }
+    .mobile-bottom {
+        grid-template-columns:1fr;
+    }
+    .mobile-info-value {
+        font-size:13px;
+    }
 }
-
-
-.results-container {
-
-padding:18px;
-border-radius:18px;
-
+/* =========================
+   PHONE PORTRAIT REFINEMENT
+========================= */
+@media(max-width:768px) and (orientation:portrait) {
+    .mobile-subject {
+        font-size:18px;
+    }
+    .mobile-row {
+        padding:11px 0;
+    }
+    .mobile-row span {
+        font-size:13px;
+    }
+    .mobile-row strong {
+        font-size:14px;
+    }
+    .mobile-row.total-row strong {
+        font-size:16px;
+    }
+    .mobile-info-label {
+        font-size:11px;
+    }
+    .mobile-info-value {
+        font-size:14px;
+    }
+    .mobile-grade-value {
+        font-size:14px;
+    }
+    .mobile-results-total-header {
+        font-size:15px;
+    }
+    .mobile-total-label {
+        font-size:13px;
+    }
+    .mobile-total-value {
+        font-size:14px;
+    }
+    .mobile-total-row.overall-total .mobile-total-value {
+        font-size:17px;
+    }
 }
-
-
-}
-
-
 </style>
-{% endblock%}
+<div class="results-page">
+<!-- HEADER -->
+<div class="results-header">
+    <h1>
+        📊 My Results
+    </h1>
+    <p>
+        {{ current_term_display }} Results Report
+    </p>
+</div>
+<!-- FILTER -->
+<div class="filter-card">
+    <div class="filter-title">
+        🔎 Select Result Period
+    </div>
+    <form method="get" class="filter-form">
+        <div class="filter-group">
+            <label>
+                Academic Term
+            </label>
+            <select name="term">
+                {% for t in terms %}
+                    <option
+                        value="{{ t.term_number }}"
+                        {% if selected_term == t.term_number|stringformat:"s" %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ t.get_term_number_display }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>
+                Academic Year
+            </label>
+            <select name="year">
+                {% for y in years %}
+                    <option
+                        value="{{ y.id }}"
+                        {% if selected_year == y.id|stringformat:"s" %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ y.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <button class="filter-btn">
+            View Results
+        </button>
+    </form>
+</div>
+<!-- SUMMARY -->
+<div class="summary-grid">
+    <div class="summary-card grade-card">
+        <div class="summary-label">
+            🏆 Overall Grade
+        </div>
+        <div class="summary-value">
+            {{ overall_grade }}
+        </div>
+        <div class="summary-small">
+            {{ overall_remark }}
+        </div>
+    </div>
+    <div class="summary-card average-card">
+        <div class="summary-label">
+            📈 Average Score
+        </div>
+        <div class="summary-value">
+            {{ average_score }}%
+        </div>
+    </div>
+    <div class="summary-card position-card">
+        <div class="summary-label">
+            🥇 Class Position
+        </div>
+        <div class="summary-value">
+            {{ position }}
+        </div>
+        <div class="summary-small">
+            Out of {{ total_students }} Students
+        </div>
+    </div>
+    <div class="summary-card status-card">
+        <div class="summary-label">
+            ✅ Result Status
+        </div>
+        <div class="summary-value">
+            Published
+        </div>
+    </div>
+    <div class="summary-card subject-card">
+        <div class="summary-label">
+            📚 Subjects
+        </div>
+        <div class="summary-value">
+            {{ results|length }}
+        </div>
+    </div>
+</div>
+<!-- RESULTS SECTION -->
+<div class="results-container">
+    <div class="results-title">
+        📚 Subject Performance Breakdown
+    </div>
+    {% if results %}
+        <!-- =================================================
+             DESKTOP TABLE
+        ================================================== -->
+        <div class="desktop-results">
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Class Score</th>
+                        <th>Exam Score</th>
+                        <th>Total</th>
+                        <th>Grade</th>
+                        <th>Remark</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                        <tr>
+                            <td class="subject-cell">
+                                <a href="{% url 'accounts:student_subject_progress' result.subject.id %}">
+                                    {{ result.subject.name }}
+                                </a>
+                            </td>
+                            <td>
+                                <div class="score-box">
+                                    {{ result.class_score|floatformat:0 }}
+                                    /
+                                    {{ result.term.ca_total }}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="score-box">
+                                    {{ result.exam_score|floatformat:0 }}
+                                    /
+                                    {{ result.term.exam_total }}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="percentage-pill
+                                    {% if result.percentage >= 80 %}
+                                        excellent
+                                    {% elif result.percentage >= 70 %}
+                                        good
+                                    {% elif result.percentage >= 50 %}
+                                        average
+                                    {% else %}
+                                        poor
+                                    {% endif %}
+                                ">
+                                    {{ result.total|floatformat:0 }}
+                                    /
+                                    {{ result.total_max|floatformat:0 }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="grade-pill
+                                    {% if result.grade == 'A' %}
+                                        grade-a
+                                    {% elif result.grade == 'B' %}
+                                        grade-b
+                                    {% elif result.grade == 'C' %}
+                                        grade-c
+                                    {% elif result.grade == 'D' %}
+                                        grade-d
+                                    {% else %}
+                                        grade-f
+                                    {% endif %}
+                                ">
+                                    {{ result.grade }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="remark-text">
+                                    {{ result.remark }}
+                                </span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td>
+                            <strong>Total</strong>
+                        </td>
+                        <td>
+                            {{ grand_class_score|floatformat:0 }}
+                            /
+                            {{ grand_class_max|floatformat:0 }}
+                        </td>
+                        <td>
+                            {{ grand_exam_score|floatformat:0 }}
+                            /
+                            {{ grand_exam_max|floatformat:0 }}
+                        </td>
+                        <td colspan="3">
+                            {{ grand_total_score|floatformat:0 }}
+                            /
+                            {{ grand_total_max|floatformat:0 }}
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <!-- =================================================
+             MOBILE RESULTS
+        ================================================== -->
+        <div class="mobile-results">
+            {% for result in results %}
+                <div class="result-mobile-card">
+                    <!-- SUBJECT -->
+                    <div class="mobile-subject">
+                        <a href="{% url 'accounts:student_subject_progress' result.subject.id %}">
+                            📘
+                            <span>
+                                {{ result.subject.name }}
+                            </span>
+                        </a>
+                    </div>
+                    <!-- CLASS SCORE -->
+                    <div class="mobile-row">
+                        <span>
+                            Class Score
+                        </span>
+                        <strong>
+                            {{ result.class_score|floatformat:0 }}
+                            /
+                            {{ result.term.ca_total }}
+                        </strong>
+                    </div>
+                    <!-- EXAM SCORE -->
+                    <div class="mobile-row">
+                        <span>
+                            Exam Score
+                        </span>
+                        <strong>
+                            {{ result.exam_score|floatformat:0 }}
+                            /
+                            {{ result.term.exam_total }}
+                        </strong>
+                    </div>
+                    <!-- TOTAL -->
+                    <div class="mobile-row total-row">
+                        <span>
+                            Total
+                        </span>
+                        <strong>
+                            {{ result.total|floatformat:0 }}
+                            /
+                            {{ result.total_max|floatformat:0 }}
+                        </strong>
+                    </div>
+                    <!-- GRADE + REMARK -->
+                    <div class="mobile-bottom">
+                        <!-- GRADE -->
+                        <div class="mobile-info-box">
+                            <span class="mobile-info-label">
+                                Grade
+                            </span>
+                            <span class="mobile-grade-value
+                                {% if result.grade == 'A' %}
+                                    grade-a
+                                {% elif result.grade == 'B' %}
+                                    grade-b
+                                {% elif result.grade == 'C' %}
+                                    grade-c
+                                {% elif result.grade == 'D' %}
+                                    grade-d
+                                {% else %}
+                                    grade-f
+                                {% endif %}
+                            ">
+                                {{ result.grade }}
+                            </span>
+                        </div>
+                        <!-- REMARK -->
+                        <div class="mobile-info-box">
+                            <span class="mobile-info-label">
+                                Remark
+                            </span>
+                            <span class="mobile-info-value">
+                                {{ result.remark }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            <!-- =================================================
+                 MOBILE TOTAL
+            ================================================== -->
+            <div class="mobile-results-total">
+                <div class="mobile-results-total-header">
+                    <i class="fas fa-calculator me-2"></i>
+                    Results Total
+                </div>
+                <div class="mobile-total-row">
+                    <span class="mobile-total-label">
+                        Class Score
+                    </span>
+                    <span class="mobile-total-value">
+                        {{ grand_class_score|floatformat:0 }}
+                        /
+                        {{ grand_class_max|floatformat:0 }}
+                    </span>
+                </div>
+                <div class="mobile-total-row">
+                    <span class="mobile-total-label">
+                        Exam Score
+                    </span>
+                    <span class="mobile-total-value">
+                        {{ grand_exam_score|floatformat:0 }}
+                        /
+                        {{ grand_exam_max|floatformat:0 }}
+                    </span>
+                </div>
+                <div class="mobile-total-row overall-total">
+                    <span class="mobile-total-label">
+                        Overall Total
+                    </span>
+                    <span class="mobile-total-value">
+                        {{ grand_total_score|floatformat:0 }}
+                        /
+                        {{ grand_total_max|floatformat:0 }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-results">
+            📄
+            <h4>
+                No Results Published Yet
+            </h4>
+            <p>
+                No results available for {{ current_term_display }}.
+            </p>
+        </div>
+    {% endif %}
+</div>
+</div>
+
+{% endblock %}

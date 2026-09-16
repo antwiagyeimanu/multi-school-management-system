@@ -817,7 +817,7 @@ a.page-btn {
 <div class="card-info-section">
 
     <h2 class="teacher-name">
-        {{ teacher.title|default:"" }}
+        {{ teacher.get_title_display|default:"" }}
         {{ teacher.first_name|default:"" }}
         {% if teacher.middle_name %}{{ teacher.middle_name }}{% endif %}
         {{ teacher.last_name|default:"" }}
@@ -966,8 +966,8 @@ window.addEventListener('click', function(e){
             <a href="{% url 'accounts:view-teacher' teacher.id %}" class="btn-big btn-view">
                 View Profile
             </a>
-            {% if request.user.role == 'admin' or request.user.school.can_teachers_manage_teachers %}
-           <a href="{% url 'accounts:edit-teacher' teacher.id %}" class="btn-big btn-edit">
+{% if user.role == 'admin' or user.role == 'proprietor' or user.role == 'proprietress' or user.role == 'headmaster' or user.role == 'headmistress' %}
+         <a href="{% url 'accounts:edit-teacher' teacher.id %}" class="btn-big btn-edit">
                 Edit Teacher
             </a>
           <button type="button" 

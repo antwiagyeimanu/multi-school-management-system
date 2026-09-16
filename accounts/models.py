@@ -15,6 +15,7 @@ from decimal import Decimal
 from django.db.models import Sum
 from django.core.validators import MinValueValidator
 import string
+import uuid
 from django.contrib.auth import get_user_model
 # Add these imports at top if not there
 
@@ -45,22 +46,52 @@ TERM_CHOICES = [
     ('term3', 'Third Term'),
 ]
 
+
 # -------------------------------
 # School model
 # -------------------------------
 class School(models.Model):
     name = models.CharField(max_length=200, unique=True)
+
+    SCHOOL_EDITION_CHOICES = [
+        ("full", "Full School Management System"),
+        ("basic", "Basic / Custom School System"),
+    ]
+
+    edition = models.CharField(
+        max_length=10,
+        choices=SCHOOL_EDITION_CHOICES,
+        default="full",
+    )
+
     allows_student_login = models.BooleanField(default=False)
     address = models.TextField(blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
     logo = models.ImageField(upload_to='school_logos/', blank=True, null=True)
     email = models.EmailField(blank=True, null=True, verbose_name="School Email")
     gps_address = models.CharField(max_length=50, blank=True, null=True, verbose_name="GPS/Digital Address")
+    motto = models.CharField(
+        max_length=200, blank=True, null=True, verbose_name="School Motto"
+    )
+    admission_letter_title = models.CharField(max_length=200, default="ADMISSION LETTER")
+    admission_letter_body = models.TextField(
+        default="We are delighted to inform you that following your successful application and interview, you have been offered admission to {school_name} as a pupil of {class_name} for the {academic_year} academic year.\n\nAt {school_name}, we are committed to providing holistic education...",
+        help_text="Use {school_name}, {student_name}, {class_name}, {academic_year} as placeholders"
+    )
+    admission_letter_footer = models.TextField(default="We look forward to welcoming you to the {school_name} family.")
+    academic_year = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        verbose_name="Current Academic Year e.g 2024/2025",
+    )
     can_teachers_manage_students = models.BooleanField(default=False)
 
     SCHOOL_TYPE = [
         ('basic', 'Basic (Nursery - JHS)'),
         ('shs', 'Senior High School'),
+        ('basic_shs', 'Basic + Senior High School (Nursery - SHS)'),
+
     ]
     level = models.CharField(
         max_length=10,
@@ -81,7 +112,7 @@ class School(models.Model):
         default='disabled',
         help_text="OLD - Keep for now"
     )
-    
+
     # 👇 NEW FIELDS - THESE 3 LINES ARE NEW
     accept_cash = models.BooleanField(default=False, verbose_name="Cash at School")
     accept_manual = models.BooleanField(default=False, verbose_name="Manual Transfer")
@@ -91,7 +122,7 @@ class School(models.Model):
     # === SMS SETTINGS - ADD THIS ===
     sms_enabled = models.BooleanField(default=False, verbose_name="Enable SMS Notifications")
     sms_test_mode = models.BooleanField(default=True, verbose_name="SMS Test Mode - Don't send real SMS")
-    
+
     SMS_PROVIDER_CHOICES = [
         ('hubtel', 'Hubtel (Recommended for Ghana)'),
         ('mnotify', 'MNotify'),
@@ -106,11 +137,11 @@ class School(models.Model):
     # Reuse hubtel_client_id and hubtel_client_secret you already have!
     # Just add sender ID for SMS
     sms_sender_id = models.CharField(max_length=11, blank=True, null=True, verbose_name="SMS Sender ID e.g SCHOOL", help_text="Max 11 chars, e.g. ADISSCH")
-    
+
     # For MNotify if they use it
     mnotify_api_key = models.CharField(max_length=200, blank=True, null=True)
     mnotify_sender_id = models.CharField(max_length=11, blank=True, null=True)
-    
+
     # Gateway Selection
     PAYMENT_GATEWAY_CHOICES = [
         ('hubtel', 'Hubtel'),
@@ -125,23 +156,27 @@ class School(models.Model):
         null=True,
         help_text="Select gateway if Online Gateway is enabled"
     )
-    
+    # NEW - Allow multiple gateways at once (Option B)
+    accept_hubtel = models.BooleanField(default=False, verbose_name="Enable Hubtel")
+    accept_paystack = models.BooleanField(default=False, verbose_name="Enable Paystack")
+    accept_flutterwave = models.BooleanField(default=False, verbose_name="Enable Flutterwave")
+
     # For Manual Payment
     momo_number = models.CharField(max_length=15, blank=True, null=True, verbose_name="School MoMo Number")
     momo_name = models.CharField(max_length=100, blank=True, null=True, verbose_name="School MoMo Name")
     bank_name = models.CharField(max_length=100, blank=True, null=True)
     account_number = models.CharField(max_length=20, blank=True, null=True)
     account_name = models.CharField(max_length=200, blank=True, null=True)
-    
+
     # For Automatic Payment - Paystack
     paystack_public_key = models.CharField(max_length=200, blank=True, null=True)
     paystack_secret_key = models.CharField(max_length=200, blank=True, null=True)
-    
+
     # For Automatic Payment - Hubtel
     hubtel_client_id = models.CharField(max_length=200, blank=True, null=True)
     hubtel_client_secret = models.CharField(max_length=200, blank=True, null=True)
     hubtel_merchant_account = models.CharField(max_length=100, blank=True, null=True, verbose_name="Hubtel Merchant Account Number")
-    
+
     # For Automatic Payment - Flutterwave
     flutterwave_public_key = models.CharField(max_length=200, blank=True, null=True)
     flutterwave_secret_key = models.CharField(max_length=200, blank=True, null=True)
@@ -149,24 +184,28 @@ class School(models.Model):
     def __str__(self):
         return self.name
 
+
 # -------------------------------
 # User model
 # -------------------------------
 class User(AbstractUser):
     ROLE_CHOICES = (
-        ('admin', 'Admin/Proprietor'),  
-        ('board_director', 'Board of Directors'),    
-        ('headmaster', 'Headmaster'),       
-        ('accountant', 'Accountant'),       
-        ('bursar', 'Bursar'),               
-        ('hod', 'Head of Department'),      
-        ('teacher', 'Teacher'),             
-        ('student', 'Student'),             
+        ('admin', 'Administrator'),
+        ('proprietor', 'Proprietor'),
+        ('proprietress', 'Proprietress'),
+        ('board_director', 'Board of Directors'),
+        ('headmaster', 'Headmaster'),
+        ('headmistress', 'Headmistress'),
+        ('accountant', 'Accountant'),
+        ('bursar', 'Bursar'),
+        ('hod', 'Head of Department'),
+        ('teacher', 'Teacher'),
+        ('student', 'Student'),
         ('parent', 'Parent'),
-        ('support_staff', 'Support Staff - Kitchen/Garden/Security/Canteen/Attendant/Driver/Cleaner'),             
+        ('support_staff', 'Support Staff - Kitchen/Garden/Security/Canteen/Attendant/Driver/Cleaner'),
     )
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
-        # 🔐 NEW FIELD (THIS IS IMPORTANT)
+    # 🔐 NEW FIELD (THIS IS IMPORTANT)
     can_login = models.BooleanField(default=True)
 
     GENDER_CHOICES = [
@@ -186,9 +225,14 @@ class User(AbstractUser):
     parent_guardian_phone = models.CharField(max_length=20, null=True, blank=True)
 
     TITLE_CHOICES = [
-        ('Mr', 'Mr'),
-        ('Mrs', 'Mrs'),
-        ('Miss', 'Miss'),
+        ('Mr', 'Mr.'),
+        ('Mrs', 'Mrs.'),
+        ('Miss', 'Miss.'),
+        ('Dr', 'Dr.'),
+        ('Prof', 'Prof.'),
+        ('Rev', 'Rev.'),
+        ('Hon', 'Hon.'),
+        ('Sir', 'Sir.'),
     ]
     title = models.CharField(max_length=10,
                              choices=TITLE_CHOICES,
@@ -217,6 +261,9 @@ class User(AbstractUser):
     occupation = models.CharField(max_length=100, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
     relationship_type = models.CharField(max_length=30, blank=True, null=True, help_text="Father/Mother/Guardian")
+    conduct = models.CharField(
+        max_length=30, blank=True, null=True, default="Very Good"
+    )
     @property
     def is_real_class_teacher(self):
         return (
@@ -229,11 +276,6 @@ class User(AbstractUser):
         if self.is_real_class_teacher:
             return "Class Teacher"
         return "Teacher"
-    
-    
-    
-
-    
 
     RELIGION_CHOICES = [
     ('CHRISTIAN', 'Christianity'),
@@ -252,20 +294,21 @@ class User(AbstractUser):
         blank=True
     )
 
-
-
     def save(self, *args, **kwargs):
         if self.school:
             school_initials = ''.join([word[0] for word in self.school.name.split()]).upper()
-            
-            if self.role in ['teacher','accountant','bursar','hod','headmaster','admin','board_director'] and not self.staff_id:
+
+            if self.role in ['teacher','accountant','bursar','hod','headmaster','headmistress','admin','proprietor','proprietress','board_director'] and not self.staff_id:
                 role_codes = {
                     'teacher': 'TCH',
                     'accountant': 'ACC',
                     'bursar': 'BUR',
                     'hod': 'HOD',
                     'headmaster': 'HMT',
+                    'headmistress': 'HMS',
                     'admin': 'ADM',
+                    'proprietor': 'PRO',
+                    'proprietress': 'PRS',
                     'board_director': 'BOD',
                 }
                 role_code = role_codes.get(self.role, 'STF')
@@ -285,7 +328,6 @@ class User(AbstractUser):
                         if not User.objects.filter(staff_id=staff_id).exists():
                             self.staff_id = staff_id
                             break
-
 
                 # Student Number
                 if self.role == 'student' and not self.student_number:
@@ -358,7 +400,7 @@ class SchoolClass(models.Model):
     stage_code = models.CharField(max_length=50, null=True, blank=True)
     school = models.ForeignKey('School', on_delete=models.CASCADE)
     subjects = models.ManyToManyField('Subject')
-    
+
     def __str__(self):
         return self.name
     def save(self, *args, **kwargs):
@@ -376,26 +418,122 @@ class SchoolClass(models.Model):
 
         super().save(*args, **kwargs)
 
-# -------------------------------
-# TeacherSubjectClass - ONLY ONE COPY
-# -------------------------------
-class TeacherSubjectClass(models.Model):
-    teacher = models.ForeignKey('User', on_delete=models.CASCADE, limit_choices_to={'role': 'teacher'})
-    subject = models.ForeignKey('Subject', on_delete=models.CASCADE, null=True, blank=True)
-    school_class = models.ForeignKey('accounts.SchoolClass', on_delete=models.CASCADE, null=True, blank=True)
+
+class BasicDailyFeeSetting(models.Model):
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name="basic_daily_fee_settings"
+    )
+    school_class = models.ForeignKey(
+        SchoolClass,
+        on_delete=models.CASCADE,
+        related_name="basic_daily_fee_setting"
+    )
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
 
     class Meta:
-        unique_together = ('teacher', 'subject', 'school_class')
+        unique_together = ("school", "school_class")
+
+    def __str__(self):
+        return f"{self.school_class.name} - GH₵{self.amount}"
+
+
+class BasicDailyFeeCollection(models.Model):
+    school = models.ForeignKey(
+        School, on_delete=models.CASCADE, related_name="basic_daily_fee_collections"
+    )
+
+    academic_year = models.ForeignKey(
+        "AcademicYear",
+        on_delete=models.PROTECT,
+        related_name="basic_daily_fee_collections",
+    )
+
+    term = models.ForeignKey(
+        "Term", on_delete=models.PROTECT, related_name="basic_daily_fee_collections"
+    )
+
+    student = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="basic_daily_fee_collections"
+    )
+
+    school_class = models.ForeignKey(
+        SchoolClass,
+        on_delete=models.CASCADE,
+        related_name="basic_daily_fee_collections",
+    )
+
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+    date = models.DateField()
+
+    collected_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="basic_daily_fees_collected",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-date", "-created_at"]
+
+    def __str__(self):
+        return f"{self.student.get_full_name()} - " f"GH₵{self.amount} - {self.date}"
+
+
+# -------------------------------
+# TeacherSubjectClass - MULTI-SCHOOL PERMANENT
+# -------------------------------
+class TeacherSubjectClass(models.Model):
+    school = models.ForeignKey(
+        "School",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="teacher_subject_assignments",
+    )
+    teacher = models.ForeignKey(
+        "User", on_delete=models.CASCADE, limit_choices_to={"role": "teacher"}
+    )
+    subject = models.ForeignKey(
+        "Subject", on_delete=models.CASCADE, null=True, blank=True
+    )
+    school_class = models.ForeignKey(
+        "accounts.SchoolClass", on_delete=models.CASCADE, null=True, blank=True
+    )
+
+    class Meta:
+        unique_together = ("teacher", "subject", "school_class", "school")
+
+    def save(self, *args, **kwargs):
+        # Auto-fill school from school_class if not provided - PERMANENT LOGIC
+        if not self.school:
+            if self.school_class and self.school_class.school:
+                self.school = self.school_class.school
+            elif self.teacher and self.teacher.school:
+                self.school = self.teacher.school
+        super().save(*args, **kwargs)
 
     def __str__(self):
         school_class_str = str(self.school_class) if self.school_class else "No Class"
         subject_str = self.subject.name if self.subject else "No Subject"
-        return f"{school_class_str} - {subject_str}"
+        school_str = self.school.name if self.school else "No School"
+        return f"{school_str} - {school_class_str} - {subject_str} - {self.teacher.get_full_name()}"
+
 
 # -------------------------------
 # System settings
 # -------------------------------
 class SystemSettings(models.Model):
+    school = models.ForeignKey('School', on_delete=models.CASCADE, null=True, blank=True)
     site_name = models.CharField(max_length=200)
     max_students_per_class = models.IntegerField(default=30)
 
@@ -434,7 +572,7 @@ class AttendanceSession(models.Model):
         ('L', 'Late'),
         ('E', 'Excused'), 
     ]
-
+    term = models.ForeignKey('Term', on_delete=models.CASCADE, null=True, blank=True, related_name='sessions') # <-- ADD THIS
     school = models.ForeignKey('School', on_delete=models.CASCADE, null=True, blank=True) 
     school_class = models.ForeignKey('SchoolClass', on_delete=models.CASCADE)
     subject = models.ForeignKey('Subject', on_delete=models.CASCADE)
@@ -501,8 +639,8 @@ class AttendanceRecord(models.Model):
         verbose_name = "Attendance Record"
         verbose_name_plural = "Attendance Records"
     def save(self, *args, **kwargs): 
-        if not self.school and self.school_class_id:
-            self.school = self.school_class.school
+        if not self.school and self.session_id:
+            self.school = self.session.school
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -516,7 +654,9 @@ class Result(models.Model):
     school = models.ForeignKey('School', on_delete=models.CASCADE, null=True, blank=True) 
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='results')
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    exam_score = models.DecimalField(max_digits=5, decimal_places=2, default=0, null=True, blank=True)
+    exam_score = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True, default=None
+    )
 
     date = models.DateField(auto_now_add=True)
     TERM_CHOICES = [(1, 'First Term'), (2, 'Second Term'), (3, 'Third Term')]
@@ -538,56 +678,69 @@ class Result(models.Model):
     published_at = models.DateTimeField(null=True, blank=True)
     returned_reason = models.TextField(blank=True, null=True)
 
-    
-
     @property
     def class_score(self):
         from accounts.models import ContinuousAssessment
 
-        return ContinuousAssessment.objects.filter(
+        raw_sba = ContinuousAssessment.objects.filter(
+            school=self.school,
             student=self.student,
             subject=self.subject,
             term=self.term,
             academic_year=self.academic_year
         ).aggregate(total=Sum('score'))['total'] or 0
+
+        if not self.term.sba_total:
+            return 0
+
+        return round(
+            (float(raw_sba) / float(self.term.sba_total))
+            * float(self.term.ca_total),
+            2
+        )
     @property
     def grade(self):
-        pct = self.percentage
+        from accounts.utils import get_grading_scale
 
-        if pct >= 80:
-            return "A"
-        elif pct >= 70:
-            return "B"
-        elif pct >= 60:
-            return "C"
-        elif pct >= 50:
-            return "D"
-        elif pct >= 40:
-            return "E"
-        else:
-            return "F"
+        grading = get_grading_scale(
+            self.school,
+            self.term,
+            self.percentage
+        )
 
-
+        return grading.grade if grading else "-"
     @property
     def remark(self):
-        pct = self.percentage
+        from accounts.utils import get_grading_scale
 
-        if pct >= 80:
-            return "Excellent"
-        elif pct >= 70:
-            return "Very Good"
-        elif pct >= 60:
-            return "Good"
-        elif pct >= 50:
-            return "Pass"
-        elif pct >= 40:
-            return "Weak"
-        else:
-            return "Fail"
+        grading = get_grading_scale(
+            self.school,
+            self.term,
+            self.percentage
+        )
+
+        return grading.remark if grading else "-"
+
+    @property
+    def exam_converted_score(self):
+        """Convert raw exam score out of 100 to the school's exam contribution."""
+        if not self.exam_score or not self.term.exam_total:
+            return 0
+
+        return round(
+            (float(self.exam_score) / 100)
+            * float(self.term.exam_total),
+            2
+        )
+
 
     @property
     def total_score(self):
-            return float(self.class_score or 0) + float(self.exam_score or 0)
+        return round(
+            float(self.class_score or 0)
+            + float(self.exam_converted_score or 0),
+            2
+        )
     @property
     def percentage(self):
         total_max = 100
@@ -596,7 +749,6 @@ class Result(models.Model):
             return 0
 
         return round((float(self.total_score) / float(total_max)) * 100, 1)
-
 
     def clean(self):
         if self.exam_score and self.exam_score > 100:
@@ -607,41 +759,46 @@ class Result(models.Model):
     def save(self, *args, **kwargs):
         if not self.school and self.student_id:
             self.school = self.student.school 
-        self.full_clean()
         super().save(*args, **kwargs)
 
     class Meta:
         unique_together = ('student', 'subject', 'term', 'academic_year')
 
+
 # -------------------------------
 # Fees
 # -------------------------------
 class Fee(models.Model):
+    school = models.ForeignKey(
+        "School", on_delete=models.CASCADE, null=True, blank=True
+    )
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     description = models.CharField(max_length=200, default="School Fees")
-    amount_due = models.DecimalField(max_digits=8, decimal_places=2)  # What student OWES
-    amount_paid = models.DecimalField(max_digits=8, decimal_places=2, default=0)  # What student PAID
+    amount_due = models.DecimalField(max_digits=8, decimal_places=2)
+    amount_paid = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    term = models.ForeignKey(
+        "Term", on_delete=models.CASCADE, null=True, blank=True
+    )  # <-- ADDED TERM
     due_date = models.DateField(null=True, blank=True)
-    date_paid = models.DateField(null=True, blank=True)  # Only set when paid
-    year = models.IntegerField() 
+    date_paid = models.DateField(null=True, blank=True)
+    year = models.IntegerField()
     academic_year = models.ForeignKey(
-        'AcademicYear',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
+        "AcademicYear", on_delete=models.SET_NULL, null=True, blank=True
     )
     status = models.CharField(
-        max_length=10, 
-        choices=[('unpaid', 'Unpaid'), ('paid', 'Paid')], 
-        default='unpaid'
+        max_length=10,
+        choices=[("unpaid", "Unpaid"), ("paid", "Paid")],
+        default="unpaid",
     )
+
+    def save(self, *args, **kwargs):
+        if not self.school and self.student_id:
+            self.school = self.student.school
+        super().save(*args, **kwargs)
 
     @property
     def balance(self):
         return self.amount_due - self.amount_paid
-
-    def __str__(self):
-        return f"{self.student.username} - {self.description}"
 
 
 # -------------------------------
@@ -721,6 +878,7 @@ class Term(models.Model):
     end_date = models.DateField()
     days_opened = models.IntegerField(help_text="Total school days this term")
     next_term_begins = models.DateField(null=True, blank=True)
+    sba_total = models.IntegerField( help_text="Maximum raw SBA marks for this term")
     ca_total = models.IntegerField(help_text="Total CA marks for this term")
     exam_total = models.IntegerField(help_text="Total Exam marks for this term")
     is_active = models.BooleanField(default=False)
@@ -741,7 +899,7 @@ class Term(models.Model):
         
 
     def __str__(self):
-        return f" {self.get_term_number_display()}"
+        return f" {self.get_term_number_display()}- {self.academic_year}"
 
 def get_current_academic_year():
     today = date.today()
@@ -759,7 +917,7 @@ def get_current_academic_year():
 
 class AcademicYear(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='academic_years', null=True, blank=True)
-    name = models.CharField(max_length=20, unique=True)  
+    name = models.CharField(max_length=20)  
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     is_active = models.BooleanField(default=False)
@@ -775,87 +933,72 @@ class AcademicYear(models.Model):
         super().save(*args, **kwargs)
 
     class Meta:
+        unique_together = ('school', 'name')
         ordering = ['-name']
 
     def __str__(self):
         return self.name
 
 
+class GradingScale(models.Model):
+    school = models.ForeignKey(
+        School, on_delete=models.CASCADE, related_name="grading_scales"
+    )
+
+    term = models.ForeignKey(
+        "Term",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="grading_scales",
+    )
+
+    grade = models.CharField(max_length=5)
+
+    min_score = models.DecimalField(max_digits=5, decimal_places=2)
+
+    max_score = models.DecimalField(max_digits=5, decimal_places=2)
+
+    remark = models.CharField(max_length=100)
+
+    class Meta:
+        ordering = ["-min_score"]
+
+    def __str__(self):
+        return f"{self.school} - {self.grade}"
+
+
 # NO SPACES BEFORE 'class' - start at column 1
 class StudentFee(models.Model):
     student = models.ForeignKey(
-        'accounts.User', 
-        on_delete=models.CASCADE, 
-        related_name='fees',
-        limit_choices_to={'role': 'student'}
+        "accounts.User",
+        on_delete=models.CASCADE,
+        related_name="fees",
+        limit_choices_to={"role": "student"},
     )
     school = models.ForeignKey(
-    School,
-    on_delete=models.CASCADE,
-    related_name='student_fees'
-)
-    term = models.ForeignKey('Term', on_delete=models.CASCADE)
+        School, on_delete=models.CASCADE, related_name="student_fees"
+    )
+    term = models.ForeignKey("Term", on_delete=models.CASCADE)
     academic_year = models.CharField(max_length=20)
     stage = models.CharField(max_length=50)
-    
-    school_fees = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    pta_dues = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    computer_levy = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    exam_fees = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    other_fees = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    canteen_type = models.CharField(max_length=10, choices=[('terminal', 'Per Term')], default='terminal')
-    canteen_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    amount_paid_school_fees = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    amount_paid_pta_dues = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    amount_paid_computer_levy = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    amount_paid_exam_fees = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    amount_paid_canteen = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    amount_paid_other_fees = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    development_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    boarding_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    hostel_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    amount_paid_boarding_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    amount_paid_hostel_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    amount_paid_development_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     due_date = models.DateField(null=True, blank=True)
-    
+
     class Meta:
-        unique_together = ('student', 'term', 'academic_year')  # add academic_year back
-        
+        unique_together = ("student", "term", "academic_year", "stage")
+
     def amount_paid(self):
-        return (
-            self.amount_paid_school_fees +
-            self.amount_paid_pta_dues +
-            self.amount_paid_computer_levy +
-            self.amount_paid_exam_fees +
-            self.amount_paid_canteen +
-            self.amount_paid_other_fees +
-            self.amount_paid_boarding_fee +
-            self.amount_paid_hostel_fee +
-            self.amount_paid_development_fee 
-        )
+        return self.dynamic_items.aggregate(total=Sum("amount_paid"))[
+            "total"
+        ] or Decimal("0")
 
     def balance(self):
         return self.total_amount - self.amount_paid()
 
     def __str__(self):
-        return f"{self.student.first_name} - {self.term} {self.academic_year}"
-
-    def save(self, *args, **kwargs):
-        self.total_amount = (
-            self.school_fees + 
-            self.pta_dues + 
-            self.boarding_fee +
-            self.hostel_fee +
-            self.development_fee +
-            self.computer_levy + 
-            self.exam_fees + 
-            self.canteen_amount +
-            self.other_fees
-        )
-        super().save(*args, **kwargs)
+        return f"{self.student.first_name} - {self.term} {self.academic_year} - {self.total_amount}"
 
 
 class FeeStructure(models.Model):
@@ -933,7 +1076,7 @@ class FeePayment(models.Model):
     note = models.CharField(max_length=200, blank=True)
     recorded_at = models.DateTimeField(auto_now_add=True) 
     recorded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    
+
     def save(self, *args, **kwargs):
         if not self.receipt_number:
             year = timezone.now().year
@@ -946,74 +1089,58 @@ class FeePayment(models.Model):
         choices_dict = dict(self.PAYMENT_TYPES)
         types = [t.strip() for t in self.payment_type.split(',') if t.strip()]
         return ', '.join([choices_dict.get(t, t) for t in types])
-    
+
     def __str__(self):
         return f"{self.fee.student.first_name} - GHS {self.amount} - {self.get_payment_types_display()}"
 
     class Meta:
         ordering = ['-payment_date']
-    
+
     # models.py
+
+
 class SchoolSetting(models.Model):
 
     school = models.OneToOneField(
-        School,
-        on_delete=models.CASCADE,
-        related_name="settings",
-        null=True,
-        blank=True
+        School, on_delete=models.CASCADE, related_name="settings", null=True, blank=True
     )
+
     ATTENDANCE_MODE_CHOICES = [
-        ('subject', 'Subject Teacher'),
-        ('class_teacher', 'Class Teacher'),
+        ("subject", "Subject Teacher"),
+        ("class_teacher", "Class Teacher"),
     ]
 
     attendance_mode = models.CharField(
-        max_length=20,
-        choices=ATTENDANCE_MODE_CHOICES,
-        default='subject'
+        max_length=20, choices=ATTENDANCE_MODE_CHOICES, default="subject"
     )
-
 
     # Teacher attendance settings
+    teacher_reporting_time = models.TimeField(default="07:30")
 
-    teacher_reporting_time = models.TimeField(
-        default="07:30"
-    )
+    teacher_closing_time = models.TimeField(default="15:30")
 
-    teacher_closing_time = models.TimeField(
-        default="15:30"
-    )
-
-    late_after_minutes = models.PositiveIntegerField(
-        default=15
-    )
-
+    late_after_minutes = models.PositiveIntegerField(default=15)
 
     class_score_total = models.IntegerField(default=50)
     exam_score_total = models.IntegerField(default=50)
-    email = models.EmailField(blank=True, null=True)  
-    gps_address = models.CharField(max_length=255, blank=True, null=True)  # add this
+
+    email = models.EmailField(blank=True, null=True)
+
+    gps_address = models.CharField(max_length=255, blank=True, null=True)
+
     academic_year_start_month = models.IntegerField(
-        default=9,
-        help_text="Month academic year starts. 1=Jan, 8=Aug, 9=Sep"
+        default=9, help_text="Month academic year starts. 1=Jan, 8=Aug, 9=Sep"
     )
-    
+
     class Meta:
         verbose_name_plural = "School Settings"
-    
+
     def __str__(self):
         return f"Academic year starts month {self.academic_year_start_month}"
-    
-    def save(self, *args, **kwargs):
-        if not self.pk and SchoolSetting.objects.exists():
-            raise Exception("Only one SchoolSetting record allowed")
-        return super().save(*args, **kwargs)
-
-
-
 
     # -------------------------------
+
+
 # TermSetting - ADD THIS
 # -------------------------------
 class TermSetting(models.Model):
@@ -1043,6 +1170,8 @@ class Timetable(models.Model):
     null=True,
     blank=True
 )
+    term = models.ForeignKey('Term', on_delete=models.CASCADE, null=True, blank=True) 
+    academic_year = models.ForeignKey('AcademicYear', on_delete=models.CASCADE, null=True, blank=True) 
     school_class = models.ForeignKey('SchoolClass', on_delete=models.CASCADE, related_name='timetables')
     subject = models.ForeignKey(
     'Subject',
@@ -1240,10 +1369,12 @@ class PaymentTransaction(models.Model):
         User,
         on_delete=models.CASCADE, related_name='student_transactions')
     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='payment_transactions', null=True, blank=True)
+    student_fee = models.ForeignKey('StudentFee', on_delete=models.CASCADE, null=True, blank=True, related_name='transactions')
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     payment_types = models.ManyToManyField('PaymentType', blank=True, verbose_name='PAYMENT TYPE')
     receipt_number = models.CharField(max_length=50, unique=True, blank=True, null=True)
+    verification_token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     transaction_id = models.CharField(max_length=100, blank=True, null=True, help_text="Parent's bank/momo reference")  
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -1333,7 +1464,7 @@ class PendingPayment(models.Model):
         ('momo', 'Mobile Money'),
     )
     
-    # Who & What
+    school = models.ForeignKey(School, on_delete=models.CASCADE, null=True, blank=True)
     student = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -1394,10 +1525,6 @@ class PendingPayment(models.Model):
     
     def __str__(self):
         return f"{self.student.student_number} - GHS {self.amount} - {self.get_status_display()}"
-    
-    @property
-    def school(self):
-        return self.student.school
 
 
 class PendingPaymentItem(models.Model):
@@ -1418,6 +1545,8 @@ class PendingPaymentItem(models.Model):
         max_digits=10,
         decimal_places=2
     )
+    dynamic_item_id = models.IntegerField(null=True, blank=True)
+    
 
     def __str__(self):
         return f"{self.fee_name}: GHS {self.amount}"
@@ -1464,12 +1593,7 @@ class PaymentType(models.Model):
 
 
 class ContinuousAssessment(models.Model):
-    school = models.ForeignKey(
-        School,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True
-    )
+    school = models.ForeignKey(School, on_delete=models.CASCADE, null=True, blank=True)
 
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -1480,6 +1604,12 @@ class ContinuousAssessment(models.Model):
     academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.school and self.student_id:
+            self.school = self.student.school
+
+        super().save(*args, **kwargs)
 
 
 class StudentRemark(models.Model):
@@ -1492,7 +1622,7 @@ class StudentRemark(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'role': 'student'})
     term = models.ForeignKey(Term, on_delete=models.CASCADE)
     class_teacher_remark = models.TextField(blank=True, null=True)
-    headteacher_remark = models.TextField(blank=True, null=True)
+    headmaster_remark = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
@@ -1528,6 +1658,7 @@ class Announcement(models.Model):
         blank=True,
         help_text="Select class if targeting specific class only"
     )
+    target_classes = models.ManyToManyField('accounts.SchoolClass', blank=True, related_name="announcements_new")
     
     created_by = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -1572,6 +1703,7 @@ class AnnouncementRead(models.Model):
 
 
 class ParentStudentLink(models.Model):
+    school = models.ForeignKey(School, on_delete=models.CASCADE, null=True)
     parent = models.ForeignKey(
         'accounts.User',
         on_delete=models.CASCADE,
@@ -1602,8 +1734,10 @@ class ParentStudentLink(models.Model):
 
 
 class Notification(models.Model):
+    school = models.ForeignKey(School, on_delete=models.CASCADE, null=True)
     title = models.CharField(max_length=200)
     message = models.TextField()
+    announcement = models.ForeignKey(Announcement, on_delete=models.CASCADE, null=True, blank=True) 
     link = models.URLField(blank=True, null=True)
     target_group = models.CharField(max_length=100, default='All Users')
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -1718,3 +1852,128 @@ class TeacherAttendance(models.Model):
     @property
     def worked_today(self):
         return self.time_in is not None
+
+
+class SystemSetting(models.Model):
+    school = models.OneToOneField(
+        School, on_delete=models.CASCADE, related_name="system_setting"
+    )
+
+    site_name = models.CharField(max_length=150, default="My School Management System")
+
+    max_students = models.PositiveIntegerField(default=30)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.school.name} - System Settings"
+
+# ==========================
+# NEW DYNAMIC FEE SYSTEM - MULTI-SCHOOL SAFE
+# ==========================
+
+class DynamicFeeStructure(models.Model):
+    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='dynamic_fee_structures')
+    stage = models.CharField(max_length=20, choices=STAGE_CHOICES)
+    term = models.ForeignKey(Term, on_delete=models.CASCADE)
+    academic_year = models.CharField(max_length=20)
+    due_date = models.DateField(null=True, blank=True)
+    is_published = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('school', 'stage', 'term', 'academic_year')
+
+    @property
+    def total_amount(self):
+        return self.items.aggregate(total=Sum('amount'))['total'] or Decimal('0')
+
+    def __str__(self):
+        return f"{self.school.name} | {self.get_stage_display()} | {self.term} | {self.total_amount}"
+
+class DynamicFeeStructureItem(models.Model):
+    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='dynamic_fee_items') # <--- SCHOOL HERE
+    fee_structure = models.ForeignKey(DynamicFeeStructure, on_delete=models.CASCADE, related_name='items')
+    payment_type = models.ForeignKey(PaymentType, on_delete=models.SET_NULL, null=True, blank=True)
+    name = models.CharField(max_length=100) # e.g School Fees, Bus Fee, PTA
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    class Meta:
+        unique_together = ('school', 'fee_structure', 'name')
+
+    def save(self, *args, **kwargs):
+        if not self.school and self.fee_structure_id:
+            self.school = self.fee_structure.school
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.school.name} - {self.name} - {self.amount}"
+
+class DynamicStudentFeeItem(models.Model):
+    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='dynamic_student_fee_items') # <--- SCHOOL HERE
+    student_fee = models.ForeignKey('StudentFee', on_delete=models.CASCADE, related_name='dynamic_items')
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='dynamic_fee_items') # <--- for fast query
+    name = models.CharField(max_length=100)
+    amount_due = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    payment_type = models.ForeignKey(PaymentType, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        unique_together = ('school', 'student_fee', 'name')
+
+    @property
+    def balance(self):
+        return self.amount_due - self.amount_paid
+
+    def save(self, *args, **kwargs):
+        if not self.school and self.student_fee_id:
+            self.school = self.student_fee.school
+        if not self.student_id and self.student_fee_id:
+            self.student = self.student_fee.student
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.student.first_name} - {self.name} - Due:{self.amount_due} Paid:{self.amount_paid}"
+
+
+# HEADMASTER PERMISSIONS - ONE CHECKBOX CONTROLS ALL (Add+Edit+Delete+View)
+class HeadmasterPermission(models.Model):
+    school = models.OneToOneField(
+        School, on_delete=models.CASCADE, related_name="headmaster_permissions"
+    )
+    # ACADEMICS
+    can_add_class = models.BooleanField(default=False)
+    can_add_subject = models.BooleanField(default=False)
+    can_assigned_teachers = models.BooleanField(default=False)
+    can_create_timetable = models.BooleanField(default=False)
+    can_manage_timetable = models.BooleanField(default=False)
+    can_calendar = models.BooleanField(default=False)
+    # PEOPLE
+    can_add_student = models.BooleanField(default=False)
+    can_add_parent = models.BooleanField(default=False)
+    can_add_teacher = models.BooleanField(default=False)
+    can_add_accountant = models.BooleanField(default=False)
+    can_add_headmaster = models.BooleanField(default=False)
+    # OPERATIONS
+    can_attendance = models.BooleanField(default=False)
+    can_teacher_attendance = models.BooleanField(default=False)
+    can_review_results = models.BooleanField(default=False)
+    can_published_results = models.BooleanField(default=False)
+    # FINANCE
+    can_fees = models.BooleanField(default=False)
+    can_edit_student_fees = models.BooleanField(default=False)
+    can_expenses = models.BooleanField(default=False)
+    can_fee_monitoring = models.BooleanField(default=False)
+    # COMMUNICATION
+    can_create_announcements = models.BooleanField(default=False)
+    can_notifications = models.BooleanField(default=False)
+    # REPORTS
+    can_view_reports = models.BooleanField(default=False)
+    can_headmaster_remarks = models.BooleanField(default=False)
+    # SETTINGS
+    can_school_settings = models.BooleanField(default=False)
+    can_user_management = models.BooleanField(default=False)
+    can_system_settings = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Perms for {self.school.name}"

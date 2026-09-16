@@ -1,607 +1,2786 @@
-{% extends "accounts/dashboard_base.html" %}
+{% extends 'accounts/dashboard_base.html' %}
 {% block content %}
 
 <style>
-
-/* ===============================
-   PREMIUM SCHOOL SETTINGS UI
-================================ */
+/* =========================================================
+   PREMIUM SCHOOL SETTINGS
+========================================================= */
 
 .settings-wrapper {
-    padding: 25px;
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 24px 28px 40px;
 }
 
-.settings-header {
+/* =========================================================
+   HERO
+========================================================= */
+
+.settings-hero {
+    position: relative;
+    overflow: hidden;
+
+    min-height: 190px;
+
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 25px;
-    flex-wrap: wrap;
-    gap: 15px;
+    justify-content: space-between;
+
+    gap: 25px;
+
+    padding: 32px 38px;
+    margin-bottom: 18px;
+
+    border-radius: 24px;
+
+    color: #fff;
+
+    background:
+        radial-gradient(
+            circle at 85% 15%,
+            rgba(255,255,255,.17),
+            transparent 30%
+        ),
+        radial-gradient(
+            circle at 10% 100%,
+            rgba(96,165,250,.15),
+            transparent 32%
+        ),
+        linear-gradient(
+            135deg,
+            #0f172a 0%,
+            #172554 48%,
+            #2563eb 100%
+        );
+
+    box-shadow:
+        0 18px 45px rgba(15,23,42,.18);
 }
 
-.settings-header h2 {
+.settings-hero::before {
+    content: "";
+
+    position: absolute;
+
+    width: 280px;
+    height: 280px;
+
+    right: -100px;
+    top: -150px;
+
+    border-radius: 50%;
+
+    background: rgba(255,255,255,.055);
+
+    pointer-events: none;
+}
+
+.settings-hero::after {
+    content: "";
+
+    position: absolute;
+
+    width: 170px;
+    height: 170px;
+
+    left: 38%;
+    bottom: -130px;
+
+    border-radius: 50%;
+
+    background: rgba(255,255,255,.035);
+
+    pointer-events: none;
+}
+
+.settings-hero-content {
+    position: relative;
+    z-index: 2;
+}
+
+.settings-hero-icon {
+    width: 56px;
+    height: 56px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: 13px;
+
+    border-radius: 16px;
+
+    background: rgba(255,255,255,.11);
+
+    border: 1px solid rgba(255,255,255,.16);
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.08);
+
+    font-size: 25px;
+}
+
+.settings-hero h1 {
+    margin: 0;
+
+    color: #fff;
+
     font-size: 30px;
-    font-weight: 800;
-    color: #1f2937;
+    font-weight: 850;
+
+    letter-spacing: -.7px;
+}
+
+.settings-hero p {
+    margin: 7px 0 0;
+
+    color: #dbeafe;
+
+    font-size: 13px;
+    line-height: 1.6;
 }
 
 .school-name-badge {
-    background: linear-gradient(135deg,#2563eb,#4f46e5);
-    color: white;
-    padding: 10px 18px;
+    position: relative;
+    z-index: 2;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    max-width: 420px;
+
+    padding: 12px 18px;
+
     border-radius: 30px;
-    font-weight: 600;
+
+    background: rgba(255,255,255,.10);
+
+    border: 1px solid rgba(255,255,255,.17);
+
+    color: #fff;
+
+    font-size: 12px;
+    font-weight: 750;
+
+    backdrop-filter: blur(12px);
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.08);
 }
 
+/* =========================================================
+   HORIZONTAL SETTINGS NAVIGATION
+========================================================= */
 
-/* CARD */
+.settings-nav {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 5px;
+
+    padding: 7px;
+
+    margin-bottom: 20px;
+
+    background: #fff;
+
+    border: 1px solid #e5eaf1;
+
+    border-radius: 17px;
+
+    box-shadow:
+        0 8px 25px rgba(15,23,42,.055);
+
+    overflow-x: auto;
+
+    scrollbar-width: none;
+}
+
+.settings-nav::-webkit-scrollbar {
+    display: none;
+}
+
+.settings-nav-title {
+    display: none;
+}
+
+.settings-tab {
+    flex: 1 0 auto;
+
+    min-height: 48px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    padding: 10px 14px;
+
+    border: 0;
+
+    border-radius: 11px;
+
+    background: transparent;
+
+    color: #64748b;
+
+    font-size: 12px;
+    font-weight: 750;
+
+    white-space: nowrap;
+
+    cursor: pointer;
+
+    transition:
+        background .2s ease,
+        color .2s ease,
+        box-shadow .2s ease,
+        transform .2s ease;
+}
+
+.settings-tab i {
+    width: 18px;
+
+    text-align: center;
+
+    font-size: 13px;
+
+    transition: color .2s ease;
+}
+
+.settings-tab:hover {
+    color: #1e293b;
+
+    background: #f8fafc;
+}
+
+.settings-tab.active {
+    color: #4338ca;
+
+    background:
+        linear-gradient(
+            135deg,
+            #eef2ff,
+            #e0e7ff
+        );
+
+    box-shadow:
+        0 4px 12px rgba(79,70,229,.10);
+}
+
+.settings-tab.active i {
+    color: #4f46e5;
+}
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.settings-content {
+    width: 100%;
+
+    min-width: 0;
+}
+
+.settings-panel {
+    display: none;
+
+    width: 100%;
+
+    animation: settingsFade .22s ease;
+}
+
+.settings-panel.active {
+    display: block;
+}
+
+@keyframes settingsFade {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =========================================================
+   SETTINGS CARD
+========================================================= */
 
 .settings-card {
-    background: white;
-    border-radius: 18px;
-    padding: 25px;
-    margin-bottom: 25px;
-    box-shadow: 
-        0 10px 25px rgba(0,0,0,0.08);
-    border: none;
+    position: relative;
+    overflow: hidden;
+
+    width: 100%;
+
+    padding: 26px;
+
+    margin-bottom: 18px;
+
+    background: #fff;
+
+    border: 1px solid #e6ebf2;
+
+    border-radius: 20px;
+
+    box-shadow:
+        0 8px 25px rgba(15,23,42,.055);
 }
 
-
-.section-title {
-    font-size: 20px;
-    font-weight: 750;
-    color:#111827;
-    margin-bottom:20px;
-    display:flex;
-    align-items:center;
-    gap:10px;
+.settings-card:last-child {
+    margin-bottom: 0;
 }
 
+.settings-card-title {
+    display: flex;
+    align-items: center;
 
-/* FORM */
+    gap: 11px;
+
+    padding-bottom: 16px;
+    margin-bottom: 23px;
+
+    border-bottom: 1px solid #edf1f6;
+
+    color: #111827;
+
+    font-size: 17px;
+    font-weight: 850;
+}
+
+.settings-card-title i {
+    width: 38px;
+    height: 38px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 11px;
+
+    background: #eef2ff;
+
+    color: #4f46e5;
+
+    font-size: 15px;
+}
+
+/* =========================================================
+   FORM
+========================================================= */
 
 .form-label {
-    font-weight:600;
-    color:#374151;
-}
+    display: block;
 
+    margin-bottom: 7px;
+
+    color: #374151;
+
+    font-size: 12px;
+    font-weight: 750;
+}
 
 .form-control,
 .form-select {
+    width: 100%;
 
-    border-radius:12px;
-    padding:12px 15px;
-    border:1px solid #d1d5db;
-    transition:.3s;
+    min-height: 48px;
 
+    border: 1px solid #dce3ed;
+
+    border-radius: 11px;
+
+    padding: 10px 13px;
+
+    color: #111827;
+
+    background: #fff;
+
+    font-size: 13px;
+
+    transition:
+        border-color .2s ease,
+        box-shadow .2s ease,
+        background .2s ease;
 }
 
+.form-control:hover,
+.form-select:hover {
+    border-color: #cbd5e1;
+}
 
 .form-control:focus,
 .form-select:focus {
+    border-color: #4f46e5;
 
-    border-color:#4f46e5;
-    box-shadow:0 0 0 .2rem rgba(79,70,229,.15);
+    background: #fff;
 
+    box-shadow:
+        0 0 0 4px rgba(79,70,229,.09);
+
+    outline: none;
 }
 
+textarea.form-control {
+    min-height: auto;
 
-/* LOGO */
+    resize: vertical;
+}
+
+::placeholder {
+    color: #94a3b8;
+}
+
+/* =========================================================
+   DESCRIPTION
+========================================================= */
+
+.settings-description {
+    margin-top: 8px;
+
+    color: #7b8495;
+
+    font-size: 12px;
+
+    line-height: 1.65;
+}
+
+/* =========================================================
+   PERMISSION BOX
+========================================================= */
+
+.permission-box {
+    display: flex;
+    align-items: center;
+
+    gap: 14px;
+
+    padding: 16px;
+
+    border: 1px solid #e8edf4;
+
+    border-radius: 14px;
+
+    background: #f8fafc;
+}
+
+.permission-box .form-check-input {
+    width: 48px;
+    height: 25px;
+
+    margin: 0;
+
+    flex-shrink: 0;
+
+    cursor: pointer;
+}
+
+.permission-box .form-check-input:checked {
+    background-color: #4f46e5;
+
+    border-color: #4f46e5;
+}
+
+.permission-box label {
+    color: #374151;
+
+    font-size: 13px;
+    font-weight: 650;
+
+    cursor: pointer;
+}
+
+/* =========================================================
+   LOGO
+========================================================= */
+
+.logo-box {
+    min-height: 235px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    padding: 22px;
+
+    border: 1px dashed #cbd5e1;
+
+    border-radius: 17px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #f8fafc,
+            #f1f5f9
+        );
+}
+
+.logo-box .form-control {
+    max-width: 100%;
+}
 
 .logo-preview {
+    width: 105px;
+    height: 105px;
 
-    width:100px;
-    height:100px;
-    border-radius:15px;
-    object-fit:cover;
-    border:3px solid #e5e7eb;
-    padding:5px;
+    object-fit: contain;
 
+    margin-bottom: 14px;
+
+    padding: 7px;
+
+    border: 2px solid #e2e8f0;
+
+    border-radius: 17px;
+
+    background: #fff;
+
+    box-shadow:
+        0 7px 18px rgba(15,23,42,.07);
 }
 
+/* =========================================================
+   SAVE BUTTON
+========================================================= */
 
-/* SWITCH */
+.settings-save {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
-.form-switch .form-check-input {
+    gap: 8px;
 
-    width:50px;
-    height:25px;
+    min-height: 48px;
 
+    padding: 10px 23px;
+
+    border: 0;
+
+    border-radius: 11px;
+
+    color: #fff;
+
+    background:
+        linear-gradient(
+            135deg,
+            #2563eb,
+            #4f46e5
+        );
+
+    font-size: 13px;
+    font-weight: 750;
+
+    box-shadow:
+        0 8px 20px rgba(37,99,235,.20);
+
+    transition:
+        transform .2s ease,
+        box-shadow .2s ease;
 }
 
+.settings-save:hover {
+    color: #fff;
 
-.form-switch .form-check-input:checked {
+    transform: translateY(-2px);
 
-    background-color:#4f46e5;
-    border-color:#4f46e5;
-
+    box-shadow:
+        0 12px 25px rgba(37,99,235,.28);
 }
 
+/* =========================================================
+   ACADEMIC / LINK SETTINGS
+========================================================= */
 
-.description-text {
+.academic-setting-item {
+    min-height: 88px;
 
-    margin-top:12px;
-    color:#6b7280;
-    font-size:14px;
+    display: flex;
+    align-items: center;
 
+    gap: 14px;
+
+    padding: 17px;
+
+    text-decoration: none;
+
+    background: #f8fafc;
+
+    border: 1px solid #e5eaf1;
+
+    border-radius: 15px;
+
+    transition:
+        background .2s ease,
+        border-color .2s ease,
+        transform .2s ease,
+        box-shadow .2s ease;
 }
 
+.academic-setting-item:hover {
+    background: #eef2ff;
 
+    border-color: #c7d2fe;
 
-/* BUTTON */
+    transform: translateY(-2px);
 
-.save-btn {
-
-    background:linear-gradient(
-        135deg,
-        #2563eb,
-        #4f46e5
-    );
-
-    border:none;
-    border-radius:12px;
-    padding:12px 30px;
-    font-weight:700;
-    color:white;
-
+    box-shadow:
+        0 8px 18px rgba(79,70,229,.07);
 }
 
+.academic-setting-icon {
+    width: 46px;
+    height: 46px;
 
-.save-btn:hover {
+    flex-shrink: 0;
 
-    transform:translateY(-2px);
-    box-shadow:0 8px 20px rgba(37,99,235,.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
+    border-radius: 12px;
+
+    background: #eef2ff;
+
+    font-size: 21px;
 }
 
+.academic-setting-content {
+    flex: 1;
 
-
-/* TERM CARD */
-
-.term-card {
-
-    display:block;
-    text-decoration:none;
-    color:inherit;
-
+    min-width: 0;
 }
 
+.academic-setting-content h4 {
+    margin: 0 0 4px;
 
-.term-card:hover {
+    color: #1e293b;
 
-    transform:translateY(-3px);
-
+    font-size: 14px;
+    font-weight: 800;
 }
 
+.academic-setting-content p {
+    margin: 0;
 
-/* MOBILE */
+    color: #64748b;
+
+    font-size: 12px;
+
+    line-height: 1.5;
+}
+
+.academic-setting-arrow {
+    flex-shrink: 0;
+
+    color: #4f46e5;
+
+    font-size: 20px;
+    font-weight: 800;
+}
+
+//* =========================================================
+   FEE STRUCTURE - FIXED PREMIUM INSIDE
+========================================================= */
+
+.fee-builder {
+    padding: 26px 26px !important;
+    background: #fff;
+    border: 1px solid #e8edf5;
+    border-radius: 20px;
+}
+
+.fee-builder-header {
+    padding: 18px 20px;
+    margin: 0 0 24px 0;
+    border-radius: 14px;
+    color: #fff;
+    text-align: center;
+    background: linear-gradient(135deg, #2938cf, #4338ca);
+    box-shadow: 0 10px 22px rgba(42,59,218,.16);
+}
+
+.fee-builder-header h4 {
+    margin: 0;
+    color: #fff;
+    font-size: 17px;
+    font-weight: 850;
+}
+
+.fee-builder-header p {
+    margin: 5px 0 0;
+    color: #dbeafe;
+    font-size: 11px;
+}
+
+/* Row with inner breathing space */
+.fee-builder .row.g-3 {
+    padding: 0 4px;
+}
+
+.fee-builder .form-label {
+    display: block !important;
+    margin-bottom: 9px !important;
+    font-size: 11.5px !important;
+    font-weight: 750 !important;
+    color: #374151 !important;
+    letter-spacing: .2px;
+}
+
+.fee-builder .form-control,
+.fee-builder .form-select {
+    height: 48px;
+    background: #f8fafc;
+    border: 1px solid #dce3ed;
+    border-radius: 12px;
+}
+
+.fee-row {
+    padding: 4px 0;
+}
+
+.fee-items-wrapper {
+    padding: 16px;
+    margin: 0 4px;
+    border: 1px solid #e8ecff;
+    border-radius: 14px;
+    background: #f8faff;
+}
+
+.fee-row + .fee-row {
+    margin-top: 8px;
+}
+
+.fee-remove {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 50%;
+    background: #fee2e2;
+    color: #dc2626;
+    font-size: 18px;
+    font-weight: 900;
+    transition: .2s ease;
+}
+
+.fee-remove:hover {
+    background: #fecaca;
+    transform: scale(1.05);
+}
+
+.fee-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border: 1px solid #c7d2fe;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: 12px;
+    font-weight: 750;
+    transition: .2s ease;
+}
+
+.fee-add-btn:hover {
+    background: #e0e7ff;
+}
+
+/* FEE SUMMARY */
+.fee-summary {
+    margin-top: 26px;
+    padding: 22px 4px 0 4px;
+    border-top: 1px solid #edf1f6;
+}
+
+.fee-summary-heading {
+    color: #1e293b;
+    font-size: 15px;
+    font-weight: 850;
+}
+
+.fee-summary-subtitle {
+    color: #64748b;
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+.fee-summary-meta {
+    padding: 14px;
+    margin-top: 14px;
+    border-radius: 13px;
+    background: #eef4ff;
+    border: 1px solid #dbeafe;
+    color: #334155;
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+.fee-item-card {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+}
+
+.fee-item-icon {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: #eef2ff;
+    font-size: 18px;
+}
+
+.fee-item-name {
+    color: #64748b;
+    font-size: 11px;
+}
+
+.fee-item-amount {
+    margin-top: 2px;
+    color: #111827;
+    font-size: 14px;
+    font-weight: 850;
+}
+
+.generate-fees-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 11px 15px;
+    border: 0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #2563eb, #4338ca);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 800;
+    transition: .2s ease;
+}
 
 @media(max-width:768px){
+  .fee-builder{padding:18px !important}
+}
+/* =========================================================
+   ADMISSION LETTER
+========================================================= */
 
-.settings-wrapper{
-    padding:15px;
+.admission-letter-intro {
+    display: flex;
+    align-items: center;
+
+    gap: 14px;
+
+    padding: 16px;
+
+    margin-bottom: 22px;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 15px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #f8fafc,
+            #eef2ff
+        );
 }
 
-.settings-header h2{
-    font-size:24px;
+.admission-letter-icon {
+    width: 48px;
+    height: 48px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 13px;
+
+    background: #e0e7ff;
+
+    color: #4338ca;
+
+    font-size: 21px;
 }
 
+.admission-letter-intro h4 {
+    margin: 0 0 3px;
+
+    color: #1e293b;
+
+    font-size: 14px;
+    font-weight: 850;
 }
 
+.admission-letter-intro p {
+    margin: 0;
 
+    color: #64748b;
+
+    font-size: 12px;
+
+    line-height: 1.55;
+}
+
+.variable-help {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: 7px;
+
+    margin-top: 10px;
+}
+
+.variable-chip {
+    display: inline-flex;
+    align-items: center;
+
+    padding: 5px 9px;
+
+    border-radius: 8px;
+
+    background: #eef2ff;
+
+    color: #4338ca;
+
+    font-family: monospace;
+
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.admission-letter-textarea {
+    min-height: 220px !important;
+
+    line-height: 1.7;
+}
+
+.admission-letter-footer {
+    min-height: 120px !important;
+
+    line-height: 1.7;
+}
+
+/* =========================================================
+   PLACEHOLDER
+========================================================= */
+
+.coming-soon {
+    padding: 50px 25px;
+
+    text-align: center;
+
+    border: 1px dashed #d8dee8;
+
+    border-radius: 16px;
+
+    background: #fafbfd;
+}
+
+.coming-soon-icon {
+    width: 54px;
+    height: 54px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin: 0 auto 12px;
+
+    border-radius: 15px;
+
+    background: #eef2ff;
+
+    color: #4f46e5;
+
+    font-size: 22px;
+}
+
+.coming-soon h4 {
+    margin: 0;
+
+    color: #1e293b;
+
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.coming-soon p {
+    max-width: 550px;
+
+    margin: 7px auto 0;
+
+    color: #7b8495;
+
+    font-size: 12px;
+
+    line-height: 1.6;
+}
+
+/* =========================================================
+   DESKTOP
+========================================================= */
+
+@media (min-width: 1100px) {
+
+    .settings-tab {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .settings-nav {
+        gap: 6px;
+    }
+}
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1000px) {
+
+    .settings-wrapper {
+        padding: 20px;
+    }
+
+    .settings-tab {
+        flex: 0 0 auto;
+    }
+
+    .settings-nav {
+        justify-content: flex-start;
+
+        overflow-x: auto;
+    }
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 768px) {
+
+    .settings-wrapper {
+        padding: 13px;
+    }
+
+    .settings-hero {
+        min-height: auto;
+
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        padding: 23px;
+
+        border-radius: 20px;
+    }
+
+    .settings-hero h1 {
+        font-size: 24px;
+    }
+
+    .settings-hero p {
+        font-size: 12px;
+    }
+
+    .school-name-badge {
+        width: 100%;
+
+        max-width: none;
+
+        justify-content: center;
+    }
+
+    .settings-nav {
+        position: sticky;
+
+        top: 5px;
+
+        z-index: 20;
+
+        padding: 6px;
+
+        margin-bottom: 15px;
+
+        border-radius: 14px;
+
+        box-shadow:
+            0 7px 20px rgba(15,23,42,.10);
+    }
+
+    .settings-tab {
+        min-height: 44px;
+
+        padding: 9px 13px;
+
+        font-size: 11px;
+    }
+
+    .settings-tab i {
+        font-size: 12px;
+    }
+
+    .settings-card {
+        padding: 19px;
+
+        border-radius: 17px;
+    }
+
+    .settings-card-title {
+        font-size: 16px;
+    }
+
+    .settings-save {
+        width: 100%;
+    }
+
+    .academic-setting-item {
+        min-height: 80px;
+    }
+
+    .fee-builder-header {
+        padding: 16px;
+    }
+}
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+
+    .settings-wrapper {
+        padding: 9px;
+    }
+
+    .settings-hero {
+        padding: 20px;
+
+        border-radius: 18px;
+    }
+
+    .settings-hero-icon {
+        width: 50px;
+        height: 50px;
+
+        font-size: 22px;
+    }
+
+    .settings-hero h1 {
+        font-size: 21px;
+    }
+
+    .settings-nav {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .settings-tab {
+        min-width: max-content;
+
+        padding: 9px 12px;
+    }
+
+    .settings-tab span {
+        display: inline;
+    }
+
+    .settings-card {
+        padding: 16px;
+
+        border-radius: 15px;
+    }
+
+    .settings-card-title {
+        gap: 9px;
+
+        font-size: 15px;
+    }
+
+    .settings-card-title i {
+        width: 34px;
+        height: 34px;
+    }
+
+    .academic-setting-item {
+        padding: 14px;
+    }
+
+    .academic-setting-content h4 {
+        font-size: 13px;
+    }
+
+    .academic-setting-content p {
+        font-size: 11px;
+    }
+
+    .permission-box {
+        align-items: flex-start;
+    }
+}
 </style>
-
 
 
 <div class="settings-wrapper">
 
+    <!-- =====================================================
+         HERO
+    ====================================================== -->
 
-<!-- HEADER -->
+    <div class="settings-hero">
 
-<div class="settings-header">
+        <div class="settings-hero-content">
 
-<h2>
-⚙️ School Settings
-</h2>
+            <div class="settings-hero-icon">
+                ⚙️
+            </div>
+
+            <h1>School Settings</h1>
+
+            <p>
+                Configure how your school's management system operates.
+            </p>
+
+        </div>
+
+        {% if school %}
+        <div class="school-name-badge">
+            🏫 {{ school.name }}
+        </div>
+        {% endif %}
+
+    </div>
 
 
-{% if school %}
+    <!-- =====================================================
+         HORIZONTAL SETTINGS NAVIGATION
+    ====================================================== -->
 
-<div class="school-name-badge">
-🏫 {{ school.name }}
+    <nav class="settings-nav" aria-label="School Settings">
+
+        <button
+            type="button"
+            class="settings-tab active"
+            data-tab="profile">
+
+            <i class="fas fa-school"></i>
+            <span>School Profile</span>
+
+        </button>
+
+
+        <button
+            type="button"
+            class="settings-tab"
+            data-tab="academic">
+
+            <i class="fas fa-book-open"></i>
+            <span>Academic</span>
+
+        </button>
+
+
+        {% if not is_basic_school %}
+
+        <button
+            type="button"
+            class="settings-tab"
+            data-tab="fees">
+
+            <i class="fas fa-money-bill-wave"></i>
+            <span>Fee Settings</span>
+
+        </button>
+        
+        {% endif %}
+
+
+        <button
+            type="button"
+            class="settings-tab"
+            data-tab="attendance">
+
+            <i class="fas fa-calendar-check"></i>
+            <span>Attendance</span>
+
+        </button>
+
+        {% if not is_basic_school %}
+
+        <button
+            type="button"
+            class="settings-tab"
+            data-tab="payments">
+
+            <i class="fas fa-credit-card"></i>
+            <span>Payments</span>
+
+        </button>
+        {% endif %}
+
+
+       {% if not is_basic_school %}
+
+        <button
+            type="button"
+            class="settings-tab"
+            data-tab="sms">
+
+            <i class="fas fa-comment-dots"></i>
+            <span>SMS</span>
+
+        </button>
+        
+        {% endif %}
+
+       {% if not is_basic_school %}
+
+        <button
+            type="button"
+            class="settings-tab"
+            data-tab="permissions">
+
+            <i class="fas fa-user-shield"></i>
+            <span>Permissions</span>
+
+        </button>
+        
+        {% endif %}
+
+
+        <button
+            type="button"
+            class="settings-tab"
+            data-tab="admission">
+
+            <i class="fas fa-file-signature"></i>
+            <span>Admission Letter</span>
+
+        </button>
+        
+
+        {% if not is_basic_school %}
+
+
+
+        <button
+            type="button"
+            class="settings-tab"
+            data-tab="system">
+
+            <i class="fas fa-sliders-h"></i>
+            <span>System</span>
+
+        </button>
+        
+        {% endif %}
+
+    </nav>
+
+
+    <!-- =====================================================
+         SETTINGS CONTENT
+    ====================================================== -->
+
+    <main class="settings-content">
+
+
+        <!-- =================================================
+             SCHOOL PROFILE
+        ================================================== -->
+
+        <div
+            class="settings-panel active"
+            id="tab-profile">
+
+            <form
+                method="post"
+                enctype="multipart/form-data">
+
+                {% csrf_token %}
+
+                <div class="settings-card">
+
+                    <h3 class="settings-card-title">
+                        <i class="fas fa-school"></i>
+                        School Profile
+                    </h3>
+
+
+                    <div class="row g-4">
+
+                        <div class="col-lg-8">
+
+                            <div class="mb-3">
+
+                                <label class="form-label">
+                                    School Name
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="name"
+                                    value="{{ school.name|default:'' }}"
+                                    class="form-control"
+                                    required>
+
+                            </div>
+
+
+                            <div class="mb-3">
+
+                                <label class="form-label">
+                                    Address
+                                </label>
+
+                                <textarea
+                                    name="address"
+                                    class="form-control"
+                                    rows="3">{{ school.address|default:'' }}</textarea>
+
+                            </div>
+
+
+                            <div class="mb-3">
+
+                                <label class="form-label">
+                                    School Motto
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="motto"
+                                    value="{{ school.motto|default:'' }}"
+                                    class="form-control"
+                                    placeholder="e.g. Knowledge is Light">
+
+                            </div>
+
+
+                            <div class="row g-3">
+
+                                <div class="col-md-6">
+
+                                    <label class="form-label">
+                                        Phone
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        name="phone"
+                                        value="{{ school.phone|default:'' }}"
+                                        class="form-control">
+
+                                </div>
+
+
+                                <div class="col-md-6">
+
+                                    <label class="form-label">
+                                        GPS Address
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        name="gps_address"
+                                        value="{{ school.gps_address|default:'' }}"
+                                        class="form-control">
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="mt-3">
+
+                                <label class="form-label">
+                                    Email
+                                </label>
+
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value="{{ school.email|default:'' }}"
+                                    class="form-control">
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="col-lg-4">
+
+                            <div class="logo-box">
+
+                                <label class="form-label">
+                                    School Logo
+                                </label>
+
+                                {% if school.logo %}
+
+                                <img
+                                    src="{{ school.logo.url }}"
+                                    class="logo-preview"
+                                    alt="School Logo">
+
+                                {% endif %}
+
+                                <input
+                                    type="file"
+                                    name="logo"
+                                    accept="image/*"
+                                    class="form-control">
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="d-flex justify-content-end mt-3">
+
+                    <button
+                        type="submit"
+                        name="update_school"
+                        class="settings-save">
+
+                        <i class="fas fa-save"></i>
+
+                        Save School Profile
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+
+        <!-- =================================================
+             ACADEMIC SETTINGS
+        ================================================== -->
+
+        <div
+            class="settings-panel"
+            id="tab-academic">
+
+            <div class="settings-card">
+
+                <h3 class="settings-card-title">
+
+                    <i class="fas fa-book-open"></i>
+
+                    Academic Settings
+
+                </h3>
+
+
+                <div class="row g-3">
+
+                    <div class="col-lg-6">
+
+                        <a
+                            href="{% url 'accounts:term_settings' %}"
+                            class="academic-setting-item">
+
+                            <div class="academic-setting-icon">
+                                📅
+                            </div>
+
+                            <div class="academic-setting-content">
+
+                                <h4>
+                                    Term Settings
+                                </h4>
+
+                                <p>
+                                    Manage academic years, terms,
+                                    opening & closing dates,
+                                    CA and Exam totals.
+                                </p>
+
+                            </div>
+
+                            <div class="academic-setting-arrow">
+                                →
+                            </div>
+
+                        </a>
+
+                    </div>
+                    <div class="col-lg-6">
+
+    <a
+        href="{% url 'accounts:grading-settings' %}"
+        class="academic-setting-item">
+
+        <div class="academic-setting-icon">
+            🎓
+        </div>
+
+        <div class="academic-setting-content">
+
+            <h4>
+                Grading Settings
+            </h4>
+
+            <p>
+                Configure grade ranges, scores and remarks
+                for each term or across all terms.
+            </p>
+
+        </div>
+
+        <div class="academic-setting-arrow">
+            →
+        </div>
+
+    </a>
+
+</div>
+
+
+{% if not is_basic_school %}
+
+<div class="col-lg-6">
+
+    <a
+        href="{% url 'accounts:add_event' %}"
+        class="academic-setting-item">
+
+        <div class="academic-setting-icon">
+            🗓️
+        </div>
+
+        <div class="academic-setting-content">
+
+            <h4>
+                Academic Calendar
+            </h4>
+
+            <p>
+                Add holidays, vacations,
+                examinations and school events.
+            </p>
+
+        </div>
+
+        <div class="academic-setting-arrow">
+            →
+        </div>
+
+    </a>
+
 </div>
 
 {% endif %}
 
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             FEE SETTINGS
+        ================================================== -->
+
+        <div
+            class="settings-panel"
+            id="tab-fees">
+
+            <div class="settings-card fee-builder">
+
+                <div class="fee-builder-header">
+
+                    <h4>
+                        Create Fee Structure - Dynamic
+                    </h4>
+
+                    <p>
+                        Define the fee items and amounts for a
+                        particular stage and term.
+                    </p>
+
+                </div>
+
+
+                <form method="post">
+
+                    {% csrf_token %}
+
+                    <input
+                        type="hidden"
+                        name="create_fee_structure"
+                        value="1">
+
+
+                    <div class="row g-3 mb-4">
+
+                        <div class="col-md-3 col-6">
+
+                            <label class="form-label">
+                                Stage / Level
+                            </label>
+
+                            <select
+                                name="stage"
+                                class="form-select"
+                                required>
+
+                                <option value="">
+                                    Select Stage
+                                </option>
+
+                                <option value="creche">
+                                    Creche
+                                </option>
+
+                                <option value="nursery">
+                                    Nursery
+                                </option>
+
+                                <option value="kg">
+                                    KG
+                                </option>
+
+                                <option value="lower_primary">
+                                    Lower Primary
+                                </option>
+
+                                <option value="upper_primary">
+                                    Upper Primary
+                                </option>
+
+                                <option value="jhs">
+                                    JHS
+                                </option>
+
+                                <option value="shs">
+                                    SHS
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="col-md-3 col-6">
+
+                            <label class="form-label">
+                                Term
+                            </label>
+
+                            <select
+                                name="term"
+                                class="form-select"
+                                required>
+
+                                <option value="">
+                                    Select Term
+                                </option>
+
+                                {% for t in terms %}
+
+                                <option value="{{ t.id }}">
+                                    {{ t }}
+                                </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="col-md-3 col-6">
+
+                            <label class="form-label">
+                                Academic Year
+                            </label>
+
+                            <input
+                                type="text"
+                                name="academic_year"
+                                value="2025/2026"
+                                class="form-control">
+
+                        </div>
+
+
+                        <div class="col-md-3 col-6">
+
+                            <label class="form-label">
+                                Due Date
+                            </label>
+
+                            <input
+                                type="date"
+                                name="due_date"
+                                class="form-control">
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+
+                        <label class="form-label mb-0">
+                            Fee Items
+                        </label>
+
+                        <button
+                            type="button"
+                            onclick="addFeeFixed()"
+                            class="fee-add-btn">
+
+                            <span>+</span>
+                            Add Fee Type
+
+                        </button>
+
+                    </div>
+
+
+                    <div class="fee-items-wrapper">
+
+                        <div id="fee-items-fixed">
+
+                            <div class="fee-row row g-2 align-items-center">
+
+                                <div class="col-5">
+
+                                    <input
+                                        type="text"
+                                        name="fee_name[]"
+                                        class="form-control"
+                                        placeholder="Fee Type e.g School Fees"
+                                        required>
+
+                                </div>
+
+
+                                <div class="col-5">
+
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        name="fee_amount[]"
+                                        class="form-control"
+                                        placeholder="Amount e.g 500"
+                                        required>
+
+                                </div>
+
+
+                                <div class="col-2 text-center">
+
+                                    <button
+                                        type="button"
+                                        onclick="removeFeeFixed(this)"
+                                        class="fee-remove">
+
+                                        ×
+
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <button
+                        type="submit"
+                        class="settings-save w-100 mt-4">
+
+                        <i class="fas fa-save"></i>
+
+                        Save Fee Structure
+
+                    </button>
+
+                </form>
+
+
+                {% if fee_breakdown %}
+
+                <div class="fee-summary">
+
+                    <div class="fee-summary-heading">
+                        📋 Fee Generation Summary
+                    </div>
+
+                    <div class="fee-summary-subtitle">
+                        Review the fee structure before generating
+                        student fees.
+                    </div>
+
+
+                    <div class="fee-summary-meta">
+
+                        <strong>Stage:</strong>
+                        {{ fee_breakdown.get_stage_display }}
+
+                        &nbsp; | &nbsp;
+
+                        <strong>Term:</strong>
+                        {{ fee_breakdown.term }}
+
+                        &nbsp; | &nbsp;
+
+                        <strong>Academic Year:</strong>
+                        {{ fee_breakdown.academic_year }}
+
+                        &nbsp; | &nbsp;
+
+                        <strong>Total:</strong>
+                        ₵{{ fee_breakdown.total_amount }}
+
+                    </div>
+
+
+                    <div class="row g-3 mt-1">
+
+                        {% for item in fee_breakdown.items.all %}
+
+                        <div class="col-6 col-md-3">
+
+                            <div class="fee-item-card">
+
+                                <div class="fee-item-icon">
+                                    💰
+                                </div>
+
+                                <div>
+
+                                    <div class="fee-item-name">
+                                        {{ item.name }}
+                                    </div>
+
+                                    <div class="fee-item-amount">
+                                        ₵{{ item.amount }}
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        {% endfor %}
+
+                    </div>
+
+
+                    <form
+                        method="POST"
+                        action="{% url 'accounts:generate_fees_for_term' %}"
+                        class="mt-4">
+
+                        {% csrf_token %}
+
+                        <input
+                            type="hidden"
+                            name="stage_group"
+                            value="{{ fee_breakdown.stage }}">
+
+                        <input
+                            type="hidden"
+                            name="term"
+                            value="{{ fee_breakdown.term.id }}">
+
+                        <input
+                            type="hidden"
+                            name="academic_year"
+                            value="{{ fee_breakdown.academic_year }}">
+
+
+                        <button
+                            type="submit"
+                            class="generate-fees-btn">
+
+                            <i class="fas fa-plus-circle me-2"></i>
+
+                            Generate Fees for
+                            {{ fee_breakdown.get_stage_display }}
+                            -
+                            {{ fee_breakdown.term }}
+                            -
+                            {{ fee_breakdown.academic_year }}
+
+                        </button>
+
+                    </form>
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             ATTENDANCE SETTINGS
+        ================================================== -->
+
+        <div
+            class="settings-panel"
+            id="tab-attendance">
+
+            <form method="post">
+
+                {% csrf_token %}
+
+                <div class="settings-card">
+
+                    <h3 class="settings-card-title">
+
+                        <i class="fas fa-calendar-check"></i>
+
+                        Attendance Settings
+
+                    </h3>
+
+
+                    <div class="mb-4">
+
+                        <label class="form-label">
+                            Attendance Mode
+                        </label>
+
+                        <select
+                            name="attendance_mode"
+                            class="form-select">
+
+                            <option
+                                value="subject"
+                                {% if setting.attendance_mode == "subject" %}
+                                selected
+                                {% endif %}>
+
+                                Per Subject Attendance
+
+                            </option>
+
+                            <option
+                                value="class_teacher"
+                                {% if setting.attendance_mode == "class_teacher" %}
+                                selected
+                                {% endif %}>
+
+                                Class Teacher Only
+
+                            </option>
+
+                        </select>
+
+
+                        <div class="settings-description">
+
+                            Choose how attendance will be
+                            recorded by teachers.
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="permission-box">
+
+                        <div
+                            style="
+                                width:45px;
+                                height:45px;
+                                flex-shrink:0;
+                                display:flex;
+                                align-items:center;
+                                justify-content:center;
+                                border-radius:12px;
+                                background:#eef2ff;
+                                color:#4f46e5;
+                                font-size:19px;
+                            ">
+
+                            <i class="fas fa-users"></i>
+
+                        </div>
+
+
+                        <div>
+
+                            <div
+                                style="
+                                    color:#1e293b;
+                                    font-size:13px;
+                                    font-weight:800;
+                                    margin-bottom:4px;
+                                ">
+
+                                Attendance Mode
+
+                            </div>
+
+
+                            <div
+                                style="
+                                    color:#64748b;
+                                    font-size:12px;
+                                    line-height:1.6;
+                                ">
+
+                                <strong>
+                                    Per Subject Attendance:
+                                </strong>
+
+                                Each subject teacher marks
+                                attendance for their subject.
+
+                                <br>
+
+                                <strong>
+                                    Class Teacher Only:
+                                </strong>
+
+                                The assigned class teacher
+                                is responsible for marking attendance.
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    name="update_attendance"
+                    class="settings-save">
+
+                    <i class="fas fa-save"></i>
+
+                    Save Attendance Settings
+
+                </button>
+
+            </form>
+
+        </div>
+
+
+        <!-- =================================================
+             PAYMENT SETTINGS
+        ================================================== -->
+
+        <div
+            class="settings-panel"
+            id="tab-payments">
+
+            <div class="settings-card">
+
+                <h3 class="settings-card-title">
+
+                    <i class="fas fa-credit-card"></i>
+
+                    Payment Settings
+
+                </h3>
+
+
+                <p class="settings-description mb-4">
+
+                    Configure the payment methods and online
+                    payment gateways your school accepts.
+
+                </p>
+
+
+                <a
+                    href="{% url 'accounts:school_payment_settings' %}"
+                    class="academic-setting-item">
+
+                    <div class="academic-setting-icon">
+                        💳
+                    </div>
+
+
+                    <div class="academic-setting-content">
+
+                        <h4>
+                            Manage Payment Settings
+                        </h4>
+
+                        <p>
+                            Configure cash payments, MoMo,
+                            bank transfers, Hubtel, Paystack
+                            and Flutterwave.
+                        </p>
+
+                    </div>
+
+
+                    <div class="academic-setting-arrow">
+                        →
+                    </div>
+
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             SMS SETTINGS
+        ================================================== -->
+
+        <div
+            class="settings-panel"
+            id="tab-sms">
+
+            <div class="settings-card">
+
+                <h3 class="settings-card-title">
+
+                    <i class="fas fa-comment-dots"></i>
+
+                    SMS Settings
+
+                </h3>
+
+
+                <p class="settings-description mb-4">
+
+                    Configure your school's SMS provider,
+                    sender ID, test mode and messaging credentials.
+
+                </p>
+
+
+                <a
+                    href="{% url 'accounts:school_sms_settings' %}"
+                    class="academic-setting-item">
+
+                    <div class="academic-setting-icon">
+                        📱
+                    </div>
+
+
+                    <div class="academic-setting-content">
+
+                        <h4>
+                            Manage SMS Settings
+                        </h4>
+
+                        <p>
+                            Configure Hubtel, MNotify,
+                            sender ID and SMS test mode.
+                        </p>
+
+                    </div>
+
+
+                    <div class="academic-setting-arrow">
+                        →
+                    </div>
+
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             PERMISSIONS
+        ================================================== -->
+
+        <div
+            class="settings-panel"
+            id="tab-permissions">
+
+            <form method="post">
+
+                {% csrf_token %}
+
+                <div class="settings-card">
+
+                    <h3 class="settings-card-title">
+
+                        <i class="fas fa-user-shield"></i>
+
+                        Permission Settings
+
+                    </h3>
+
+
+                    <div class="permission-box">
+
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            name="can_teachers_manage_students"
+                            id="teacherPermission"
+                            {% if school and school.can_teachers_manage_students %}
+                            checked
+                            {% endif %}>
+
+
+                        <label for="teacherPermission">
+
+                            Allow teachers to manage students
+                            in their classes
+
+                        </label>
+
+                    </div>
+
+
+                    <div class="settings-description">
+
+                        When enabled, teachers can add or remove
+                        students assigned to their classes.
+
+                        <br>
+
+                        When disabled, only administrators can
+                        manage student assignments.
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    name="update_permission"
+                    class="settings-save">
+
+                    <i class="fas fa-save"></i>
+
+                    Save Permission Settings
+
+                </button>
+
+            </form>
+
+        </div>
+
+
+        <!-- =================================================
+             ADMISSION LETTER
+        ================================================== -->
+
+        <div
+            class="settings-panel"
+            id="tab-admission">
+
+            <form method="POST">
+
+                {% csrf_token %}
+
+
+                <div class="settings-card">
+
+                    <h3 class="settings-card-title">
+
+                        <i class="fas fa-file-signature"></i>
+
+                        Admission Letter
+
+                    </h3>
+
+
+                    <div class="admission-letter-intro">
+
+                        <div class="admission-letter-icon">
+
+                            <i class="fas fa-envelope-open-text"></i>
+
+                        </div>
+
+
+                        <div>
+
+                            <h4>
+                                Admission Letter Wording
+                            </h4>
+
+                            <p>
+                                Customize the wording used when
+                                generating student admission letters.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="mb-4">
+
+                        <label class="form-label">
+                            Available Variables
+                        </label>
+
+                        <div class="settings-description">
+
+                            You can use these variables in your
+                            admission letter. They will be replaced
+                            automatically when the letter is generated.
+
+                        </div>
+
+
+                        <div class="variable-help">
+
+                            <span class="variable-chip">
+                                {school_name}
+                            </span>
+
+                            <span class="variable-chip">
+                                {student_name}
+                            </span>
+
+                            <span class="variable-chip">
+                                {class_name}
+                            </span>
+
+                            <span class="variable-chip">
+                                {academic_year}
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="mb-4">
+
+                        <label class="form-label">
+                            Letter Title
+                        </label>
+
+                        <input
+                            type="text"
+                            name="admission_letter_title"
+                            value="{{ school.admission_letter_title }}"
+                            class="form-control"
+                            placeholder="e.g. Admission Letter">
+
+                    </div>
+
+
+                    <div class="mb-4">
+
+                        <label class="form-label">
+                            Letter Body
+                        </label>
+
+                        <textarea
+                            name="admission_letter_body"
+                            rows="10"
+                            class="form-control admission-letter-textarea"
+                            placeholder="Write the main admission letter wording here...">{{ school.admission_letter_body }}</textarea>
+
+                        <div class="settings-description">
+
+                            This is the main body of the admission
+                            letter. You can use the available variables
+                            above.
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="mb-4">
+
+                        <label class="form-label">
+                            Letter Footer
+                        </label>
+
+                        <textarea
+                            name="admission_letter_footer"
+                            rows="5"
+                            class="form-control admission-letter-footer"
+                            placeholder="e.g. We look forward to welcoming you...">{{ school.admission_letter_footer }}</textarea>
+
+                        <div class="settings-description">
+
+                            Add any closing message, signature wording
+                            or additional information that should appear
+                            at the bottom of the letter.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="d-flex justify-content-end mt-3">
+
+                    <button
+                        type="submit"
+                        name="update_admission_letter"
+                        class="settings-save">
+
+                        <i class="fas fa-save"></i>
+
+                        Save Admission Letter
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+
+        <!-- =================================================
+             SYSTEM
+        ================================================== -->
+
+        <div
+            class="settings-panel"
+            id="tab-system">
+
+            <div class="settings-card">
+
+                <h3 class="settings-card-title">
+
+                    <i class="fas fa-sliders-h"></i>
+
+                    System Settings
+
+                </h3>
+
+
+                <div class="coming-soon">
+
+                    <div class="coming-soon-icon">
+                        ⚙️
+                    </div>
+
+
+                    <h4>
+                        System Configuration
+                    </h4>
+
+
+                    <p>
+                        General school-wide system preferences
+                        will be configured here.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+    </main>
 
 </div>
 
 
+<script>
+/* =========================================================
+   SETTINGS TABS
+========================================================= */
 
-<!-- SCHOOL DETAILS -->
+document.addEventListener("DOMContentLoaded", function () {
 
-<form method="post" enctype="multipart/form-data">
+    const tabs = document.querySelectorAll(".settings-tab");
+    const panels = document.querySelectorAll(".settings-panel");
 
-{% csrf_token %}
+    tabs.forEach(function (tab) {
 
+        tab.addEventListener("click", function () {
 
-<div class="settings-card">
+            const target = this.dataset.tab;
 
+            /* Remove active state */
+            tabs.forEach(function (item) {
+                item.classList.remove("active");
+            });
 
-<h4 class="section-title">
-🏫 School Profile
-</h4>
+            panels.forEach(function (panel) {
+                panel.classList.remove("active");
+            });
 
 
+            /* Activate selected tab */
+            this.classList.add("active");
 
-<div class="row">
 
+            /* Activate selected panel */
+            const panel = document.getElementById(
+                "tab-" + target
+            );
 
-<div class="col-md-8">
+            if (panel) {
 
+                panel.classList.add("active");
 
-<div class="mb-3">
+                /*
+                 * On mobile, move the selected tab
+                 * into view automatically.
+                 */
+                this.scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest",
+                    inline: "center"
+                });
 
-<label class="form-label">
-School Name
-</label>
+            }
 
+        });
 
-<input 
-type="text"
-name="name"
-value="{{ school.name|default:'' }}"
-class="form-control"
-required>
+    });
 
-</div>
+});
 
 
+/* =========================================================
+   FEE STRUCTURE
+========================================================= */
 
-<div class="mb-3">
+function addFeeFixed() {
 
-<label class="form-label">
-Address
-</label>
+    const container =
+        document.getElementById("fee-items-fixed");
 
+    if (!container) {
+        return;
+    }
 
-<textarea
-name="address"
-class="form-control"
-rows="3">{{ school.address|default:'' }}</textarea>
 
+    container.insertAdjacentHTML(
+        "beforeend",
+        `
+        <div class="fee-row row g-2 align-items-center">
 
-</div>
+            <div class="col-5">
 
+                <input
+                    type="text"
+                    name="fee_name[]"
+                    class="form-control"
+                    placeholder="Fee Type e.g PTA Dues"
+                    required>
 
+            </div>
 
-<div class="row">
 
+            <div class="col-5">
 
-<div class="col-md-4 mb-3">
+                <input
+                    type="number"
+                    step="0.01"
+                    name="fee_amount[]"
+                    class="form-control"
+                    placeholder="Amount e.g 500"
+                    required>
 
-<label class="form-label">
-Phone
-</label>
+            </div>
 
 
-<input
-type="text"
-name="phone"
-value="{{ school.phone|default:'' }}"
-class="form-control">
+            <div class="col-2 text-center">
 
-</div>
+                <button
+                    type="button"
+                    onclick="removeFeeFixed(this)"
+                    class="fee-remove">
 
+                    ×
 
+                </button>
 
-<div class="col-md-4 mb-3">
+            </div>
 
-<label class="form-label">
-Email
-</label>
+        </div>
+        `
+    );
 
+}
 
-<input
-type="email"
-name="email"
-value="{{ school.email|default:'' }}"
-class="form-control">
 
-</div>
+function removeFeeFixed(button) {
 
+    const container =
+        document.getElementById("fee-items-fixed");
 
+    if (!container) {
+        return;
+    }
 
-<div class="col-md-4 mb-3">
 
-<label class="form-label">
-GPS Address
-</label>
+    const rows =
+        container.querySelectorAll(".fee-row");
 
 
-<input
-type="text"
-name="gps_address"
-value="{{ school.gps_address|default:'' }}"
-class="form-control">
+    if (rows.length <= 1) {
 
-</div>
+        alert("At least one fee required");
 
+        return;
 
-</div>
+    }
 
 
+    const row =
+        button.closest(".fee-row");
 
-</div>
 
+    if (row) {
+        row.remove();
+    }
 
-
-
-<div class="col-md-4 text-center">
-
-
-<label class="form-label d-block">
-School Logo
-</label>
-
-
-{% if school.logo %}
-
-<img 
-src="{{ school.logo.url }}"
-class="logo-preview mb-3">
-
-{% endif %}
-
-
-<input 
-type="file"
-name="logo"
-accept="image/*"
-class="form-control">
-
-
-</div>
-
-
-
-</div>
-
-
-</div>
-
-<!-- TEACHER PERMISSIONS -->
-
-<div class="settings-card">
-
-<h4 class="section-title">
-👨‍🏫 Teacher Permissions
-</h4>
-
-
-<div class="form-check form-switch d-flex align-items-center gap-3">
-
-<input 
-class="form-check-input"
-type="checkbox"
-name="can_teachers_manage_students"
-id="teacherPermission"
-
-{% if school and school.can_teachers_manage_students %}
-checked
-{% endif %}
->
-
-
-<label 
-class="form-check-label"
-for="teacherPermission">
-
-Allow teachers to manage students in their classes
-
-</label>
-
-
-</div>
-
-
-<div class="description-text">
-
-When enabled, teachers can add or remove students assigned to their classes.
-<br>
-
-When disabled, only administrators can manage student assignments.
-
-</div>
-
-
-</div>
-
-
-
-
-
-<!-- ATTENDANCE SETTINGS -->
-
-
-<div class="settings-card">
-
-
-<h4 class="section-title">
-🎯 Attendance Configuration
-</h4>
-
-
-
-<label class="form-label">
-Attendance Mode
-</label>
-
-
-<select 
-name="attendance_mode"
-class="form-select">
-
-
-<option 
-value="subject"
-{% if setting.attendance_mode == "subject" %}
-selected
-{% endif %}
->
-
-Per Subject Attendance
-
-</option>
-
-
-
-<option
-value="class_teacher"
-{% if setting.attendance_mode == "class_teacher" %}
-selected
-{% endif %}
->
-
-Class Teacher Only
-
-</option>
-
-
-</select>
-
-
-<div class="description-text">
-
-Choose how teachers will mark attendance in the school.
-
-</div>
-
-
-
-</div>
-
-
-
-
-
-<button 
-type="submit"
-name="update_school"
-class="btn save-btn mb-4">
-
-💾
-
-{% if school %}
-Save School Settings
-
-{% else %}
-
-Create School
-
-{% endif %}
-
-</button>
-
-
-
-</form>
-
-
-
-
-
-{% if school %}
-
-
-
-<!-- TERM SETTINGS -->
-
-
-<a 
-href="{% url 'accounts:term_settings' %}"
-class="settings-card term-card">
-
-
-<h4 class="section-title">
-
-📅 Academic Term Settings
-
-</h4>
-
-
-
-<div class="description-text">
-
-
-Manage academic terms, CA totals, examination totals and active sessions.
-
-
-
-<br><br>
-
-
-<strong>
-Current Active Term:
-</strong>
-
-
-{% if active_term %}
-
-
-{{ active_term.get_term_number_display }}
-
-<br>
-
-
-<strong>
-Academic Year:
-</strong>
-
-{{ active_term.academic_year }}
-
-
-<br><br>
-
-
-<span>
-
-CA:
-{{ active_term.ca_total }}
-
-|
-
-Exam:
-{{ active_term.exam_total }}
-
-</span>
-
-
-{% else %}
-
-
-No active term configured.
-
-
-{% endif %}
-
-
-
-</div>
-
-
-
-</a>
-
-
-
-
-{% endif %}
-
-
-
-</div>
-
+}
+</script>
 
 {% endblock %}

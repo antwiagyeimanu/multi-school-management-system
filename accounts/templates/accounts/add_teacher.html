@@ -6,46 +6,173 @@
 
 <style>
 
-/* PAGE */
+/* ==========================
+   TEACHER PAGE
+========================== */
+
 .teacher-page{
-    background:#f8fafc;
-    min-height:100vh;
-    padding:25px;
+    max-width:1100px;
+    margin:0 auto;
+    padding:30px 20px 50px;
 }
 
+/* ==========================
+   PAGE HEADER
+========================== */
 
-/* HERO */
 .teacher-hero{
-    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    background:linear-gradient(135deg,#2563eb,#1e3a8a);
+    border-radius:24px;
+    padding:30px 35px;
     color:white;
-    border-radius:22px;
-    padding:35px;
+    display:flex;
+    align-items:center;
+    gap:18px;
     margin-bottom:25px;
-    box-shadow:0 15px 35px rgba(37,99,235,.25);
+    box-shadow:0 15px 35px rgba(37,99,235,.20);
+}
+
+.teacher-hero-icon{
+    width:58px;
+    height:58px;
+    border-radius:16px;
+    background:rgba(255,255,255,.15);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:30px;
+    flex-shrink:0;
 }
 
 .teacher-hero h2{
-    margin:0;
-    font-size:32px;
+    margin:0 0 6px;
+    font-size:30px;
     font-weight:800;
 }
 
 .teacher-hero p{
-    margin-top:8px;
-    opacity:.85;
+    margin:0;
+    color:#dbeafe;
+    font-size:15px;
 }
 
+/* ==========================
+   FORM CARD
+========================== */
 
-/* CARD */
 .teacher-card{
     background:white;
     border-radius:22px;
-    padding:30px;
-    box-shadow:0 10px 30px rgba(0,0,0,.08);
+    padding:28px;
+    border:1px solid #e5e7eb;
+    box-shadow:0 8px 25px rgba(0,0,0,.06);
 }
 
+/* ==========================
+   FORM GRID
+========================== */
 
-/* ALERTS */
+.teacher-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:22px;
+}
+
+.teacher-section{
+    background:#f8fafc;
+    border:1px solid #e5e7eb;
+    padding:24px;
+    border-radius:18px;
+}
+
+.section-title{
+    font-size:18px;
+    font-weight:800;
+    color:#111827;
+    margin-bottom:20px;
+}
+
+/* ==========================
+   FORM FIELDS
+========================== */
+
+.teacher-section label{
+    display:block;
+    font-weight:700;
+    color:#374151;
+    margin-bottom:7px;
+    font-size:14px;
+}
+
+.teacher-section input:not([type="checkbox"]),
+.teacher-section select,
+.teacher-section textarea{
+    width:100%;
+    border-radius:12px;
+    border:1px solid #d1d5db;
+    padding:10px 14px;
+    font-size:15px;
+    margin-bottom:16px;
+    background:white;
+    box-sizing:border-box;
+}
+
+.teacher-section input:not([type="checkbox"]),
+.teacher-section select{
+    height:45px;
+}
+
+.teacher-section textarea{
+    min-height:90px;
+    resize:vertical;
+}
+
+.teacher-section input:focus,
+.teacher-section select:focus,
+.teacher-section textarea:focus{
+    outline:none;
+    border-color:#2563eb;
+    box-shadow:0 0 0 4px rgba(37,99,235,.12);
+}
+
+/* ==========================
+   CLASS TEACHER
+========================== */
+
+.class-teacher-check{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-top:4px;
+}
+
+.class-teacher-check input[type="checkbox"]{
+    width:18px;
+    height:18px;
+    margin:0;
+    accent-color:#2563eb;
+}
+
+.class-teacher-check label{
+    margin:0;
+}
+
+/* ==========================
+   PHOTO
+========================== */
+
+.photo-box{
+    background:white;
+    border:2px dashed #cbd5e1;
+    padding:14px;
+    border-radius:15px;
+    margin-bottom:16px;
+}
+
+/* ==========================
+   ALERTS
+========================== */
+
 .success-box{
     background:#ecfdf5;
     border-left:5px solid #10b981;
@@ -64,126 +191,102 @@
     margin-bottom:20px;
 }
 
+/* ==========================
+   BUTTONS
+========================== */
 
-/* FORM */
-.teacher-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:30px;
+.teacher-actions{
+    margin-top:25px;
+    display:flex;
+    gap:12px;
 }
 
-.teacher-section{
-    background:#f8fafc;
-    padding:25px;
-    border-radius:18px;
-}
-
-.section-title{
-    font-size:18px;
-    font-weight:800;
-    color:#1f2937;
-    margin-bottom:20px;
-}
-
-
-/* INPUTS */
-label{
-    display:block;
-    font-weight:700;
-    color:#374151;
-    margin-bottom:7px;
-    font-size:14px;
-}
-
-
-input,
-select{
-    width:100%;
-    height:45px;
-    border-radius:12px;
-    border:1px solid #d1d5db;
-    padding:10px 14px;
-    font-size:15px;
-    margin-bottom:18px;
-    background:white;
-}
-
-
-input:focus,
-select:focus{
-    outline:none;
-    border-color:#2563eb;
-    box-shadow:0 0 0 4px rgba(37,99,235,.12);
-}
-
-
-/* CHECKBOX */
-input[type="checkbox"]{
-    width:18px;
-    height:18px;
-    accent-color:#2563eb;
-}
-
-
-/* PHOTO */
-.photo-box{
-    background:white;
-    border:2px dashed #cbd5e1;
-    padding:15px;
-    border-radius:15px;
-}
-
-
-/* BUTTON */
 .teacher-btn{
-    width:100%;
-    padding:14px;
+    flex:1;
+    padding:14px 25px;
     border:none;
-    border-radius:50px;
+    border-radius:12px;
     background:linear-gradient(135deg,#2563eb,#1d4ed8);
     color:white;
     font-size:16px;
     font-weight:700;
+    cursor:pointer;
 }
-
 
 .teacher-btn:hover{
-    transform:translateY(-2px);
+    transform:translateY(-1px);
 }
 
-
-/* MOBILE */
-@media(max-width:768px){
-
-.teacher-page{
-    padding:15px;
+.teacher-cancel{
+    padding:14px 25px;
+    background:#6b7280;
+    color:white;
+    border-radius:12px;
+    text-decoration:none;
+    font-weight:700;
+    text-align:center;
 }
 
-.teacher-grid{
-    grid-template-columns:1fr;
-}
+/* ==========================
+   MOBILE
+========================== */
 
-.teacher-hero h2{
-    font-size:25px;
-}
+@media(max-width:700px){
 
+    .teacher-page{
+        padding:20px 12px 40px;
+    }
+
+    .teacher-hero{
+        padding:24px 20px;
+        border-radius:18px;
+    }
+
+    .teacher-hero h2{
+        font-size:24px;
+    }
+
+    .teacher-grid{
+        grid-template-columns:1fr;
+    }
+
+    .teacher-card{
+        padding:18px 14px;
+        border-radius:18px;
+    }
+
+    .teacher-section{
+        padding:18px 15px;
+        border-radius:15px;
+    }
+
+    .teacher-actions{
+        flex-direction:column;
+    }
+
+    .teacher-cancel{
+        width:100%;
+        box-sizing:border-box;
+    }
 }
 
 </style>
 
-
 <div class="teacher-page">
-
 
 <div class="teacher-hero">
 
-<h2>
-👨‍🏫 Add New Teacher
-</h2>
+    <div class="teacher-hero-icon">
+        👨‍🏫
+    </div>
 
-<p>
-Register teacher details and assign them to your school.
-</p>
+    <div>
+        <h2>Add New Teacher</h2>
+
+        <p>
+            Create teacher profile and manage teaching assignments.
+        </p>
+    </div>
 
 </div>
 
@@ -309,6 +412,18 @@ Last Name *
 
 {{ form.last_name }}
 
+<label>
+Phone Number *
+</label>
+
+{{ form.phone }}
+
+
+<label>
+Email*
+</label>
+
+{{ form.email }}
 
 <label>
 Gender
@@ -365,18 +480,7 @@ Religion
 {{ form.religion }}
 
 
-<label>
-Phone Number *
-</label>
 
-{{ form.phone }}
-
-
-<label>
-Email
-</label>
-
-{{ form.email }}
 
 
 <label>
@@ -398,6 +502,33 @@ Department
 </label>
 
 {{ form.department }}
+
+<label>
+Address
+</label>
+
+{{ form.address }}
+
+
+<label>
+Emergency Contact Name
+</label>
+
+{{ form.emergency_contact_name }}
+
+
+<label>
+Emergency Contact Phone
+</label>
+
+{{ form.emergency_contact_phone }}
+
+
+<label>
+Emergency Contact Relationship
+</label>
+
+{{ form.emergency_contact_relationship }}
 
 
 <label>
@@ -430,26 +561,15 @@ Class Teacher Of
 
 
 
-<div style="margin-top:30px; display:flex; gap:15px;">
+<div class="teacher-actions">
 
-<button type="submit" class="teacher-btn">
-💾 Add Teacher
-</button>
+    <button type="submit" class="teacher-btn">
+        💾 Add Teacher
+    </button>
 
-
-<a href="{% url 'accounts:manage-teachers-grid' %}"
-style="
-padding:14px 25px;
-background:#6b7280;
-color:white;
-border-radius:50px;
-text-decoration:none;
-font-weight:700;
-text-align:center;
-">
-Cancel
-</a>
-
+    <a href="{% url 'accounts:manage-teachers-grid' %}" class="teacher-cancel">
+        Cancel
+    </a>
 
 </div>
 

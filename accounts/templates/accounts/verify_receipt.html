@@ -1,0 +1,453 @@
+{% extends 'accounts/dashboard_base.html' %}
+{% block title %}Receipt Verification{% endblock %}
+{% block content %}
+<style>
+/* =========================================================
+   PREMIUM RECEIPT VERIFICATION
+========================================================= */
+.verification-page {
+    min-height: calc(100vh - 80px);
+    padding: 40px 16px 60px;
+    background:
+        radial-gradient(circle at top left, rgba(79,70,229,.08), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(22,163,74,.07), transparent 35%),
+        #f8fafc;
+}
+.verification-wrapper {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+}
+.verification-card {
+    position: relative;
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 24px;
+    box-shadow: 0 25px 70px rgba(15,23,42,.12);
+}
+/* TOP ACCENT */
+.verification-accent {
+    height: 7px;
+    background: linear-gradient(
+        90deg,
+        #166534,
+        #16a34a,
+        #4ade80
+    );
+}
+/* HEADER */
+.verification-header {
+    padding: 34px 30px 28px;
+    text-align: center;
+    border-bottom: 1px solid #eef2f7;
+}
+.success-icon {
+    width: 78px;
+    height: 78px;
+    margin: 0 auto 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #dcfce7;
+    color: #15803d;
+    font-size: 38px;
+    font-weight: 900;
+    box-shadow:
+        0 0 0 8px #f0fdf4,
+        0 12px 30px rgba(22,163,74,.16);
+}
+.verification-header h1 {
+    margin: 0;
+    color: #166534;
+    font-size: 27px;
+    font-weight: 900;
+    letter-spacing: -.6px;
+}
+.verification-header p {
+    margin: 8px auto 0;
+    max-width: 480px;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.6;
+}
+/* VERIFIED BADGE */
+.verified-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 16px;
+    padding: 7px 14px;
+    border-radius: 30px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .7px;
+    text-transform: uppercase;
+}
+/* CONTENT */
+.verification-body {
+    padding: 28px 30px 30px;
+}
+/* SCHOOL */
+.school-block {
+    margin-bottom: 24px;
+    padding: 18px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+}
+.school-logo {
+    width: 55px;
+    height: 55px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 13px;
+    background: #eef2ff;
+    color: #3730a3;
+    font-size: 18px;
+    font-weight: 900;
+}
+.school-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+.school-info h2 {
+    margin: 0;
+    color: #172554;
+    font-size: 16px;
+    font-weight: 900;
+}
+.school-info p {
+    margin: 4px 0 0;
+    color: #64748b;
+    font-size: 11px;
+}
+/* SECTION TITLE */
+.details-title {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 12px;
+    color: #172554;
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .7px;
+}
+.details-title-icon {
+    width: 29px;
+    height: 29px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: 13px;
+}
+/* DETAILS */
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 9px;
+}
+.detail-item {
+    padding: 13px 14px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 13px;
+}
+.detail-item.full {
+    grid-column: 1 / -1;
+}
+.detail-label {
+    display: block;
+    margin-bottom: 5px;
+    color: #94a3b8;
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+}
+.detail-value {
+    display: block;
+    color: #1e293b;
+    font-size: 12px;
+    font-weight: 800;
+    word-break: break-word;
+}
+.detail-value.amount {
+    color: #15803d;
+    font-size: 16px;
+}
+/* SECURITY */
+.security-box {
+    margin-top: 22px;
+    padding: 15px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 13px;
+}
+.security-icon {
+    width: 31px;
+    height: 31px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    background: #e0e7ff;
+    color: #4338ca;
+    font-size: 13px;
+}
+.security-text strong {
+    display: block;
+    color: #334155;
+    font-size: 10px;
+    font-weight: 900;
+}
+.security-text span {
+    display: block;
+    margin-top: 3px;
+    color: #64748b;
+    font-size: 9px;
+    line-height: 1.5;
+    word-break: break-word;
+}
+/* FOOTER */
+.verification-footer {
+    padding: 18px 25px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    text-align: center;
+    color: #64748b;
+    font-size: 9px;
+    line-height: 1.5;
+}
+.verification-footer strong {
+    color: #334155;
+}
+/* =========================================================
+   MOBILE
+========================================================= */
+@media (max-width: 600px) {
+    .verification-page {
+        padding: 18px 8px 35px;
+    }
+    .verification-card {
+        border-radius: 18px;
+    }
+    .verification-header {
+        padding: 28px 18px 23px;
+    }
+    .success-icon {
+        width: 68px;
+        height: 68px;
+        font-size: 32px;
+    }
+    .verification-header h1 {
+        font-size: 22px;
+    }
+    .verification-header p {
+        font-size: 11px;
+    }
+    .verification-body {
+        padding: 20px 14px 22px;
+    }
+    .school-block {
+        padding: 13px;
+        gap: 11px;
+    }
+    .school-logo {
+        width: 46px;
+        height: 46px;
+        border-radius: 11px;
+    }
+    .school-info h2 {
+        font-size: 13px;
+    }
+    .school-info p {
+        font-size: 9px;
+    }
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+    .detail-item.full {
+        grid-column: auto;
+    }
+    .detail-value.amount {
+        font-size: 15px;
+    }
+    .verification-footer {
+        padding: 15px 14px;
+    }
+}
+</style>
+<div class="verification-page">
+    <div class="verification-wrapper">
+        <div class="verification-card">
+            <!-- ACCENT -->
+            <div class="verification-accent"></div>
+            <!-- HEADER -->
+            <div class="verification-header">
+                <div class="success-icon">
+                    ✓
+                </div>
+                <h1>
+                    Valid Receipt
+                </h1>
+                <p>
+                    This payment receipt has been successfully verified
+                    and is a valid record from the school accounts office.
+                </p>
+                <div class="verified-badge">
+                    ✓ Payment Verified
+                </div>
+            </div>
+            <!-- BODY -->
+            <div class="verification-body">
+                <!-- SCHOOL -->
+                <div class="school-block">
+                    <div class="school-logo">
+                        {% if school.logo %}
+                            <img
+                                src="{{ school.logo.url }}"
+                                alt="{{ school.name }}"
+                            >
+                        {% else %}
+                            {{ school.name|slice:":2"|upper }}
+                        {% endif %}
+                    </div>
+                    <div class="school-info">
+                        <h2>
+                            {{ school.name }}
+                        </h2>
+                        <p>
+                            Official payment verification
+                        </p>
+                    </div>
+                </div>
+                <!-- PAYMENT DETAILS -->
+                <div class="details-title">
+                    <div class="details-title-icon">
+                        💳
+                    </div>
+                    Payment Details
+                </div>
+                <div class="details-grid">
+                    <!-- STUDENT -->
+                    <div class="detail-item">
+                        <span class="detail-label">
+                            Student
+                        </span>
+                        <span class="detail-value">
+                            {{ payment.student.get_full_name|default:"—" }}
+                        </span>
+                    </div>
+                    <!-- STUDENT NUMBER -->
+                    <div class="detail-item">
+                        <span class="detail-label">
+                            Student Number
+                        </span>
+                        <span class="detail-value">
+                            {{ payment.student.student_number|default:"—" }}
+                        </span>
+                    </div>
+                    <!-- RECEIPT NUMBER -->
+                    <div class="detail-item">
+                        <span class="detail-label">
+                            Receipt Number
+                        </span>
+                        <span class="detail-value">
+                            {{ payment.receipt_number|default:"—" }}
+                        </span>
+                    </div>
+                    <!-- AMOUNT -->
+                    <div class="detail-item">
+                        <span class="detail-label">
+                            Amount Paid
+                        </span>
+                        <span class="detail-value amount">
+                            GH₵ {{ payment.total_amount|floatformat:2 }}
+                        </span>
+                    </div>
+                    <!-- PAYMENT METHOD -->
+                    <div class="detail-item">
+                        <span class="detail-label">
+                            Payment Method
+                        </span>
+                        <span class="detail-value">
+                            {{ payment.get_payment_method_display|default:"—" }}
+                        </span>
+                    </div>
+                    <!-- PAYMENT DATE -->
+                    <div class="detail-item">
+                        <span class="detail-label">
+                            Payment Date
+                        </span>
+                        <span class="detail-value">
+                            {{ payment.created_at|date:"d M Y, h:i A" }}
+                        </span>
+                    </div>
+                    <!-- TERM -->
+                    <div class="detail-item">
+                        <span class="detail-label">
+                            Term
+                        </span>
+                        <span class="detail-value">
+                            {{ payment.term|default:"—" }}
+                        </span>
+                    </div>
+                    <!-- ACADEMIC YEAR -->
+                    <div class="detail-item">
+                        <span class="detail-label">
+                            Academic Year
+                        </span>
+                        <span class="detail-value">
+                            {{ payment.academic_year|default:"—" }}
+                        </span>
+                    </div>
+                </div>
+                <!-- SECURITY -->
+                <div class="security-box">
+                    <div class="security-icon">
+                        🔐
+                    </div>
+                    <div class="security-text">
+                        <strong>
+                            Secure Verification
+                        </strong>
+                        <span>
+                            Verification ID:
+                            {{ payment.verification_token }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <!-- FOOTER -->
+            <div class="verification-footer">
+                <strong>
+                    Official Payment Verification
+                </strong>
+                <br>
+                This verification confirms that the payment exists
+                in the school's records.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

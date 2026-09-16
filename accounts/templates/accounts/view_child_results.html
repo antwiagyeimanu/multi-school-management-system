@@ -2,329 +2,137 @@
 {% block title %}Results – {{ selected_child.get_full_name }}{% endblock %}
 {% block content %}
 <style>
-.report-card{ background:#fff; padding:30px; border-radius:16px; box-shadow:0 6px 20px rgba(0,0,0,0.06); position:relative; width:100%; overflow:hidden; }
-.watermark{ display:none; }
-.school-logo{ width:160px; height:140px; object-fit:contain; }
-.print-header{ display:flex; align-items:center; gap:20px; margin-bottom:15px; border-bottom:3px solid #111827; padding-bottom:15px; }
-.school-info{ flex:1; text-align:center; }
-.school-info h1{ margin:0; font-size:26px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:#000; line-height:1.2; }
-.school-info p{ margin:3px 0; font-size:13px; color:#000; }
-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-th, td { border: 1px solid #000; padding: 6px; text-align: center; font-weight: bold; }
-th { background: #f3f4f6 !important; }
-
-@media print{
-  html, body{ background:#fff !important; margin:0 !important; padding:0 !important; height:auto !important; min-height:0 !important; }
-  #sidebar, #sidebarToggleBtn, .top-bar, .no-print{ display:none !important; }
-  .main-content{ margin:0 !important; padding:0 !important; min-height:0 !important; height:auto !important; overflow:visible !important; }
-  div[style*="min-height:100vh"]{ min-height:0 !important; padding:0 !important; background:#fff !important; }
-  .report-card{ box-shadow:none !important; border-radius:0 !important; padding:8mm !important; background:#fff !important; overflow:visible !important; height:auto !important; zoom:0.85; }
-  .school-logo{ width:150px !important; height:150px !important; }
-  .print-header{ border-bottom:3px solid #000 !important; padding-bottom:8px !important; margin-bottom:8px !important; }
-  .school-info h1{ font-size:18px !important; white-space:nowrap !important; }
-  .school-info p{ font-size:16px !important; margin:3px 0 !important; }
-  .watermark{ display:block !important; position:absolute !important; top:70% !important; left:40% !important; transform:translate(-50%,-50%) rotate(-28deg) !important; font-size:38px !important; font-weight:900 !important; color:rgba(0,0,0,0.06) !important; width:65% !important; text-align:center !important; white-space:normal !important; line-height:1.1 !important; pointer-events:none !important; }
-  *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
-  @page{ size:A4; margin:6mm !important; }
-}
-.child-card{
-    background:#fff;
-    border-radius:20px;
-    padding:16px;
-    display:flex;
-    align-items:center;
-    gap:15px;
-    position:relative;
-    border:2px solid #eef2f7;
-    transition:.3s ease;
-    box-shadow:0 6px 18px rgba(0,0,0,.05);
-    height:100%;
-}
-
-.child-card:hover{
-    transform:translateY(-3px);
-    box-shadow:0 15px 30px rgba(0,0,0,.10);
-}
-
-.child-active{
-    border-color:#4f46e5;
-    background:#eef2ff;
-}
-
-.child-photo,
-.child-avatar{
-    width:65px;
-    height:65px;
-    border-radius:50%;
-    object-fit:cover;
-    flex-shrink:0;
-}
-
-.child-avatar{
-    background:linear-gradient(135deg,#4f46e5,#2563eb);
-    color:#fff;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:22px;
-    font-weight:800;
-}
-
-.child-info{
-    flex:1;
-}
-
-.child-info h6{
-    margin:0;
-    font-weight:800;
-    color:#111827;
-    font-size:15px;
-}
-
-.child-info p{
-    margin:4px 0;
-    color:#6b7280;
-    font-size:13px;
-}
-
-.child-info span{
-    font-size:12px;
-    color:#9ca3af;
-    font-weight:600;
-}
-
-.selected-badge{
-    position:absolute;
-    top:10px;
-    right:12px;
-    background:#4f46e5;
-    color:#fff;
-    padding:4px 10px;
-    border-radius:20px;
-    font-size:11px;
-    font-weight:700;
-}
+.report-card{background:#fff;padding:30px;border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,0.06);position:relative;width:100%;overflow:hidden;box-sizing:border-box}
+.watermark{display:none}
+.school-logo{width:160px;height:140px;object-fit:contain}
+.print-header{display:flex;align-items:center;gap:20px;margin-bottom:15px;border-bottom:3px solid #111827;padding-bottom:15px;width:100%;box-sizing:border-box}
+.school-logo-wrapper{width:110px;flex:0 0 110px;display:flex;align-items:center;justify-content:center}
+.school-info{flex:1;min-width:0;text-align:center}
+.school-info h1{margin:0;font-size:26px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;color:#000;line-height:1.2}
+.school-info p{margin:3px 0;font-size:13px;color:#000}
+.school-header-spacer{width:110px;flex:0 0 110px}
+.report-table-wrapper{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #000;padding:6px;text-align:center;font-weight:bold}
+th{background:#f3f4f6!important}
+.child-card{background:#fff;border-radius:20px;padding:16px;display:flex;align-items:center;gap:15px;position:relative;border:2px solid #eef2f7;transition:.3s ease;box-shadow:0 6px 18px rgba(0,0,0,.05);height:100%;box-sizing:border-box}
+.child-card:hover{transform:translateY(-3px);box-shadow:0 15px 30px rgba(0,0,0,.10)}
+.child-active{border-color:#4f46e5;background:#eef2ff}
+.child-photo,.child-avatar{width:65px;height:65px;border-radius:50%;object-fit:cover;flex-shrink:0}
+.child-avatar{background:linear-gradient(135deg,#4f46e5,#2563eb);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800}
+.child-info{flex:1;min-width:0}
+.child-info h6{margin:0;font-weight:800;color:#111827;font-size:15px}
+.child-info p{margin:4px 0;color:#6b7280;font-size:13px}
+.child-info span{font-size:12px;color:#9ca3af;font-weight:600}
+.selected-badge{position:absolute;top:10px;right:12px;background:#4f46e5;color:#fff;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.remarks-wrapper{margin-top:30px;display:flex;flex-direction:row;gap:20px;width:100%;box-sizing:border-box}
+.remark-column{flex:1 1 0;width:50%;min-width:0}
+.remark-box{min-height:70px;padding:10px;border:1px solid #000;box-sizing:border-box}
+.attendance-wrapper{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.attendance-table{margin-top:15px;min-width:600px}
+.attendance-table td{white-space:nowrap}
 
 @media(max-width:768px){
+/* CHILD SWITCHER ONLY - 2 COLUMNS LIKE TIMETABLE */
+#child-switcher .row{flex-wrap:wrap!important;overflow:visible!important;--bs-gutter-x:8px!important;--bs-gutter-y:8px!important}
+#child-switcher .col-md-6{width:50%!important;flex:0 0 50%!important}
+.child-card{flex-direction:column!important;text-align:center!important;align-items:center!important}
 
-.child-card{
-    padding:14px;
+
+/* keep your other mobile styles below - don't delete */
+.child-card{padding:10px 8px!important;border-radius:14px!important;display:flex!important;gap:8px!important;overflow:hidden!important;min-width:0!important}
+.child-photo,.child-avatar{width:42px!important;height:42px!important;min-width:42px!important;flex:0 0 42px!important}
+.child-info{flex:1!important;min-width:0!important;overflow:hidden!important}
+.child-info h6{font-size:12px!important;margin:0!important;line-height:1.2!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.child-info p{font-size:11px!important;margin:1px 0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.child-info span{display:block!important;font-size:11px!important;font-weight:800!important;white-space:normal!important;word-break:break-all!important;line-height:1.15!important;color:#4f46e5!important;max-width:100%!important;overflow:hidden!important;margin-top:2px!important}
+.selected-badge{top:4px!important;right:4px!important;font-size:7px!important;padding:2px 5px!important}
+.print-header{gap:6px!important;padding-bottom:10px!important}
+.school-logo-wrapper{flex:0 0 55px!important;width:55px!important;height:60px!important}
+.school-logo{width:55px!important;height:60px!important}
+.school-header-spacer{flex:0 0 0px!important;width:0px!important;display:none!important}
+.school-info{flex:1!important;min-width:0!important;padding:0 4px!important}
+.school-info h1{font-size:12px!important;line-height:1.2!important;white-space:normal!important;word-break:break-word!important}
+.school-info p{font-size:8.5px!important;line-height:1.3!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;word-break:break-word!important}
+.student-hero-card{display:flex!important;flex-direction:column!important;gap:15px!important;padding:16px!important;width:100%!important;box-sizing:border-box!important;overflow:hidden!important}
+.student-hero-card > div:first-child{display:flex!important;align-items:center!important;gap:12px!important;width:100%!important}
+.student-hero-card > div:first-child img,.student-hero-card > div:first-child > div:first-child{width:65px!important;height:65px!important;min-width:65px!important;flex:0 0 65px!important}
+.student-hero-card h2{font-size:17px!important}
+.student-hero-card > div:last-child{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:8px!important;width:100%!important}
+.report-table-wrapper{width:100%;overflow-x:auto!important;display:block!important}
+.report-table-wrapper table{width:700px!important;min-width:700px!important;border-collapse:collapse!important}
+.report-table-wrapper th,.report-table-wrapper td{border:1px solid #000!important;padding:7px 8px!important;font-size:12px!important;white-space:nowrap!important}
+.attendance-wrapper{width:100%;overflow-x:auto!important;display:block!important}
+.attendance-table{width:600px!important;min-width:600px!important}
+.remarks-wrapper{flex-direction:column!important;gap:15px!important}
+.remark-column{width:100%!important;flex:1 1 100%!important}
+.no-print > div[style*="display:flex"]{display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;gap:8px!important;width:100%!important}
+.no-print form{display:contents!important}
+.no-print form select{flex:1 1 48%!important;min-width:0!important;font-size:12px!important;padding:10px 6px!important;border-radius:8px!important}
+.no-print form a[href*="child_id"]{flex:1 1 48%!important;width:48%!important;text-align:center!important;padding:11px 6px!important;background:#e5e7eb!important;border-radius:10px!important;font-weight:700!important;font-size:13px!important;order:2!important;text-decoration:none!important}
+.no-print > div[style*="display:flex"] > button{flex:1 1 48%!important;width:48%!important;padding:11px 6px!important;font-size:13px!important;border-radius:10px!important;order:3!important}
 }
 
-.child-photo,
-.child-avatar{
-    width:55px;
-    height:55px;
-}
-
-.child-info h6{
-    font-size:14px;
-}
-
+@media print{
+html,body{background:#fff!important;margin:0!important;padding:0!important;height:auto!important;overflow:visible!important}
+#sidebar,#sidebarToggleBtn,.top-bar,.no-print{display:none!important}
+.main-content{margin:0!important;padding:0!important}
+div[style*="min-height:100vh"]{min-height:0!important;padding:0!important;margin:0!important;background:#fff!important}
+.report-card{padding:4mm!important;margin:0!important;box-shadow:none!important;border-radius:0!important;overflow:visible!important}
+@page{size:A4;margin:4mm!important}
+.report-table-wrapper{width:100%!important;overflow:visible!important;display:block!important}
+.report-table-wrapper table{width:100%!important;min-width:0!important;border:2px solid #000!important;border-collapse:collapse!important}
+.report-table-wrapper th,.report-table-wrapper td{border:1px solid #000!important}
+.report-table-wrapper th:first-child,.report-table-wrapper td:first-child{position:static!important;left:auto!important;box-shadow:none!important;z-index:auto!important;border-right:1px solid #000!important}
+.attendance-wrapper{width:100%!important;overflow:visible!important;display:block!important}
+.attendance-table{width:100%!important;min-width:0!important;border:1px solid #000!important;border-collapse:collapse!important}
+.attendance-table td{border:1px solid #000!important}
+.remarks-wrapper{display:flex!important;flex-direction:row!important;gap:15px!important;width:100%!important;margin-top:10px!important;break-inside:avoid!important;page-break-inside:avoid!important}
+.remark-column{display:block!important;flex:1 1 0!important;width:50%!important;break-inside:avoid!important}
+.remark-box{border:1px solid #000!important;break-inside:avoid!important;min-height:50px!important}
+.remarks-wrapper + div{margin-top:8px!important;break-before:avoid!important;break-inside:avoid!important;page-break-before:avoid!important;page-break-inside:avoid!important}
+.print-header{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;gap:15px!important;width:100%!important;box-sizing:border-box!important;border-bottom:3px solid #000!important;padding-bottom:8px!important;margin-bottom:8px!important}
+.school-logo-wrapper{display:flex!important;flex:0 0 100px!important;width:100px!important;height:100px!important;align-items:center!important;justify-content:center!important}
+.school-logo{display:block!important;width:100px!important;height:100px!important;object-fit:contain!important}
+.school-info{display:block!important;flex:1 1 auto!important;text-align:center!important}
+.school-info h1{display:block!important;font-size:18px!important}
+.school-info p{display:block!important;color:#000!important}
+.school-header-spacer{display:block!important;flex:0 0 100px!important;width:100px!important;height:1px!important}
+.student-hero-card{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;break-inside:avoid!important}
+.watermark{display:block!important;position:absolute!important;top:55%!important;left:50%!important;transform:translate(-50%,-50%) rotate(-28deg)!important;font-size:38px!important;font-weight:900!important;color:rgba(0,0,0,0.06)!important;width:65%!important;text-align:center!important;white-space:normal!important;line-height:1.1!important;pointer-events:none!important}
+*{ -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important }
 }
 </style>
-
-<div style="max-width:900px; margin:0 auto; padding:20px; font-family:system-ui,-apple-system,sans-serif; background:#f5f7fa; min-height:100vh;">
-
-<div class="no-print" style="margin-bottom:20px; display:flex; gap:15px; align-items:flex-start; justify-content:space-between;">
+<div style="max-width:900px;margin:0 auto;padding:20px;font-family:system-ui,-apple-system,sans-serif;background:#f5f7fa;min-height:100vh;">
+<div class="no-print" style="margin-bottom:20px;">
 {% if children_count > 1 %}
 <div id="child-switcher" class="mb-4">
-
-    <h6 class="fw-bold text-secondary mb-3">
-        <i class="fas fa-users me-2"></i>Select Child
-    </h6>
-
-    <div class="row g-3">
-
-        {% for child in children %}
-
-        <div class="col-md-6 col-lg-4">
-
-            <a href="?child_id={{ child.id }}#child-switcher"
-               style="text-decoration:none;">
-
-                <div class="child-card {% if selected_child.id == child.id %}child-active{% endif %}">
-
-                    {% if child.photo %}
-                        <img src="{{ child.photo.url }}" class="child-photo">
-                    {% else %}
-                        <div class="child-avatar">
-                            {{ child.first_name|first }}{{ child.last_name|first }}
-                        </div>
-                    {% endif %}
-
-                    <div class="child-info">
-
-                        <h6>{{ child.first_name }} {{ child.last_name }}</h6>
-
-                        <p>{{ child.school_class.name|default:"No Class" }}</p>
-
-                        <span>ID: {{ child.student_number|default:"-" }}</span>
-
-                    </div>
-
-                    {% if selected_child.id == child.id %}
-                    <div class="selected-badge">
-                        Selected
-                    </div>
-                    {% endif %}
-
-                </div>
-
-            </a>
-
-        </div>
-
-        {% endfor %}
-
-    </div>
-
+<h6 class="fw-bold text-secondary mb-3"><i class="fas fa-users me-2"></i>Select Child</h6>
+<div class="row g-3">
+{% for child in children %}
+<div class="col-md-6 col-lg-4"><a href="?child_id={{ child.id }}#child-switcher" style="text-decoration:none;"><div class="child-card {% if selected_child.id == child.id %}child-active{% endif %}">{% if child.photo %}<img src="{{ child.photo.url }}" class="child-photo">{% else %}<div class="child-avatar">{{ child.first_name|first }}{{ child.last_name|first }}</div>{% endif %}<div class="child-info"><h6>{{ child.first_name }} {{ child.last_name }}</h6><p>{{ child.school_class.name|default:"No Class" }}</p><span>ID: {{ child.student_number|default:"-" }}</span></div>{% if selected_child.id == child.id %}<div class="selected-badge">Selected</div>{% endif %}</div></a></div>
+{% endfor %}
+</div>
 </div>
 {% endif %}
-    <div style="display:flex; gap:10px; align-items:center; flex-shrink:0;">
-        {% if terms %}
-<form method="get" style="display:flex; gap:10px; margin-bottom:15px;">
-  <input type="hidden" name="child_id" value="{{ selected_child.id }}">
-  <select name="year" onchange="this.form.submit()" style="padding:8px; border-radius:8px; border:1px solid #d1d5db;">
-    <option value="">All Years</option>
-    {% for y in years %}
-      <option value="{{ y.id }}" {% if selected_year == y.id|stringformat:"s" %}selected{% endif %}>{{ y.name }}</option>
-    {% endfor %}
-  </select>
-  <select name="term_id" onchange="this.form.submit()" style="padding:8px; border-radius:8px; border:1px solid #d1d5db;">
-    <option value="">Select Term</option>
-    {% for t in terms %}
-      <option value="{{ t.id }}" {% if selected_term and selected_term.id == t.id %}selected{% endif %}>{{ t.get_term_number_display }} </option>
-    {% endfor %}
-  </select>
-  <a href="?child_id={{ selected_child.id }}" style="padding:8px 12px; background:#f3f6f6; border-radius:8px; text-decoration:none;">Reset</a>
-</form> 
-       {% endif %}
-        <button onclick="window.print()" style="padding:8px 16px; background:#4f46e5; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Print Report</button>
-    </div>
+<div style="display:flex;gap:10px;align-items:center;flex-shrink:0;">
+{% if terms %}
+<form method="get" style="display:flex;gap:10px;margin-bottom:15px;"><input type="hidden" name="child_id" value="{{ selected_child.id }}"><select name="year" onchange="this.form.submit()" style="padding:8px;border-radius:8px;border:1px solid #d1d5db;"><option value="">All Years</option>{% for y in years %}<option value="{{ y.id }}" {% if selected_year == y.id|stringformat:"s" %}selected{% endif %}>{{ y.name }}</option>{% endfor %}</select><select name="term_id" onchange="this.form.submit()" style="padding:8px;border-radius:8px;border:1px solid #d1d5db;"><option value="">Select Term</option>{% for t in terms %}<option value="{{ t.id }}" {% if selected_term and selected_term.id == t.id %}selected{% endif %}>{{ t.get_term_number_display }}</option>{% endfor %}</select><a href="?child_id={{ selected_child.id }}" style="padding:8px 12px;background:#f3f6f6;border-radius:8px;text-decoration:none;">Reset</a></form>
+{% endif %}
+<button onclick="window.print()" class="no-print" style="padding:8px 16px;background:#4f46e5;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Print Report</button>
 </div>
-
+</div>
 {% if selected_child and term_data %}
 <div class="report-card">
-  <div class="watermark">{{ school.name|upper }}</div>
-  <div class="print-header">
-    <div style="width:110px; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
-      {% if school.logo %}<img src="{{ school.logo.url }}" class="school-logo">{% endif %}
-    </div>
-    <div class="school-info">
-      <h1>{{ school.name|upper }}</h1>
- <p style="font-weight:600; text-transform:uppercase; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ school.address|default:"" }}{% if school.gps_address %} | GPS: {{ school.gps_address }}{% endif %}</p>
-<p style="font-size:11px; white-space:nowrap;">Tel: {{ school.phone }} | Email: {{ school.email }}</p>
-    </div>
-    <div style="width:110px;"></div>
-  </div>
-
-  <div style="text-align:center; margin:18px 0;">
-    <h3 style="background:#111827; color:#fff; display:inline-block; padding:8px 30px; border-radius:25px; font-size:14px; letter-spacing:1.5px; margin:0;">STUDENT REPORT CARD</h3>
-  </div>
-
-<!-- STUDENT HERO CARD -->
-<div style="
-background:linear-gradient(135deg,#4f46e5,#2563eb);
-border-radius:18px;
-padding:22px;
-margin-bottom:22px;
-display:flex;
-align-items:center;
-justify-content:space-between;
-gap:20px;
-color:white;
-box-shadow:0 10px 30px rgba(79,70,229,.25);
-">
-
-    <div style="display:flex;align-items:center;gap:18px;">
-
-        {% if selected_child.photo %}
-            <img src="{{ selected_child.photo.url }}"
-                 style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:4px solid rgba(255,255,255,.35);">
-        {% else %}
-            <div style="
-            width:90px;
-            height:90px;
-            border-radius:50%;
-            background:rgba(255,255,255,.18);
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:34px;
-            font-weight:700;
-            border:4px solid rgba(255,255,255,.35);">
-                {{ selected_child.first_name|first }}{{ selected_child.last_name|first }}
-            </div>
-        {% endif %}
-
-        <div>
-
-            <h2 style="
-            margin:0;
-            font-size:24px;
-            font-weight:800;
-            text-transform:uppercase;">
-                {{ selected_child.get_full_name }}
-            </h2>
-
-            <div style="opacity:.95;margin-top:5px;">
-                Student ID:
-                <strong>{{ selected_child.student_number }}</strong>
-            </div>
-
-            <div style="opacity:.95;">
-                {{ selected_child.school_class.name }}
-            </div>
-
-        </div>
-
-    </div>
-
-    <div style="text-align:right;line-height:1.9;">
-
-        <div>
-            <strong>Academic Year</strong><br>
-            {{ term_data.term.academic_year }}
-        </div>
-
-        <div style="margin-top:10px;">
-            <strong>Term</strong><br>
-            {{ term_data.term.get_term_number_display }}
-        </div>
-
-        <div style="margin-top:10px;">
-            <strong>Printed</strong><br>
-            {% now "d M Y" %}
-        </div>
-
-    </div>
-
-</div>
-<table border="1" cellpadding="8" cellspacing="0" width="100%">
-    <tr><th>Subject</th><th>CA</th><th>Exam</th><th>Total%</th><th>Grade</th><th>Remark</th></tr>
-    {% for result in term_data.results %}
-    <tr><td>{{ result.subject.name }}</td><td>{{ result.calc_ca|floatformat:0 }}</td><td>{{ result.calc_exam|floatformat:0 }}</td><td>{{ result.calc_total|floatformat:0 }}</td><td>{{ result.calc_grade }}</td><td>{{ result.calc_remark }}</td></tr>
-    {% endfor %}
-   <tr style="background:#dbeafe; font-weight:bold;"><td>GRAND TOTAL<td></td><td><td>{{ term_data.grand_total_score }}</td><td></td><td></tr>
-    <tr style="background:#fef3c7; font-weight:bold;"><td>AVERAGE SCORE<td>{{ term_data.grand_percentage }}%</td><td><td></td><td></td><td></td></td></td></tr>
-    <tr style="background:#dcfce7; font-weight:bold;"><td>OVERALL GRADE</td><td></td><td><td><td>{{ term_data.overall_grade }}</td><td>{{ term_data.overall_remark }}</td></tr>
-    <tr style="background:#e9d5ff; font-weight:bold;"><td>POSITION IN CLASS</td><td></td><td><td></td><td></td><td>{{ term_data.class_position }} out of {{ term_data.class_size }}</td></tr>
-</table>
-
-<table style="margin-top:15px;"><tr><td><b>Times School Opened: {{ term_data.days_opened }}</b></td><td><b>Present: {{ term_data.times_present }}</b></td><td><b>Absent: {{ term_data.times_absent }}</b></td><td><b>Attendance: {{ term_data.attendance_percentage }}%</b></td></tr></table>
-
-{% if remark %}
-<div style="margin-top:30px; display:flex; gap:20px; width:100%;">
-  <div style="flex:1;"><p><strong>Class Teacher's Remark:</strong></p><div style="min-height:70px; padding:10px; border:1px solid #000;">{{ remark.class_teacher_remark|default:"-" }}</div><div style="margin-top:15px;">Class Teacher: ___________________________</div></div>
-  <div style="flex:1;"><p><strong>Head Teacher's Remark:</strong></p><div style="min-height:70px; padding:10px; border:1px solid #000;">{{ remark.headteacher_remark|default:"-" }}</div><div style="margin-top:15px;">Head Teacher: ___________________________</div></div>
-</div>
-<div style="margin-top:20px; text-align: center;">Next Term Begins: {% if term_data.term.next_term_begins %}{{ term_data.term.next_term_begins|date:"l, jS F Y" }}{% else %}To be announced{% endif %}</div>
-{% endif %}
+<div class="watermark">{{ school.name|upper }}</div>
+<div class="print-header"><div class="school-logo-wrapper">{% if school.logo %}<img src="{{ school.logo.url }}" class="school-logo">{% endif %}</div><div class="school-info"><h1>{{ school.name|upper }}</h1><p style="font-weight:600;text-transform:uppercase;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ school.address|default:"" }}{% if school.gps_address %} | GPS: {{ school.gps_address }}{% endif %}</p><p style="font-size:11px;white-space:nowrap;">Tel: {{ school.phone }} | Email: {{ school.email }}</p></div><div class="school-header-spacer"></div></div>
+<div style="text-align:center;margin:18px 0;"><h3 style="background:#111827;color:#fff;display:inline-block;padding:8px 30px;border-radius:25px;font-size:14px;letter-spacing:1.5px;margin:0;">STUDENT REPORT CARD</h3></div>
+<div class="student-hero-card" style="background:linear-gradient(135deg,#4f46e5,#2563eb);border-radius:18px;padding:22px;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between;gap:20px;color:white;box-shadow:0 10px 30px rgba(79,70,229,.25);"><div style="display:flex;align-items:center;gap:18px;">{% if selected_child.photo %}<img src="{{ selected_child.photo.url }}" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:4px solid rgba(255,255,255,.35);">{% else %}<div style="width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:700;border:4px solid rgba(255,255,255,.35);">{{ selected_child.first_name|first }}{{ selected_child.last_name|first }}</div>{% endif %}<div><h2 style="margin:0;font-size:24px;font-weight:800;text-transform:uppercase;">{{ selected_child.get_full_name }}</h2><div style="opacity:.95;margin-top:5px;"> ID: <strong>{{ selected_child.student_number }}</strong></div><div style="opacity:.95;">{{ selected_child.school_class.name }}</div></div></div><div style="display:flex;gap:18px;justify-content:flex-end;flex-wrap:wrap;align-items:center;text-align:left;line-height:1.4;"><div style="background:rgba(255,255,255,0.12);padding:8px 14px;border-radius:8px;"><div style="font-size:11px;opacity:0.7;text-transform:uppercase;letter-spacing:0.5px;"><strong>Academic Year</strong></div><div style="font-weight:bold;font-size:14px;">{{ term_data.term.academic_year }}</div></div><div style="background:rgba(255,255,255,0.12);padding:8px 14px;border-radius:8px;"><div style="font-size:11px;opacity:0.7;text-transform:uppercase;"><strong>Term</strong></div><div style="font-weight:bold;font-size:14px;">{{ term_data.term.get_term_number_display }}</div></div><div style="background:rgba(255,255,255,0.12);padding:8px 14px;border-radius:8px;"><div style="font-size:11px;opacity:0.7;text-transform:uppercase;"><strong>Printed</strong></div><div style="font-weight:bold;font-size:14px;">{% now "d M Y" %}</div></div></div></div>
+<div class="report-table-wrapper"><table border="1" cellpadding="8" cellspacing="0" width="100%"><tr><th>Subject</th><th>CA</th><th>Exam</th><th>Total%</th><th>Grade</th><th>Remark</th></tr>{% for result in term_data.results %}<tr><td>{{ result.subject.name }}</td><td>{{ result.calc_ca|floatformat:0 }}</td><td>{{ result.calc_exam|floatformat:0 }}</td><td>{{ result.calc_total|floatformat:0 }}</td><td>{{ result.calc_grade }}</td><td>{{ result.calc_remark }}</td></tr>{% endfor %}<tr style="background:#dbeafe;font-weight:bold;"><td>GRAND TOTAL</td><td></td><td></td><td>{{ term_data.grand_total_score }}</td><td></td><td></td></tr><tr style="background:#fef3c7;font-weight:bold;"><td>AVERAGE SCORE</td><td>{{ term_data.grand_percentage }}%</td><td></td><td></td><td></td><td></td></tr><tr style="background:#dcfce7;font-weight:bold;"><td>OVERALL GRADE</td><td></td><td></td><td></td><td>{{ term_data.overall_grade }}</td><td>{{ term_data.overall_remark }}</td></tr><tr style="background:#e9d5ff;font-weight:bold;"><td>POSITION IN CLASS</td><td></td><td></td><td></td><td></td><td>{{ term_data.class_position }} out of {{ term_data.class_size }}</td></tr><tr style="background:#eff6ff;font-weight:bold;"><td colspan="2">Times Shool Opened: {{ term_data.days_opened }}</td><td>Present: {{ term_data.times_present }}</td><td>Absent: {{ term_data.times_absent }}</td><td colspan="2">Attendance: {{ term_data.attendance_percentage }}%</td></tr></table></div>
+{% if remark %}<div class="remarks-wrapper"><div class="remark-column"><p><strong>Class Teacher's Remark:</strong></p><div class="remark-box">{{ remark.class_teacher_remark|default:"-" }}</div></div><div class="remark-column"><p><strong>Head Teacher's Remark:</strong></p><div class="remark-box">{{ remark.headmaster_remark|default:"-" }}</div></div></div><div style="margin-top:20px;text-align:center;">Next Term Begins: {% if term_data.term.next_term_begins %}{{ term_data.term.next_term_begins|date:"l, jS F Y" }}{% else %}To be announced{% endif %}</div>{% endif %}
 </div>
 {% else %}
-    <div class="report-card" style="text-align:center; padding:60px 30px;"><div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:30px;"><h3 style="color:#991b1b; margin:0 0 15px 0; font-size:18px;">No published results yet for <strong>{{ selected_child.get_full_name|default:selected_child.username }}</strong><br>Student ID: {{ selected_child.student_number|default:"-" }} | Class: {{ selected_child.school_class.name|default:"-" }}</h3></div></div>
+<div class="report-card" style="text-align:center;padding:60px 30px;"><div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:30px;"><h3 style="color:#991b1b;margin:0 0 15px 0;font-size:18px;">No published results yet for <strong>{{ selected_child.get_full_name|default:selected_child.username }}</strong><br>Student ID: {{ selected_child.student_number|default:"-" }} | Class: {{ selected_child.school_class.name|default:"-" }}</h3></div></div>
 {% endif %}
 </div>
-
 {% endblock %}

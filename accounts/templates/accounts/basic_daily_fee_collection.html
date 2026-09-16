@@ -1,0 +1,593 @@
+{% extends "accounts/dashboard_base.html" %}
+
+{% block content %}
+
+<style>
+    .daily-collection-page {
+        padding-bottom: 30px;
+    }
+    .collection-header {
+        background: linear-gradient(135deg, #111827, #1f2937);
+        color: #fff;
+        border-radius: 18px;
+        padding: 26px 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 10px 30px rgba(0,0,0,.10);
+    }
+    .collection-header-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        background: rgba(255,255,255,.10);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+    .collection-header h4 {
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+    .collection-header p {
+        color: rgba(255,255,255,.65);
+        margin: 0;
+    }
+    .fee-summary-card,
+    .collection-card {
+        background: #fff;
+        border: 1px solid #eef0f3;
+        border-radius: 16px;
+        box-shadow: 0 6px 20px rgba(0,0,0,.05);
+    }
+    .fee-summary-card {
+        padding: 22px;
+        margin-bottom: 24px;
+    }
+    .summary-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+    }
+    .summary-amount {
+        font-size: 27px;
+        font-weight: 750;
+        color: #111827;
+        margin-top: 5px;
+    }
+    .summary-date {
+        font-size: 12px;
+        color: #9ca3af;
+        margin-top: 3px;
+    }
+    .collection-card {
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+    .collection-card-header {
+        padding: 20px 22px;
+        border-bottom: 1px solid #eef0f3;
+    }
+    .collection-card-header h5 {
+        font-size: 16px;
+        font-weight: 700;
+        color: #111827;
+        margin: 0;
+    }
+    .collection-card-header p {
+        font-size: 12px;
+        color: #9ca3af;
+        margin: 5px 0 0;
+    }
+    .collection-card-body {
+        padding: 22px;
+    }
+    .form-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+    }
+    .filter-control {
+        height: 46px;
+        border-radius: 11px;
+        border: 1px solid #e5e7eb;
+    }
+    .student-select {
+        height: 48px;
+        border-radius: 11px;
+        border: 1px solid #e5e7eb;
+        padding-left: 14px;
+    }
+    .student-select:focus,
+    .filter-control:focus {
+        border-color: #9ca3af;
+        box-shadow: 0 0 0 .2rem rgba(17,24,39,.08);
+    }
+    .record-btn {
+        height: 48px;
+        border-radius: 11px;
+        font-weight: 600;
+    }
+    .record-btn:disabled {
+        opacity: .55;
+        cursor: not-allowed;
+    }
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+    .status-paid {
+        background: #ecfdf3;
+        color: #15803d;
+    }
+    .status-unpaid {
+        background: #fff7ed;
+        color: #c2410c;
+    }
+    .history-table th {
+        font-size: 11px;
+        text-transform: uppercase;
+        color: #6b7280;
+        letter-spacing: .4px;
+        white-space: nowrap;
+    }
+    .history-table td {
+        vertical-align: middle;
+        font-size: 13px;
+    }
+    .empty-history {
+        padding: 35px 20px;
+        text-align: center;
+        color: #9ca3af;
+    }
+    .weekend-alert {
+        background: #fff7ed;
+        border: 1px solid #fed7aa;
+        color: #9a3412;
+        border-radius: 12px;
+        padding: 13px 15px;
+        font-size: 13px;
+        margin-bottom: 20px;
+    }
+    @media (max-width: 767px) {
+        .collection-header {
+            padding: 20px;
+            border-radius: 15px;
+        }
+        .collection-header-icon {
+            width: 42px;
+            height: 42px;
+        }
+        .summary-amount {
+            font-size: 24px;
+        }
+        .collection-card-body {
+            padding: 18px;
+        }
+        .history-table {
+            min-width: 650px;
+        }
+    }
+</style>
+<div class="container-fluid daily-collection-page">
+<!-- HEADER -->
+<div class="collection-header">
+    <div class="d-flex align-items-center gap-3">
+        <div class="collection-header-icon">
+            <i class="fas fa-hand-holding-usd"></i>
+        </div>
+        <div>
+            <h4>Daily Fee Collection</h4>
+            <p>
+                Record daily fee payments for {{ school_class.name }}.
+            </p>
+        </div>
+    </div>
+</div>
+<!-- FILTERS -->
+<div class="collection-card">
+    <div class="collection-card-header">
+        <h5>Collection Filters</h5>
+        <p>
+            Select the academic year, term, date and view.
+        </p>
+    </div>
+    <div class="collection-card-body">
+        <form method="get">
+            <div class="row g-3 align-items-end">
+                <!-- ACADEMIC YEAR -->
+                <div class="col-md-3">
+                    <label class="form-label">
+                        Academic Year
+                    </label>
+                    <select name="academic_year"
+                            class="form-select filter-control">
+                        <option value="">
+                            All Academic Years
+                        </option>
+                        {% for year in academic_years %}
+                            <option value="{{ year.id }}"
+                                {% if selected_academic_year and selected_academic_year.id == year.id %}
+                                    selected
+                                {% endif %}>
+                                {{ year.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <!-- TERM -->
+                <div class="col-md-3">
+                    <label class="form-label">
+                        Term
+                    </label>
+                    <select name="term"
+                            class="form-select filter-control">
+                        <option value="">
+                            All Terms
+                        </option>
+                        {% for term in terms %}
+                            <option value="{{ term.id }}"
+                                {% if selected_term and selected_term.id == term.id %}
+                                    selected
+                                {% endif %}>
+                                {{ term.get_term_number_display }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <!-- DATE -->
+                <div class="col-md-3">
+                    <label class="form-label">
+                        Date
+                    </label>
+                    <input type="date"
+                           name="date"
+                           value="{{ selected_date|date:'Y-m-d' }}"
+                           class="form-control filter-control">
+                </div>
+                <!-- VIEW -->
+                <div class="col-md-3">
+                    <label class="form-label">
+                        View
+                    </label>
+                    <select name="view"
+                            class="form-select filter-control">
+                        <option value="today"
+                            {% if view_mode == "today" %}selected{% endif %}>
+                            Selected Day
+                        </option>
+                        <option value="week"
+                            {% if view_mode == "week" %}selected{% endif %}>
+                            This Week
+                        </option>
+                        <option value="month"
+                            {% if view_mode == "month" %}selected{% endif %}>
+                            This Month
+                        </option>
+                        <option value="all"
+                            {% if view_mode == "all" %}selected{% endif %}>
+                            All Records
+                        </option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit"
+                            class="btn btn-dark">
+                        <i class="fas fa-filter me-2"></i>
+                        Apply Filters
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% if is_weekend %}
+    <div class="weekend-alert">
+        <i class="fas fa-calendar-times me-2"></i>
+        Daily fees are not collected on weekends.
+        Please select a school day.
+    </div>
+{% endif %}
+<!-- FEE SUMMARY -->
+<div class="fee-summary-card">
+    <div class="summary-label">
+        Daily Fee — {{ school_class.name }}
+    </div>
+    <div class="summary-amount">
+        GH₵ {{ daily_fee.amount|floatformat:2 }}
+    </div>
+    <div class="summary-date">
+        <i class="fas fa-calendar-day me-1"></i>
+        Selected date:
+        {{ selected_date|date:"d M Y" }}
+    </div>
+    <div class="mt-2">
+        <span class="summary-label">
+            Collection Total
+        </span>
+        <div class="fw-bold">
+            GH₵ {{ collection_total|floatformat:2 }}
+        </div>
+    </div>
+</div>
+<!-- COLLECTION FORM -->
+<div class="collection-card">
+    <div class="collection-card-header">
+        <h5>
+            Record Student Payment
+        </h5>
+        <p>
+            Record the daily fee for
+            {{ selected_date|date:"d M Y" }}.
+        </p>
+    </div>
+    <div class="collection-card-body">
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden"
+                   name="date"
+                   value="{{ selected_date|date:'Y-m-d' }}">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-8">
+                    <label class="form-label">
+                        Student
+                    </label>
+                    <select name="student"
+                            class="form-select student-select"
+                            required>
+                        <option value="">
+                            Select student
+                        </option>
+                        {% for student in students %}
+                            <option value="{{ student.id }}"
+                                {% if student.is%}
+                                    disabled
+                                {% endif %}>
+                                {{ student.get_full_name }} - {{ student.student_number}}
+                       
+                                {% if student.id in paid_student_ids %}
+                                    — Already Paid
+                                {% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit"
+                            class="btn btn-dark w-100 record-btn"
+                            {% if is_weekend %}disabled{% endif %}>
+                        <i class="fas fa-check-circle me-2"></i>
+                        {% if is_weekend %}
+                            Weekend — Collection Closed
+                        {% else %}
+                            Record Payment
+                        {% endif %}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<form method="get" class="mb-3">
+    <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+    <input type="hidden" name="view" value="{{ view_mode }}">
+
+    {% if selected_academic_year %}
+        <input type="hidden" name="academic_year" value="{{ selected_academic_year.id }}">
+    {% endif %}
+
+    {% if selected_term %}
+        <input type="hidden" name="term" value="{{ selected_term.id }}">
+    {% endif %}
+
+    <div class="input-group">
+        <input
+            type="text"
+            name="student_search"
+            value="{{ student_search }}"
+            class="form-control"
+            placeholder="Search student by name..."
+        >
+
+        <button type="submit" class="btn btn-dark">
+            <i class="fas fa-search"></i>
+            Search
+        </button>
+    </div>
+</form>
+<!-- STUDENT PAYMENT STATUS -->
+<div class="collection-card">
+    <div class="collection-card-header">
+        <h5>
+            Student Payment Status
+        </h5>
+        <p>
+            Payment status for {{ selected_date|date:"d M Y" }}.
+        </p>
+    </div>
+    <div class="collection-card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 history-table">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Student ID</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                        <tr>
+                            <td>
+                                {{ student.get_full_name }}
+                            </td>
+                            <td>
+                                {{ student.student_number }}
+                            </td>
+                            <td>
+                                {% if student.id in paid_student_ids %}
+                                    <span class="status-badge status-paid">
+                                        <i class="fas fa-check-circle"></i>
+                                        Paid
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge status-unpaid">
+                                        <i class="fas fa-clock"></i>
+                                        Unpaid
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="3">
+                                <div class="empty-history">
+                                    No students found.
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% if students_page.paginator.num_pages > 1 %}
+
+<div class="d-flex justify-content-between align-items-center mt-3">
+
+    <div class="text-muted small">
+        Page {{ students_page.number }}
+        of {{ students_page.paginator.num_pages }}
+    </div>
+
+    <div class="d-flex gap-2">
+
+        {% if students_page.has_previous %}
+            <a href="?students_page={{ students_page.previous_page_number }}&date={{ selected_date|date:'Y-m-d' }}&view={{ view_mode }}{% if selected_academic_year %}&academic_year={{ selected_academic_year.id }}{% endif %}{% if selected_term %}&term={{ selected_term.id }}{% endif %}{% if student_search %}&student_search={{ student_search|urlencode }}{% endif %}"
+               class="btn btn-sm btn-outline-dark">
+                <i class="fas fa-chevron-left"></i>
+                Previous
+            </a>
+        {% endif %}
+
+        {% if students_page.has_next %}
+            <a href="?students_page={{ students_page.next_page_number }}&date={{ selected_date|date:'Y-m-d' }}&view={{ view_mode }}{% if selected_academic_year %}&academic_year={{ selected_academic_year.id }}{% endif %}{% if selected_term %}&term={{ selected_term.id }}{% endif %}{% if student_search %}&student_search={{ student_search|urlencode }}{% endif %}"
+               class="btn btn-sm btn-outline-dark">
+                Next
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endif %}
+<!-- COLLECTION HISTORY -->
+<div class="collection-card">
+    <div class="collection-card-header">
+        <h5>
+            Collection History
+        </h5>
+        <p>
+            Recorded payments for {{ school_class.name }}.
+        </p>
+    </div>
+    <div class="collection-card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 history-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Student</th>
+                        <th>Student ID</th>
+                        <th>Academic Year</th>
+                        <th>Term</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for collection in collections %}
+                        <tr>
+                            <td>
+                                {{ collection.date|date:"d M Y" }}
+                            </td>
+                            <td>
+                                {{ collection.student.get_full_name }}
+                            </td>
+                            <td>
+                                {{ collection.student.student_number }}
+                            </td>
+                            <td>
+                                {{ collection.academic_year.name }}
+                            </td>
+                            <td>
+                                {{ collection.term.get_term_number_display }}
+                            </td>
+                            <td>
+                                <strong>
+                                    GH₵ {{ collection.amount|floatformat:2 }}
+                                </strong>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6">
+                                <div class="empty-history">
+                                    <i class="fas fa-receipt fa-2x mb-2"></i>
+                                    <div>
+                                        No collection records found.
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</div>
+{% if collections_page.paginator.num_pages > 1 %}
+
+<div class="d-flex justify-content-between align-items-center mt-3">
+
+    <div class="text-muted small">
+        Page {{ collections_page.number }}
+        of {{ collections_page.paginator.num_pages }}
+    </div>
+
+    <div class="d-flex gap-2">
+
+        {% if collections_page.has_previous %}
+            <a href="?history_page={{ collections_page.previous_page_number }}&date={{ selected_date|date:'Y-m-d' }}&view={{ view_mode }}{% if selected_academic_year %}&academic_year={{ selected_academic_year.id }}{% endif %}{% if selected_term %}&term={{ selected_term.id }}{% endif %}{% if student_search %}&student_search={{ student_search|urlencode }}{% endif %}"
+               class="btn btn-sm btn-outline-dark">
+                <i class="fas fa-chevron-left"></i>
+                Previous
+            </a>
+        {% endif %}
+
+        {% if collections_page.has_next %}
+            <a href="?history_page={{ collections_page.next_page_number }}&date={{ selected_date|date:'Y-m-d' }}&view={{ view_mode }}{% if selected_academic_year %}&academic_year={{ selected_academic_year.id }}{% endif %}{% if selected_term %}&term={{ selected_term.id }}{% endif %}{% if student_search %}&student_search={{ student_search|urlencode }}{% endif %}"
+               class="btn btn-sm btn-outline-dark">
+                Next
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endif %}
+
+{% endblock %}

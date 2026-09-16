@@ -1,10 +1,10 @@
 from django.urls import path
-from .views import dashboard_dispatcher
+from .views import add_headmaster, dashboard_dispatcher
 
 from .views import (
     
     login_view, logout_view, signup_view, dashboard, download_class_defaulters_pdf, parent_payment_history, deactivated_students,
-    manage_students, add_student, edit_student, delete_student, assign_student_class, student_payment_history,
+    manage_students, add_student, edit_student, delete_student, assign_student_class, student_payment_history, teacher_attendance_print,
     manage_teachers_grid, edit_teacher, delete_teacher, apply_fee_structure, save_student_remark, reject_manual_payment,
     manage_users, edit_user, delete_user, generate_report_excel, expense_list, mark_announcements_read, approve_manual_payment,
     manage_parents, edit_parent, delete_parent, download_defaulters_pdf, print_student_report, my_children, parent_notifications,
@@ -13,12 +13,12 @@ from .views import (
     view_student_subjects, view_student_results, view_student_fees, edit_expense,  delete_event, student_terminal_report,
     view_child_results, view_child_fees, view_child_progress, edit_student_fee, class_remarks_list, submit_manual_payment,
     send_message, system_settings, view_reports, generate_report, verify_expense, manage_timetable, pending_payments, reactivate_student,
-    add_result, assign_subject, add_teacher, all_students_fees_list, receipt_pdf, accountant_profile, parent_attendance,
-    add_parent, view_student, export_students_excel, view_teacher, add_class,  verify_payment, link_students_to_parent,
+    add_result, assign_subject, add_teacher, all_students_fees_list, receipt_pdf, accountant_profile, parent_attendance, headmaster_my_profile,
+    add_parent, view_student, export_students_excel, view_teacher, add_class,  verify_payment, link_students_to_parent, verify_receipt,
     export_teachers_excel, edit_assignment, delete_assignment, test_view, teacher_published_results, parent_timetable, break_edit,
     assign_teacher, manage_assignments, admin_dashboard, teacher_dashboard, change_password, fee_history, notifications_list, 
     student_dashboard, parent_dashboard, teacher_assignments, upload_result, admin_profile, fee_list_page, edit_announcement, 
-    teacher_results, upload_results_list, profile_view, edit_result, attendance_report, edit_event, pending_payment_detail,
+    teacher_results, upload_results_list, profile_view, edit_result, attendance_report, edit_event, pending_payment_detail, headmaster_dashboard,
     mark_attendance, add_subject_to_class, admin_classes, delete_class, edit_class, class_detail, reactivate_parent, void_transaction, 
     assign_teacher_subject, subject_list, delete_subject, edit_subject, view_receipt, deactivated_teachers, delete_announcement,
     assigned_teachers_list, assign_students_to_class, school_settings, attendance_mark, create_announcement, student_notifications, 
@@ -30,8 +30,12 @@ from .views import (
     results_by_class, results_by_subject, results_detail, view_student_grades,  print_class_report, view_parent, edit_teacher_attendance,
     term_settings, set_active_term, edit_term, timetable_manager_create_timetable,  timetable_manager_delete, school_sms_settings,
     student_timetable,  delete_term, timetable_manager_edit, record_payment, add_expense, set_student_fee, accountant_notifications,
-    add_calendar_event, calendar_list, teacher_timetable, accountant_dashboard, add_accountant, manage_accountant_grid,
-    view_accountant, edit_accountant, delete_accountant, deactivated_accountants, reactivate_accountant, my_attendance,
+    add_calendar_event, calendar_list, teacher_timetable, accountant_dashboard, add_accountant, manage_accountant_grid,  manage_headmaster_grid,
+    view_accountant, edit_accountant, delete_accountant, deactivated_accountants, reactivate_accountant, my_attendance,  copy_timetable_to_term,
+     verify_hubtel_payment, verify_flutterwave_payment, print_admission_letter, student_transcript, headmaster_remarks,  view_headmaster,
+    add_headmaster, manage_headmaster_grid, edit_headmaster, delete_headmaster, reactivate_headmaster, headmaster_profile, deactivated_headmasters,
+     manage_headmaster_permissions, backup_database, school_backup, restore_school_backup,  basic_daily_fee_settings, basic_daily_fee_collection,
+     basic_daily_fee_monitoring, grading_settings,
 )
 print(">>> ACCOUNTS URLS FILE LOADED")
 app_name = "accounts"
@@ -40,6 +44,9 @@ urlpatterns = [
 
     
     # Auth
+
+path("restore-school-backup/", restore_school_backup, name="restore_school_backup"),
+path("school-backup/", school_backup, name="school_backup"),
 path('term/edit/<int:pk>/', edit_term, name='edit_term'),
 path('term/delete/<int:pk>/', delete_term, name='delete_term'),    
 path('term-settings/', term_settings, name='term_settings'),
@@ -80,7 +87,10 @@ path('timetable/manage/create/', timetable_manager_create_timetable, name='timet
 path('timetable/manage/delete/<int:timetable_id>/', timetable_manager_delete, name='timetable_delete'),
 path('timetable/manage/edit/<int:timetable_id>/', timetable_manager_edit, name='timetable_manager_edit'),
 path('add-accountant/', add_accountant, name='add_accountant'),
+path('add-headmaster/', add_headmaster, name='add_headmaster'),
+path('deactivated-headmasters/', deactivated_headmasters, name='deactivated_headmasters'),
 path('deactivated-accountants/', deactivated_accountants, name='deactivated_accountants'),
+path('reactivate-headmaster/<int:user_id>/', reactivate_headmaster, name='reactivate_headmaster'),
 path('reactivate-accountant/<int:user_id>/', reactivate_accountant, name='reactivate_accountant'),
 path('fee-structure-settings/', fee_structure_settings, name='fee_structure_settings'),
 path('student-fees/edit/<int:fee_id>/', edit_student_fee, name='edit_student_fee'),
@@ -109,6 +119,22 @@ path('reports/teacher-attendance/', teacher_attendance_report, name='teacher_att
 path('teacher-attendance/mark/', mark_teacher_attendance, name='mark_teacher_attendance'),
 path("teacher-attendance/edit/<int:attendance_id>/", edit_teacher_attendance, name="edit-teacher-attendance"),
 path('timetable/manage/break/edit/<int:break_id>/', break_edit, name='break_edit'),
+path('copy/', copy_timetable_to_term, name='copy_timetable_to_term'),
+path('verify_hubtel_payment/', verify_hubtel_payment, name='verify_hubtel_payment'),
+path('verify-flutterwave/', verify_flutterwave_payment, name='verify_flutterwave_payment'),
+path('print-admission/<int:student_id>/', print_admission_letter, name='print_admission_letter'),
+path('student/<int:student_id>/transcript/', student_transcript, name='student_transcript'),
+path('headmaster/remarks/', headmaster_remarks, name='headmaster_remarks'),
+path('headmaster/dashboard/', headmaster_dashboard, name='headmaster_dashboard'),
+path(
+    'basic/daily-fees/collect/',
+    basic_daily_fee_collection,
+    name='basic_daily_fee_collection'),
+path(
+    "grading-settings/",
+    grading_settings,
+    name="grading-settings"
+),
 
 
 #path('api/notifications/count/', get_notification_count, name='notif_count'),
@@ -132,6 +158,11 @@ path('signup/', signup_view, name='signup'),
 
 
    # Admin - Students
+   path(
+    'basic/daily-fees/monitoring/',
+    basic_daily_fee_monitoring,
+    name='basic_daily_fee_monitoring'
+),
     path("students/deactivated/<int:class_id>/", deactivated_students, name="deactivated-students",),
     path('students/reactivate/<int:student_id>/', reactivate_student, name='reactivate-student'),
     path('students/add/', add_student, name='add-student'),  
@@ -156,15 +187,23 @@ path('signup/', signup_view, name='signup'),
     path("timetable/manage/", manage_timetable, name="manage_timetable"),
     path('settings/payment/', school_payment_settings, name='school_payment_settings'),
     path('finance/fees/', fee_list_page, name='finance_fee_list'),
+   path('headmaster/profile/', headmaster_my_profile, name='headmaster_profile'),
+    path('headmaster/permissions/<int:school_id>/', manage_headmaster_permissions, name='manage_headmaster_permissions'),
 
 
 
 
     # Admin - Teachers
+    path('accountant/<int:accountant_id>/', view_accountant, name='view_accountant'),
+    path('headmaster/<int:headmaster_id>/', view_headmaster, name='view_headmaster'),
     path('manage-accountants/', manage_accountant_grid, name='manage_accountant_grid'),
+    path('manage-headmasters/', manage_headmaster_grid, name='manage_headmaster_grid'),
     path('accountant/<int:accountant_id>/', view_accountant, name='view_accountant'),
     path('accountant/<int:accountant_id>/edit/', edit_accountant, name='edit_accountant'),
     path('accountant/<int:accountant_id>/delete/', delete_accountant, name='delete_accountant'),
+    path('headmaster/<int:headmaster_id>/', view_headmaster, name='view_headmaster'),
+    path('headmaster/<int:headmaster_id>/edit/', edit_headmaster, name='edit_headmaster'),
+    path('headmaster/<int:headmaster_id>/delete/', delete_headmaster, name='delete_headmaster'),
     path('teachers/', manage_teachers_grid, name='manage-teachers-grid'),
     path('teachers/add/', add_teacher, name='add-teacher'),
     path('teachers/edit/<int:teacher_id>/', edit_teacher, name='edit-teacher'),
@@ -177,12 +216,19 @@ path('signup/', signup_view, name='signup'),
     path('assign-teacher/<int:teacher_id>/', assign_teacher, name='assign-teacher'),
     path('assignments/', manage_assignments, name='manage_assignments'),
     path('teacher/timetable/', teacher_timetable, name='teacher_timetable'),
+    path("teacher-attendance/print/", teacher_attendance_print, name="teacher_attendance_print"),
+    path("headmaster/my-profile/", headmaster_my_profile, name="headmaster_my_profile"),
     
 
     # Admin - Users
     path('users/', manage_users, name='manage-users'),
     path('users/edit/<int:user_id>/', edit_user, name='edit-user'),
     path('users/delete/<int:user_id>/', delete_user, name='delete-user'),
+    path(
+    'basic/daily-fees/settings/',
+    basic_daily_fee_settings,
+    name='basic_daily_fee_settings'
+),
 
     # Admin - Parents
     path('parents/', manage_parents, name='manage-parents'),
@@ -194,6 +240,7 @@ path('signup/', signup_view, name='signup'),
     path('view-reports/', view_reports, name='view-reports'),
     path('system-settings/', system_settings, name='system-settings'),
     path('add-result/', add_result, name='add-result'),
+    path('system-settings/backup/', backup_database, name='backup_database'),
 
     # Teacher views
     path('teacher/dashboard/', teacher_dashboard, name='teacher-dashboard'),
@@ -263,6 +310,7 @@ path('signup/', signup_view, name='signup'),
     path('generate-fees/', generate_fees_for_term, name='generate_fees_for_term'),
     path('receipt/<int:payment_id>/', view_receipt, name='view_receipt'),
     path('receipt/<int:payment_id>/pdf/', receipt_pdf, name='receipt_pdf'),
+    path('verify-receipt/<uuid:verification_token>/', verify_receipt, name='verify_receipt'),
     path('expenses/', expense_list, name='expense_list'),
     path('edit-expense/<int:pk>/', edit_expense, name='edit_expense'),
     path('accountant/profile/',accountant_profile, name='accountant_profile'),

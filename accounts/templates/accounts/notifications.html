@@ -1,125 +1,655 @@
 {% extends 'accounts/dashboard_base.html' %}
 {% block content %}
+
 <style>
 :root{
     --primary:#4f46e5;
+    --primary-dark:#3730a3;
     --primary-light:#eef2ff;
     --success:#10b981;
     --danger:#ef4444;
-    --text:#1f2937;
+    --text:#111827;
     --muted:#6b7280;
     --border:#e5e7eb;
     --bg:#f8fafc;
 }
-body{background:var(--bg);}
-.notifications-wrapper{max-width:900px;margin:auto;}
-.page-header{background:#fff;border-radius:20px;padding:24px;box-shadow:0 8px 25px rgba(0,0,0,.06);margin-bottom:30px;}
-.page-title{font-weight:700;color:var(--text);margin:0;}
-.page-title i{color:var(--primary);}
-.count-badge{background:linear-gradient(135deg,#4f46e5,#6366f1);border-radius:50px;padding:6px 12px;font-size:.8rem;}
-.filter-btn{border-radius:30px;padding:.45rem 1rem;font-weight:600;transition:.3s;}
-.filter-btn.active{background:linear-gradient(135deg,#4f46e5,#6366f1);border:none;color:#fff;}
-.filter-btn:not(.active){background:#fff;border:1px solid var(--border);}
-.date-heading{display:flex;align-items:center;gap:10px;margin:30px 0 15px;color:var(--muted);font-size:.9rem;font-weight:600;}
-.date-heading::after{content:"";flex:1;height:1px;background:var(--border);}
-.notification-card{border:none;border-radius:18px;overflow:hidden;margin-bottom:16px;transition:.3s;background:#fff;box-shadow:0 6px 18px rgba(0,0,0,.05);position:relative;}
-.notification-card:hover{transform:translateY(-4px);box-shadow:0 14px 30px rgba(0,0,0,.08);}
-.notification-card.unread::before{content:"";position:absolute;left:0;top:0;width:5px;height:100%;background:linear-gradient(180deg,#4f46e5,#6366f1);}
-.icon-box{width:55px;height:55px;border-radius:16px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
-.notification-title{font-weight:700;color:var(--text);}
-.notification-message{color:var(--muted);margin:8px 0 12px;line-height:1.6;}
-.meta{display:flex;align-items:center;flex-wrap:wrap;gap:8px;justify-content:space-between;}
-.badge-soft{background:#e0f2fe;color:#0369a1;font-weight:600;padding:6px 12px;border-radius:30px;}
-.new-badge{background:#fee2e2;color:#b91c1c;border-radius:30px;padding:6px 12px;font-weight:600;}
-.btn-action{border-radius:30px;padding:4px 12px;font-size:.8rem;font-weight:600;}
-/* Custom Popup */
-.custom-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:9999;}
-.custom-modal.show{display:flex;}
-.modal-box{background:#fff;border-radius:20px;padding:28px;max-width:380px;width:90%;text-align:center;box-shadow:0 25px 50px rgba(0,0,0,.2);}
+body{
+    background:var(--bg);
+}
+/* =========================
+   MAIN WRAPPER
+========================= */
+.notifications-page{
+    padding:24px 0 50px;
+}
+.notifications-wrapper{
+    max-width:1100px;
+    margin:auto;
+}
+/* =========================
+   PREMIUM HERO HEADER
+========================= */
+.page-header{
+    position:relative;
+    overflow:hidden;
+    border:none;
+    border-radius:26px;
+    padding:30px;
+    margin-bottom:28px;
+    color:#fff;
+    background:
+        radial-gradient(circle at 90% 10%,rgba(255,255,255,.20),transparent 28%),
+        radial-gradient(circle at 10% 100%,rgba(129,140,248,.35),transparent 35%),
+        linear-gradient(135deg,#312e81,#4f46e5 55%,#6366f1);
+    box-shadow:0 18px 45px rgba(79,70,229,.22);
+}
+.page-header::before{
+    content:"";
+    position:absolute;
+    width:180px;
+    height:180px;
+    border-radius:50%;
+    background:rgba(255,255,255,.07);
+    right:-55px;
+    top:-70px;
+}
+.page-header::after{
+    content:"";
+    position:absolute;
+    width:110px;
+    height:110px;
+    border-radius:50%;
+    background:rgba(255,255,255,.05);
+    left:35%;
+    bottom:-70px;
+}
+.header-top{
+    position:relative;
+    z-index:2;
+    gap:20px;
+}
+.header-title-area{
+    display:flex;
+    align-items:center;
+    gap:16px;
+}
+.header-icon{
+    width:62px;
+    height:62px;
+    border-radius:20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,.16);
+    border:1px solid rgba(255,255,255,.20);
+    backdrop-filter:blur(10px);
+    font-size:28px;
+    flex-shrink:0;
+}
+.page-title{
+    font-size:28px;
+    font-weight:800;
+    color:#fff;
+    margin:0;
+    letter-spacing:-.5px;
+}
+.page-subtitle{
+    margin:6px 0 0;
+    color:rgba(255,255,255,.78);
+    font-size:14px;
+}
+.count-badge{
+    background:rgba(255,255,255,.16);
+    border:1px solid rgba(255,255,255,.22);
+    color:#fff;
+    border-radius:50px;
+    padding:7px 13px;
+    font-size:.78rem;
+    vertical-align:middle;
+    margin-left:5px;
+}
+/* =========================
+   FILTERS
+========================= */
+.filters{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    gap:7px;
+}
+.filter-btn{
+    border-radius:30px;
+    padding:8px 14px;
+    font-size:.78rem;
+    font-weight:700;
+    transition:.25s ease;
+    white-space:nowrap;
+}
+.page-header .filter-btn.active{
+    background:#fff;
+    color:var(--primary);
+    border:1px solid #fff;
+    box-shadow:0 5px 15px rgba(0,0,0,.12);
+}
+.page-header .filter-btn:not(.active){
+    color:#fff;
+    background:rgba(255,255,255,.10);
+    border:1px solid rgba(255,255,255,.20);
+}
+.page-header .filter-btn:not(.active):hover{
+    background:rgba(255,255,255,.18);
+    color:#fff;
+    transform:translateY(-1px);
+}
+/* =========================
+   DATE HEADING
+========================= */
+.date-heading{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin:30px 0 14px;
+    color:var(--muted);
+    font-size:.82rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+}
+.date-heading::before{
+    content:"";
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:var(--primary);
+    box-shadow:0 0 0 5px var(--primary-light);
+    flex-shrink:0;
+}
+.date-heading::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background:var(--border);
+}
+/* =========================
+   NOTIFICATION CARD
+========================= */
+.notification-card{
+    position:relative;
+    overflow:hidden;
+    border:1px solid rgba(229,231,235,.85);
+    border-radius:20px;
+    margin-bottom:14px;
+    background:#fff;
+    box-shadow:0 6px 20px rgba(15,23,42,.045);
+    transition:.3s ease;
+}
+.notification-card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 16px 35px rgba(15,23,42,.09);
+    border-color:#dfe3ff;
+}
+.notification-card.unread{
+    background:linear-gradient(135deg,#fff,#fafaff);
+}
+.notification-card.unread::before{
+    content:"";
+    position:absolute;
+    left:0;
+    top:0;
+    width:4px;
+    height:100%;
+    background:linear-gradient(180deg,#4f46e5,#818cf8);
+}
+.notification-card .card-body{
+    padding:22px !important;
+}
+/* =========================
+   ICON
+========================= */
+.icon-box{
+    width:54px;
+    height:54px;
+    border-radius:17px;
+    background:linear-gradient(135deg,#eef2ff,#e0e7ff);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:23px;
+    flex-shrink:0;
+    box-shadow:inset 0 0 0 1px rgba(79,70,229,.08);
+}
+/* =========================
+   CONTENT
+========================= */
+.notification-title{
+    font-weight:800;
+    color:var(--text);
+}
+.notification-message{
+    display:inline;
+    color:var(--muted);
+    line-height:1.65;
+}
+.meta{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+    justify-content:space-between;
+}
+.badge-soft{
+    display:inline-flex;
+    align-items:center;
+    background:#eff6ff;
+    color:#1d4ed8;
+    border:1px solid #dbeafe;
+    font-weight:700;
+    padding:6px 11px;
+    border-radius:30px;
+    font-size:.75rem;
+}
+.new-badge{
+    display:inline-flex;
+    align-items:center;
+    background:#fef2f2;
+    color:#b91c1c;
+    border:1px solid #fecaca;
+    border-radius:30px;
+    padding:6px 11px;
+    font-size:.75rem;
+    font-weight:800;
+    margin-left:5px;
+}
+.btn-action{
+    border-radius:30px;
+    padding:6px 14px;
+    font-size:.76rem;
+    font-weight:700;
+    transition:.2s;
+}
+.btn-action:hover{
+    transform:translateY(-1px);
+}
+/* =========================
+   EMPTY STATE
+========================= */
+.empty-state{
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:22px;
+    padding:55px 25px;
+    text-align:center;
+    box-shadow:0 8px 25px rgba(0,0,0,.04);
+}
+.empty-state .icon{
+    width:70px;
+    height:70px;
+    border-radius:22px;
+    margin:0 auto 18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--primary-light);
+    font-size:30px;
+}
+/* =========================
+   PAGINATION
+========================= */
+.pagination-wrap{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:8px;
+    margin-top:28px;
+}
+.pagination-wrap .btn{
+    border-radius:30px;
+    font-weight:700;
+    padding:7px 15px;
+}
+/* =========================
+   CUSTOM DELETE MODAL
+========================= */
+.custom-modal{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    padding:20px;
+    background:rgba(15,23,42,.58);
+    backdrop-filter:blur(5px);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:9999;
+}
+.custom-modal.show{
+    display:flex;
+}
+.modal-box{
+    background:#fff;
+    border-radius:24px;
+    padding:30px;
+    max-width:400px;
+    width:100%;
+    text-align:center;
+    box-shadow:0 30px 70px rgba(0,0,0,.25);
+    animation:modalIn .22s ease;
+}
+@keyframes modalIn{
+    from{
+        opacity:0;
+        transform:translateY(15px) scale(.97);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0) scale(1);
+    }
+}
+.modal-icon{
+    width:70px;
+    height:70px;
+    border-radius:22px;
+    margin:0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#fef2f2;
+    font-size:32px;
+}
+/* =========================
+   TABLET
+========================= */
+@media(max-width:991px){
+    .notifications-page{
+        padding:18px 0 40px;
+    }
+    .page-header{
+        padding:24px;
+    }
+    .header-top{
+        flex-direction:column;
+        align-items:stretch !important;
+    }
+    .filters{
+        justify-content:flex-start;
+    }
+}
+/* =========================
+   MOBILE
+========================= */
+@media(max-width:767px){
+    .notifications-page{
+        padding:12px 0 35px;
+    }
+    .notifications-wrapper{
+        width:100%;
+    }
+    .page-header{
+        border-radius:20px;
+        padding:20px;
+        margin-bottom:22px;
+    }
+    .header-title-area{
+        align-items:flex-start;
+    }
+    .header-icon{
+        width:50px;
+        height:50px;
+        border-radius:16px;
+        font-size:22px;
+    }
+    .page-title{
+        font-size:21px;
+        line-height:1.3;
+    }
+    .page-subtitle{
+        font-size:12px;
+    }
+    .count-badge{
+        font-size:.68rem;
+        padding:5px 9px;
+    }
+    .filters{
+        display:grid;
+        grid-template-columns:repeat(2,1fr);
+        gap:7px;
+        width:100%;
+    }
+    .filter-btn{
+        width:100%;
+        padding:8px 6px;
+        font-size:.72rem;
+    }
+    .notification-card .card-body{
+        padding:17px !important;
+    }
+    .notification-card .d-flex{
+        align-items:flex-start;
+    }
+    .icon-box{
+        width:44px;
+        height:44px;
+        border-radius:14px;
+        font-size:19px;
+        margin-right:11px !important;
+    }
+    .notification-title{
+        font-size:.9rem;
+    }
+    .notification-message{
+        font-size:.84rem;
+    }
+    .notification-card .text-muted{
+        font-size:.7rem;
+    }
+    .meta{
+        align-items:flex-start;
+        flex-direction:column;
+    }
+    .meta > div{
+        width:100%;
+    }
+    .meta .d-flex{
+        width:100%;
+    }
+    .btn-action{
+        width:100%;
+    }
+    .date-heading{
+        margin:22px 0 12px;
+        font-size:.72rem;
+    }
+    .empty-state{
+        padding:45px 20px;
+    }
+    .modal-box{
+        padding:24px 20px;
+        border-radius:20px;
+    }
+}
+/* =========================
+   VERY SMALL PHONES
+========================= */
+@media(max-width:380px){
+    .filters{
+        grid-template-columns:1fr 1fr;
+    }
+    .page-header{
+        padding:17px;
+    }
+    .header-title-area{
+        gap:11px;
+    }
+    .page-title{
+        font-size:19px;
+    }
+    .notification-card .card-body{
+        padding:15px !important;
+    }
+}
 </style>
-
-
-<div class="container py-4">
+<div class="container-fluid notifications-page">
 <div class="notifications-wrapper">
-    <div class="page-header">
-        <div class="d-flex justify-content-between align-items-center header-top">
-            <div>
-                <h3 class="page-title"><i class="bi bi-bell-fill me-2"></i>Notifications <span class="badge count-badge">{{ total }}</span></h3>
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center header-top">
+        <div class="header-title-area">
+            <div class="header-icon">
+                <i class="bi bi-bell-fill"></i>
             </div>
-            <div class="filters">
-                <a href="?filter=all" class="btn filter-btn {% if filter == 'all' %}active{% endif %}">All</a>
-                <a href="?filter=today" class="btn filter-btn {% if filter == 'today' %}active{% endif %}">Today</a>
-                <a href="?filter=week" class="btn filter-btn {% if filter == 'week' %}active{% endif %}">This Week</a>
+            <div>
+                <h3 class="page-title">
+                    Notifications
+                    <span class="badge count-badge">{{ total }}</span>
+                </h3>
+                <p class="page-subtitle">
+                    Stay updated with the latest announcements and messages.
+                </p>
             </div>
         </div>
+        <div class="filters">
+            <a href="?filter=all" class="btn filter-btn {% if filter == 'all' %}active{% endif %}">
+                All
+            </a>
+            <a href="?filter=today" class="btn filter-btn {% if filter == 'today' %}active{% endif %}">
+                Today
+            </a>
+            <a href="?filter=week" class="btn filter-btn {% if filter == 'week' %}active{% endif %}">
+                This Week
+            </a>
+            <a href="?filter=term" class="btn filter-btn {% if filter == 'term' %}active{% endif %}">
+                This Term
+            </a>
+            <a href="?filter=year" class="btn filter-btn {% if filter == 'year' %}active{% endif %}">
+                This Year
+            </a>
+        </div>
     </div>
-
-    {% for date, items in grouped_notifications.items %}
-        <div class="date-heading">{{ date }} • {{ items|length }} notification{{ items|length|pluralize }}</div>
-        {% for n in items %}
-        <div class="notification-card {% if not n.is_read %}unread{% endif %}">
-            <div class="card-body p-4">
-                <div class="d-flex">
-                    <div class="icon-box me-3">🔔</div>
-                    <div class="flex-grow-1">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <div><span class="fw-bold">Title:</span> <span class="notification-title ms-1">{{ n.notification.title }}</span></div>
-                            <small class="text-muted">{{ n.notification.created_at|timesince }} ago</small>
+</div>
+{% for date, items in grouped_notifications.items %}
+    <div class="date-heading">
+        {{ date }} • {{ items|length }} notification{{ items|length|pluralize }}
+    </div>
+    {% for n in items %}
+    <div class="notification-card {% if not n.is_read %}unread{% endif %}">
+        <div class="card-body">
+            <div class="d-flex">
+                <div class="icon-box me-3">
+                    🔔
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <span class="fw-bold">Title:</span>
+                            <span class="notification-title ms-1">
+                                {{ n.notification.title }}
+                            </span>
                         </div>
-                        <div class="mb-3"><span class="fw-bold">Message:</span> <span class="notification-message ms-1">{{ n.notification.message }}</span></div>
-                        <div class="meta">
-                            <div>
-                                <span class="badge-soft">Sent to: {{ n.notification.target_group }}</span>
-                                {% if not n.is_read %}<span class="new-badge">New</span>{% endif %}
-                            </div>
-                            <div class="d-flex gap-1">
-                                <button class="btn btn-danger btn-action" onclick="openDelete({{ n.notification.id }})">Delete</button>
-                            </div>
+                        <small class="text-muted ms-3">
+                            {{ n.notification.created_at|timesince }} ago
+                        </small>
+                    </div>
+                    <div class="mb-3">
+                        <span class="fw-bold">
+                            Message:
+                        </span>
+                        <span class="notification-message ms-1">
+                            {{ n.notification.message }}
+                        </span>
+                    </div>
+                    <div class="meta">
+                        <div>
+                            <span class="badge-soft">
+                                Sent to: {{ n.notification.target_group }}
+                            </span>
+                            {% if not n.is_read %}
+                            <span class="new-badge">
+                                New
+                            </span>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex gap-1">
+<form method="POST" action="{% url 'accounts:delete_announcement' n.notification.pk %}" style="display:inline;" onsubmit="return confirm('Delete this announcement for everyone?')">    {% csrf_token %}
+    <button type="button" class="btn btn-danger btn-sm" onclick="openDelete({{ n.notification.pk }})">
+    <i class="fas fa-trash"></i> Delete
+</button>
+</form>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        {% endfor %}
-    {% empty %}
-    <div class="empty-state"><div class="icon">🔔</div><h4 class="fw-bold mb-2">No Notifications</h4><p class="text-muted mb-0">You're all caught up.</p></div>
+    </div>
     {% endfor %}
-    {% if page_obj.has_other_pages %}
-<div class="d-flex justify-content-center mt-4 gap-2">
-  {% if page_obj.has_previous %}
-    <a href="?filter={{ filter }}&page={{ page_obj.previous_page_number }}" class="btn btn-light btn-sm">Previous</a>
-  {% endif %}
-  
-  <span class="btn btn-dark btn-sm">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-  
-  {% if page_obj.has_next %}
-    <a href="?filter={{ filter }}&page={{ page_obj.next_page_number }}" class="btn btn-light btn-sm">Next</a>
-  {% endif %}
+{% empty %}
+    <div class="empty-state">
+        <div class="icon">
+            🔔
+        </div>
+        <h4 class="fw-bold mb-2">
+            No Notifications
+        </h4>
+        <p class="text-muted mb-0">
+            You're all caught up.
+        </p>
+    </div>
+{% endfor %}
+{% if page_obj.has_other_pages %}
+<div class="pagination-wrap">
+    {% if page_obj.has_previous %}
+    <a
+        href="?filter={{ filter }}&page={{ page_obj.previous_page_number }}"
+        class="btn btn-light btn-sm">
+        <i class="bi bi-chevron-left me-1"></i>
+        Previous
+    </a>
+    {% endif %}
+    <span class="btn btn-dark btn-sm">
+        {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+    </span>
+    {% if page_obj.has_next %}
+    <a
+        href="?filter={{ filter }}&page={{ page_obj.next_page_number }}"
+        class="btn btn-light btn-sm">
+        Next
+        <i class="bi bi-chevron-right ms-1"></i>
+    </a>
+    {% endif %}
 </div>
 {% endif %}
 </div>
 </div>
-
 <!-- Custom Delete Popup -->
 <div id="deleteModal" class="custom-modal">
-  <div class="modal-box">
-    <div style="font-size:40px;">🗑️</div>
-    <h5 class="fw-bold mt-2">Delete Announcement?</h5>
+<div class="modal-box">
+    <div class="modal-icon">🗑️</div>
+    <h5 class="fw-bold mt-3">Delete Announcement?</h5>
     <p class="text-muted small">This will delete the announcement for everyone. This action cannot be undone.</p>
     <div class="d-flex gap-2 justify-content-center mt-4">
-      <button class="btn btn-light px-4" style="border-radius:30px;" onclick="closeDelete()">Cancel</button>
-      <button class="btn btn-danger px-4" style="border-radius:30px;" id="confirmBtn">Delete</button>
+        <button class="btn btn-light px-4" style="border-radius:30px;" onclick="closeDelete()">Cancel</button>
+        <form id="deleteForm" method="POST" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger px-4" style="border-radius:30px;">Delete</button>
+        </form>
     </div>
-  </div>
+</div>
 </div>
 
 <script>
 let delId = null;
-function openDelete(id){ delId=id; document.getElementById('deleteModal').classList.add('show'); }
-function closeDelete(){ document.getElementById('deleteModal').classList.remove('show'); }
-document.getElementById('confirmBtn').onclick = function(){
-  window.location.href = `/communication/announcements/${delId}/delete/`;
+function openDelete(id){
+    delId=id;
+    document.getElementById('deleteForm').action = `/communication/announcements/${id}/delete/`;
+    document.getElementById('deleteModal').classList.add('show');
 }
+function closeDelete(){
+    document.getElementById('deleteModal').classList.remove('show');
+}
+// Close when clicking outside
+document.getElementById('deleteModal').addEventListener('click', function(e){
+    if(e.target === this) closeDelete();
+});
 </script>
 
 {% endblock %}

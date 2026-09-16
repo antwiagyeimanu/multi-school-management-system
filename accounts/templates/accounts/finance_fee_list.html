@@ -278,6 +278,7 @@
         <div class="col-md-4">
             <label class="form-label">Academic Year</label>
             <select name="year" onchange="this.form.submit()" class="form-select">
+                <option value="">All Years</option>
                 {% for year in years %}
                     <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>
                         {{ year }}
@@ -288,17 +289,10 @@
         <div class="col-md-4">
             <label class="form-label">Term</label>
             <select name="term" class="form-select" onchange="this.form.submit()">
+                <option value="">All Terms</option>
                 {% for t in terms %}
                     <option value="{{ t.id }}" {% if t.id|stringformat:"s" == selected_term %}selected{% endif %}>
-                        {% if t.term_number == 1 %}
-                            First Term
-                        {% elif t.term_number == 2 %}
-                            Second Term
-                        {% elif t.term_number == 3 %}
-                            Third Term
-                        {% else %}
-                            Term {{ t.term_number }}
-                        {% endif %}
+                        {{ t }}
                     </option>
                 {% endfor %}
             </select>
@@ -326,23 +320,23 @@
                         <strong>{{ fs.get_stage_display }}</strong>
                     </td>
                     <td>
-                        {{ fs.term.get_term_number_display }}
+                        {{ fs.term }}
                     </td>
                     <td>
-                        {{ fs.term.academic_year }}
+                        {{ fs.academic_year }}
                     </td>
                     <td>
                         <strong>GH₵ {{ fs.total_amount }}</strong>
                     </td>
                     <td>
-                        {% if fs.is_active %}
+                        {% if fs.is_published %}
                             <span class="badge bg-success">
                                 <i class="bi bi-check-circle me-1"></i>
-                                Active
+                                Published
                             </span>
                         {% else %}
                             <span class="badge bg-secondary">
-                                Inactive
+                                Draft
                             </span>
                         {% endif %}
                     </td>
@@ -350,33 +344,11 @@
                 <tr class="breakdown-row">
                     <td colspan="5" class="small text-muted">
                         Breakdown:
-                        {% if fs.school_fees %}
-                            School Fees: {{ fs.school_fees }} |
-                        {% endif %}
-                        {% if fs.canteen_amount %}
-                            Feeding: {{ fs.canteen_amount }} |
-                        {% endif %}
-                        {% if fs.boarding_fee %}
-                            Boarding: {{ fs.boarding_fee }} |
-                        {% endif %}
-                        {% if fs.hostel_fee %}
-                            Hostel: {{ fs.hostel_fee }} |
-                        {% endif %}
-                        {% if fs.development_fee %}
-                            Development: {{ fs.development_fee }} |
-                        {% endif %}
-                        {% if fs.pta_dues %}
-                            PTA Dues: {{ fs.pta_dues }} |
-                        {% endif %}
-                        {% if fs.computer_levy %}
-                            Computer Fee: {{ fs.computer_levy }} |
-                        {% endif %}
-                        {% if fs.exam_fees %}
-                            Exam Fees: {{ fs.exam_fees }} |
-                        {% endif %}
-                        {% if fs.other_fees %}
-                            Other: {{ fs.other_fees }}
-                        {% endif %}
+                        {% for item in fs.items.all %}
+                            <span class="badge bg-light text-dark border me-1 mb-1">{{ item.name }}: GH₵ {{ item.amount }}</span>
+                        {% empty %}
+                            No items
+                        {% endfor %}
                     </td>
                 </tr>
                 {% endfor %}
@@ -387,9 +359,12 @@
 {% else %}
 <div class="description-text">
     <i class="bi bi-wallet2 d-block mb-2 fs-3"></i>
-    No fee structures created yet.
+    No fee structures created yet. Go to Fee Structure Settings to create.
 </div>
 {% endif %}
+
+
+
 </div>
 
 {% endblock %}

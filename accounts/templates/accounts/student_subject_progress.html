@@ -5,276 +5,342 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-
 <style>
 
-.progress-page{
+/* =========================================================
+   PREMIUM SUBJECT PROGRESS
+========================================================= */
 
-    max-width:1200px;
-    margin:auto;
-    padding:25px 20px;
+.progress-page{
+    width:100%;
+    max-width:1080px;
+    margin:0 auto;
+    padding:22px 16px 45px;
     background:#f8fafc;
     min-height:100vh;
-
 }
 
-
-
-/* HEADER */
+/* =========================================================
+   HEADER
+========================================================= */
 
 .progress-header{
-
-    background:linear-gradient(135deg,#0f172a,#2563eb);
-
+    position:relative;
+    overflow:hidden;
+    background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 55%,#2563eb 100%);
     color:white;
-
-    border-radius:24px;
-
-    padding:30px;
-
+    border-radius:22px;
+    padding:27px 30px;
     display:flex;
-
     justify-content:space-between;
-
     align-items:center;
-
-    margin-bottom:30px;
-
-    box-shadow:0 15px 35px rgba(15,23,42,.15);
-
+    gap:20px;
+    margin-bottom:22px;
+    box-shadow:0 16px 35px rgba(15,23,42,.14);
 }
 
+.progress-header::after{
+    content:"";
+    position:absolute;
+    width:180px;
+    height:180px;
+    border-radius:50%;
+    right:-65px;
+    top:-95px;
+    background:rgba(255,255,255,.07);
+}
+
+.progress-header::before{
+    content:"";
+    position:absolute;
+    width:90px;
+    height:90px;
+    border-radius:50%;
+    right:100px;
+    bottom:-60px;
+    background:rgba(255,255,255,.05);
+}
+
+.progress-header > div,
+.back-btn{
+    position:relative;
+    z-index:2;
+}
 
 .progress-header h1{
-
     margin:0;
-
-    font-size:32px;
-
-    font-weight:800;
-
+    font-size:28px;
+    font-weight:900;
+    letter-spacing:-.5px;
 }
 
-
+.progress-header p{
+    font-size:13px;
+}
 
 .back-btn{
-
-    background:white;
-
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:44px;
+    padding:10px 17px;
+    background:#fff;
     color:#1d4ed8;
-
-    padding:12px 20px;
-
-    border-radius:14px;
-
+    border-radius:12px;
     text-decoration:none;
-
-    font-weight:700;
-
-    transition:.25s;
-
+    font-size:13px;
+    font-weight:800;
+    white-space:nowrap;
+    transition:.25s ease;
+    box-shadow:0 6px 16px rgba(0,0,0,.10);
 }
-
 
 .back-btn:hover{
-
     transform:translateY(-2px);
-
     color:#1d4ed8;
-
+    box-shadow:0 10px 20px rgba(0,0,0,.14);
 }
 
-
-
-/* CARDS */
+/* =========================================================
+   CARDS
+========================================================= */
 
 .progress-card{
-
-    background:white;
-
-    border-radius:22px;
-
-    padding:25px;
-
-    margin-bottom:25px;
-
-    box-shadow:
-    0 10px 25px rgba(15,23,42,.08);
-
+    background:#fff;
+    border:1px solid #e5e7eb;
+    border-radius:20px;
+    padding:23px;
+    margin-bottom:20px;
+    box-shadow:0 10px 26px rgba(15,23,42,.055);
 }
 
+.progress-card h3{
+    color:#0f172a;
+    font-size:19px;
+    font-weight:900;
+}
 
-
-/* TABLE */
+/* =========================================================
+   RESULTS TABLE
+========================================================= */
 
 .table-wrapper{
-
+    width:100%;
     overflow-x:auto;
-
+    -webkit-overflow-scrolling:touch;
 }
-
-
 
 .progress-table{
-
     width:100%;
-
-    border-collapse:collapse;
-
+    min-width:600px;
+    border-collapse:separate;
+    border-spacing:0;
+    overflow:hidden;
 }
-
-
 
 .progress-table th{
-
     background:#0f172a;
-
-    color:white;
-
-    padding:14px;
-
+    color:#fff;
+    padding:13px 14px;
     text-align:center;
-
     font-size:13px;
-
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    white-space:nowrap;
 }
 
+.progress-table th:first-child{
+    border-radius:10px 0 0 0;
+}
 
+.progress-table th:last-child{
+    border-radius:0 10px 0 0;
+}
 
 .progress-table td{
-
-    padding:14px;
-
+    padding:15px 14px;
     text-align:center;
-
-    border-bottom:1px solid #e5e7eb;
-
-    font-size:14px;
-
+    border-bottom:1px solid #eef2f7;
+    color:#475569;
+    font-size:13px;
+    vertical-align:middle;
 }
 
-
-
-.progress-table tr:hover{
-
-    background:#f8fafc;
-
+.progress-table tbody tr{
+    transition:.2s ease;
 }
 
+.progress-table tbody tr:hover{
+    background:#f8faff;
+}
 
+.progress-table tbody tr:last-child td{
+    border-bottom:none;
+}
 
-/* GRADE BADGES */
+/* =========================================================
+   GRADE
+========================================================= */
 
 .grade{
-
-    display:inline-block;
-
-    padding:6px 14px;
-
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:44px;
+    padding:6px 12px;
     border-radius:999px;
-
-    font-weight:800;
-
+    font-size:15px;
+    font-weight:900;
     background:#dbeafe;
-
     color:#1d4ed8;
-
 }
 
+/* =========================================================
+   SCORE
+========================================================= */
 
+.progress-table .fw-bold{
+    color:#0f172a;
+}
 
-/* CHART */
+.progress-table .text-primary{
+    display:inline-block;
+    margin-top:3px;
+    font-size:15px;
+    font-weight:800;
+}
+
+/* =========================================================
+   REMARK
+========================================================= */
+
+.progress-table .fw-bold{
+    color:#0f172a;
+}
+
+.progress-table .text-primary{
+    display:inline-block;
+    margin-top:3px;
+    font-size:15px;
+    font-weight:800;
+}
+/* =========================================================
+   CHART
+========================================================= */
 
 .chart-box{
-
-    min-height:350px;
-
+    position:relative;
+    width:100%;
+    height:350px;
+    padding:5px 0;
 }
 
-
-
-/* EMPTY */
+/* =========================================================
+   EMPTY STATES
+========================================================= */
 
 .empty-box{
-
     background:#f8fafc;
-
-    padding:45px 20px;
-
+    border:1px solid #e5e7eb;
+    padding:42px 20px;
     text-align:center;
-
-    border-radius:18px;
-
+    border-radius:17px;
     color:#64748b;
-
 }
 
+.empty-box h5{
+    color:#0f172a;
+}
 
+.empty-box p{
+    font-size:13px;
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
 
 @media(max-width:768px){
 
+    .progress-page{
+        padding:15px 10px 35px;
+    }
 
-.progress-header{
+    .progress-header{
+        flex-direction:column;
+        align-items:stretch;
+        text-align:center;
+        padding:23px 18px;
+        border-radius:19px;
+        margin-bottom:18px;
+    }
 
-    flex-direction:column;
+    .progress-header h1{
+        font-size:23px;
+    }
 
-    gap:20px;
+    .progress-header p{
+        font-size:15px;
+        font-weight: 800;
+    }
 
-    text-align:center;
+    .back-btn{
+        width:100%;
+    }
+
+    .progress-card{
+        padding:17px;
+        border-radius:18px;
+        margin-bottom:17px;
+    }
+
+    .progress-card h3{
+        font-size:20px;
+        font-weight: 800;
+    }
+
+    .progress-table th,
+    .progress-table td{
+        font-size:13px;
+        padding:11px 9px;
+    }
+
+    .chart-box{
+        height:300px;
+    }
 
 }
-
-
-.progress-header h1{
-
-    font-size:25px;
-
-}
-
-
-.progress-card{
-
-    padding:18px;
-
-}
-
-
-
-.progress-table th,
-.progress-table td{
-
-    font-size:12px;
-
-    padding:10px;
-
-}
-
-
-}
-
 
 @media(max-width:480px){
 
-.progress-page{
+    .progress-page{
+        padding:10px 8px 30px;
+    }
 
-    padding:15px 10px;
+    .progress-header{
+        padding:21px 15px;
+    }
 
-}
+    .progress-header h1{
+        font-size:21px;
+    }
 
+    .progress-card{
+        padding:14px;
+    }
 
-.back-btn{
+    .chart-box{
+        height:270px;
+    }
 
-    width:100%;
-
-    text-align:center;
-
-}
-
+    .empty-box{
+        padding:35px 15px;
+    }
 
 }
 
 </style>
-
 
 
 <div class="progress-page">
@@ -284,345 +350,355 @@
 
 <div class="progress-header">
 
-<div>
+    <div>
 
-<h1>
-📘 {{ subject.name }} Progress
-</h1>
+        <h1>
+            📘 {{ subject.name }} Progress
+        </h1>
 
-<p class="mb-0 mt-2 opacity-75">
-Your academic performance history
-</p>
+        <p class="mb-0 mt-2 opacity-75">
+            Your academic performance history
+        </p>
+
+    </div>
+
+
+    <a href="{% url 'accounts:view-student-subjects' %}"
+       class="back-btn">
+
+        ← Back to Subjects
+
+    </a>
 
 </div>
-
-
-<a href="{% url 'accounts:view-student-subjects' %}"
-   class="back-btn">
-
-← Back to Subjects
-
-</a>
-
-
-</div>
-
-
 
 
 <!-- RESULTS -->
 
 <div class="progress-card">
 
+    <h3 class="text-center fw-bold mb-4">
 
-<h3 class="text-center fw-bold mb-4">
+        📊 All Results for {{ subject.name }}
 
-📊 All Results for {{ subject.name }}
+    </h3>
 
-</h3>
 
+    {% if results %}
 
 
-{% if results %}
+    <div class="table-wrapper">
 
+        <table class="progress-table">
 
-<div class="table-wrapper">
+            <thead>
 
+                <tr>
 
-<table class="progress-table">
+                    <th>Term</th>
 
+                    <th>Total Score</th>
 
-<thead>
+                    <th>Grade</th>
 
-<tr>
+                    <th>Remark</th>
 
-<th>Term</th>
+                </tr>
 
-<th>Total Score</th>
+            </thead>
 
-<th>Grade</th>
 
-<th>Remark</th>
+            <tbody>
 
-</tr>
 
-</thead>
+            {% for result in results %}
 
+            <tr>
 
+                <td>
 
-<tbody>
+                    <strong>
+                         {{ result.term }}
+                    </strong>
 
+                    <br>
 
-{% for result in results %}
+                    <small class="text-muted">
+                        {{ result.academic_year }}
+                    </small>
 
+                </td>
 
-<tr>
 
+                <td class="fw-bold">
 
-<td>
 
-Term {{ result.term }}
+                   
 
-<br>
+                    <span class="text-primary">
 
-<small class="text-muted">
-{{ result.academic_year }}
-</small>
+                        {{ result.percentage }}%
 
-</td>
+                    </span>
 
+                </td>
 
 
-<td class="fw-bold">
+                <td>
 
-{{ result.total_score }}/{{ result.total_score_max }}
+                    <span class="grade">
 
-<br>
+                        {{ result.grade }}
 
-<span class="text-primary">
+                    </span>
 
-{{ result.percentage }}%
+                </td>
 
-</span>
 
+                <td>
 
-</td>
+                    {{ result.remark }}
 
+                </td>
 
+            </tr>
 
-<td>
+            {% endfor %}
 
-<span class="grade">
 
-{{ result.grade }}
+            </tbody>
 
-</span>
+        </table>
 
+    </div>
 
-</td>
 
+    {% else %}
 
 
-<td>
+    <div class="empty-box">
 
-{{ result.remark }}
+        <h5 class="fw-bold">
 
+            📚 No Results Yet
 
-</td>
+        </h5>
 
+        <p class="mb-0">
 
+            No results uploaded for {{ subject.name }} yet.
 
-</tr>
+        </p>
 
+    </div>
 
-{% endfor %}
 
-
-</tbody>
-
-
-</table>
-
+    {% endif %}
 
 </div>
-
-
-
-{% else %}
-
-
-<div class="empty-box">
-
-<h5 class="fw-bold">
-
-📚 No Results Yet
-
-</h5>
-
-
-<p class="mb-0">
-
-No results uploaded for {{ subject.name }} yet.
-
-</p>
-
-
-</div>
-
-
-{% endif %}
-
-
-</div>
-
-
-
 
 
 <!-- CHART -->
 
 <div class="progress-card">
 
+    <h3 class="fw-bold mb-4">
 
-<h3 class="fw-bold mb-4">
+        📈 Performance Over Time
 
-📈 Performance Over Time
-
-</h3>
-
+    </h3>
 
 
-{% if labels|length >= 2 %}
+    {% if labels|length >= 2 %}
 
 
+    <div class="chart-box">
 
-<div class="chart-box">
+        <canvas id="progressChart"></canvas>
 
-<canvas id="progressChart"></canvas>
+    </div>
+
+
+    <script>
+
+    const ctx =
+    document.getElementById('progressChart');
+
+
+    new Chart(ctx, {
+
+        type:'line',
+
+        data:{
+
+            labels: {{ labels|safe }},
+
+            datasets:[{
+
+                label:'Score %',
+
+                data: {{ scores|safe }},
+
+                borderColor:'#2563eb',
+
+                backgroundColor:'rgba(37,99,235,.10)',
+
+                borderWidth:3,
+
+                fill:true,
+
+                tension:.4,
+
+                pointRadius:5,
+
+                pointHoverRadius:7,
+
+                pointBackgroundColor:'#2563eb',
+
+                pointBorderColor:'#fff',
+
+                pointBorderWidth:2
+
+            }]
+
+        },
+
+
+        options:{
+
+            responsive:true,
+
+            maintainAspectRatio:false,
+
+            interaction:{
+                intersect:false,
+                mode:'index'
+            },
+
+
+            plugins:{
+
+                legend:{
+                    display:false
+                },
+
+
+                tooltip:{
+
+                    backgroundColor:'#0f172a',
+
+                    titleColor:'#fff',
+
+                    bodyColor:'#e2e8f0',
+
+                    padding:12,
+
+                    cornerRadius:10,
+
+                    displayColors:false,
+
+                    callbacks:{
+
+                        label:function(context){
+
+                            return context.parsed.y + '%';
+
+                        }
+
+                    }
+
+                }
+
+            },
+
+
+            scales:{
+
+                x:{
+
+                    grid:{
+                        display:false
+                    },
+
+                    ticks:{
+                        color:'#64748b',
+                        font:{
+                            size:11,
+                            weight:'600'
+                        }
+                    }
+
+                },
+
+                y:{
+
+                    beginAtZero:true,
+
+                    max:100,
+
+                    grid:{
+                        color:'rgba(148,163,184,.15)'
+                    },
+
+                    ticks:{
+
+                        color:'#64748b',
+
+                        font:{
+                            size:11
+                        },
+
+                        callback:function(value){
+
+                            return value+'%';
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    });
+
+    </script>
+
+
+    {% else %}
+
+
+    <div class="empty-box">
+
+        <div style="font-size:45px">
+
+            📊
+
+        </div>
+
+
+        <h5 class="fw-bold mt-3">
+
+            Not Enough Data
+
+        </h5>
+
+
+        <p class="mb-0">
+
+            You need results from at least two terms to see progress.
+
+        </p>
+
+    </div>
+
+
+    {% endif %}
 
 
 </div>
-
-
-
-<script>
-
-const ctx =
-document.getElementById('progressChart');
-
-
-new Chart(ctx, {
-
-type:'line',
-
-data:{
-
-labels: {{ labels|safe }},
-
-datasets:[{
-
-label:'Score %',
-
-data: {{ scores|safe }},
-
-borderColor:'#2563eb',
-
-backgroundColor:'rgba(37,99,235,.12)',
-
-borderWidth:3,
-
-fill:true,
-
-tension:.4,
-
-pointRadius:6,
-
-pointBackgroundColor:'#2563eb'
-
-}]
-
-},
-
-
-options:{
-
-responsive:true,
-
-maintainAspectRatio:false,
-
-
-plugins:{
-
-legend:{
-display:false
-},
-
-
-tooltip:{
-
-callbacks:{
-
-label:function(context){
-
-return context.parsed.y + '%';
-
-}
-
-}
-
-}
-
-},
-
-
-scales:{
-
-y:{
-
-beginAtZero:true,
-
-max:100,
-
-ticks:{
-
-callback:function(value){
-
-return value+'%';
-
-}
-
-}
-
-}
-
-}
-
-}
-
-});
-
-
-</script>
-
-
-
-{% else %}
-
-
-
-<div class="empty-box">
-
-
-<div style="font-size:50px">
-
-📊
-
-</div>
-
-
-<h5 class="fw-bold mt-3">
-
-Not Enough Data
-
-</h5>
-
-
-<p class="mb-0">
-
-You need results from at least two terms to see progress.
-
-</p>
-
-
-</div>
-
-
-
-{% endif %}
-
-
-</div>
-
 
 
 </div>

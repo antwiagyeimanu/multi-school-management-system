@@ -7,6 +7,17 @@ import string
 import uuid
 import io
 import json
+import zipfile
+from django.apps import apps
+from django.core import serializers
+from .hubtel_service import initiate_hubtel_payment
+import base64
+import qrcode
+from django.db import transaction
+from django.core.files.base import ContentFile
+from django.utils import timezone
+from .utils import get_grading_scale
+from .utils import get_weeks_for_term
 from django.core.exceptions import ValidationError
 from .utils import get_term_year_filter
 from django.http import HttpResponseRedirect
@@ -42,10 +53,11 @@ from django.db.models import (
 from django.contrib.auth.hashers import check_password
 from django.views.decorators.http import require_http_methods
 
-
+import sqlite3
+from django.conf import settings
 from django.db.models.functions import Rank, Coalesce
 from django.db.models.functions import Rank
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, FileResponse
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_date
@@ -68,15 +80,18 @@ from .models import (
     CanteenPayment, PaymentTransaction, PaymentItem, PaymentType, Subject, AttendanceSession, School, SchoolSetting, Notification, NotificationRecipient,
     StudentFee, Term, Timetable, AcademicCalendar, FeePayment, StudentSubjectClass, AcademicYear, Fee, PendingPayment, PendingPaymentItem, FeeAuditLog, TeacherAttendance,
     Expense, STAGE_GROUP_MAP, FeeStructure, SchoolClass, AttendanceRecord, Result, TeacherSubjectClass, ParentStudentLink, StudentTermSummary, TeacherAttendance, Break,
-    TermSetting
+    TermSetting, SystemSetting, DynamicFeeStructure, DynamicFeeStructureItem, STAGE_CHOICES, DynamicStudentFeeItem, HeadmasterPermission, AcademicYear,
+    BasicDailyFeeSetting, BasicDailyFeeCollection, GradingScale,
 )
 from django.db.models import Case, When, Value, IntegerField, CharField, Min
 
 from .forms import (
     ExpenseForm, TeacherForm, AccountantForm, StudentForm, PendingPaymentForm,
     TeacherEditForm, AddSubjectToClassForm, ResultUploadForm, SchoolSmsSettingsForm,
-    TermSettingForm, SchoolClassForm, TermForm, AcademicCalendarForm,
-    AccountantEditForm, StudentFeeForm, ResultForm, AssignTeacherForm
+    TermSettingForm, SchoolClassForm, TermForm, AcademicCalendarForm, 
+    AccountantEditForm, StudentFeeForm, ResultForm, AssignTeacherForm, HeadmasterForm, HeadmasterEditForm, ParentForm,
+    GradingScaleForm,
+
 )
 
 # External apps
@@ -123,26 +138,46 @@ def check_clash(school, teacher_id, class_id, weekday, start_time, end_time, exc
 
 def redirect_to_dashboard(user):
     """Send user to correct dashboard based on role"""
-    if user.role == 'admin':
+
+    if user.role in ['admin', 'proprietor', 'proprietress']:
         return redirect('accounts:admin_dashboard')
+
     elif user.role == 'teacher':
         return redirect('accounts:teacher-dashboard')
+
     elif user.role == 'student':
         return redirect('accounts:student_dashboard')
+
     elif user.role == 'parent':
         return redirect('accounts:parent_dashboard')
+
     elif user.role == 'accountant':
         return redirect('accounts:accountant_dashboard')
-    else:
-        return redirect('accounts:home')  # fallback
 
-def calculate_grade(total_score):
-    if total_score >= 80: return "A"
-    elif total_score >= 70: return "B"
-    elif total_score >= 60: return "C"
-    elif total_score >= 50: return "D"
-    elif total_score >= 40: return "E"
-    else: return "F"
+    elif user.role in ['headmaster', 'headmistress']:
+        return redirect('accounts:headmaster_dashboard')
+
+    else:
+        return redirect('accounts:home')
+
+def calculate_grade(total_score, school, term):
+
+    grading = GradingScale.objects.filter(
+        school=school,
+        term=term,
+        min_score__lte=total_score,
+        max_score__gte=total_score,
+    ).first()
+
+    if not grading:
+        grading = GradingScale.objects.filter(
+            school=school,
+            term__isnull=True,
+            min_score__lte=total_score,
+            max_score__gte=total_score,
+        ).first()
+
+    return grading.grade if grading else "-"
 
 
 def role_required(allowed_roles=[]):
@@ -153,20 +188,29 @@ def role_required(allowed_roles=[]):
                 return redirect('accounts:login')
 
             if request.user.role not in allowed_roles:
-                if request.user.role == 'admin':
+                if request.user.role in ['admin', 'proprietor', 'proprietress']:
                     return redirect('accounts:admin_dashboard')
+
                 elif request.user.role == 'teacher':
                     return redirect('accounts:teacher_dashboard')
+
                 elif request.user.role == 'student':
                     return redirect('accounts:student_dashboard')
+
                 elif request.user.role == 'parent':
                     return redirect('accounts:parent_dashboard')
+
                 elif request.user.role == 'accountant':
-                    return redirect('accountant_dashboard')
+                    return redirect('accounts:accountant_dashboard')
+
+                elif request.user.role in ['headmaster', 'headmistress']:
+                    return redirect('accounts:headmaster_dashboard')
+
                 else:
                     return redirect('accounts:login')
 
             return view_func(request, *args, **kwargs)
+
         return wrapper
     return decorator
 
@@ -178,7 +222,7 @@ def dashboard(request):
     user = request.user
     role = user.role
 
-    if role == "admin":
+    if role in ["admin", "proprietor", "proprietress"]:
         return redirect('accounts:admin_dashboard')
 
     elif role == "teacher":
@@ -192,6 +236,8 @@ def dashboard(request):
 
     elif role == "accountant":
         return redirect('accountant_dashboard')
+    elif role in ["headmaster", "headmistress"]:
+        return redirect('headmaster_dashboard')
     else:
 
      return redirect('accounts:login')
@@ -200,7 +246,7 @@ def dashboard(request):
 @login_required
 def admin_dashboard(request):
 
-    if request.user.role != "admin":
+    if request.user.role not in ["admin", "proprietor", "proprietress"]:
         return redirect("accounts:dashboard")
 
     school = request.user.school
@@ -238,6 +284,19 @@ def admin_dashboard(request):
         total_subjects = Subject.objects.filter(
             school=school
         ).count()
+        # ============================
+        # ACADEMIC YEAR & CURRENT TERM
+        # ============================
+
+        academic_year = AcademicYear.objects.filter(
+            school=school,
+            is_active=True
+        ).first()
+
+        current_term = Term.objects.filter(
+            school=school,
+            is_active=True
+        ).first()
 
         pending_count = Expense.objects.filter(
             school=school,
@@ -270,6 +329,8 @@ def admin_dashboard(request):
 
         "total_classes": total_classes,
         "total_subjects": total_subjects,
+        "academic_year": academic_year,
+        "current_term": current_term,
 
         "pending_count": pending_count,
 
@@ -291,154 +352,192 @@ def admin_profile(request):
 
 @login_required
 def student_dashboard(request):
-    if request.user.role!= 'student':
+    if request.user.role != "student":
         return redirect_to_dashboard(request.user)
 
     student = request.user
+    # EXTRA SAFETY: Ensure student has school and class
+    if not student.school:
+        return redirect("login")  # or error page
 
-    current_term = Term.objects.filter(
-        school=student.school,
-        is_active=True
-    ).select_related('academic_year').first()
+    current_term = (
+        Term.objects.filter(school=student.school, is_active=True)
+        .select_related("academic_year")
+        .first()
+    )
 
     if not current_term:
-        return render(request, 'accounts/student_dashboard.html', {
-            'student': student,
-            'student_class': student.school_class,
-            'current_term': None,
-            'total_fees': 0,
-            'balance': 0,
-            'average_score': 0,
-            'total_subjects': 0,
-            'attendance_percent': 0,
-            'attendance_percent_text': '0%',
-            'today_timetable': [],
-            'announcements': [],
-            'announcement_count': 0,
-            'term_grade': '-',
-            'term_remark': 'No results',
-        })
+        return render(
+            request,
+            "accounts/student_dashboard.html",
+            {
+                "student": student,
+                "student_class": student.school_class,
+                "current_term": None,
+                "total_fees": 0,
+                "balance": 0,
+                "average_score": 0,
+                "total_subjects": 0,
+                "attendance_percent": 0,
+                "attendance_percent_text": "0%",
+                "today_timetable": [],
+                "announcements": [],
+                "announcement_count": 0,
+                "term_grade": "-",
+                "term_remark": "No results",
+            },
+        )
 
     student_results = Result.objects.filter(
+        school=student.school,  # <-- ADDED school isolation
         student=student,
         term=current_term,
         academic_year=current_term.academic_year,
-        status='published'
+        status="published",
     )
 
     totals = [r.total_score or 0 for r in student_results]
     avg_score = sum(totals) / len(totals) if totals else 0
     total_subjects = student_results.count()
 
-    def get_term_grade(pct):
-        if pct >= 80: return "A"
-        elif pct >= 70: return "B"
-        elif pct >= 60: return "C"
-        elif pct >= 50: return "D"
-        elif pct >= 40: return "E"
-        else: return "F"
+    def get_term_grading(pct):
+        grading = GradingScale.objects.filter(
+            school=student.school,
+            term=current_term,
+            min_score__lte=pct,
+            max_score__gte=pct,
+        ).first()
 
-    def get_term_remark(pct):
-        if pct >= 80: return "Excellent"
-        elif pct >= 70: return "Very Good"
-        elif pct >= 60: return "Good"
-        elif pct >= 50: return "Pass"
-        elif pct >= 40: return "Weak"
-        else: return "Fail"
+        if not grading:
+            grading = GradingScale.objects.filter(
+                school=student.school,
+                term__isnull=True,
+                min_score__lte=pct,
+                max_score__gte=pct,
+            ).first()
 
-    term_grade = get_term_grade(avg_score) if total_subjects > 0 else "-"
-    term_remark = get_term_remark(avg_score) if total_subjects > 0 else "No results"
+        return grading
 
-    # Attendance - FINAL RULE: ONLY P and A, 1 P = Whole day Present
+
+    term_grading = get_term_grading(avg_score)
+
+    term_grade = term_grading.grade if term_grading and total_subjects > 0 else "-"
+    term_remark = (
+        term_grading.remark
+        if term_grading and total_subjects > 0
+        else "No results"
+    )
+
+
+
     today_date = timezone.now().date()
 
     spent_days = calculate_school_days(
-        current_term.start_date,
-        today_date,
-        student.school
+        current_term.start_date, today_date, student.school
     )
 
     total_days = calculate_school_days(
-        current_term.start_date,
-        current_term.end_date,
-        student.school
+        current_term.start_date, current_term.end_date, student.school
     )
 
     attendance_records = AttendanceRecord.objects.filter(
+        school=student.school,  # <-- ADDED
         student=student,
+        session__school=student.school,  # <-- ADDED double protection
         session__date__gte=current_term.start_date,
-        session__date__lte=today_date
-    ).values('session__date', 'status')
+        session__date__lte=today_date,
+    ).values("session__date", "status")
 
     daily_statuses = defaultdict(list)
     for record in attendance_records:
-        daily_statuses[record['session__date']].append(record['status'])
+        daily_statuses[record["session__date"]].append(record["status"])
 
     present_days = 0
     for statuses in daily_statuses.values():
-        if 'P' in statuses:
+        if "P" in statuses:
             present_days += 1
 
-    attendance_percent = round((present_days / spent_days) * 100, 1) if spent_days else 0
+    attendance_percent = (
+        round((present_days / spent_days) * 100, 1) if spent_days else 0
+    )
     attendance_display = f"{present_days}/{spent_days}"
 
+    # NOTE: StudentFee academic_year in your model is CharField, but current_term.academic_year is FK
+    # So we filter by name
     fee_record = StudentFee.objects.filter(
+        school=student.school,  # <-- ADDED
         student=student,
         term=current_term,
-        academic_year=current_term.academic_year
+        academic_year=str(current_term.academic_year),  # <-- FIX for CharField vs FK
     ).first()
 
     today = timezone.now().date()
     weekday_int = today.weekday()
     today_timetable = []
     if weekday_int <= 4:
-        today_timetable = Timetable.objects.filter(
-            school = student.school,
-            school_class=student.school_class,
-            weekday=weekday_int
-        ).select_related('subject','teacher').order_by('start_time')
+        today_timetable = (
+            Timetable.objects.filter(
+                school=student.school,
+                school_class=student.school_class,
+                weekday=weekday_int,
+            )
+            .select_related("subject", "teacher")
+            .order_by("start_time")
+        )
 
     all_announcements = Announcement.objects.filter(
-        school=student.school,
-        is_active=True
-    ).order_by('-created_at')
+        school=student.school, is_active=True
+    ).order_by("-created_at")
 
     filtered = []
     for ann in all_announcements:
-        roles = ann.target_roles or []
+        roles = [r.lower().replace("_", " ") for r in (ann.target_roles or [])]
         if isinstance(roles, str):
-            roles = roles.replace("'", "").replace("[", "").replace("]", "").replace(" ", "").split(",")
-        if 'all' in roles or 'students' in roles:
+            roles = (
+                roles.lower()
+                .replace("'", "")
+                .replace("[", "")
+                .replace("]", "")
+                .split(",")
+            )
+
+        roles = [r.strip().replace("_", " ") for r in roles]
+
+        if "all" in roles or "student" in roles or "students" in roles:
             filtered.append(ann)
-        elif 'specific_class' in roles and ann.target_class_id == student.school_class_id:
-            filtered.append(ann)
+        elif "specific class" in roles:
+            if ann.target_classes.filter(id=student.school_class_id).exists():
+                filtered.append(ann)
+            elif ann.target_class_id and ann.target_class_id == student.school_class_id:
+                filtered.append(ann)
 
     announcement_count = len(filtered)
     announcements = filtered[:5]
 
     context = {
-        'student': student,
-        'student_class': student.school_class,
-        'current_term': current_term,
-        'average_score': round(avg_score, 1),
-        'total_subjects': total_subjects,
-        'attendance_percent': attendance_percent,
-        'attendance_percent_text': f"{attendance_percent}%",
-        'total_fees': fee_record.total_amount if fee_record else 0,
-        'balance': fee_record.balance() if fee_record else 0,
-        'fee_record': fee_record,
-        'results': student_results,
-        'today_timetable': today_timetable,
-        'announcements': announcements,
-        'announcement_count': announcement_count,
-        'term_grade': term_grade,
-        'term_remark': term_remark,
-        'present_days': present_days,
-        'spent_days': spent_days,
-        'total_days': total_days,
-        'attendance_display': attendance_display,
+        "student": student,
+        "student_class": student.school_class,
+        "current_term": current_term,
+        "average_score": round(avg_score, 1),
+        "total_subjects": total_subjects,
+        "attendance_percent": attendance_percent,
+        "attendance_percent_text": f"{attendance_percent}%",
+        "total_fees": fee_record.total_amount if fee_record else 0,
+        "balance": fee_record.balance() if fee_record else 0,
+        "fee_record": fee_record,
+        "results": student_results,
+        "today_timetable": today_timetable,
+        "announcements": announcements,
+        "announcement_count": announcement_count,
+        "term_grade": term_grade,
+        "term_remark": term_remark,
+        "present_days": present_days,
+        "spent_days": spent_days,
+        "total_days": total_days,
+        "attendance_display": attendance_display,
     }
-    return render(request, 'accounts/student_dashboard.html', context)
+    return render(request, "accounts/student_dashboard.html", context)
+
 
 # ----------------------------
 # SIGNUP VIEW
@@ -474,9 +573,13 @@ def login_view(request):
         if not user:
             messages.error(request, "Invalid login details")
             return render(request, "accounts/login.html")
-        if user.role == "student" and not user.can_login:
-            messages.error(request, "Your account is not active yet. Contact admin.")
-            return render(request, "accounts/login.html")
+        if user.role == "student":
+            school_login = user.school.allows_student_login
+            class_login = user.school_class.allows_student_login
+
+            if not school_login or not class_login or not user.can_login:
+                messages.error(request, "Student login is not enabled for your school or class.")
+                return render(request, "accounts/login.html")
         authenticated_user = authenticate(
             request,
             username=user.username,
@@ -486,7 +589,7 @@ def login_view(request):
             login(request, authenticated_user)
             if not authenticated_user.is_password_changed:
                 return redirect('accounts:change-password')
-            if authenticated_user.role == "admin":
+            if authenticated_user.role in ["admin", "proprietor", "proprietress"]:
                 return redirect('accounts:admin_dashboard')
             elif authenticated_user.role == "teacher":
                 return redirect('accounts:teacher-dashboard')
@@ -494,9 +597,11 @@ def login_view(request):
                 return redirect('accounts:student_dashboard')
             elif authenticated_user.role == "accountant":
                 return redirect('accounts:accountant_dashboard')
-            elif authenticated_user.role == "parent":   # <-- added
-                return redirect('accounts:parent_dashboard')  # <-- added
-            return redirect('accounts:dashboard')  # <-- added accounts:
+            elif authenticated_user.role == "parent":   
+                return redirect('accounts:parent_dashboard')  
+            elif authenticated_user.role in ["headmaster", "headmistress"]:  
+                return redirect('accounts:headmaster_dashboard')  
+            return redirect('accounts:dashboard')  
         messages.error(request, "Invalid login details")
     return render(request, "accounts/login.html")
 
@@ -534,8 +639,11 @@ def change_password(request):
             return redirect('accounts:accountant_dashboard')
         elif user.role == 'parent':
             return redirect('accounts:parent_dashboard')
+        elif user.role in ['headmaster', 'headmistress']:
+            return redirect('accounts:headmaster_dashboard')
         else:
             return redirect('accounts:admin_dashboard')
+        
 
     return render(request, "accounts/change-password.html")
 
@@ -577,57 +685,85 @@ def logout_view(request):
 @login_required
 def toggle_student_login(request, student_id):
 
-    if request.user.role != "admin":
-        return redirect('accounts:dashboard')
+    if not request.user.school:
+        messages.error(request, "You are not assigned to a school.")
+        return redirect("accounts:dashboard")
+
+    role = request.user.role
+
+    if role in ["admin", "proprietor", "proprietress"]:
+        pass
+    elif role in ["headmaster", "headmistress"]:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_add_student:
+                messages.error(request, "You don't have permission")
+                return redirect("accounts:headmaster_dashboard")
+        except Exception:
+            messages.error(request, "No permission set")
+            return redirect("accounts:headmaster_dashboard")
+    else:
+        return redirect("accounts:dashboard")
 
     if request.method != "POST":
-        return redirect('accounts:manage-students')
+        return redirect("accounts:manage-students")
 
     student = get_object_or_404(
-        User,
-        id=student_id,
-        role='student',
-        school=request.user.school
+        User, id=student_id, role="student", school=request.user.school
     )
 
     student.can_login = not student.can_login
     student.save()
 
     if student.can_login:
-        messages.success(
-            request,
-            f"{student.get_full_name()} can now log in."
-        )
+        messages.success(request, f"{student.get_full_name()} can now log in.")
     else:
         messages.success(
-            request,
-            f"{student.get_full_name()} has been blocked from logging in."
+            request, f"{student.get_full_name()} has been blocked from logging in."
         )
 
-    return redirect(request.META.get('HTTP_REFERER', 'accounts:manage-students'))
+    return redirect(request.META.get("HTTP_REFERER", "accounts:manage-students"))
+
 
 # ----------------------------
 # DASHBOARD
 # ----------------------------
 @login_required
 def dashboard(request):
-    school = request.user.school  
-    
-    if request.user.role == 'admin':
+    school = request.user.school
+
+    if request.user.role in ["admin", "proprietor", "proprietress"]:
         context = {
-            'total_students': User.objects.filter(role='student', school=school).count(),  
-            'total_teachers': User.objects.filter(role='teacher', school=school).count(),
-            'total_parents': User.objects.filter(role='parent', school=school).count(),
-            'total_users': User.objects.filter(school=school).count(),
+            "total_students": User.objects.filter(
+                role="student", school=school
+            ).count(),
+            "total_teachers": User.objects.filter(
+                role="teacher", school=school
+            ).count(),
+            "total_parents": User.objects.filter(role="parent", school=school).count(),
+            "total_users": User.objects.filter(school=school).count(),
         }
-        return render(request, 'accounts/admin_dashboard.html', context)
-    elif request.user.role == 'teacher':
-        return render(request, 'accounts/teacher_dashboard.html')
-    elif request.user.role == 'student':
-        return render(request, 'accounts/student_dashboard.html')
-    elif request.user.role == 'parent':
-        return render(request, 'accounts/parent_dashboard.html')
-    return render(request, 'accounts/dashboard_base.html')
+        return render(request, "accounts/admin_dashboard.html", context)
+    elif request.user.role in ["headmaster", "headmistress"]:
+        context = {
+            "total_students": User.objects.filter(
+                role="student", school=school
+            ).count(),
+            "total_teachers": User.objects.filter(
+                role="teacher", school=school
+            ).count(),
+            "total_parents": User.objects.filter(role="parent", school=school).count(),
+            "total_users": User.objects.filter(school=school).count(),
+        }
+        return render(request, "accounts/headmaster_dashboard.html", context)
+    elif request.user.role == "teacher":
+        return render(request, "accounts/teacher_dashboard.html")
+    elif request.user.role == "student":
+        return render(request, "accounts/student_dashboard.html")
+    elif request.user.role == "parent":
+        return render(request, "accounts/parent_dashboard.html")
+    return render(request, "accounts/dashboard_base.html")
+
 
 # ----------------------------
 # ADMIN VIEWS
@@ -637,19 +773,55 @@ def dashboard(request):
 @login_required
 def manage_students(request, class_id=None):
     credentials = request.session.pop("credentials", None)
-    if request.user.role == 'admin':
+
+    show_credentials = False
+
+    if credentials:
+        student = User.objects.filter(
+            id=credentials.get("student_id"),
+            role="student",
+            school=request.user.school
+        ).select_related("school_class").first()
+
+        if student and student.school_class:
+            show_credentials = (
+                student.school.allows_student_login
+                and student.school_class.allows_student_login
+            )
+
+    # --- ONLY THIS PART WE ADD - Regardez ma permission ---
+    if not request.user.school:
+        messages.error(request, "No school assigned")
+        return redirect('accounts:dashboard')
+
+    role = request.user.role
+    if role in ['admin', 'proprietor', 'proprietress']:
         allowed_class_ids = SchoolClass.objects.filter(
             school=request.user.school
         ).values_list('id', flat=True)
-    else:  
+    elif role in ["headmaster", "headmistress"]:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_add_student:
+                messages.error(request, "You don't have permission to manage students")
+                return redirect('accounts:headmaster_dashboard')
+            # headmaster can see all classes like admin
+            allowed_class_ids = SchoolClass.objects.filter(
+                school=request.user.school
+            ).values_list('id', flat=True)
+        except Exception:
+            messages.error(request, "Permission not set")
+            return redirect('accounts:headmaster_dashboard')
+    else:  # teacher
         allowed_class_ids = TeacherSubjectClass.objects.filter(
             school_class__school=request.user.school,
             teacher=request.user
         ).values_list('school_class_id', flat=True).distinct()
-    
+    # --- END OF PERMISSION PART - Everything below is YOUR OLD CODE 100% same ---
+
     if class_id and int(class_id) not in allowed_class_ids:
         raise Http404("You are not assigned to teach in this class")
-    
+
     classes = SchoolClass.objects.filter(id__in=allowed_class_ids, school = request.user.school)
     all_students = User.objects.filter(
         is_active=True,
@@ -657,45 +829,45 @@ def manage_students(request, class_id=None):
         school=request.user.school,
         student__school_class_id__in=allowed_class_ids
     ).select_related('student')
-    
+
     search_query = request.GET.get('q', '')
     class_filter = request.GET.get('class', '')
     subject_filter = request.GET.get('subject', '')
-    
+
     if class_id:
         all_students = all_students.filter(school_class_id=class_id)
         current_class = get_object_or_404(SchoolClass, id=class_id, school=request.user.school)
     else:
         current_class = None
-    
+
     if search_query:
         all_students = all_students.filter(
             Q(first_name__icontains=search_query) | 
             Q(last_name__icontains=search_query) |
             Q(student_number__icontains=search_query)
         )
-    
+
     if class_filter:
         all_students = all_students.filter(school_class_id=class_filter)
-    
+
     if subject_filter:
         all_students = all_students.filter(
             studentsubjectclass__subject_id=subject_filter
         ).distinct()
-    
+
     all_students = all_students.order_by('last_name')
     paginator = Paginator(all_students, 4)
     page_number = request.GET.get('page', 1)
     students = paginator.get_page(page_number)
-    
-    if request.user.role == 'admin':
+
+    if request.user.role in ['admin', 'proprietor', 'proprietress', 'headmaster', 'headmistress']:
         subjects = Subject.objects.filter(school=request.user.school)
     else:
         subject_ids = TeacherSubjectClass.objects.filter(
             teacher=request.user
         ).values_list('subject_id', flat=True).distinct()
         subjects = Subject.objects.filter(id__in=subject_ids)
-    
+
     context = {
         'students': students,
         'classes': classes,
@@ -705,7 +877,8 @@ def manage_students(request, class_id=None):
         'class_filter': class_filter,
         'subject_filter': subject_filter,
         'current_class': current_class,
-        'credentials': credentials
+        'credentials': credentials,
+        'show_credentials': show_credentials
 
     }
     return render(request, "accounts/manage_students.html", context)
@@ -713,16 +886,50 @@ def manage_students(request, class_id=None):
 @login_required
 def manage_students_grid(request, class_id=None):
     credentials = request.session.pop("credentials", None)
-    if request.user.role == 'admin':
+    show_credentials = False
+
+    if credentials:
+        student = User.objects.filter(
+            id=credentials.get("student_id"),
+            role="student",
+            school=request.user.school
+        ).select_related("school_class").first()
+
+        if student and student.school_class:
+            show_credentials = (
+                student.school.allows_student_login
+                and student.school_class.allows_student_login
+            )
+
+    # --- ADD PERMISSION ONLY ---
+    if not request.user.school:
+        messages.error(request, "No school assigned")
+        return redirect('accounts:dashboard')
+    
+    role = request.user.role
+    if role in ['admin', 'proprietor', 'proprietress']:
         allowed_class_ids = SchoolClass.objects.filter(
             school=request.user.school
         ).values_list('id', flat=True)
+    elif role in ['headmaster', 'headmistress']:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_add_student:
+                messages.error(request, "You don't have permission")
+                return redirect('accounts:headmaster_dashboard')
+            allowed_class_ids = SchoolClass.objects.filter(
+                school=request.user.school
+            ).values_list('id', flat=True)
+        except Exception:
+            messages.error(request, "Permission not set")
+            return redirect('accounts:headmaster_dashboard')
     else:  
         allowed_class_ids = TeacherSubjectClass.objects.filter(
             school_class__school=request.user.school,
             teacher=request.user
         ).values_list('school_class_id', flat=True).distinct()
-    
+    # --- END PERMISSION ---
+
     if class_id and int(class_id) not in allowed_class_ids:
         raise Http404("You are not assigned to teach in this class")
     
@@ -764,7 +971,7 @@ def manage_students_grid(request, class_id=None):
     page_number = request.GET.get('page', 1)
     students = paginator.get_page(page_number)
     
-    if request.user.role == 'admin':
+    if request.user.role in ['admin', 'proprietor', 'proprietress', 'headmaster', 'headmistress']:
         subjects = Subject.objects.filter(school=request.user.school)
     else:
         subject_ids = TeacherSubjectClass.objects.filter(
@@ -781,16 +988,39 @@ def manage_students_grid(request, class_id=None):
         'class_filter': class_filter,
         'subject_filter': subject_filter,
         'current_class': current_class,
-        'credentials': credentials
+        'credentials': credentials,
+        'show_credentials': show_credentials
 
     }
-    return render(request, "accounts/manage_students.html", context) 
+    return render(request, "accounts/manage_students.html", context)
 
 
 @login_required
 def assign_student_subject(request, student_id):
 
     school = request.user.school
+
+    # --- ADD PERMISSION ONLY ---
+    if not school:
+        messages.error(request, "No school assigned")
+        return redirect('accounts:dashboard')
+
+    role = request.user.role
+    if role in ['admin', 'proprietor', 'proprietress']:
+        pass
+    elif role in ['headmaster', 'headmistress']:
+        try:
+            hp = school.headmaster_permissions
+            if not hp.can_add_student:
+                messages.error(request, "You don't have permission")
+                return redirect('accounts:headmaster_dashboard')
+        except Exception:
+            messages.error(request, "Permission not set")
+            return redirect('accounts:headmaster_dashboard')
+    else:
+        messages.error(request, "Not allowed")
+        return redirect('accounts:dashboard')
+    # --- END PERMISSION ---
 
     student = get_object_or_404(
         User,
@@ -834,7 +1064,6 @@ def assign_student_subject(request, student_id):
 
         return redirect('accounts:manage-students')
 
-
     subjects = Subject.objects.filter(
         school=school
     )
@@ -863,42 +1092,80 @@ def assign_student_subject(request, student_id):
 def assigned_teachers_list(request):
     school = request.user.school
 
-    classes = SchoolClass.objects.filter(
-        school=school
-    ).prefetch_related(
-        Prefetch(
-            'teachersubjectclass_set',
-            queryset=TeacherSubjectClass.objects.select_related(
-                'subject',
-                'teacher'
-            ).filter(
-                teacher__school=school
+    # --- ADD PERMISSION ONLY ---
+    if not school:
+        messages.error(request, "No school assigned")
+        return redirect("accounts:dashboard")
+
+    role = request.user.role
+    if request.user.role in ["admin", "proprietor", "proprietress"]:
+        pass
+    elif role in ["headmaster", "headmistress"]:
+        try:
+            hp = school.headmaster_permissions
+            # for teachers we use can_add_teacher permission
+            if not hp.can_add_teacher:
+                messages.error(request, "You don't have permission")
+                return redirect("accounts:headmaster_dashboard")
+        except Exception:
+            messages.error(request, "Permission not set")
+            return redirect("accounts:headmaster_dashboard")
+    else:
+        messages.error(request, "Not allowed")
+        return redirect("accounts:dashboard")
+    # --- END PERMISSION ---
+
+    classes = (
+        SchoolClass.objects.filter(school=school)
+        .prefetch_related(
+            Prefetch(
+                "teachersubjectclass_set",
+                queryset=TeacherSubjectClass.objects.select_related(
+                    "subject", "teacher"
+                ).filter(teacher__school=school),
             )
         )
-    ).filter(
-        teachersubjectclass__isnull=False
-    ).distinct().order_by('name')
+        .filter(teachersubjectclass__isnull=False)
+        .distinct()
+        .order_by("name")
+    )
 
-    return render(request, 'accounts/assigned_teachers_list.html', {
-        'classes': classes
-    })
+    return render(request, "accounts/assigned_teachers_list.html", {"classes": classes})
 
 
 @login_required
 def add_student(request):
-    credentials = None  
-
-    if request.user.role == 'teacher':
-        if not request.user.school.can_teachers_manage_students:
-            messages.error(request, "Your school admin has disabled teacher access to add students.")
-            return redirect('accounts:teacher_dashboard')
-
-    elif request.user.role not in ['admin', 'teacher']:
-        return redirect('accounts:student_dashboard')
+    credentials = None
 
     if not request.user.school:
         messages.error(request, "You are not assigned to a school.")
-        return redirect('accounts:dashboard')
+        return redirect("accounts:dashboard")
+
+    # --- PERMISSION ---
+    if request.user.role in ["admin", "proprietor", "proprietress"]:
+        pass  # admin-level roles allowed always
+
+    elif request.user.role in ["headmaster", "headmistress"]:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_add_student:
+                messages.error(request, "Admin has not allowed you to add students")
+                return redirect("accounts:headmaster_dashboard")
+        except HeadmasterPermission.DoesNotExist:
+            messages.error(request, "No permissions set by admin yet")
+            return redirect("accounts:headmaster_dashboard")
+
+    elif request.user.role == "teacher":
+        if not request.user.school.can_teachers_manage_students:
+            messages.error(
+                request,
+                "Your school admin has disabled teacher access to add students.",
+            )
+            return redirect("accounts:teacher_dashboard")
+
+    else:
+        return redirect("accounts:dashboard")
+    # --- END PERMISSION ---
 
     if request.method == "POST":
         form = StudentForm(request.POST, request.FILES, request=request)
@@ -942,21 +1209,23 @@ def add_student(request):
 
             # password
             password = ''.join(secrets.choice(
-                'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%*'
+                'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'
             ) for _ in range(10))
 
             student.set_password(password)
 
-            student.can_login = student.school_class.allows_student_login
+            student.can_login = (student.school.allows_student_login and student.school_class.allows_student_login)
 
             student.save()
 
-            request.session["credentials"] = {
-                "title": "Student Login Credentials",
+            credentials = {
                 "username": student.username,
                 "student_number": student.student_number,
-                "password": password
+                "password": password,
+                "student_id": student.id
             }
+            request.session["credentials"] = credentials
+            request.session["last_student_id"] = student.id
 
             # auto assign subjects
             if student.school_class:
@@ -969,12 +1238,6 @@ def add_student(request):
                     )
                     for sub in class_subjects
                 ], ignore_conflicts=True)
-
-            messages.success(
-                request,
-                f"Username: {student.username} | Student ID: {student.student_number} | Password: {password}",
-                extra_tags="credentials"
-            )
 
             if student.school_class:
                 return redirect(
@@ -998,11 +1261,38 @@ def add_student(request):
 
 @login_required
 def edit_student_assignment(request, id):
-    assignment = get_object_or_404(StudentSubjectClass, id=id)
+    school = request.user.school
+    
+    # --- ADD PERMISSION + ISOLATION ONLY ---
+    if not school:
+        messages.error(request, "No school assigned")
+        return redirect('accounts:dashboard')
+    
+    role = request.user.role
+    if role in ['admin', 'proprietor', 'proprietress']:
+        pass
+    elif role in ['headmaster', 'headmistress']:
+        try:
+            hp = school.headmaster_permissions
+            if not hp.can_add_student:
+                messages.error(request, "You don't have permission")
+                return redirect('accounts:headmaster_dashboard')
+        except Exception:
+            messages.error(request, "Permission not set")
+            return redirect('accounts:headmaster_dashboard')
+    else:
+        return redirect('accounts:dashboard')
 
-    classes = SchoolClass.objects.all()
-    subjects = Subject.objects.all()
-
+    # Isolation fix - assignment must be from your school
+    assignment = get_object_or_404(
+        StudentSubjectClass, 
+        id=id,
+        student__school=school  # <-- isolation
+    )
+    classes = SchoolClass.objects.filter(school=school)
+    subjects = Subject.objects.filter(school=school)
+    # --- END FIX ---
+    
     if request.method == 'POST':
         new_class = request.POST.get('school_class')
         new_subject = request.POST.get('subject')
@@ -1041,26 +1331,27 @@ def edit_student_assignment(request, id):
         'subjects': subjects,
     })
 
+
 @login_required
 def edit_student(request, student_id):
     student = get_object_or_404(User, id=student_id, role='student', school=request.user.school)
-    
+
     if request.user.role == 'teacher':
         if not request.user.school.can_teachers_manage_students:
             messages.error(request, "Your school admin has disabled teacher access to edit students.")
             return redirect('accounts:teacher_dashboard')
-        
+
         teacher_classes = TeacherSubjectClass.objects.filter(
             teacher=request.user
         ).values_list('school_class', flat=True)
-        
+
         if student.school_class_id not in teacher_classes:
             messages.error(request, "You can only edit students in your assigned classes.")
             return redirect('accounts:view-students-in-class', class_id=student.school_class_id)
-            
-    elif request.user.role not in ['admin', 'teacher']:
+
+    elif request.user.role not in ["admin", "proprietor", "proprietress", "teacher"]:
         return redirect('accounts:student_dashboard')
-    
+
     # Get classes for dropdown
     if request.user.role == 'teacher':
         teacher_classes = TeacherSubjectClass.objects.filter(
@@ -1069,35 +1360,35 @@ def edit_student(request, student_id):
         classes = SchoolClass.objects.filter(id__in=teacher_classes, school=request.user.school)
     else:
         classes = SchoolClass.objects.filter(school=request.user.school)
-    
+
     if request.method == 'POST':
         # PERSONAL INFO
         student.first_name = request.POST.get('first_name', student.first_name)
         student.middle_name = request.POST.get('middle_name', '') or None
         student.last_name = request.POST.get('last_name', student.last_name)
-        
+
         # CONTACT INFO
         student.email = request.POST.get('email', '') 
         student.phone = request.POST.get('phone', '') or None
-        
+
         # CLASS - school is read-only now
         class_id = request.POST.get('school_class')
         if class_id:
             school_class = get_object_or_404(SchoolClass, id=class_id, school=request.user.school)
-            
+
             if request.user.role == 'teacher':
                 if not TeacherSubjectClass.objects.filter(teacher=request.user, school_class=school_class).exists():
                     messages.error(request, "You can only assign students to classes you teach.")
                     return redirect('accounts:edit-student', student_id=student.id)
-            
+
             student.school_class = school_class
-        
+
         # BIO DATA
         student.date_of_birth = request.POST.get('date_of_birth') or None
         student.gender = request.POST.get('gender') or None
         student.nationality = request.POST.get('nationality', '') or None
         student.religion = request.POST.get('religion') or None
-        
+
         # GUARDIAN INFO
         student.parent_guardian_name = request.POST.get('parent_guardian_name', '') or None
         student.parent_guardian_phone = request.POST.get('parent_guardian_phone', '') or None
@@ -1106,15 +1397,16 @@ def edit_student(request, student_id):
         student.emergency_contact_name = request.POST.get('emergency_contact_name', '') or None
         student.emergency_contact_phone = request.POST.get('emergency_contact_phone', '') or None
         student.emergency_contact_relationship = request.POST.get('emergency_contact_relationship', '') or None
-        
+
         # OTHER
         student.admission_date = request.POST.get('admission_date') or None
+        student.conduct = request.POST.get("conduct", student.conduct)
 
         if 'photo' in request.FILES:
             student.photo = request.FILES['photo']
-        
+
         student.save()
-        
+
         messages.success(request, f"{student.get_full_name()} updated successfully!")
         return redirect('accounts:view-student', student_id=student.id)
 
@@ -1124,15 +1416,34 @@ def edit_student(request, student_id):
     }
     return render(request, 'accounts/edit_student.html', context)
 
+
 @login_required
 def view_student(request, student_id):
 
     student = get_object_or_404(
-        User,
-        id=student_id,
-        role='student',
-        school=request.user.school
+        User, id=student_id, role="student", school=request.user.school
     )
+
+    # --- ADD PERMISSION ONLY ---
+    role = request.user.role
+    if role in ["admin", "proprietor", "proprietress"]:
+        pass
+    elif role in ["headmaster", "headmistress"]:
+        try:
+            hp = request.user.school.headmaster_permissions
+            # headmaster can view if he can manage students OR can view dashboard
+            if not (hp.can_add_student or hp.can_view_dashboard):
+                messages.error(request, "No permission to view students")
+                return redirect("accounts:headmaster_dashboard")
+        except:
+            return redirect("accounts:headmaster_dashboard")
+    elif role == "teacher":
+        # your old teacher check will still run below in other logic, we keep it
+        pass
+    elif role == "student" and request.user.id != student.id:
+        return redirect("accounts:student_dashboard")
+    elif role not in ["admin","proprietor", "proprietress", "headmaster", "headmistress", "teacher", "student"]:
+        return redirect("accounts:dashboard")
     # ==========================
     # TERM FILTER (FOR RESULTS, ATTENDANCE, FEES)
     # ==========================
@@ -1154,13 +1465,12 @@ def view_student(request, student_id):
             is_active=True
         ).first()
         # ==========================
-# ACADEMIC YEAR FILTER
+    # ACADEMIC YEAR FILTER
     # ==========================
 
     academic_years = AcademicYear.objects.filter(
         school=request.user.school
     ).order_by('-name')
-
 
     selected_year_id = request.GET.get('year')
 
@@ -1186,7 +1496,6 @@ def view_student(request, student_id):
         flat=True
     ).distinct()
 
-
     available_subjects = Subject.objects.filter(
         school=request.user.school
     ).exclude(
@@ -1195,8 +1504,6 @@ def view_student(request, student_id):
     setting = SchoolSetting.objects.filter(
         school=request.user.school
     ).first()
-
-    
 
     attendance_mode = setting.attendance_mode if setting else "subject"
     if attendance_mode == "class_teacher":
@@ -1209,7 +1516,6 @@ def view_student(request, student_id):
             'session__date'
         )
 
-
         attendance_records = {}
 
         for record in records:
@@ -1221,7 +1527,6 @@ def view_student(request, student_id):
 
             if record.status == "P":
                 attendance_records[date] = "Present"
-
 
         attendance_records = [
             {
@@ -1264,7 +1569,6 @@ def view_student(request, student_id):
         "percentage": 0,
     }
 
-
     if attendance_mode == "class_teacher":
 
         all_attendance = {}
@@ -1285,13 +1589,11 @@ def view_student(request, student_id):
             if record.status == "P":
                 all_attendance[date] = "Present"
 
-
         total_days = len(all_attendance)
 
         present_days = list(all_attendance.values()).count("Present")
 
         absent_days = total_days - present_days
-
 
     else:
 
@@ -1313,12 +1615,9 @@ def view_student(request, student_id):
 
         absent_days = total_days - present_days
 
-
-
     attendance_summary["total_days"] = total_days
     attendance_summary["present_days"] = present_days
     attendance_summary["absent_days"] = absent_days
-
 
     if total_days > 0:
         attendance_summary["percentage"] = round(
@@ -1326,88 +1625,57 @@ def view_student(request, student_id):
             1
         )
     # ==========================
-    # FEES INFORMATION - FIXED
+    # FEES INFORMATION - DYNAMIC ONLY - FIXED
     # ==========================
+    # Get ALL fees for this student - no filter for now to find paid one
     student_fees = StudentFee.objects.filter(
-        student=student
-    ).select_related('term')
+        student=student, school=request.user.school
+    ).order_by("-id")
 
-    if selected_term:
-        student_fees = student_fees.filter(
-            term=selected_term
-        )
+    # Only filter if user selected term/year
+    term_id = request.GET.get("term")
+    year_id = request.GET.get("year")
 
-    if selected_year:
-        student_fees = student_fees.filter(
-            academic_year=selected_year.name
-        )
+    if term_id and selected_term:
+        student_fees = student_fees.filter(term=selected_term)
+    if year_id and selected_year:
+        student_fees = student_fees.filter(academic_year=selected_year.name)
 
-    # Get all terms for this student
-    fee_terms = [fee.term for fee in student_fees]
-
-    payment_items_all = PaymentItem.objects.filter(
-        transaction__student=student,
-        transaction__term__in=fee_terms,
-        transaction__is_voided=False
-    )
-
-
+    # Build breakdown from DynamicStudentFeeItem ONLY
     fee_breakdowns = []
-
     for fee in student_fees:
         breakdown = []
+        for item in fee.dynamic_items.all():  # <-- DYNAMIC ITEMS
+            breakdown.append(
+                {
+                    "name": item.name,
+                    "amount": item.amount_due,
+                    "paid": item.amount_paid,
+                    "balance": item.balance,
+                }
+            )
+        fee_breakdowns.append(
+            {
+                "fee": fee,
+                "items": breakdown,
+                "total_amount": fee.total_amount,
+                "total_paid": fee.amount_paid(),
+                "total_balance": fee.balance(),
+            }
+        )
 
-        fee_items = [
-            ("School Fees", fee.school_fees),
-            ("PTA Dues", fee.pta_dues),
-            ("Computer Levy", fee.computer_levy),
-            ("Exam Fees", fee.exam_fees),
-            ("Feeding Fee", fee.canteen_amount),
-            ("Other Fees", fee.other_fees),
-            ("Development Fee", fee.development_fee),
-            ("Boarding Fee", fee.boarding_fee),
-            ("Hostel Fee", fee.hostel_fee),
-        ]
-
-        for name, amount in fee_items:
-            if amount and amount > 0:
-                # FIX 1: filter by THIS term only + case-insensitive
-                paid = payment_items_all.filter(
-                    transaction__term=fee.term,
-                    fee_name__iexact=name  # iexact = Canteen = canteen = CANTEEN
-                ).aggregate(total=Sum('amount'))['total'] or 0
-
-
-
-                breakdown.append({
-                    "name": name,
-                    "amount": amount,
-                    "paid": paid,
-                    "balance": amount - paid
-                })
-
-        fee_breakdowns.append({
-            "fee": fee,
-            "items": breakdown
-        })
-
+    # Payment history stays same but school isolated
     payment_history = PaymentTransaction.objects.filter(
-        student=student,
-        term=selected_term,
-        academic_year=selected_year,
-        is_voided=False
-
-    ).prefetch_related(
-        'items'
-    ).order_by(
-        '-created_at'
+        student=student, school=request.user.school, is_voided=False
     )
+    if selected_term:
+        payment_history = payment_history.filter(term=selected_term)
+    if selected_year:
+        payment_history = payment_history.filter(academic_year=selected_year)
 
-    payment_history = Paginator(
-        payment_history,
-        10
-    ).get_page(
-        request.GET.get('payment_page')
+    payment_history = payment_history.prefetch_related("items").order_by("-created_at")
+    payment_history = Paginator(payment_history, 10).get_page(
+        request.GET.get("payment_page")
     )
     # ==========================
     # RESULTS INFORMATION
@@ -1424,8 +1692,6 @@ def view_student(request, student_id):
     ).order_by(
         'subject__name'
     )
-    
-            
 
     return render(
         request,
@@ -1459,6 +1725,28 @@ def delete_student(request, student_id):
         school=request.user.school
     )
 
+    # --- ADD PERMISSION ONLY ---
+    if not request.user.school:
+        messages.error(request, "No school assigned")
+        return redirect('accounts:dashboard')
+    
+    role = request.user.role
+    if role in ['admin', 'proprietor', 'proprietress']:
+        pass
+    elif role in ['headmaster', 'headmistress']:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_add_student: # we use can_add_student for delete too
+                messages.error(request, "You don't have permission to delete students")
+                return redirect('accounts:headmaster_dashboard')
+        except Exception:
+            messages.error(request, "Permission not set")
+            return redirect('accounts:headmaster_dashboard')
+    else:
+        messages.error(request, "Not allowed")
+        return redirect('accounts:dashboard')
+    # --- END PERMISSION ---
+
     if request.method == 'POST':
 
         # deactivate student login
@@ -1467,7 +1755,6 @@ def delete_student(request, student_id):
         student_user.save()
 
         # remove student subject assignments
-
 
         messages.success(
             request,
@@ -1490,12 +1777,24 @@ def delete_student(request, student_id):
 
 @login_required
 def assign_student_class(request, student_id):
-    if request.user.role != 'admin':
+    # --- FIXED PERMISSION - was only admin, now admin + headmaster ---
+    if request.user.role in ['admin', 'proprietor', 'proprietress']:
+        pass
+    elif request.user.role in ['headmaster', 'headmistress']:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_add_student:
+                messages.error(request, "No permission")
+                return redirect('accounts:headmaster_dashboard')
+        except:
+            return redirect('accounts:headmaster_dashboard')
+    else:
         return redirect('accounts:dashboard')  # fixed typo
+    # --- END FIX ---
 
     # ✅ add school filter - prevent cross-school
     student = get_object_or_404(User, id=student_id, role='student', school=request.user.school)
-    
+
     # ✅ only show your school classes
     classes = SchoolClass.objects.filter(school=request.user.school)
 
@@ -1515,10 +1814,23 @@ def assign_student_class(request, student_id):
         'classes': classes
     })
 
+
 @login_required
 def manage_teachers_grid(request, teacher_id=None):
-    if request.user.role != 'admin':
-        return redirect('accounts:dashboard')
+    # --- FIXED PERMISSION ---
+    if request.user.role in ['admin', 'proprietor', 'proprietress']:
+        pass
+    elif request.user.role in ['headmaster', 'headmistress']:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_add_teacher:
+                messages.error(request, "No permission")
+                return redirect("accounts:headmaster_dashboard")
+        except:
+            return redirect("accounts:headmaster_dashboard")
+    else:
+        return redirect("accounts:dashboard")
+    # --- END FIX ---
 
     credentials = request.session.pop("credentials", None)
 
@@ -1579,7 +1891,7 @@ def manage_teachers_grid(request, teacher_id=None):
     # =====================================
     search_query = request.GET.get("q","").strip()
     if search_query:
-            teachers = teachers.filter(
+        teachers = teachers.filter(
                 Q(first_name__icontains=search_query) |
                 Q(last_name__icontains=search_query) |
                 Q(username__icontains=search_query) |
@@ -1640,12 +1952,23 @@ def manage_teachers_grid(request, teacher_id=None):
 def add_teacher(request):
     credentials = None
 
-    if request.user.role != 'admin':
-        return redirect('accounts:home')
-
     if not request.user.school:
         messages.error(request, "You are not assigned to a school.")
-        return redirect('accounts:home')
+        return redirect("accounts:home")
+
+    # --- FIX: allow headmaster with permission ---
+    if request.user.role in ["headmaster", "headmistress"]:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_add_teacher:
+                messages.error(request, "Admin has not allowed you to add teachers")
+                return redirect("accounts:headmaster_dashboard")
+        except:
+            return redirect("accounts:headmaster_dashboard")
+    elif request.user.role not in ["admin", "proprietor", "proprietress"]:
+        return redirect("accounts:home")
+
+    # ... keep rest of your code exactly ...
 
     if request.method == "POST":
         form = TeacherForm(request.POST, request.FILES, school=request.user.school)
@@ -1690,13 +2013,11 @@ def add_teacher(request):
                 "password": password if password else "Not set"
             }
 
-
             messages.success(
                 request,
                 f"Username: {teacher.username} | Staff ID: {teacher.staff_id} | Password: {password}",
                 extra_tags="credentials"
             )
-
 
             return redirect(
                 f"{reverse('accounts:manage-teachers-grid')}?highlight={teacher.id}"
@@ -1716,11 +2037,23 @@ def add_teacher(request):
 @login_required
 def view_teacher(request, teacher_id):
     teacher = get_object_or_404(
-        User,
-        id=teacher_id,
-        role='teacher',
-        school=request.user.school
+        User, id=teacher_id, role="teacher", school=request.user.school
     )
+
+    # --- ADD PERMISSION ONLY ---
+    role = request.user.role
+    if role in ["admin", "proprietor", "proprietress"]:
+        pass
+    elif role in ["headmaster", "headmistress"]:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_add_teacher:
+                messages.error(request, "No permission to view teachers")
+                return redirect("accounts:headmaster_dashboard")
+        except:
+            return redirect("accounts:headmaster_dashboard")
+    elif role != "teacher":  # teacher can view other teachers? keep your logic
+        pass
 
     teacher_classes = TeacherSubjectClass.objects.filter(
         teacher=teacher
@@ -1739,7 +2072,6 @@ def view_teacher(request, teacher_id):
         'school_class__name'
     )
 
-
     grouped_data = defaultdict(list)
 
     for tc in teacher_classes:
@@ -1749,7 +2081,6 @@ def view_teacher(request, teacher_id):
                 'assignment_id': tc.id,
                 'slot_count': tc.slot_count,
             })
-
 
     return render(request, 'accounts/view_teacher.html', {
         'teacher': teacher,
@@ -1761,6 +2092,20 @@ def view_teacher(request, teacher_id):
 @login_required
 def edit_teacher(request, teacher_id):
     teacher = get_object_or_404(User, id=teacher_id, role='teacher', school=request.user.school)
+
+    # --- ADD PERMISSION ONLY ---
+    if request.user.role in ['admin', 'proprietor', 'proprietress']:
+        pass
+    elif request.user.role in ['headmaster', 'headmistress']:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_add_teacher:
+                messages.error(request, "No permission to edit teachers")
+                return redirect('accounts:headmaster_dashboard')
+        except:
+            return redirect('accounts:headmaster_dashboard')
+    else:
+        return redirect('accounts:dashboard')
 
     if request.method == 'POST':
         form = TeacherEditForm(request.POST, request.FILES, instance=teacher)
@@ -1787,6 +2132,19 @@ def delete_teacher(request, teacher_id):
         role='teacher',
         school=request.user.school
     )
+    if request.user.role in ['admin', 'proprietor', 'proprietress']:
+        pass
+    elif request.user.role in ['headmaster', 'headmistress']:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_add_teacher:
+                messages.error(request, "No permission to delete teachers")
+                return redirect('accounts:headmaster_dashboard')
+        except:
+            return redirect('accounts:headmaster_dashboard')
+    else:
+        return redirect('accounts:dashboard')
+    
 
     if request.method == 'POST':
         teacher.is_active = False
@@ -1807,8 +2165,20 @@ def delete_teacher(request, teacher_id):
 
 @login_required
 def deactivated_teachers(request):
-    if request.user.role != 'admin':
+    # --- FIXED PERMISSION - FIRST ---
+    if request.user.role in ['admin', 'proprietor', 'proprietress']:
+        pass
+    elif request.user.role in ['headmaster', 'headmistress']:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_add_teacher:
+                messages.error(request, "No permission")
+                return redirect('accounts:headmaster_dashboard')
+        except:
+            return redirect('accounts:headmaster_dashboard')
+    else:
         return redirect('accounts:dashboard')
+    # --- END FIX ---
 
     teachers = User.objects.filter(
         role='teacher',
@@ -1824,13 +2194,22 @@ def deactivated_teachers(request):
         }
     )
 
-
 @login_required
 def reactivate_teacher(request, user_id):
-
-    if request.user.role != 'admin':
+    # --- FIXED PERMISSION ---
+    if request.user.role in ['admin', 'proprietor', 'proprietress']:
+        pass
+    elif request.user.role in ['headmaster', 'headmistress']:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_add_teacher:
+                messages.error(request, "No permission")
+                return redirect('accounts:headmaster_dashboard')
+        except:
+            return redirect('accounts:headmaster_dashboard')
+    else:
         return redirect('accounts:dashboard')
-
+    # --- END FIX ---
 
     teacher = get_object_or_404(
         User,
@@ -1838,7 +2217,6 @@ def reactivate_teacher(request, user_id):
         role='teacher',
         school=request.user.school
     )
-
 
     if request.method == "POST":
 
@@ -1854,8 +2232,22 @@ def reactivate_teacher(request, user_id):
 
 @login_required
 def assign_teacher(request, teacher_id):
-    if request.user.role != 'admin':
+    # --- FIXED PERMISSION ---
+    if request.user.role in ['admin', 'proprietor', 'proprietress']:
+        pass
+    elif request.user.role in ['headmaster', 'headmistress']:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_add_teacher:
+                messages.error(request, "No permission")
+                return redirect('accounts:headmaster_dashboard')
+        except:
+            return redirect('accounts:headmaster_dashboard')
+    else:
         return redirect('accounts:dashboard')
+    # --- END FIX ---
+
+ 
 
     teacher = get_object_or_404(User, id=teacher_id, role='teacher', school=request.user.school)
 
@@ -1901,7 +2293,18 @@ def assign_teacher(request, teacher_id):
 
 @login_required
 def manage_assignments(request):
-    if request.user.role != 'admin':
+    # --- FIXED PERMISSION ---
+    if request.user.role in ['admin', 'proprietor', 'proprietress']:
+        pass
+    elif request.user.role in ['headmaster', 'headmistress']:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_manage_assignments:
+                messages.error(request, "No permission")
+                return redirect('accounts:headmaster_dashboard')
+        except:
+            return redirect('accounts:headmaster_dashboard')
+    else:
         return redirect('accounts:dashboard')
 
     teachers = User.objects.filter(role='teacher', school=request.user.school, is_active=True).order_by('first_name')
@@ -1926,19 +2329,42 @@ def manage_assignments(request):
 
 @login_required
 def admin_attendance_dashboard(request):
+    # --- PERMISSION ---
+    if request.user.role in ['admin', 'proprietor', 'proprietress']:
+        pass
+    elif request.user.role in ['headmaster', 'headmistress']:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_view_attendance:
+                messages.error(request, "No permission")
+                return redirect('accounts:headmaster_dashboard')
+        except:
+            return redirect('accounts:headmaster_dashboard')
+    else:
+        return redirect('accounts:dashboard')
+    # --- END PERMISSION ---
+
     today = timezone.now().date()
 
-    total_students = User.objects.count()
+    # --- FIXED ISOLATION ---
+    total_students = User.objects.filter(
+        role='student',
+        school=request.user.school,
+        is_active=True
+    ).count()
 
     present_today = Attendance.objects.filter(
         date=today,
-        status="Present"
+        status="Present",
+        student__school=request.user.school
     ).count()
 
     absent_today = Attendance.objects.filter(
         date=today,
-        status="Absent"
+        status="Absent",
+        student__school=request.user.school
     ).count()
+    # --- END FIX ---
 
     attendance_percent = 0
     if total_students > 0:
@@ -1958,136 +2384,336 @@ def admin_attendance_dashboard(request):
 
 @login_required
 def manage_users(request):
-    users = User.objects.exclude(role__in=['student', 'teacher'])
-    return render(request, 'accounts/manage_users.html', {'users': users})
+
+    # Admin / Proprietor
+    if request.user.role in ["admin", "proprietor", "proprietress"]:
+        users = User.objects.filter(school=request.user.school).exclude(
+            role__in=["student", "teacher"]
+        )
+
+    # Basic School Headmaster / Headmistress
+    elif request.user.role in ["headmaster", "headmistress"]:
+
+        school = request.user.school
+
+        if not school or school.edition != "basic":
+            return redirect("accounts:dashboard")
+
+        users = User.objects.filter(school=school).exclude(
+            role__in=["parent", "accountant", "student"]
+        )
+
+    else:
+        return redirect("accounts:dashboard")
+
+    return render(request, "accounts/manage_users.html", {"users": users})
 
 
 @login_required
 def edit_user(request, user_id):
-    user = get_object_or_404(User, id=user_id)
-    roles = ['admin', 'teacher', 'student', 'parent']
+    if request.user.role not in ["admin", "proprietor", "proprietress"]:
+        return redirect("accounts:dashboard")
 
-    if request.method == 'POST':
-        user.username = request.POST.get('username', user.username)
-        user.email = request.POST.get('email', user.email)
-        user.role = request.POST.get('role', user.role)
+    # --- FIXED ISOLATION ---
+    user = get_object_or_404(User, id=user_id, school=request.user.school)
+    roles = [
+        "admin",
+        "headmaster",
+        "teacher",
+        "student",
+        "parent",
+        "accountant",
+    ]  # add your roles
+
+    if request.method == "POST":
+        user.username = request.POST.get("username", user.username)
+        user.email = request.POST.get("email", user.email)
+        # prevent role change to admin if you want
+        new_role = request.POST.get("role", user.role)
+        if new_role in roles:
+            user.role = new_role
         user.save()
         messages.success(request, f"{user.username} updated successfully!")
-        return redirect('accounts:manage-users')
+        return redirect("accounts:manage-users")
 
-    return render(request, 'accounts/edit_user.html', {'user': user, 'roles': roles})
+    return render(request, "accounts/edit_user.html", {"user": user, "roles": roles})
 
 
 @login_required
 def delete_user(request, user_id):
-    user = get_object_or_404(User, id=user_id)
+    if request.user.role not in ["admin", "proprietor", "proprietress"]:
+        return redirect("accounts:dashboard")
+
+    # --- FIXED ISOLATION + PREVENT SELF DELETE ---
+    user = get_object_or_404(User, id=user_id, school=request.user.school)
+
+    if user.id == request.user.id:
+        messages.error(request, "You cannot delete yourself!")
+        return redirect("accounts:manage-users")
+
     user.delete()
     messages.success(request, f"{user.username} deleted successfully!")
-    return redirect('accounts:manage-users')
+    return redirect("accounts:manage-users")
 
 
 @login_required
 def manage_parents(request):
-    if request.user.role != 'admin':
-        return redirect('accounts:dashboard')
+    # --- FIXED PERMISSION + SCHOOL ISOLATION ---
+    if not hasattr(request.user, "school") or request.user.school is None:
+        messages.error(request, "No school assigned")
+        return redirect("accounts:dashboard")
 
-    parents = User.objects.filter(role='parent', is_active=True, school=request.user.school)
+    school = request.user.school
 
-    # Search filter
-    search_query = request.GET.get('q', '')
+    if request.user.role in ["admin", "proprietor", "proprietress"]:
+        pass
+    elif request.user.role in ["headmaster", "headmistress"]:
+        try:
+            hp = school.headmaster_permissions
+            if hasattr(hp, "can_add_parent"):
+                if not hp.can_add_parent:
+                    messages.error(request, "No permission")
+                    return redirect("accounts:headmaster_dashboard")
+            else:
+                if not hp.can_add_student:
+                    messages.error(request, "No permission")
+                    return redirect("accounts:headmaster_dashboard")
+        except:
+            return redirect("accounts:headmaster_dashboard")
+    else:
+        return redirect("accounts:dashboard")
+    # --- END FIX ---
+
+    # ✅ GET CREDENTIALS FROM ADD PARENT REDIRECT
+    credentials = request.session.pop("parent_credentials", None)
+
+    parents = User.objects.filter(role="parent", is_active=True, school=school)
+
+    search_query = request.GET.get("q", "")
     if search_query:
-        # Split the search query into words
         name_parts = search_query.strip().split()
-
         if len(name_parts) == 1:
-            # If only one word is typed, search in first or last name
             parents = parents.filter(
-                Q(first_name__icontains=name_parts[0]) |
-                Q(last_name__icontains=name_parts[0])
+                Q(first_name__icontains=name_parts[0])
+                | Q(last_name__icontains=name_parts[0])
             )
         else:
-            # If multiple words, assume first word = first name, last word = last name
             parents = parents.filter(
-                Q(first_name__icontains=name_parts[0]) &
-                Q(last_name__icontains=name_parts[-1])
+                Q(first_name__icontains=name_parts[0])
+                & Q(last_name__icontains=name_parts[-1])
             )
 
-    # Pagination
-    paginator = Paginator(parents, 20)
-    page_number = request.GET.get('page')
+    paginator = Paginator(parents, 10)
+    page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
-
-
-    return render(request, 'accounts/manage_parents.html', {
-    'parents': page_obj,
-    'search_query': search_query
-})
+    return render(
+        request,
+        "accounts/manage_parents.html",
+        {
+            "parents": page_obj,
+            "search_query": search_query,
+            "credentials": credentials,  # ✅ This shows green box on manage page
+        },
+    )
 
 
 @login_required
 def add_parent(request):
-    if request.user.role != 'admin':
-        return redirect('accounts:dashboard')
+    if not hasattr(request.user, "school") or request.user.school is None:
+        messages.error(request, "No school assigned to your account")
+        return redirect("accounts:dashboard")
 
-    credentials = None
+    school = request.user.school
 
+    # --- PERMISSIONS ---
+    if request.user.role in ["headmaster", "headmistress"]:
+        try:
+            hp = school.headmaster_permissions
+
+            if not hp.can_add_parent:
+                messages.error(
+                    request,
+                    "Admin has not allowed you to add parents"
+                )
+                return redirect("accounts:headmaster_dashboard")
+
+        except:
+            return redirect("accounts:headmaster_dashboard")
+
+    elif request.user.role not in [
+        "admin",
+        "proprietor",
+        "proprietress"
+    ]:
+        return redirect("accounts:dashboard")
+
+    # --- CREATE PARENT ---
     if request.method == "POST":
-        first_name = request.POST.get("first_name","").strip()
-        middle_name = request.POST.get("middle_name","").strip()
-        last_name = request.POST.get("last_name","").strip()
-        email = request.POST.get("email","").strip()
-        phone = request.POST.get("phone","").strip()
-        occupation = request.POST.get("occupation","").strip()
-        address = request.POST.get("address","").strip()
-        relationship = request.POST.get("relationship","").strip()
 
-        base_username = f"{first_name}.{last_name}".lower().replace(" ", "")
+        first_name = request.POST.get(
+            "first_name", ""
+        ).strip()
+
+        middle_name = request.POST.get(
+            "middle_name", ""
+        ).strip()
+
+        last_name = request.POST.get(
+            "last_name", ""
+        ).strip()
+
+        email = request.POST.get(
+            "email", ""
+        ).strip()
+
+        phone = request.POST.get(
+            "phone", ""
+        ).strip()
+
+        occupation = request.POST.get(
+            "occupation", ""
+        ).strip()
+
+        address = request.POST.get(
+            "address", ""
+        ).strip()
+
+        relationship = request.POST.get(
+            "relationship", ""
+        ).strip()
+
+        title = request.POST.get(
+            "title", ""
+        ).strip()
+
+        # --- EMERGENCY CONTACT ---
+        emergency_contact_name = request.POST.get(
+            "emergency_contact_name", ""
+        ).strip()
+
+        emergency_contact_phone = request.POST.get(
+            "emergency_contact_phone", ""
+        ).strip()
+
+        emergency_contact_relationship = request.POST.get(
+            "emergency_contact_relationship", ""
+        ).strip()
+
+        # --- REQUIRED FIELDS ---
+        if not first_name or not last_name:
+            messages.error(
+                request,
+                "First name and Last name are required"
+            )
+            return redirect("accounts:add-parent")
+
+        # --- USERNAME ---
+        base_username = (
+            f"{first_name}.{last_name}"
+            .lower()
+            .replace(" ", "")
+        )
+
         username = base_username
         counter = 1
+
         while User.objects.filter(username=username).exists():
             username = f"{base_username}{counter}"
             counter += 1
 
-        import secrets, string
-        password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(10))
+        # --- PASSWORD ---
+        import secrets
+        import string
 
+        password = "".join(
+            secrets.choice(
+                string.ascii_letters + string.digits
+            )
+            for _ in range(10)
+        )
+
+        # --- CREATE USER ---
         parent = User.objects.create_user(
             username=username,
             password=password,
+
             first_name=first_name,
             middle_name=middle_name,
             last_name=last_name,
+
+            title=title,
+
             email=email,
             phone=phone,
-            role='parent',
-            school=request.user.school,
+
+            role="parent",
+            school=school,
+
             occupation=occupation,
             address=address,
             relationship_type=relationship,
+
+            emergency_contact_name=emergency_contact_name,
+            emergency_contact_phone=emergency_contact_phone,
+            emergency_contact_relationship=(
+                emergency_contact_relationship
+            ),
         )
 
+        # --- PHOTO ---
         if request.FILES.get("photo"):
             parent.photo = request.FILES["photo"]
             parent.save()
 
-        credentials = {"username": username, "password": password}
+        # --- SAVE CREDENTIALS ---
+        request.session["parent_credentials"] = {
+            "username": username,
+            "password": password,
+            "name": parent.get_full_name(),
+        }
 
-        # ✅ THIS LINE WAS MISSING - ADD IT
-        messages.success(request, f"Parent {parent.get_full_name()} created successfully! Username: {username}")
+        messages.success(
+            request,
+            f"Parent {parent.get_full_name()} created successfully!"
+        )
 
-    parents = User.objects.filter(role='parent', school=request.user.school)
+        return redirect(
+            "accounts:manage-parents"
+        )
 
-    return render(request, 'accounts/add_parent.html', {
-        'parents': parents,
-        'credentials': credentials
-    })
+    form = ParentForm()
+
+    return render(
+        request,
+        "accounts/add_parent.html",
+        {
+            "form": form
+        }
+    )
 
 
 @login_required
 def view_parent(request, parent_id):
-    if request.user.role != 'admin':
+    # --- FIXED PERMISSION ---
+    if request.user.role in ['admin', 'proprietor', 'proprietress']:
+        pass
+    elif request.user.role in ['headmaster', 'headmistress']:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if hasattr(hp, 'can_add_parent'):
+                if not hp.can_add_parent:
+                    messages.error(request, "No permission")
+                    return redirect('accounts:headmaster_dashboard')
+            else:
+                if not hp.can_add_student:
+                    messages.error(request, "No permission")
+                    return redirect('accounts:headmaster_dashboard')
+        except:
+            return redirect('accounts:headmaster_dashboard')
+    else:
         return redirect('accounts:dashboard')
+    # --- END FIX ---
 
     parent = get_object_or_404(User, id=parent_id, role='parent', school=request.user.school)
 
@@ -2101,39 +2727,134 @@ def view_parent(request, parent_id):
 
 @login_required
 def edit_parent(request, parent_id):
-    if request.user.role != 'admin':
-        return redirect('accounts:dashboard')
+    # --- PERMISSION ---
+    if request.user.role in ["admin", "proprietor", "proprietress"]:
+        pass
 
-    parent = get_object_or_404(User, id=parent_id, role='parent',     school=request.user.school)
+    elif request.user.role in ["headmaster", "headmistress"]:
+        try:
+            hp = request.user.school.headmaster_permissions
 
+            if hasattr(hp, "can_add_parent"):
+                if not hp.can_add_parent:
+                    messages.error(request, "No permission")
+                    return redirect("accounts:headmaster_dashboard")
+            else:
+                if not hp.can_add_student:
+                    messages.error(request, "No permission")
+                    return redirect("accounts:headmaster_dashboard")
+
+        except:
+            return redirect("accounts:headmaster_dashboard")
+
+    else:
+        return redirect("accounts:dashboard")
+
+    # --- SCHOOL ISOLATION ---
+    parent = get_object_or_404(
+        User,
+        id=parent_id,
+        role="parent",
+        school=request.user.school
+    )
+
+    # --- UPDATE ---
     if request.method == "POST":
-        parent.first_name = request.POST.get("first_name", "").strip()
-        parent.middle_name = request.POST.get("middle_name", "").strip()
-        parent.last_name = request.POST.get("last_name", "").strip()
-        parent.email = request.POST.get("email", "").strip()
-        parent.phone = request.POST.get("phone", "").strip()
-        parent.qualification = request.POST.get("occupation", "").strip()
-        parent.parent_guardian_name = request.POST.get("relationship", "").strip()
-        parent.address = request.POST.get("address", "").strip()
 
-        # PHOTO (IMPORTANT)
+        parent.title = request.POST.get(
+            "title", ""
+        ).strip()
+
+        parent.first_name = request.POST.get(
+            "first_name", ""
+        ).strip()
+
+        parent.middle_name = request.POST.get(
+            "middle_name", ""
+        ).strip()
+
+        parent.last_name = request.POST.get(
+            "last_name", ""
+        ).strip()
+
+        parent.email = request.POST.get(
+            "email", ""
+        ).strip()
+
+        parent.phone = request.POST.get(
+            "phone", ""
+        ).strip()
+
+        parent.occupation = request.POST.get(
+            "occupation", ""
+        ).strip()
+
+        parent.relationship_type = request.POST.get(
+            "relationship", ""
+        ).strip()
+
+        parent.address = request.POST.get(
+            "address", ""
+        ).strip()
+
+        # --- EMERGENCY CONTACT ---
+        parent.emergency_contact_name = request.POST.get(
+            "emergency_contact_name", ""
+        ).strip()
+
+        parent.emergency_contact_phone = request.POST.get(
+            "emergency_contact_phone", ""
+        ).strip()
+
+        parent.emergency_contact_relationship = request.POST.get(
+            "emergency_contact_relationship", ""
+        ).strip()
+
+        # --- PHOTO ---
         if "photo" in request.FILES:
             parent.photo = request.FILES["photo"]
 
         parent.save()
-        messages.success(request, "Parent updated successfully!")
-        return redirect('accounts:view_parent', parent_id=parent.id)
 
-    return render(request, 'accounts/edit_parent.html', {
-        'parent': parent
-    })
+        messages.success(
+            request,
+            "Parent updated successfully!"
+        )
+
+        return redirect(
+            "accounts:view_parent",
+            parent_id=parent.id
+        )
+
+    return render(
+        request,
+        "accounts/edit_parent.html",
+        {
+            "parent": parent
+        }
+    )
 
 
 @login_required
 def delete_parent(request, parent_id):
 
-    if request.user.role != 'admin':
-        return redirect('accounts:dashboard')
+    if request.user.role in ["admin", "proprietor", "proprietress"]:
+        pass
+    elif request.user.role in ["headmaster", "headmistress"]:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if hasattr(hp, "can_add_parent"):
+                if not hp.can_add_parent:
+                    messages.error(request, "No permission")
+                    return redirect("accounts:headmaster_dashboard")
+            else:
+                if not hp.can_add_student:
+                    messages.error(request, "No permission")
+                    return redirect("accounts:headmaster_dashboard")
+        except:
+            return redirect("accounts:headmaster_dashboard")
+    else:
+        return redirect("accounts:dashboard")
 
     parent = get_object_or_404(
         User,
@@ -2156,8 +2877,23 @@ def delete_parent(request, parent_id):
 @login_required
 def deactivated_parents(request):
 
-    if request.user.role != 'admin':
-        return redirect('accounts:dashboard')
+    if request.user.role in ["admin", "proprietor", "proprietress"]:
+        pass
+    elif request.user.role in ["headmaster", "headmistress"]:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if hasattr(hp, "can_add_parent"):
+                if not hp.can_add_parent:
+                    messages.error(request, "No permission")
+                    return redirect("accounts:headmaster_dashboard")
+            else:
+                if not hp.can_add_student:
+                    messages.error(request, "No permission")
+                    return redirect("accounts:headmaster_dashboard")
+        except:
+            return redirect("accounts:headmaster_dashboard")
+    else:
+        return redirect("accounts:dashboard")
 
     parents = User.objects.filter(
         role='parent',
@@ -2174,8 +2910,23 @@ def deactivated_parents(request):
 @login_required
 def reactivate_parent(request, user_id):
 
-    if request.user.role != 'admin':
-        return redirect('accounts:dashboard')
+    if request.user.role in ["admin", "proprietor", "proprietress"]:
+        pass
+    elif request.user.role in ["headmaster", "headmistress"]:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if hasattr(hp, "can_add_parent"):
+                if not hp.can_add_parent:
+                    messages.error(request, "No permission")
+                    return redirect("accounts:headmaster_dashboard")
+            else:
+                if not hp.can_add_student:
+                    messages.error(request, "No permission")
+                    return redirect("accounts:headmaster_dashboard")
+        except:
+            return redirect("accounts:headmaster_dashboard")
+    else:
+        return redirect("accounts:dashboard")
 
     parent = get_object_or_404(
         User,
@@ -2196,29 +2947,68 @@ def reactivate_parent(request, user_id):
 
 @login_required
 def add_result(request):
-    if request.user.role != 'admin':
+    # --- FIXED PERMISSION ---
+    if request.user.role in ['admin', 'proprietor', 'proprietress']:
+        pass
+    elif request.user.role in ['headmaster', 'headmistress']:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_manage_results:
+                messages.error(request, "No permission")
+                return redirect('accounts:headmaster_dashboard')
+        except:
+            return redirect('accounts:headmaster_dashboard')
+    else:
         return redirect('accounts:dashboard')
+    # --- END FIX ---
 
     if request.method == 'POST':
         form = ResultForm(request.POST)
+        # --- FIXED ISOLATION ---
+        form.fields['student'].queryset = User.objects.filter(role='student', school=request.user.school)
+        if 'subject' in form.fields:
+            form.fields['subject'].queryset = Subject.objects.filter(school=request.user.school)
+        # --- END FIX ---
         if form.is_valid():
-            form.save()
+            result = form.save(commit=False)
+            # ensure school isolation if model has school
+            if hasattr(result, 'school'):
+                result.school = request.user.school
+            result.save()
             return redirect('accounts:dashboard')
     else:
+        form = ResultForm()
+        form.fields['student'].queryset = User.objects.filter(role='student', school=request.user.school)
+        if 'subject' in form.fields:
+            form.fields['subject'].queryset = Subject.objects.filter(school=request.user.school)
 
-     form = ResultForm()
-    form.fields['student'].queryset = User.objects.filter(role='student')
     return render(request, 'accounts/add_result.html', {'form': form})
 
 @login_required
 def assign_subject(request, teacher_id):
-    teacher = User.objects.get(id=teacher_id, role='teacher')
-    subjects = Subject.objects.all()
+    # --- FIXED PERMISSION ---
+    if request.user.role in ['admin', 'proprietor', 'proprietress']:
+        pass
+    elif request.user.role in ['headmaster', 'headmistress']:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_add_teacher:
+                messages.error(request, "No permission")
+                return redirect('accounts:headmaster_dashboard')
+        except:
+            return redirect('accounts:headmaster_dashboard')
+    else:
+        return redirect('accounts:dashboard')
+    # --- END FIX ---
+
+    # --- FIXED ISOLATION ---
+    teacher = get_object_or_404(User, id=teacher_id, role='teacher', school=request.user.school)
+    subjects = Subject.objects.filter(school=request.user.school)
 
     if request.method == 'POST':
         subject_id = request.POST.get('subject_id')
-        subject = Subject.objects.get(id=subject_id)
-        teacher.subjects.add(subject)  # assuming ManyToManyField
+        subject = get_object_or_404(Subject, id=subject_id, school=request.user.school)
+        teacher.subjects.add(subject)
         messages.success(request, f"{subject.name} assigned to {teacher.username}")
         return redirect('accounts:manage-teachers')
 
@@ -2239,82 +3029,70 @@ def profile_view(request):
 # TEACHER VIEWS
 # ----------------------------
 
+
 # ---------------------------
 # TEACHER DASHBOARD
 # --------------------------
-@role_required(['teacher'])
+@role_required(["teacher"])
 def teacher_dashboard(request):
-    
     teacher = request.user
     school = teacher.school
 
     if not school:
-        messages.error(
-            request,
-            "Your account is not assigned to any school."
-        )
+        messages.error(request, "Your account is not assigned to any school.")
         return redirect("accounts:home")
 
-
-    setting = SchoolSetting.objects.filter(
-        school=school
-    ).first()
-        
-
-    attendance_mode = (
-        setting.attendance_mode
-        if setting else "subject"
-    )
+    setting = SchoolSetting.objects.filter(school=school).first()
+    attendance_mode = setting.attendance_mode if setting else "subject"
     real_today = timezone.now().date()
+
     today_attendance = TeacherAttendance.objects.filter(
-        teacher=teacher,
-        school=school,
-        date=real_today
+        teacher=teacher, school=school, date=real_today
     ).first()
 
-
-    can_check_in = True
+    can_check_in = False
     can_check_out = False
+    if not today_attendance:
+        can_check_in = True
+    elif today_attendance.time_in and not today_attendance.time_out:
+        can_check_out = True
 
-
-    if today_attendance:
-
-        if today_attendance.time_in:
-            can_check_in = False
-
-        if today_attendance.time_in and not today_attendance.time_out:
-            can_check_out = True
-    
-    
     try:
-        week_offset = int(request.GET.get('week', '0') or 0)
+        week_offset = int(request.GET.get("week", "0") or 0)
     except ValueError:
         week_offset = 0
-    
-    monday = real_today - timedelta(days=real_today.weekday()) + timedelta(weeks=week_offset)
+
+    monday = (
+        real_today - timedelta(days=real_today.weekday()) + timedelta(weeks=week_offset)
+    )
     friday = monday + timedelta(days=4)
     school_days = [monday + timedelta(days=i) for i in range(5)]
-    school_days = [monday + timedelta(days=i) for i in range(5)]
 
+    # ✅ Added school isolation here
     teacher_weekdays = set(
-        Timetable.objects.filter(teacher=teacher, weekday__in=range(5))
-        .values_list('weekday', flat=True)
+        Timetable.objects.filter(
+            teacher=teacher, school=school, weekday__in=range(5)
+        ).values_list("weekday", flat=True)
     )
 
     scheduled_dates = [d for d in school_days if d.weekday() in teacher_weekdays]
     total_scheduled_this_week = len(scheduled_dates)
 
-    teacher_sessions = AttendanceSession.objects.filter(teacher=teacher, date__in=scheduled_dates)
-    marked_sessions_this_week = teacher_sessions.filter(records__isnull=False).distinct().count()
-    last_marked_session = teacher_sessions.filter(records__isnull=False).order_by('-date').first()
-    last_marked_day_name = last_marked_session.date.strftime('%A').upper() if last_marked_session else ''
-    pending_sessions_this_week = total_scheduled_this_week - marked_sessions_this_week
-    
-    teacher_weekdays = set(
-        Timetable.objects.filter(teacher=teacher, weekday__in=range(5))
-        .values_list('weekday', flat=True)
+    # ✅ Added school isolation here
+    teacher_sessions = AttendanceSession.objects.filter(
+        teacher=teacher, school=school, date__in=scheduled_dates
     )
-    
+    marked_sessions_this_week = (
+        teacher_sessions.filter(records__isnull=False).distinct().count()
+    )
+    last_marked_session = (
+        teacher_sessions.filter(records__isnull=False).order_by("-date").first()
+    )
+    last_marked_day_name = (
+        last_marked_session.date.strftime("%A").upper() if last_marked_session else ""
+    )
+    pending_sessions_this_week = total_scheduled_this_week - marked_sessions_this_week
+
     display_date = None
     for weekday in range(4, -1, -1):
         if weekday in teacher_weekdays:
@@ -2322,180 +3100,323 @@ def teacher_dashboard(request):
             if monday <= candidate_date <= friday:
                 display_date = candidate_date
                 break
-    
     if display_date is None:
         display_date = friday
-    
-    if week_offset == 0 and real_today.weekday() < 5 and real_today.weekday() in teacher_weekdays:
+
+    if (
+        week_offset == 0
+        and real_today.weekday() < 5
+        and real_today.weekday() in teacher_weekdays
+    ):
         display_date = real_today
         display_date_label = "Today"
     else:
-        display_date_label = display_date.strftime('%A')  # "Thursday", "Friday", etc
-    
+        display_date_label = display_date.strftime("%A")
+
     def get_day_suffix(day):
-        if 11 <= day <= 13: return 'th'
-        elif day % 10 == 1: return 'st'
-        elif day % 10 == 2: return 'nd'
-        elif day % 10 == 3: return 'rd'
-        else: return 'th'
-    
+        if 11 <= day <= 13:
+            return "th"
+        elif day % 10 == 1:
+            return "st"
+        elif day % 10 == 2:
+            return "nd"
+        elif day % 10 == 3:
+            return "rd"
+        else:
+            return "th"
+
     date_range = f"{monday.strftime('%b')} {monday.day}{get_day_suffix(monday.day)} - {friday.strftime('%b')} {friday.day}{get_day_suffix(friday.day)}"
-    
+
     if week_offset == 0:
         week_label = "This Week"
     elif week_offset == -1:
-        week_label = "Last Week" 
+        week_label = "Last Week"
     elif week_offset == 1:
         week_label = "Next Week"
     else:
         week_label = f"{abs(week_offset)} Weeks {'Ago' if week_offset < 0 else 'Ahead'}"
-    
-    assignments = TeacherSubjectClass.objects.filter(teacher=teacher).select_related('school_class', 'subject')
-    teacher_classes = assignments.values_list('school_class', flat=True)
-    teacher_subjects = assignments.values_list('subject', flat=True)
 
-    students_count = User.objects.filter(role='student', school_class_id__in=teacher_classes).distinct().count()
-    classes_count = assignments.values('school_class').distinct().count()
-    subjects_count = assignments.values('subject').distinct().count()
-    
-    base_results = Result.objects.filter(student__school_class_id__in=teacher_classes, subject_id__in=teacher_subjects)
-    draft_count = base_results.filter(status__in=['draft', 'returned']).count()
-    submitted_count = base_results.filter(status='submitted').count()
-    returned_count = base_results.filter(status='returned').count()
-    
-    timetable_today = Timetable.objects.filter(teacher=teacher, weekday=display_date.weekday())
-    total_classes_today = timetable_today.count()
-    
-    marked_today = AttendanceSession.objects.filter(
-        teacher=teacher, date=display_date, records__isnull=False
-    ).distinct().count()
-    
-    pending_today = total_classes_today - marked_today
-    
-    week_records = AttendanceRecord.objects.filter(
-        session__teacher=teacher, session__date__in=school_days
+    assignments = TeacherSubjectClass.objects.filter(
+        teacher=teacher, school=school
+    ).select_related("school_class", "subject")
+    teacher_classes = assignments.values_list("school_class", flat=True)
+    teacher_subjects = assignments.values_list("subject", flat=True)
+
+    students_count = (
+        User.objects.filter(
+            role="student", school=school, school_class_id__in=teacher_classes
+        )
+        .distinct()
+        .count()
     )
-    total_week = week_records.exclude(status='excuse').count()
-    present_week = week_records.filter(status__in=['present', 'late']).count()
-    absent_week = week_records.filter(status='absent').count()
-    late_week = week_records.filter(status='late').count()
-    excused_week = week_records.filter(status='excuse').count()
-    present_percent = round((present_week / total_week * 100), 1) if total_week > 0 else 0
-    today_attendance = TeacherAttendance.objects.filter(
+    classes_count = assignments.values("school_class").distinct().count()
+    subjects_count = assignments.values("subject").distinct().count()
+
+    base_results = Result.objects.filter(
         school=school,
-        teacher=teacher,
-        date=real_today
-    ).first()
+        student__school=school,
+        student__school_class_id__in=teacher_classes,
+        subject_id__in=teacher_subjects,
+    )
+    draft_count = base_results.filter(status__in=["draft", "returned"]).count()
+    submitted_count = base_results.filter(status="submitted").count()
+    returned_count = base_results.filter(status="returned").count()
 
-    can_check_in = False
-    can_check_out = False
+    timetable_today = Timetable.objects.filter(
+        teacher=teacher, school=school, weekday=display_date.weekday()
+    )
+    total_classes_today = timetable_today.count()
 
-    if not today_attendance:
-        can_check_in = True
-    elif today_attendance.time_in and not today_attendance.time_out:
-        can_check_out = True
+    marked_today = (
+        AttendanceSession.objects.filter(
+            teacher=teacher, school=school, date=display_date, records__isnull=False
+        )
+        .distinct()
+        .count()
+    )
 
+    pending_today = total_classes_today - marked_today
+
+    week_records = AttendanceRecord.objects.filter(
+        school=school,
+        session__teacher=teacher,
+        session__school=school,
+        session__date__in=school_days,
+    )
+    total_week = week_records.exclude(status="excuse").count()
+    present_week = week_records.filter(status__in=["present", "late"]).count()
+    absent_week = week_records.filter(status="absent").count()
+    late_week = week_records.filter(status="late").count()
+    excused_week = week_records.filter(status="excuse").count()
+    present_percent = (
+        round((present_week / total_week * 100), 1) if total_week > 0 else 0
+    )
 
     current_hour = timezone.localtime().hour
+    greeting = (
+        "Good Morning"
+        if current_hour < 12
+        else "Good Afternoon" if current_hour < 14 else "Good Evening"
+    )
 
-    if current_hour < 12:
-        greeting = "Good Morning"
-    elif current_hour < 14:
-        greeting = "Good Afternoon"
-    else:
-        greeting = "Good Evening"
-
-    today_date = timezone.localdate()
-
-    return render(request, 'accounts/teacher_dashboard.html', {
-        'assignments': assignments,
-        'students_count': students_count,
-        'classes_count': classes_count,
-        'subjects_count': subjects_count,
-        'draft_count': draft_count,
-        'submitted_count': submitted_count,
-        'returned_count': returned_count,
-        'marked_today': marked_today,
-        'total_classes_today': total_classes_today,
-        'pending_today': pending_today,
-        'present_percent': present_percent,
-        'present_week': present_week,
-        'absent_week': absent_week,
-        'late_week': late_week,
-        'excused_week': excused_week,
-        'total_week': total_week,
-        'marked_sessions_this_week': marked_sessions_this_week,
-        'last_marked_day_name': last_marked_day_name,
-        'total_scheduled_this_week': total_scheduled_this_week,
-        'date_range': date_range,
-        'week_label': week_label,
-        'week_offset': week_offset,
-        'display_date_label': display_date_label,
-        'today': real_today,
-        'attendance_mode': attendance_mode,
-        'is_class_teacher': teacher.is_class_teacher,
-        'pending_sessions_this_week': pending_sessions_this_week,
-        'school_setting': SchoolSetting.objects.first(),
-        'today_attendance': today_attendance,
-        'can_check_in': can_check_in,
-        'can_check_out': can_check_out,
-        "greeting": greeting,
-        "today_date": today_date,
-                
-    })
+    return render(
+        request,
+        "accounts/teacher_dashboard.html",
+        {
+            "assignments": assignments,
+            "students_count": students_count,
+            "classes_count": classes_count,
+            "subjects_count": subjects_count,
+            "draft_count": draft_count,
+            "submitted_count": submitted_count,
+            "returned_count": returned_count,
+            "marked_today": marked_today,
+            "total_classes_today": total_classes_today,
+            "pending_today": pending_today,
+            "present_percent": present_percent,
+            "present_week": present_week,
+            "absent_week": absent_week,
+            "late_week": late_week,
+            "excused_week": excused_week,
+            "total_week": total_week,
+            "marked_sessions_this_week": marked_sessions_this_week,
+            "last_marked_day_name": last_marked_day_name,
+            "total_scheduled_this_week": total_scheduled_this_week,
+            "date_range": date_range,
+            "week_label": week_label,
+            "week_offset": week_offset,
+            "display_date_label": display_date_label,
+            "today": real_today,
+            "attendance_mode": attendance_mode,
+            "is_class_teacher": teacher.is_class_teacher,
+            "pending_sessions_this_week": pending_sessions_this_week,
+            "school_setting": setting,
+            "today_attendance": today_attendance,
+            "can_check_in": can_check_in,
+            "can_check_out": can_check_out,
+            "greeting": greeting,
+            "today_date": timezone.localdate(),
+        },
+    )
 
 
-@role_required(['teacher'])
+@role_required(["teacher"])
 def teacher_timetable(request):
     teacher = request.user
+    school = teacher.school
+
+    if not school:
+        messages.error(request, "No school assigned")
+        return redirect("accounts:dashboard")
+
     today_date = timezone.now().date()
     today_weekday = today_date.weekday()
-    
+
+    # =====================================================
+    # YEAR & TERM FILTER
+    # =====================================================
+
+    selected_year = request.GET.get("year", "")
+    selected_term = request.GET.get("term", "")
+    selected_term_obj = None
+
+    if selected_year and selected_term:
+        selected_term_obj = Term.objects.filter(
+            school=school, academic_year_id=selected_year, term_number=selected_term
+        ).first()
+
+    # =====================================================
+    # ACTIVE TERM
+    # Used only when Year & Term are NOT selected
+    # =====================================================
+
+    active_term = Term.objects.filter(school=school, is_active=True).first()
+
+    # =====================================================
+    # WEEK NAVIGATION
+    # =====================================================
+
     try:
-        week_offset = int(request.GET.get('week', '0') or 0)
+        week_offset = int(request.GET.get("week", "0") or 0)
     except ValueError:
         week_offset = 0
-    
+
     start_of_week = today_date - timedelta(days=today_date.weekday())
     start_of_week += timedelta(weeks=week_offset)
-    
-    timetable = Timetable.objects.filter(
-        teacher=teacher
-    ).select_related('subject', 'school_class').order_by('weekday', 'period')
-    
-    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+
+    # =====================================================
+    # WEEK LIMITS
+    # =====================================================
+
+    can_go_previous = True
+    can_go_next = True
+
+    # Use selected term if filters are selected.
+    # Otherwise use the active term.
+    boundary_term = selected_term_obj or active_term
+
+    if boundary_term:
+
+        term_start_week = boundary_term.start_date - timedelta(
+            days=boundary_term.start_date.weekday()
+        )
+
+        term_end_week = boundary_term.end_date - timedelta(
+            days=boundary_term.end_date.weekday()
+        )
+
+        # =================================================
+        # STOP BEFORE TERM START
+        # =================================================
+
+        if start_of_week <= term_start_week:
+            start_of_week = term_start_week
+            can_go_previous = False
+
+        # =================================================
+        # STOP AFTER TERM END
+        # =================================================
+
+        if start_of_week >= term_end_week:
+            start_of_week = term_end_week
+            can_go_next = False
+
+    # =====================================================
+    # YEARS
+    # =====================================================
+
+    years = AcademicYear.objects.filter(school=school).order_by("-name")
+
+    # =====================================================
+    # TIMETABLE
+    # =====================================================
+
+    timetable = Timetable.objects.filter(teacher=teacher, school=school).select_related(
+        "subject", "school_class", "term", "academic_year"
+    )
+
+    # =====================================================
+    # APPLY YEAR FILTER
+    # =====================================================
+
+    if selected_year:
+        timetable = timetable.filter(academic_year_id=selected_year)
+
+    # =====================================================
+    # APPLY TERM FILTER
+    # =====================================================
+
+    if selected_term:
+        timetable = timetable.filter(term__term_number=selected_term)
+
+    timetable = timetable.order_by("weekday", "period")
+
+    # =====================================================
+    # DAYS
+    # =====================================================
+
+    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+
     timetable_by_day = []
-    
-    for day_num in range(5):  
+
+    for day_num in range(5):
+
         current_date = start_of_week + timedelta(days=day_num)
-        
+
+        # =================================================
+        # SCHOOL EVENT
+        # =================================================
+
         event = AcademicCalendar.objects.filter(
-            start_date__lte=current_date,
-            end_date__gte=current_date
+            school=school, start_date__lte=current_date, end_date__gte=current_date
         ).first()
-        
+
+        # =================================================
+        # DAILY ENTRIES
+        # =================================================
+
         entries = [e for e in timetable if e.weekday == day_num]
-        
+
+        # =================================================
+        # EVENT AFFECTS TIMETABLE
+        # =================================================
+
         if event and event.affects_timetable:
             entries = []
-        
-        timetable_by_day.append({
-            'num': day_num,
-            'name': days[day_num],
-            'date': current_date,
-            'entries': entries,
-            'event': event,
-        })
-    
-    return render(request, 'accounts/teacher_timetable.html', {
-        'timetable_by_day': timetable_by_day,
-        'today': today_date,  
-        'today_weekday': today_weekday if week_offset == 0 else -1,  
-        'week_offset': week_offset,
-        'prev_week': week_offset - 1,
-        'next_week': week_offset + 1,
-        'current_week_start': start_of_week,
-    })
+
+        timetable_by_day.append(
+            {
+                "num": day_num,
+                "name": days[day_num],
+                "date": current_date,
+                "entries": entries,
+                "event": event,
+            }
+        )
+
+    # =====================================================
+    # CONTEXT
+    # =====================================================
+
+    return render(
+        request,
+        "accounts/teacher_timetable.html",
+        {
+            "timetable_by_day": timetable_by_day,
+            "today": today_date,
+            "today_weekday": today_weekday if week_offset == 0 else -1,
+            "week_offset": week_offset,
+            "prev_week": week_offset - 1,
+            "next_week": week_offset + 1,
+            "current_week_start": start_of_week,
+            "years": years,
+            "selected_year": selected_year,
+            "selected_term": selected_term,
+            "selected_term_obj": selected_term_obj,
+            "can_go_previous": can_go_previous,
+            "can_go_next": can_go_next,
+        },
+    )
 
 
 # ---------------------------
@@ -2505,130 +3426,197 @@ def teacher_timetable(request):
 def teacher_classes(request):
     if request.user.role != "teacher":
         return redirect('accounts:dashboard')
-    return render(request, 'accounts/teacher_classes.html')
+
+    teacher = request.user
+    school = teacher.school
+
+    if not school:
+        messages.error(request, "No school assigned")
+        return redirect('accounts:dashboard')
+
+    # ✅ Only classes from assignments in this school
+    assignments = TeacherSubjectClass.objects.filter(
+        teacher=teacher,
+        school=school
+    ).select_related('school_class')
+
+    # Get unique classes
+    class_ids = assignments.values_list('school_class_id', flat=True).distinct()
+    classes = SchoolClass.objects.filter(
+        id__in=class_ids,
+        school=school
+    ).order_by('name')
+
+    # Count students per class (only from this school)
+    classes_with_count = []
+    for school_class in classes:
+        student_count = User.objects.filter(
+            role='student',
+            school=school,
+            school_class=school_class
+        ).count()
+
+        # Subjects teacher teaches in this class
+        subjects_in_class = assignments.filter(
+            school_class=school_class
+        ).values_list('subject__name', flat=True)
+
+        classes_with_count.append({
+            'class': school_class,
+            'student_count': student_count,
+            'subjects': list(subjects_in_class)
+        })
+
+    return render(request, 'accounts/teacher_classes.html', {
+        'classes_with_count': classes_with_count
+    })
 
 # -----------------------------------
 # TEACHER UPLOAD RESULTS
 # ----------------------------------
 
+
 @login_required
 def upload_result(request, class_id, subject_id):
-    school_class = get_object_or_404(SchoolClass, id=class_id)
-    subject = get_object_or_404(Subject, id=subject_id)
-    school = school_class.school
-    term = Term.objects.filter(is_active=True, school=school).first()
-    if not term:
-        messages.error(request, "No active term set. Ask admin to activate a term first.")
-        return redirect('accounts:teacher-dashboard')
+    if request.user.role != "teacher":
+        return redirect('accounts:dashboard')
 
-    entered_results = Result.objects.filter(
-        subject=subject,
-        term=term,
-        academic_year=term.academic_year,
-        student__school_class=school_class
-    ).select_related('student')
+    school = request.user.school  # ✅ from teacher, not from URL
+    school_class = get_object_or_404(
+        SchoolClass, id=class_id, school=school
+    )  # ✅ isolated
+    subject = get_object_or_404(Subject, id=subject_id, school=school)  
+    term = Term.objects.filter(is_active=True, school=school).first()
+
+    if not term:
+        messages.error(
+            request, "No active term set. Ask admin to activate a term first."
+        )
+        return redirect("accounts:teacher-dashboard")
+
+    entered_results = (
+        Result.objects.filter(
+            school=school,  # ✅ isolation
+            subject=subject,
+            term=term,
+            academic_year=term.academic_year,
+            student__school_class=school_class,
+        )
+        .exclude(Q(exam_score__isnull=True) | Q(exam_score=0))
+        .select_related("student")
+    )
 
     if request.method == "POST":
-        form = ResultUploadForm(request.POST, class_id=class_id)
-
+        form = ResultUploadForm(request.POST, class_id=class_id, school=school)
         if form.is_valid():
+            student = form.cleaned_data["student"]
+            ca_data = request.POST.get("ca_data")
 
-            student = form.cleaned_data['student']
-            ca_data = request.POST.get('ca_data')
             ContinuousAssessment.objects.filter(
                 student=student,
                 subject=subject,
                 term=term,
-                academic_year=term.academic_year
+                academic_year=term.academic_year,
             ).delete()
-
-            import json
 
             result = form.save(commit=False)
 
-            # --- CALCULATE CA ---
             ca_total = 0
             if ca_data:
-                assessments = json.loads(ca_data)
-                ca_total = sum(float(i['score']) for i in assessments)
+                try:
+                    assessments = json.loads(ca_data)
+                    ca_total = sum(
+                        float(i["score"])
+                        for i in assessments
+                        if str(i.get("score", "")).strip() != ""
+                    )
+                except:
+                    ca_total = 0
 
-            # --- EXAM SCORE ---
-            exam = float(result.exam_score or 0)
-            # Skip completely empty result
+            exam_str = (
+                str(result.exam_score).strip() if result.exam_score is not None else ""
+            )
+            exam = float(exam_str) if exam_str != "" else 0
+
             if ca_total == 0 and exam == 0:
                 messages.error(request, "Please enter CA or Exam score before saving.")
                 return redirect(
-                    'accounts:teacher-upload-results',
+                    "accounts:teacher-upload-results",
                     class_id=class_id,
-                    subject_id=subject_id
+                    subject_id=subject_id,
                 )
 
-            # --- LIMITS FROM TERM ---
-            max_ca = term.ca_total
-            max_exam = term.exam_total
+            if (
+                ca_total > term.sba_total
+                or exam > 100
+            ):
+                messages.error(
+                    request, "Score validation failed. SBA or Exam score exceeds its maximum and Exam cannot exceed 100."
+                )
+                return redirect(
+                    "accounts:teacher-upload-results",
+                    class_id=class_id,
+                    subject_id=subject_id,
+                )
 
-            # --- VALIDATION ---
-            if ca_total > max_ca:
-                messages.error(request, f"CA cannot be more than {max_ca}")
-                return redirect('accounts:teacher-upload-results', class_id=class_id, subject_id=subject_id)
-
-            if exam > max_exam:
-                messages.error(request, f"Exam cannot be more than {max_exam}")
-                return redirect('accounts:teacher-upload-results', class_id=class_id, subject_id=subject_id)
-
-            if ca_total > exam:
-                messages.error(request, "CA cannot be greater than Exam score")
-                return redirect('accounts:teacher-upload-results', class_id=class_id, subject_id=subject_id)
-
-            if ca_total + exam > 100:
-                messages.error(request, "Total cannot be more than 100")
-                return redirect('accounts:teacher-upload-results', class_id=class_id, subject_id=subject_id)
-
-            # --- CHECK EXISTING ---
-            existing = Result.objects.filter(
+            if Result.objects.filter(
+                school=school,
                 student=student,
                 subject=subject,
                 term=term,
-                academic_year=term.academic_year
-            ).exists()
-
-            if existing:
-                messages.error(request, f"Result already exists for {student.get_full_name()}. Delete it first.")
+                academic_year=term.academic_year,
+            ).exists():
+                messages.error(
+                    request, f"Result already exists for {student.get_full_name()}."
+                )
             else:
                 result.subject = subject
                 result.term = term
                 result.academic_year = term.academic_year
+                result.school = school  # ✅ isolation
                 result.save()
 
                 if ca_data:
-                    assessments = json.loads(ca_data)
-
-                    for item in assessments:
-                        ContinuousAssessment.objects.create(
-                            student=student,
-                            subject=subject,
-                            term=term,
-                            academic_year=term.academic_year,
-                            title=item['title'],
-                            score=item['score']
-                        )
-                        
+                    try:
+                        assessments = json.loads(ca_data)
+                        for item in assessments:
+                            if str(item.get("score", "")).strip() == "":
+                                continue
+                            ContinuousAssessment.objects.create(
+                                student=student,
+                                subject=subject,
+                                term=term,
+                                academic_year=term.academic_year,
+                                title=item["title"],
+                                score=item["score"],
+                            )
+                    except:
+                        pass
 
                 messages.success(request, f"Result saved for {student.get_full_name()}")
-                return redirect('accounts:teacher-upload-results', class_id=class_id, subject_id=subject_id)
-        else:
-            print(form.errors)
+                return redirect(
+                    "accounts:teacher-upload-results",
+                    class_id=class_id,
+                    subject_id=subject_id,
+                )
     else:
-        form = ResultUploadForm(class_id=class_id)  # Only set form on GET
+        form = ResultUploadForm(class_id=class_id, school=school)
 
-    return render(request, 'accounts/upload_result.html', {
-        'school_class': school_class, 
-        'subject': subject, 
-        'students': User.objects.filter(role='student', school_class_id=class_id),
-        'active_term': term,
-        'form': form,
-        'entered_results': entered_results,
-    })
+    return render(
+        request,
+        "accounts/upload_result.html",
+        {
+            "school_class": school_class,
+            "subject": subject,
+            "students": User.objects.filter(
+                role="student", school_class_id=class_id, school=school
+            ),  # ✅ isolation
+            "active_term": term,
+            "form": form,
+            "entered_results": entered_results,
+        },
+    )
+
 
 # --------------------------------
 # UPLOAD RESULTS LIST NEW
@@ -2636,8 +3624,10 @@ def upload_result(request, class_id, subject_id):
 @login_required
 def upload_results_list(request):
     assignments = TeacherSubjectClass.objects.filter(
-        teacher=request.user
-    )
+        teacher=request.user,
+        school=request.user.school,  # ✅ isolation
+        school_class__school=request.user.school  # ✅ double safety
+    ).select_related('school_class', 'subject')
 
     return render(request, 'accounts/upload_results_list.html', {
         'assignments': assignments
@@ -2647,204 +3637,162 @@ def upload_results_list(request):
 # TEACHER SEES RESULTS
 # ------------------------------
 
+
 @login_required
 def teacher_results(request):
     if request.user.role != 'teacher':
         return redirect('accounts:dashboard')
-    
+
     school = request.user.school
-    
-    active_term = Term.objects.filter(is_active=True, school=school).first()
+    active_term = Term.objects.filter(is_active=True, school=school).first() or Term.objects.filter(school=school).first()
+
     if not active_term:
-        active_term = Term.objects.filter(school=school).first()
-    
-    if not active_term:
-        messages.error(request, "No terms found. Create a term in Admin first.")
+        messages.error(request, "No terms found.")
         return redirect('accounts:dashboard')
-        
-    # Get term number from GET, fallback to active term
-    selected_term_number = request.GET.get('term')
-    selected_year = request.GET.get('year')
 
-    if selected_year:
-        selected_year = int(selected_year)
-    else:
-        selected_year = active_term.academic_year.id
+    selected_term_number = request.GET.get('term', str(active_term.term_number))
+    selected_year_id = request.GET.get('year') or (active_term.academic_year.id if active_term.academic_year else None)
+    try:
+        selected_year_id = int(selected_year_id)
+    except:
+        selected_year_id = active_term.academic_year.id if active_term.academic_year else None
 
-        selected_year = request.GET.get('year', active_term.academic_year.id)
-
-    # Get the correct term object
-    term_obj = Term.objects.filter(
-        school=school, 
-        term_number=selected_term_number, 
-        academic_year_id=selected_year
-    ).first()
-
-    if not term_obj:
-        term_obj = active_term
-
-    # Get the name from DB here, once
+    term_obj = Term.objects.filter(school=school, term_number=selected_term_number, academic_year_id=selected_year_id).first() or active_term
     term_name = term_obj.get_term_number_display()
+    academic_years = AcademicYear.objects.filter(term__school=school).distinct().order_by('-name')
 
+    # ✅ FIX
+    assignments = TeacherSubjectClass.objects.filter(
+        teacher=request.user, 
+        school=school,
+        school_class__school=school
+    ).select_related('school_class', 'subject')
+    assigned_classes_count = assignments.values("school_class_id").distinct().count()
 
-    academic_years = AcademicYear.objects.filter(
-        term__school=school
-    ).distinct().order_by('-name')
-        
-    assignments = TeacherSubjectClass.objects.filter(teacher=request.user)\
-        .select_related('school_class', 'subject')
     classes_with_students = []
-    
     for assignment in assignments:
         school_class = assignment.school_class
         subject = assignment.subject
-        if not Result.objects.filter(
-            subject=subject,
-            term=term_obj,
-            academic_year=term_obj.academic_year,
-            student__school_class=school_class,
-            status__in=['draft', 'returned', 'submitted']
-        ).exists():
+        base_qs = Result.objects.filter(
+            school=school,  # ✅
+            subject=subject, term=term_obj, academic_year=term_obj.academic_year,
+            student__school_class=school_class, status__in=['draft', 'returned', 'submitted']
+        ).exclude(Q(exam_score__isnull=True) | Q(exam_score=0))
+
+        if not base_qs.exists():
             continue
 
-        students = User.objects.filter(role='student', school_class_id=school_class.id)
-
+        students = User.objects.filter(role='student', school_class_id=school_class.id, school=school)  # ✅
         student_cards = []
-
         for student in students:
             results = Result.objects.filter(
-                student=student,
-                subject_id=subject.id,
-                term_id=term_obj.id,
-                academic_year_id=term_obj.academic_year.id,
-                status__in=['draft', 'returned', 'submitted']
-            )
+                school=school,  # ✅
+                student=student, subject=subject, term=term_obj,
+                academic_year=term_obj.academic_year, status__in=['draft', 'returned', 'submitted']
+            ).exclude(Q(exam_score__isnull=True) | Q(exam_score=0))
 
+            if not results.exists():
+                continue
             total = sum(r.total_score for r in results)
             count = results.count()
             average = total / count if count else 0
+            grading = get_grading_scale(school, term_obj, average)
 
-            if average >= 80:
-                grade, remark = "A", "Excellent"
-            elif average >= 70:
-                grade, remark = "B", "Very Good"
-            elif average >= 60:
-                grade, remark = "C", "Good"
-            elif average >= 50:
-                grade, remark = "D", "Pass"
-            elif average >= 40:
-                grade, remark = "E", "Weak"
-            else:
-                grade, remark = "F", "Fail"
+            grade = grading.grade if grading else "-"
+            remark = grading.remark if grading else "-"
+            student_cards.append({'student': student, 'results': results, 'total': total, 'average': average, 'grade': grade, 'remark': remark})
 
-            student_cards.append({
-                'student': student,
-                'results': results,
-                'total': total,
-                'average': average,
-                'grade': grade,
-                'remark': remark,
-            })
-
-        # ✅ MUST BE INSIDE LOOP
         if student_cards:
-            draft_count = Result.objects.filter(
-                student__school_class=school_class,
-                subject=subject,
-                term=term_obj,
-                academic_year=term_obj.academic_year,
-                status__in=['draft', 'returned']
-            ).count()
-
             classes_with_students.append({
-                'school_class': school_class,
-                'subject': subject,
+                'school_class': school_class, 'subject': subject,
                 'student_cards': student_cards,
-                'draft_count': draft_count
+                'draft_count': base_qs.filter(status__in=['draft', 'returned']).count()
             })
-        
-        
+
     return render(request, 'accounts/teacher_results.html', {
         'classes_with_students': classes_with_students,
+        'assigned_classes_count': assigned_classes_count,
         'selected_term': term_obj.term_number,
         'selected_year': term_obj.academic_year.id,
-        'term_obj': term_obj,
-        'term_name': term_name,
+        'term_obj': term_obj, 'term_name': term_name,
         'academic_years': academic_years, 
     })
 
 
 @login_required
 def teacher_published_results(request):
+    from django.db.models import Q
     if request.user.role != 'teacher':
         return redirect('accounts:dashboard')
 
-    # subjects/classes assigned to teacher
+    school = request.user.school
+
+    # ✅ FIX
     assignments = TeacherSubjectClass.objects.filter(
-        teacher=request.user
-    )
+        teacher=request.user,
+        school=school,
+        school_class__school=school
+    ).select_related('school_class', 'subject')
+
+    subject_ids = [a.subject_id for a in assignments]
+    class_ids = [a.school_class_id for a in assignments]
 
     results = Result.objects.filter(
+        school=school,  # ✅
         status='published',
-        subject__in=[a.subject for a in assignments],
-        student__school_class__in=[a.school_class for a in assignments]
-    ).select_related(
-        'student',
-        'subject'
-    ).order_by('-published_at')
-# FILTERS
+        subject_id__in=subject_ids,
+        student__school=school,  # ✅
+        student__school_class_id__in=class_ids,
+    ).exclude(Q(exam_score__isnull=True) | Q(exam_score=0)).select_related('student', 'subject', 'student__school_class').order_by('-published_at')
+
     class_id = request.GET.get('class')
     term = request.GET.get('term')
     year = request.GET.get('year')
 
     if class_id:
         results = results.filter(student__school_class_id=class_id)
-
     if term:
         results = results.filter(term__term_number=term)
-
     if year:
         results = results.filter(academic_year_id=year)
 
-    # dropdown data
-    classes = SchoolClass.objects.filter(
-        teachersubjectclass__teacher=request.user
-    ).distinct()
+    classes = SchoolClass.objects.filter(id__in=class_ids, school=school).distinct()  # ✅
+    years = AcademicYear.objects.filter(term__school=school).distinct().order_by('-name')  # ✅
 
-    years = AcademicYear.objects.all().order_by('-name')
-    for r in results:
-        total = float(r.class_score or 0) + float(r.exam_score or 0)
-
-
-    setting = SchoolSetting.objects.first()
-    attendance_mode = setting.attendance_mode if setting else "subject"
+    setting = SchoolSetting.objects.filter(school=school).first()
+    attendance_mode = setting.attendance_mode if setting else 'subject'
 
     return render(request, 'accounts/teacher_published_results.html', {
-        'results': results,
-        'classes': classes,
-        'years': years,
+        'results': results, 'classes': classes, 'years': years,
         'attendance_mode': attendance_mode,
     })
 
+
 def student_results_table_view(request):
-    # This gives us rank, term_total, etc
+    school = request.user.school
+
+    if not school:
+        messages.error(request, "No school assigned")
+        return redirect('accounts:dashboard')
+
+    # ✅ Level 1: School isolation
     summaries = StudentTermSummary.objects.select_related(
-        'student', 
-        'school_class'
+        'student', 'school_class'
     ).filter(
-        student__role='student'
-    ).order_by(
-        'school_class__name', 
-        'rank', 
-        'student__last_name'
-    )
-    
+        school=school,  # ✅
+        student__role='student',
+        student__school=school,  # ✅
+        school_class__school=school  # ✅
+    ).order_by('school_class__name', 'rank', 'student__last_name')
+
     students = []
     for summary in summaries:
         student_results = Result.objects.filter(
-            student=summary.student
+            school=school,  # ✅ Level 1
+            student=summary.student,
+            student__school=school
         ).select_related('subject').order_by('subject__name')
-        
+
         students.append({
             'id': summary.student.id,
             'name': f"{summary.student.first_name} {summary.student.last_name}",
@@ -2857,11 +3805,10 @@ def student_results_table_view(request):
             'term_remark': summary.term_remark,
             'term': summary.term,
             'academic_year': summary.academic_year,
-            'results': student_results  # This is the list of 10 subjects
+            'results': student_results
         })
-    
-    context = {'students': students}
-    return render(request, 'accounts/student_results_table.html', context)
+
+    return render(request, 'accounts/student_results_table.html', {'students': students})
 
 
 # -----------------------------------
@@ -2869,45 +3816,203 @@ def student_results_table_view(request):
 # ----------------------------------
 @login_required
 def edit_result(request, pk):
-    result = get_object_or_404(Result, pk=pk)
+    if request.user.role != "teacher":
+        return redirect("accounts:dashboard")
+    school = request.user.school
+    teacher = request.user
 
-    # Prevent editing submitted results
-    if result.status not in ['draft', 'returned']:
-        messages.error(request, "You can't edit this result. It was already submitted to admin.")
-        return redirect('accounts:teacher-results')
+    assignments = TeacherSubjectClass.objects.filter(
+        teacher=teacher,
+        school=school
+    )
 
-    if request.method == 'POST':
+    subject_ids = assignments.values_list("subject_id", flat=True)
+    class_ids = assignments.values_list("school_class_id", flat=True)
+
+    result = get_object_or_404(
+        Result,
+        pk=pk,
+        school=school,
+        subject_id__in=subject_ids,
+        student__school_class_id__in=class_ids,
+        student__school=school,
+    )
+
+    # Prevent editing submitted/published results
+    if result.status not in ["draft", "returned"]:
+        messages.error(
+            request,
+            "You can't edit this result. It was already submitted to admin."
+        )
+        return redirect("accounts:teacher-results")
+
+    ca_records = ContinuousAssessment.objects.filter(
+        school=school,
+        student=result.student,
+        subject=result.subject,
+        term=result.term,
+        academic_year=result.academic_year,
+    ).order_by("created_at")
+
+    if request.method == "POST":
+
         form = ResultForm(request.POST, instance=result)
 
         if form.is_valid():
+
+            # ---------------------------------------------
+            # GET NEW CA SCORES
+            # ---------------------------------------------
+
+            ca_total = 0
+
+            for ca in ca_records:
+
+                score_value = request.POST.get(
+                    f"ca_{ca.id}",
+                    str(ca.score)
+                )
+
+                try:
+                    score_value = float(score_value)
+                except (ValueError, TypeError):
+                    score_value = 0
+
+                if score_value < 0:
+                    score_value = 0
+
+                ca_total += score_value
+
+            # ---------------------------------------------
+            # GET NEW EXAM SCORE
+            # ---------------------------------------------
+
+            exam_score = form.cleaned_data.get("exam_score")
+
+            exam = float(exam_score or 0)
+
+            # ---------------------------------------------
+            # VALIDATION
+            # RAW SBA -> CONVERTED CA
+            # ---------------------------------------------
+
+            if ca_total > float(result.term.sba_total or 0):
+
+                messages.error(
+                    request,
+                    f"SBA score cannot exceed the school's "
+                    f"maximum SBA score of {result.term.sba_total}."
+                )
+
+                return redirect(
+                    "accounts:edit-result",
+                    pk=result.id
+                )
+
+            # Convert raw SBA to final CA
+            converted_ca = 0
+
+            if result.term.sba_total:
+                converted_ca = round(
+                    (ca_total / float(result.term.sba_total))
+                    * float(result.term.ca_total),
+                    2
+                )
+
+            if exam > 100:
+
+                messages.error(
+                    request,
+                    "Exam score cannot exceed 100."
+                    
+                )
+
+                return redirect(
+                    "accounts:edit-result",
+                    pk=result.id
+                )
+
+            converted_exam = 0
+
+            if result.term.exam_total:
+                converted_exam = round(
+                    (exam / 100) * float(result.term.exam_total),
+                    2
+                )
+
+            if converted_ca + converted_exam > 100:
+
+                messages.error(
+                    request,
+                    "The CA and Exam scores together cannot exceed 100."
+                )
+
+                return redirect(
+                    "accounts:edit-result",
+                    pk=result.id
+                )
+
+     
+
+            # ---------------------------------------------
+            # SAVE RESULT
+            # ---------------------------------------------
+
             updated_result = form.save(commit=False)
 
-            # 👇 VERY IMPORTANT: keep original student
             updated_result.student = result.student
+            updated_result.school = school
+            updated_result.subject = result.subject
+            updated_result.term = result.term
+            updated_result.academic_year = result.academic_year
 
             updated_result.save()
 
-            messages.success(request, "Result updated. Don't forget to submit to admin again.")
-            return redirect('accounts:teacher-results')
+            # ---------------------------------------------
+            # SAVE CA SCORES
+            # ---------------------------------------------
 
-        else:
-            print("FORM ERRORS:", form.errors)
+            for ca in ca_records:
+
+                score_value = request.POST.get(
+                    f"ca_{ca.id}"
+                )
+
+                if score_value is not None:
+
+                    try:
+                        score_value = float(score_value)
+
+                        if 0 <= score_value <= 100:
+                            ca.score = score_value
+                            ca.save(update_fields=["score"])
+
+                    except (ValueError, TypeError):
+                        pass
+
+            messages.success(
+                request,
+                "Result updated successfully. Don't forget to submit it to the administrator again."
+            )
+
+            return redirect("accounts:teacher-results")
 
     else:
+
         form = ResultForm(instance=result)
 
-    return render(request, 'accounts/edit_result.html', {
-        'form': form,
-        'result': result
-    })
-
+    return render(
+        request,
+        "accounts/edit_result.html",
+        {
+            "form": form,
+            "result": result,
+            "ca_records": ca_records,
+        },
+    )
 
 @login_required
 def submit_results_to_admin(request):
-    print("=== POST DATA DEBUG ===")
-    print(request.POST)
-    print("====================")
-    
     if request.user.role != 'teacher':
         return redirect('accounts:dashboard')
     
@@ -2915,12 +4020,12 @@ def submit_results_to_admin(request):
         messages.error(request, "Use the button to submit.")
         return redirect('accounts:teacher-results')
     
+    school = request.user.school  # ✅ Level 1
     class_id = request.POST.get('class_id')
     subject_id = request.POST.get('subject_id')
     term_id = request.POST.get('term')
     year_id = request.POST.get('year')
 
-    # force integers safely
     term_id = int(term_id)
     year_id = int(year_id)
     
@@ -2928,20 +4033,25 @@ def submit_results_to_admin(request):
         messages.error(request, "Missing required information.")
         return redirect('accounts:teacher-results')
     
-    # Security check
+    # ✅ Security check - BOTH levels
     if not TeacherSubjectClass.objects.filter(
         teacher=request.user, 
-        subject_id=subject_id, 
-        school_class_id=class_id
+        school=school,  # ✅ Level 1
+        subject_id=subject_id,  # ✅ Level 2
+        school_class_id=class_id,  # ✅ Level 2
+        school_class__school=school
     ).exists():
         messages.error(request, "You are not assigned to this subject and class.")
         return redirect('accounts:teacher-results')
     
-    # Filter using _id fields since term/year are FKs
     drafts = Result.objects.filter(
-        subject_id=subject_id,
-        student__school_class_id=class_id,
+        school=school,  # ✅ Level 1
+        subject_id=subject_id,  # ✅ Level 2
+        student__school=school,  # ✅ Level 1
+        student__school_class_id=class_id,  # ✅ Level 2
+        student__school_class__school=school,
         term__term_number=term_id,
+        term__school=school,
         academic_year_id=year_id,
         status__in=['draft', 'returned']
     )    
@@ -2955,7 +4065,6 @@ def submit_results_to_admin(request):
     messages.success(request, f"Submitted {count} result(s) to admin for review.")
     
     return redirect(f"{reverse('accounts:teacher-results')}?year={year_id}&term={term_id}")
-
 # --------------------------------
 # TEACHER MARK ATTENDANCE
 # ---------------------------
@@ -2965,20 +4074,25 @@ def mark_attendance(request):
     teacher = request.user
     school = teacher.school
 
-    setting = SchoolSetting.objects.first()
+    # ✅ Level 1 fix
+    setting = SchoolSetting.objects.filter(school=school).first() # ✅
     attendance_mode = setting.attendance_mode if setting else "subject"
+    
     if attendance_mode == "class_teacher":
         if not getattr(teacher, 'is_class_teacher', False):
-            messages.error(request, "Only class teachers can mark attendance in this mode.")
+            messages.error(request, "Only class teachers can mark attendance.")
             return redirect('accounts:dashboard')
 
+    # ✅ Level 1 + Level 2
     tsc_options = TeacherSubjectClass.objects.filter(
         teacher=teacher,
+        school=school, # ✅ Level 1
         school_class__school=school
     ).select_related('subject', 'school_class')
 
     if attendance_mode == "class_teacher":
         tsc_options = TeacherSubjectClass.objects.filter(
+            school=school, # ✅
             school_class__class_teacher=teacher,
             school_class__school=school
         ).select_related('subject', 'school_class')
@@ -2991,59 +4105,41 @@ def mark_attendance(request):
         tsc_options = unique
 
     selected_tsc_id = request.GET.get('tsc')
-    school_class_id = request.GET.get('school_class')
-    subject_id = request.GET.get('subject')
-    selected_date = request.GET.get('date', date.today().isoformat())
-    
     students = []
     tsc_obj = None
     session = None
     attendance_dict = {}
-    min_date = None  
-    max_date = None  
+    min_date = (date.today() - timedelta(days=30)).isoformat()
+    max_date = date.today().isoformat()
     
     if selected_tsc_id:
         if attendance_mode == "class_teacher":
-            tsc_obj = get_object_or_404(TeacherSubjectClass, id=selected_tsc_id, school_class__class_teacher=teacher, school_class__school=school)
+            tsc_obj = get_object_or_404(TeacherSubjectClass, id=selected_tsc_id, school=school, school_class__class_teacher=teacher, school_class__school=school)
         else:
-            tsc_obj = get_object_or_404(TeacherSubjectClass, id=selected_tsc_id, teacher=teacher, school_class__school=school)
+            tsc_obj = get_object_or_404(TeacherSubjectClass, id=selected_tsc_id, teacher=teacher, school=school, school_class__school=school)
     
     if tsc_obj:
-        school_class_id = tsc_obj.school_class_id
-        subject_id = tsc_obj.subject_id
-        students = User.objects.filter(
-            role='student',
-            school_class_id=school_class_id,
-            school=school
-        ).order_by('last_name', 'first_name')
+        students = User.objects.filter(role='student', school_class_id=tsc_obj.school_class_id, school=school).order_by('last_name', 'first_name')
         
     if request.method == 'POST' and tsc_obj:
-        selected_date_obj = datetime.strptime(selected_date, '%Y-%m-%d').date()
+        selected_date_obj = datetime.strptime(request.GET.get('date', date.today().isoformat()), '%Y-%m-%d').date()
         if selected_date_obj.weekday() >= 5:
             messages.error(request, "Cannot mark attendance on weekends.")
             return redirect('accounts:mark_attendance')
         
-        is_holiday = AcademicCalendar.objects.filter(
-            school=school,
-            affects_timetable=True,
-            start_date__lte=selected_date_obj,
-            end_date__gte=selected_date_obj
-        ).exists()
-        
+        is_holiday = AcademicCalendar.objects.filter(school=school, affects_timetable=True, start_date__lte=selected_date_obj, end_date__gte=selected_date_obj).exists()
         if is_holiday:
             messages.error(request, f"Cannot save attendance. {selected_date_obj} is a holiday.")
             return redirect('accounts:mark_attendance')
         
-        if attendance_mode == "class_teacher":
-            first_tsc = TeacherSubjectClass.objects.filter(school_class_id=school_class_id).first()
-            subject_id = first_tsc.subject_id if first_tsc else tsc_obj.subject_id
-        else:
-            subject_id = tsc_obj.subject_id
+        subject_id = TeacherSubjectClass.objects.filter(school_class_id=tsc_obj.school_class_id).first().subject_id if attendance_mode == "class_teacher" else tsc_obj.subject_id
 
+        # ✅ Level 1 fix
         session, created = AttendanceSession.objects.get_or_create(
-            school_class_id=school_class_id,
+            school=school,  # ✅
+            school_class_id=tsc_obj.school_class_id,
             subject_id=subject_id,
-            date=selected_date,
+            date=request.GET.get('date', date.today().isoformat()),
             teacher=teacher
         )
         
@@ -3051,82 +4147,72 @@ def mark_attendance(request):
         with transaction.atomic():
             for student in students:
                 status = request.POST.get(f'status_{student.id}')
-                # FINAL RULE: ONLY P and A ALLOWED, No Late
                 if status not in ['P', 'A']:
-                    status = None  # Treat invalid as not marked
-                
+                    status = None
                 if status:
-                    AttendanceRecord.objects.update_or_create(
-                        session=session,
-                        student=student,
-                        defaults={'status': status}
-                    )
+                    AttendanceRecord.objects.update_or_create(session=session, student=student, defaults={'status': status})
                     marked_count += 1
                 else:
                     AttendanceRecord.objects.filter(session=session, student=student).delete()
             
             marked_ids = [s.id for s in students if request.POST.get(f'status_{s.id}') in ['P', 'A']]
             unmarked_students = students.exclude(id__in=marked_ids)
-            absent_count = unmarked_students.count()
             for student in unmarked_students:
-                AttendanceRecord.objects.update_or_create(
-                    session=session,
-                    student=student,
-                    defaults={'status': 'A'}  # Auto absent
-                )
+                AttendanceRecord.objects.update_or_create(session=session, student=student, defaults={'status': 'A'})
             
-        messages.success(request, f"Attendance for {tsc_obj.school_class.name} saved. {marked_count} marked, {absent_count} auto-absent.")
+        messages.success(request, f"Attendance for {tsc_obj.school_class.name} saved.")
         return redirect('accounts:attendance_detail', session_id=session.id)
     
     if tsc_obj:
-        session = AttendanceSession.objects.filter(
-            school_class_id=school_class_id,
-            subject=tsc_obj.subject,
-            date=selected_date,
-            teacher=teacher
-        ).first()
-        
+        session = AttendanceSession.objects.filter(school=school, school_class_id=tsc_obj.school_class_id, subject=tsc_obj.subject, date=request.GET.get('date', date.today().isoformat()), teacher=teacher).first()
         if session:
             existing = AttendanceRecord.objects.filter(session=session)
             attendance_dict = {a.student_id: a.status for a in existing}
-            min_date = (date.today() - timedelta(days=30)).isoformat()
-            max_date = date.today().isoformat()
     
-    context = {
-        'tsc_options': tsc_options,
-        'students': students,
-        'selected_tsc': tsc_obj,
-        'selected_tsc_id': selected_tsc_id,
-        'selected_date': selected_date,
-        'attendance_dict': attendance_dict,
-        'session': session, 
-        'min_date': min_date,  
-        'max_date': max_date,  
-        'today': date.today(),
+    return render(request, 'accounts/mark_attendance.html', {
+        'tsc_options': tsc_options, 'students': students, 'selected_tsc': tsc_obj,
+        'selected_tsc_id': selected_tsc_id, 'selected_date': request.GET.get('date', date.today().isoformat()),
+        'attendance_dict': attendance_dict, 'session': session, 
+        'min_date': min_date, 'max_date': max_date, 'today': date.today(),
         'attendance_mode': attendance_mode,
-    }
-    
-    return render(request, 'accounts/mark_attendance.html', context)
+    })
 # --------------------------------
 
 # --------------------------------
 @login_required
 def attendance_mark(request, session_id):
-    session = AttendanceSession.objects.select_related('school_class', 'subject').get(id=session_id)
-    students = User.objects.filter(school_class=session.school_class, role='student', is_active=True).order_by('first_name')
+    school = request.user.school
+    teacher = request.user
+
+    # ✅ Level 1 + Level 2: Only session from this school AND this teacher's assignment
+    session = get_object_or_404(
+        AttendanceSession.objects.select_related('school_class', 'subject'),
+        id=session_id,
+        school=school,  # ✅ Level 1
+        school_class__school=school,
+        teacher=teacher  # ✅ Level 2 - only his own sessions
+    )
+
+    students = User.objects.filter(
+        school_class=session.school_class,
+        school=school,  # ✅ Level 1
+        role='student',
+        is_active=True
+    ).order_by('first_name')
 
     if not students.exists():
-        messages.error(request, f"No students found in {session.school_class.name}. Add students first.")
+        messages.error(request, f"No students found in {session.school_class.name}.")
         return redirect('accounts:attendance_create')
 
     if request.method == 'POST':
         for student in students:
             status = request.POST.get(f'status_{student.id}', '')
-            AttendanceRecord.objects.update_or_create(
-                session=session,
-                student=student,
-                defaults={'status': status}
-            )
+            if status in ['P', 'A']: # Only allow P/A
+                AttendanceRecord.objects.update_or_create(
+                    session=session,
+                    student=student,
+                    defaults={'status': status}
+                )
         messages.success(request, 'Attendance saved successfully!')
         return redirect('accounts:attendance_report')
 
@@ -3141,6 +4227,17 @@ def attendance_mark(request, session_id):
 
 @login_required
 def attendance_report(request):
+    # --- FIXED PERMISSION ---
+    if request.user.role not in [
+        'admin',
+        'proprietor',
+        'proprietress',
+        'headmaster',
+        'headmistress',
+        'teacher',
+    ]:
+        return redirect('accounts:dashboard')
+
     teacher = request.user
     school = teacher.school
 
@@ -3365,10 +4462,15 @@ def attendance_report(request):
 
     elif teacher.role == "teacher":
 
-        teacher_classes = SchoolClass.objects.filter(
-            teachersubjectclass__teacher=teacher,
-            school=school
-        ).distinct().order_by("name")
+        teacher_classes = (
+            SchoolClass.objects.filter(
+                teachersubjectclass__teacher=teacher,
+                teachersubjectclass__school=school,
+                school=school,
+            )
+            .distinct()
+            .order_by("name")
+        )
 
     else:
 
@@ -3428,6 +4530,7 @@ def attendance_report(request):
                         week_end
                     ],
                     school_class=school_class,
+                    school_class__school=school, #
                     school=school
                 )
                 .order_by("date")
@@ -3656,102 +4759,237 @@ def attendance_report(request):
         }
     )
 
+
 @login_required
 def attendance_detail(request, session_id):
+    if request.user.role not in [
+    "admin",
+    "proprietor",
+    "proprietress",
+    "headmaster",
+    "headmistress",
+    "teacher",
+]:
+        return redirect("accounts:dashboard")
+
     school = request.user.school
-    setting = SchoolSetting.objects.filter(
-        school=school
-    ).first()  # ✅ FIX 1 - filter by school
+
+    if not school:
+        messages.error(request, "No school assigned")
+        return redirect("accounts:dashboard")
+
+    setting = SchoolSetting.objects.filter(school=school).first()
     attendance_mode = setting.attendance_mode if setting else "subject"
+
     user = request.user
+
     is_school_admin = getattr(user, "role", "") in [
         "admin",
         "proprietor",
-        "school_admin",
-        "director",
+        "proprietress",
+        "headmaster",
+        "headmistress",
     ]
 
-    # Get base session
+    # =====================================================
+    # GET BASE ATTENDANCE SESSION
+    # =====================================================
+
     if user.is_staff or user.is_superuser:
+
         base_session = get_object_or_404(
             AttendanceSession, id=session_id, school=school
         )
+
     elif is_school_admin:
+
         base_session = get_object_or_404(
-            AttendanceSession, id=session_id, school=school
-        )  # ✅ FIX 2 - use school
+            AttendanceSession, id=session_id, school=school, school__id=school.id
+        )
+
     else:
+
         if attendance_mode == "class_teacher":
+
             base_session = get_object_or_404(
                 AttendanceSession,
                 id=session_id,
                 school=school,
+                school_class__school=school,
                 school_class__class_teacher=user,
             )
+
         else:
+
             base_session = get_object_or_404(
-                AttendanceSession, id=session_id, teacher=user, school=school
+                AttendanceSession,
+                id=session_id,
+                teacher=user,
+                school=school,
+                school_class__school=school,
             )
 
-    # === CLASS TEACHER MODE: MERGE ALL SUBJECTS OF THAT DAY ===
+    # =====================================================
+    # SCHOOL WEEK
+    # =====================================================
+    #
+    # IMPORTANT:
+    # This is NOT an ISO calendar week.
+    #
+    # Week 1 begins on the actual Term.start_date
+    # configured by the school administrator.
+    #
+    # The first week can therefore be a partial week.
+    #
+    # Example:
+    #
+    # Term starts Wednesday:
+    #
+    # Wed - Fri  = Week 1
+    # Mon - Fri  = Week 2
+    # Mon - Fri  = Week 3
+    #
+    # =====================================================
+
+    session_date = base_session.date
+
+    attendance_term = (
+        Term.objects.filter(
+            school=school, start_date__lte=session_date, end_date__gte=session_date
+        )
+        .select_related("academic_year")
+        .first()
+    )
+
+    attendance_week = None
+
+    if attendance_term:
+
+        term_start = attendance_term.start_date
+
+        # Monday of the calendar week containing the
+        # actual term start date.
+        first_monday = term_start - timedelta(days=term_start.weekday())
+
+        # Friday of that first school week.
+        first_week_friday = first_monday + timedelta(days=4)
+
+        # -------------------------------------------------
+        # WEEK 1
+        # -------------------------------------------------
+
+        if session_date <= first_week_friday:
+
+            attendance_week = 1
+
+        # -------------------------------------------------
+        # WEEK 2+
+        # -------------------------------------------------
+
+        else:
+
+            first_full_monday = first_monday + timedelta(days=7)
+
+            attendance_week = ((session_date - first_full_monday).days // 7) + 2
+
+    # =====================================================
+    # CLASS TEACHER MODE
+    # =====================================================
+
     if attendance_mode == "class_teacher":
+
         all_sessions = (
             AttendanceSession.objects.filter(
                 date=base_session.date,
                 school_class=base_session.school_class,
+                school_class__school=school,
                 school=school,
             )
             .annotate(total=Count("records"))
             .filter(total__gt=0)
-        )  # ✅ added school
+        )
+
         all_records = AttendanceRecord.objects.filter(
-            session__in=all_sessions
+            session__in=all_sessions, session__school=school
         ).select_related("student")
 
         by_student = defaultdict(list)
         student_objs = {}
+
         for r in all_records:
+
             by_student[r.student_id].append(r.status)
+
             student_objs[r.student_id] = r.student
 
         merged_list = []
+
         for sid, statuses in by_student.items():
+
             final = "P" if "P" in statuses else "A"
 
             class FakeRec:
                 pass
 
             fr = FakeRec()
+
             fr.student = student_objs[sid]
             fr.status = final
             fr.breakdown = statuses
+
             merged_list.append(fr)
 
-        present_count = sum(1 for s in by_student.values() if "P" in s)
-        absent_count = sum(1 for s in by_student.values() if "P" not in s)
+        present_count = sum(1 for statuses in by_student.values() if "P" in statuses)
+
+        absent_count = sum(1 for statuses in by_student.values() if "P" not in statuses)
+
         total_count = len(by_student)
+
         attendance_rate = (present_count / total_count * 100) if total_count else 0
 
         paginator = Paginator(merged_list, 25)
+
         page_obj = paginator.get_page(request.GET.get("page"))
 
+    # =====================================================
+    # SUBJECT ATTENDANCE MODE
+    # =====================================================
+
     else:
+
         records = (
-            AttendanceRecord.objects.filter(session=base_session)
+            AttendanceRecord.objects.filter(
+                session=base_session, session__school=school
+            )
             .select_related("student")
             .order_by("student__last_name")
         )
+
         total_count = records.count()
+
         present_count = records.filter(status="P").count()
+
         absent_count = records.filter(status="A").count()
+
         attendance_rate = (present_count / total_count * 100) if total_count else 0
+
         paginator = Paginator(records, 25)
+
         page_obj = paginator.get_page(request.GET.get("page"))
 
+    # =====================================================
+    # TEACHER SUBJECT CLASS
+    # =====================================================
+
     tsc_obj = TeacherSubjectClass.objects.filter(
-        school_class=base_session.school_class
+        school_class=base_session.school_class,
+        school=school,
+        school_class__school=school,
     ).first()
 
+    # =====================================================
+    # RENDER
+    # =====================================================
 
     return render(
         request,
@@ -3766,34 +5004,81 @@ def attendance_detail(request, session_id):
             "attendance_rate": round(attendance_rate, 2),
             "tsc_obj": tsc_obj,
             "attendance_mode": attendance_mode,
+            # SCHOOL WEEK
+            "attendance_week": attendance_week,
+            # USED BY TEMPLATE TO CONTROL
+            # WHO SEES "MARKED BY"
+            "is_school_admin": is_school_admin,
         },
     )
 
 
 @login_required
 def attendance_create_session(request):
+    if request.user.role not in [
+    "admin",
+    "proprietor",
+    "proprietress",
+    "headmaster",
+    "headmistress",
+    "teacher",
+]:
+        return redirect("accounts:dashboard")
+    school = request.user.school
+    
+    # Get teacher assignments for Level 2
+    teacher_assignments = TeacherSubjectClass.objects.filter(
+        teacher=request.user,
+        school=school
+    )
+    allowed_class_ids = teacher_assignments.values_list('school_class_id', flat=True)
+    allowed_subject_ids = teacher_assignments.values_list('subject_id', flat=True)
+
     if request.method == 'POST':
         school_class_id = request.POST.get('school_class')
         subject_id = request.POST.get('subject')
-        session_date = request.POST.get('date')  # renamed this
+        session_date = request.POST.get('date')
         
-        school_class = SchoolClass.objects.get(id=school_class_id)
-        subject = Subject.objects.get(id=subject_id)
+        # ✅ FIX 1 & 2 - check school + assignment
+        school_class = get_object_or_404(
+            SchoolClass, 
+            id=school_class_id, 
+            school=school,
+            id__in=allowed_class_ids
+        )
+        subject = get_object_or_404(
+            Subject, 
+            id=subject_id, 
+            school=school,
+            id__in=allowed_subject_ids
+        )
         
         session, created = AttendanceSession.objects.get_or_create(
-            date=session_date,  # use renamed variable
+            date=session_date,
             school_class=school_class,
+            school_class__school=school,
             subject=subject,
-            teacher=request.user
+            subject__school=school,
+            teacher=request.user,
+            school=school
         )
         return redirect('accounts:attendance_mark', session_id=session.id)
     
-    classes = SchoolClass.objects.all()
-    subjects = Subject.objects.all()
+    # ✅ FIX - only show his school + his assigned classes/subjects
+    classes = SchoolClass.objects.filter(
+        school=school,
+        id__in=allowed_class_ids
+    ).order_by('name')
+    
+    subjects = Subject.objects.filter(
+        school=school,
+        id__in=allowed_subject_ids
+    ).order_by('name')
+
     return render(request, 'accounts/attendance_create.html', {
         'classes': classes,
         'subjects': subjects,
-        'today': dt_date.today().strftime('%Y-%m-%d')  # fixed this line
+        'today': dt_date.today().strftime('%Y-%m-%d')
     })
 
 
@@ -3801,7 +5086,14 @@ def attendance_create_session(request):
 # --------------------------
 @login_required
 def teacher_student_list(request):
-    if request.user.role != "teacher":
+    if request.user.role not in [
+    "admin",
+    "proprietor",
+    "proprietress",
+    "headmaster",
+    "headmistress",
+    "teacher",
+]:
         return redirect('accounts:dashboard')
     return render(request, 'accounts/teacher_student_list.html')
 
@@ -3810,7 +5102,7 @@ def teacher_student_list(request):
 # --------------------------
 @login_required
 def teacher_attendance_report(request):
-    if request.user.role != "teacher":
+    if request.user.role not in ['teacher','admin', 'headmaster', 'headmistress', 'proprietor', 'proprietress']:
         return redirect('accounts:dashboard')
     return render(request, 'accounts/teacher_attendance_report.html')
 
@@ -3819,7 +5111,17 @@ def teacher_attendance_report(request):
 # --------------------------
 @login_required
 def teacher_assignments(request):
-    assignments = TeacherSubjectClass.objects.filter(teacher=request.user)
+    teacher = request.user
+    school = teacher.school
+
+    if not school:
+        messages.error(request, "No school assigned")
+        return redirect('accounts:dashboard')
+
+    assignments = TeacherSubjectClass.objects.filter(
+        teacher=teacher,
+        school=school  # ✅ Now permanent multi-school
+    ).select_related('subject', 'school_class', 'school').order_by('school_class__name', 'subject__name')
 
     return render(request, 'accounts/teacher_assignments.html', {
         'assignments': assignments
@@ -3828,292 +5130,367 @@ def teacher_assignments(request):
 
 # -------------------------------
 
+
 # ----------------------------
 @login_required
 def school_settings(request):
-    if request.user.role != 'admin':
-        messages.error(request, "Only school owners can access this page.")
-        return redirect('accounts:dashboard')
-    
-    school = request.user.school
-    setting, _ = SchoolSetting.objects.get_or_create(school=school)
-
-    # Handle school settings update - CREATE if missing
-    if request.method == 'POST' and 'update_school' in request.POST:
-        name = request.POST.get('name')
-        address = request.POST.get('address')
-        phone = request.POST.get('phone')
-        email = request.POST.get('email')
-        gps_address = request.POST.get('gps_address')
-        logo = request.FILES.get('logo')
-        can_teachers_manage_students = 'can_teachers_manage_students' in request.POST
-        attendance_mode = request.POST.get('attendance_mode')
-
-        setting.attendance_mode = attendance_mode
-        setting.save()
-
-        if not school:
-            # Create school and link it to user
-            school = School.objects.create(
-                name=name,
-                address=address,
-                phone=phone,
-                email=email,
-                gps_address=gps_address,
-                logo=logo,
-                can_teachers_manage_students=can_teachers_manage_students
-            )
-            request.user.school = school
-            request.user.save()
-        else:
-            # Update existing school
-            school.name = name
-            school.address = address
-            school.phone = phone
-            school.email = email
-            school.gps_address = gps_address
-            school.can_teachers_manage_students = can_teachers_manage_students
-            if logo:
-                school.logo = logo
-            school.save()
-
-        messages.success(request, "School settings saved.")
-        return redirect('accounts:school_settings')
-
-    fee_breakdown = None
-    selected_year = None
-    selected_term = request.GET.get('term')
-
-    if selected_term:
+    if request.user.role in ["admin", "proprietor", "proprietress"]:
+        pass
+    elif request.user.role in ["headmaster", "headmistress"]:
         try:
-            selected_term = int(selected_term)
-        except ValueError:
+            owner_exists = User.objects.filter(
+                school=request.user.school,
+                role__in=["admin", "proprietor", "proprietress"]
+            ).exists()
+
+            # Headmaster-only school:
+            # Headmaster/Headmistress has full management access.
+            if not owner_exists:
+                pass
+
+            # Owner-controlled school:
+            # School Settings depends on the permission granted by the owner.
+            else:
+                hp = request.user.school.headmaster_permissions
+                if not hp.can_school_settings:
+                    messages.error(
+                        request,
+                        "No permission - Ask admin to enable School Settings"
+                    )
+                    return redirect("accounts:headmaster_dashboard")
+
+        except HeadmasterPermission.DoesNotExist:
+            messages.error(
+                request,
+                "No permissions set yet - Ask admin to set permissions"
+            )
+            return redirect("accounts:headmaster_dashboard")
+        except Exception as e:
+            messages.error(request, f"Error: {e}")
+            return redirect("accounts:headmaster_dashboard")
+    else:
+        messages.error(request, "Only school owners can access this page.")
+        return redirect("accounts:dashboard")
+    school = request.user.school
+    if not school:
+        messages.error(request, "Your school not found.")
+        return redirect("accounts:dashboard")
+
+    setting, _ = SchoolSetting.objects.get_or_create(
+        school=school, defaults={"attendance_mode": "subject"}
+    )
+
+    # === 1. UPDATE SCHOOL PROFILE ===
+    if request.method == "POST" and "update_school" in request.POST:
+        school.name = request.POST.get("name") or school.name
+        school.address = request.POST.get("address") or school.address
+        school.phone = request.POST.get("phone") or school.phone
+        school.email = request.POST.get("email") or school.email
+        school.gps_address = request.POST.get("gps_address") or school.gps_address
+        school.motto = request.POST.get("motto") or school.motto
+        logo = request.FILES.get("logo")
+        if logo:
+            school.logo = logo
+        if request.POST.get("attendance_mode"):
+            setting.attendance_mode = request.POST.get("attendance_mode")
+            setting.save()
+        school.save()
+        messages.success(request, "School profile saved.")
+        return redirect("accounts:school_settings")
+
+    if request.method == "POST" and "update_attendance" in request.POST:
+        mode = request.POST.get("attendance_mode") or "subject"
+        setting.attendance_mode = mode
+        setting.save()
+        messages.success(request, f"Attendance mode changed to {mode}")
+        return redirect("accounts:school_settings")
+
+    if request.method == "POST" and "update_permission" in request.POST:
+        school.can_teachers_manage_students = "can_teachers_manage_students" in request.POST
+        school.save()
+        messages.success(request, "Permission updated")
+        return redirect("accounts:school_settings")
+
+    if request.method == "POST" and "update_admission_letter" in request.POST:
+        school.admission_letter_title = request.POST.get("admission_letter_title") or school.admission_letter_title
+        school.admission_letter_body = request.POST.get("admission_letter_body") or school.admission_letter_body
+        school.admission_letter_footer = request.POST.get("admission_letter_footer") or school.admission_letter_footer
+        school.save()
+        messages.success(request, "Admission letter template saved.")
+        return redirect("accounts:school_settings")
+
+    # === DYNAMIC FEE PART - NEW ===
+    selected_year = request.GET.get("year")
+    selected_term_raw = request.GET.get("term")
+    selected_term = None
+    if selected_term_raw and selected_term_raw not in ["None", "null", "all", ""]:
+        try:
+            selected_term = int(selected_term_raw)
+        except:
             selected_term = None
-    years = []
-    active_term = None
-    fee_structures = []
-    existing_fee_keys = set()
+    if not selected_year or selected_year in ["None", "null", "all", ""]:
+        selected_year = None
 
-    if school:
-        fee_breakdown = FeeStructure.objects.filter(school=school).order_by('-id').first()
-        selected_year = request.GET.get('year') or (fee_breakdown.academic_year if fee_breakdown else None)
-        years = FeeStructure.objects.filter(school=school).values_list('academic_year', flat=True).distinct().order_by('-academic_year')
-        active_term = Term.objects.filter(
-            school=school,
-            is_active=True
-        ).order_by('-id').first()
-        
-        if not selected_year:
-            selected_year = active_term.academic_year if active_term else (years.first() if years else '')
-        
-        fee_structures = FeeStructure.objects.filter(school=school, academic_year=selected_year)
-        if selected_term:
-         fee_structures = fee_structures.filter(term_id=selected_term)
-        fee_structures = fee_structures.order_by('term', 'stage')
-        existing_fee_keys = {f"{fs.stage}:{fs.term}" for fs in fee_structures}
+    academic_years = AcademicYear.objects.filter(school=school).order_by("-name")
+    terms = Term.objects.filter(school=school).order_by("term_number")
+    active_term = Term.objects.filter(school=school, is_active=True).first()
+    payment_types = PaymentType.objects.filter(school=school).order_by('name')
 
-    # Handle creating fee structure - only if school exists
-    if request.method == 'POST' and 'create_fee_structure' in request.POST:
-        if not school:
-            messages.error(request, "Please create your school first before adding fee structures.")
-            return redirect('accounts:school_settings')
-            
-        term_id = request.POST.get('term')
-        term = Term.objects.filter(id=term_id, school=school).first()
-        if not term:
-            messages.error(request, "Invalid term selected.")
-            return redirect('accounts:school_settings')
-        
-        academic_year = request.POST.get('academic_year')
-        
-        def to_decimal(val):
-            try:
-                return Decimal(val) if val not in [None, ''] else Decimal('0')
-            except:
-                return Decimal('0')
-        
-        school_fees = to_decimal(request.POST.get('school_fees'))
-        pta_dues = to_decimal(request.POST.get('pta_dues'))
-        computer_levy = to_decimal(request.POST.get('computer_levy'))
-        exam_fees = to_decimal(request.POST.get('exam_fees'))
-        boarding_fee = to_decimal(request.POST.get('boarding_fee'))
-        hostel_fee = to_decimal(request.POST.get('hostel_fee'))
-        development_fee = to_decimal(request.POST.get('development_fee'))
-        canteen_amount = to_decimal(request.POST.get('canteen_amount'))
-        other_fees = to_decimal(request.POST.get('other_fees'))
-        total = (school_fees + pta_dues + computer_levy + exam_fees + boarding_fee + hostel_fee + development_fee + canteen_amount + other_fees)
-        
-        obj, created = FeeStructure.objects.update_or_create(
+    # Use DYNAMIC not OLD FeeStructure
+    fee_qs = DynamicFeeStructure.objects.filter(school=school)
+    if selected_year:
+        fee_qs = fee_qs.filter(academic_year=selected_year)
+    if selected_term:
+        fee_qs = fee_qs.filter(term_id=selected_term)
+
+    # Auto-select year if none
+    if not selected_year:
+        first_fee = fee_qs.first()
+        if first_fee:
+            selected_year = first_fee.academic_year
+        elif active_term:
+            selected_year = str(active_term.academic_year)
+        elif academic_years.first():
+            selected_year = academic_years.first().name
+
+    # === CREATE DYNAMIC FEE - FIXED FOR fee_name[] ARRAY ===
+    if request.method == "POST" and "create_fee_structure" in request.POST:
+        term_id = request.POST.get("term")
+        term = get_object_or_404(Term, id=term_id, school=school)
+        academic_year = request.POST.get("academic_year")
+        stage = request.POST.get("stage")
+        due_date = request.POST.get("due_date") or None
+
+        # Get arrays from form - THIS IS WHAT YOUR TEMPLATE SENDS
+        fee_names = request.POST.getlist("fee_name[]")
+        fee_amounts = request.POST.getlist("fee_amount[]")
+
+        # Create or update structure
+        dyn_fee, created = DynamicFeeStructure.objects.get_or_create(
             school=school,
+            stage=stage,
             term=term,
             academic_year=academic_year,
-            defaults={
-                'school_fees': school_fees,
-                'pta_dues': pta_dues,
-                'computer_levy': computer_levy,
-                'exam_fees': exam_fees,
-                'other_fees': other_fees,
-                'hostel_fee': hostel_fee,
-                'boarding_fee': boarding_fee,
-                'development_fee': development_fee,
-                'canteen_amount': canteen_amount,
-                'total_amount': total,
-                'is_active': True
-            }
+            defaults={'due_date': due_date}
         )
-        
-        msg = "created" if created else "updated"
-        messages.success(request, f"Fee structure {msg} for {obj.term.term_number} {academic_year}.")
-        
-        query = f"?year={academic_year}"
-        if term:
-            query += f"&term={term.id}"
-        return redirect(f"{request.path}{query}")
-    terms = Term.objects.filter(school=school).order_by('term_number')
-    
-    return render(request, 'accounts/school_settings.html', {
-        'school': school,
-        'fee_structures': fee_structures,
-        'fee_structures_count': len(fee_structures),
-        'years': years,
-        'selected_year': selected_year,
-        'selected_term': selected_term,
-        'active_term': active_term,
-        'terms': terms, 
-        'setting': setting,
-        'fee_breakdown': fee_breakdown,
-        'existing_fee_keys': existing_fee_keys, 
-    })
+        if not created:
+            dyn_fee.due_date = due_date
+            dyn_fee.save()
+            dyn_fee.items.all().delete()  # clear old to replace
+
+        # Loop through the arrays
+        for name, amount in zip(fee_names, fee_amounts):
+            if name.strip() and amount:
+                try:
+                    amt = Decimal(amount)
+                except:
+                    amt = Decimal('0')
+
+                # Try to find PaymentType by name, or create if not exists
+                pt = PaymentType.objects.filter(school=school, name__iexact=name.strip()).first()
+                if not pt:
+                    pt = PaymentType.objects.create(
+                        school=school,
+                        name=name.strip(),
+                        code=name.strip().lower().replace(' ', '_')
+                    )
+
+                DynamicFeeStructureItem.objects.create(
+                    school=school,
+                    fee_structure=dyn_fee,
+                    name=name.strip(),
+                    amount=amt,
+                    payment_type=pt
+                )
+
+        messages.success(request, f"Fee structure {'created' if created else 'updated'} for {stage} - {term} - {academic_year}. Total: ₵{dyn_fee.total_amount}")
+        # IMPORTANT: pass fee_breakdown to show summary like in screenshot 2
+        return redirect(f"{request.path}?year={academic_year}&term={term.id}&breakdown={dyn_fee.id}")
+
+    # === FOR FEE BREAKDOWN SUMMARY (to show cards like screenshot 2) ===
+    fee_breakdown = None
+    breakdown_id = request.GET.get("breakdown")
+    if breakdown_id:
+        fee_breakdown = DynamicFeeStructure.objects.filter(id=breakdown_id, school=school).first()
+    else:
+        # If no breakdown param, show last created
+        fee_breakdown = fee_qs.order_by('-created_at').first()
+
+    return render(
+            request,
+            "accounts/school_settings.html",
+            {
+                "school": school,
+                "fee_structures": fee_qs.order_by('-created_at'),
+                "fee_structures_count": fee_qs.count(),
+                "years": academic_years,
+                "selected_year": selected_year,
+                "selected_term": selected_term,
+                "active_term": active_term,
+                "terms": terms,
+                "setting": setting,
+                "payment_types": payment_types,
+                "fee_breakdown": fee_breakdown,  
+                "stage_choices": [  
+                    ('creche','Creche'),
+                    ('nursery','Nursery'),
+                    ('kg','KG'),
+                    ('lower_primary','Lower Primary'),
+                    ('upper_primary','Upper Primary'),
+                    ('jhs','JHS'),
+                    ('shs','SHS'),
+                ],
+            },
+        )
 
 
 @login_required
 def assign_students_to_class(request):
-    # Step 3A: Check if this school allows teachers to do this
-    if not request.user.school.can_teachers_manage_students:
-        messages.error(request, "Your school does not allow teachers to assign students to classes.")
-        return redirect('teacher_attendance')  # send them back if not allowed
-    
-    # Step 3B: Get all classes this teacher teaches
-    tsc_list = TeacherSubjectClass.objects.filter(teacher=request.user)
-    
+    if request.user.role not in ["teacher", "admin", "proprietor", "proprietress", "headmistress", "headmaster"]:
+        return redirect("accounts:dashboard")
+
+    school = request.user.school
+
+    if not school.can_teachers_manage_students and request.user.role == "teacher":
+        messages.error(
+            request,
+            "Your school does not allow teachers to assign students to classes.",
+        )
+        return redirect("accounts:dashboard")
+
+    tsc_list = TeacherSubjectClass.objects.filter(
+        teacher=request.user, school=school, school_class__school=school
+    )
+
     selected_tsc = None
     assigned_ids = []
-    # Step 3C: Get all students from the same school as the teacher
-    students = User.objects.filter(role='student', school=request.user.school).order_by('first_name', 'last_name')
-    
-    # Step 3D: Check if teacher selected a class from the dropdown
-    tsc_id = request.GET.get('tsc')
+    students = User.objects.filter(
+        role="student", school=school, is_active=True
+    ).order_by("first_name", "last_name")
+
+    tsc_id = request.GET.get("tsc")
     if tsc_id:
-        selected_tsc = get_object_or_404(TeacherSubjectClass, id=tsc_id, teacher=request.user)
-        
-        # Step 3E: If teacher clicked "Save", update the database
-        if request.method == 'POST':
-            checked_ids = request.POST.getlist('student_ids')  # list of checked student IDs
-            
-            # Delete old assignments for this class+subject first
+        selected_tsc = get_object_or_404(
+            TeacherSubjectClass, id=tsc_id, teacher=request.user, school=school
+        )
+
+        if request.method == "POST":
+            checked_ids = request.POST.getlist("student_ids")
+
+            # ✅ FIXED: filter by school
             StudentSubjectClass.objects.filter(
-                school_class=selected_tsc.school_class, 
-                subject=selected_tsc.subject
+                school_class=selected_tsc.school_class,
+                subject=selected_tsc.subject,
+                school=school,
+                school_class__school=school,
             ).delete()
-            
-            # Create new assignments for each checked student
+
             for sid in checked_ids:
+                # ensure student belongs to same school
+                if not students.filter(id=sid).exists():
+                    continue
                 StudentSubjectClass.objects.create(
                     student_id=sid,
                     school_class=selected_tsc.school_class,
-                    subject=selected_tsc.subject
+                    subject=selected_tsc.subject,
+                    school=school,  # ✅ add school field if your model has it
                 )
             messages.success(request, "Student list updated successfully.")
-            return redirect(f'{request.path}?tsc={tsc_id}')
-        
-        # Step 3F: Get IDs of students already assigned to this class+subject
+            return redirect(f"{request.path}?tsc={tsc_id}")
+
         assigned_ids = StudentSubjectClass.objects.filter(
             school_class=selected_tsc.school_class,
-            subject=selected_tsc.subject
-        ).values_list('student_id', flat=True)
+            subject=selected_tsc.subject,
+            school=school,
+        ).values_list("student_id", flat=True)
 
-    # Step 3G: Send data to the HTML template
-    return render(request, 'accounts/assign_students_to_class.html', {
-        'tsc_list': tsc_list,
-        'selected_tsc': selected_tsc,
-        'students': students,
-        'assigned_ids': list(assigned_ids),
-    })
+    return render(
+        request,
+        "accounts/assign_students_to_class.html",
+        {
+            "tsc_list": tsc_list,
+            "selected_tsc": selected_tsc,
+            "students": students,
+            "assigned_ids": list(assigned_ids),
+        },
+    )
 
 
 @login_required
 def view_students_by_class(request):
-    
-    school = request.user.school
-    
-    # This adds student_count to each class, even if it's 0
-    classes = SchoolClass.objects.filter(
-        school=school
-    ).annotate(
-        student_count=Count('students', filter=Q(students__role='student'))
-    ).order_by('name')
+    if request.user.role not in ["teacher", "admin","proprietor", "proprietress", "headmistress", "headmaster"]:
+        return redirect("accounts:dashboard")
 
+    school = request.user.school
+
+    # === TEACHER: only his assigned classes ===
+    if request.user.role == "teacher":
+        my_class_ids = TeacherSubjectClass.objects.filter(
+            teacher=request.user,
+            school=school,
+            school_class__school=school
+        ).values_list('school_class_id', flat=True).distinct()
+
+        classes = SchoolClass.objects.filter(
+            school=school,
+            id__in=my_class_ids
+        ).annotate(
+            student_count=Count('students', filter=Q(students__role='student'))
+        ).order_by('name')
+    else:
+        # Admin / Headmaster sees all
+        classes = SchoolClass.objects.filter(
+            school=school
+        ).annotate(
+            student_count=Count('students', filter=Q(students__role='student'))
+        ).order_by('name')
 
     grouped = {}
-
     for c in classes:
-
         match = re.match(r"(.+\d+)([A-Z]?)$", c.name.strip())
-
         if match:
             base_class = match.group(1)
             section = match.group(2)
         else:
             base_class = c.name
             section = ""
-
         stage = STAGE_LABELS.get(c.stage, c.stage)
-
         grouped.setdefault(stage, {})
-        grouped[stage].setdefault(base_class, {
-            "main": None,
-            "sections": []
-        })
-
-        # MAIN CLASS (no letter)
+        grouped[stage].setdefault(base_class, {"main": None, "sections": []})
         if section == "":
             grouped[stage][base_class]["main"] = c
         else:
             grouped[stage][base_class]["sections"].append(c)
+
     for stage, class_dict in grouped.items():
-
         for base_class, data in class_dict.items():
-
             count = 0
-
             if data["main"]:
                 count += data["main"].student_count
-
             for section in data["sections"]:
                 count += section.student_count
-
             data["student_count"] = count
+
     total_classes = 0
-
     for stage, class_dict in grouped.items():
+        for base_class, data in class_dict.items():
+            has_real_sections = any(
+                section.name.strip()!= base_class.strip()
+                for section in data["sections"]
+            )
+            if has_real_sections:
+                total_classes += len(data["sections"])
+            else:
+                total_classes += 1
 
-            for base_class, data in class_dict.items():
+    if request.user.role == "teacher":
+        total_students = User.objects.filter(
+            school=school, role='student',
+            school_class_id__in=my_class_ids
+        ).count()
+    else:
+        total_students = User.objects.filter(school=school, role='student').count()
 
-                # If class has sections like A/B
-                has_real_sections = any(
-                    section.name.strip() != base_class.strip()
-                    for section in data["sections"]
-                )
-
-                # Count only sections
-                if has_real_sections:
-                    total_classes += len(data["sections"])
-
-                # Standalone class
-                else:
-                    total_classes += 1
-    total_students = User.objects.filter(school=school, role='student').count()
-    
     return render(request, 'accounts/view_students_by_class.html', {
         'grouped': grouped,
         'total_classes': total_classes,
@@ -4123,60 +5500,76 @@ def view_students_by_class(request):
 
 @login_required  
 def view_students_in_class(request, class_id):
-    credentials = request.session.pop("credentials", None)
-    school_class = get_object_or_404(SchoolClass, id=class_id, school=request.user.school)
+    if request.user.role not in ["teacher", "admin", "headmaster", "headmistress", "proprietor", "proprietress"]:
+        return redirect("accounts:dashboard")
+
+    school = request.user.school
+    credentials = request.session.get("credentials", None)
+
+    school_class = get_object_or_404(SchoolClass, id=class_id, school=school)
+    
+    # === TEACHER CHECK: is this his assigned class? ===
+    if request.user.role == "teacher":
+        is_my_class = TeacherSubjectClass.objects.filter(
+            teacher=request.user,
+            school=school,
+            school_class=school_class
+        ).exists()
+        if not is_my_class:
+            messages.error(request, "You are not assigned to this class.")
+            return redirect("accounts:view-students-by-class")
     
     students_in_class = User.objects.filter(
-        school_class=school_class, 
+        school=school,
+        school_class=school_class,  # use school_class field
         role='student', 
         is_active=True
     )
     
     if request.method == 'POST' and request.POST.get('add_to_all'):
+        # Only admin/headmaster can add subjects to all
+        if request.user.role == "teacher":
+            messages.error(request, "No permission.")
+            return redirect("accounts:view-students-in-class", class_id=school_class.id)
+            
         subject_ids = request.POST.getlist('subject_ids')
-        
         for student in students_in_class:
             for subject_id in subject_ids:
                 StudentSubjectClass.objects.get_or_create(
                     student=student,
                     subject_id=subject_id,
-                    school_class=school_class
+                    school_class=school_class,
+                    school=school
                 )
         messages.success(request, 'Subjects added to all students!')
         return redirect('accounts:view-students-in-class', class_id=school_class.id)
     
     if request.method == 'POST' and request.POST.get('student_id'):
+        if request.user.role == "teacher":
+            messages.error(request, "No permission.")
+            return redirect("accounts:view-students-in-class", class_id=school_class.id)
+
         student_id = request.POST.get('student_id')
         subject_ids = request.POST.getlist('subject_ids')
-        student = get_object_or_404(User, id=student_id, role='student', school=request.user.school, is_active=True)
+        student = get_object_or_404(User, id=student_id, role='student', school=school, is_active=True)
         
         for subject_id in subject_ids:
             StudentSubjectClass.objects.get_or_create(
                 student=student,
                 subject_id=subject_id,
-                school_class=school_class
+                school_class=school_class,
+                school=school
             )
         messages.success(request, f'Subjects added to {student.first_name}!')
         return redirect('accounts:view-students-in-class', class_id=school_class.id)
     
-    # Pagination
     students_list = students_in_class.order_by('last_name', 'first_name')
     paginator = Paginator(students_list, 4) 
     page_number = request.GET.get('page')
     students = paginator.get_page(page_number)
     
-    all_subjects = []
-    for subject in Subject.objects.filter(school=request.user.school):
-        # Check if ALL students in class already have this subject
-        students_with_subject = StudentSubjectClass.objects.filter(
-            student__in=students_in_class, 
-            subject=subject
-        ).count()
-        
-        # Only add to modal if at least 1 student is missing it
-        if students_with_subject < students_in_class.count():
-            all_subjects.append(subject)
-    
+    all_subjects = Subject.objects.filter(school=school)
+
     return render(request, 'accounts/manage_students.html', {  
         'students': students,
         'school_class': school_class,
@@ -4187,6 +5580,9 @@ def view_students_in_class(request, class_id):
 
 @login_required
 def deactivated_students(request, class_id):
+    if request.user.role not in ["teacher", "admin", "headmaster", "headmistress", "propreitor", "proprietress"]:
+        messages.error(request, "Only admin/headmaster can view deactivated students.")
+        return redirect("accounts:dashboard")
 
     school = request.user.school
 
@@ -4211,7 +5607,8 @@ def deactivated_students(request, class_id):
 @login_required
 def reactivate_student(request, student_id):
 
-    if request.user.role != "admin":
+    if request.user.role not in ["teacher", "admin", "headmaster"]:
+        messages.error(request, "Only admin/headmaster can reactivate students.")
         return redirect('accounts:dashboard')
 
     student = get_object_or_404(
@@ -4246,16 +5643,17 @@ def view_student_subjects(request):
         return redirect('accounts:teacher_dashboard')
     
     student = request.user
+    school = student.school
     
-    # Get ALL subjects this student is enrolled in, not just ones with results
-    subjects = StudentSubjectClass.objects.filter(student=student)\
-        .select_related('subject', 'school_class')\
-        .order_by('subject__name')
+    subjects = StudentSubjectClass.objects.filter(
+        student=student,
+        student__school=school,
+        school_class__school=school
+    ).select_related('subject', 'school_class').order_by('subject__name')
     
     context = {
         'subjects': subjects,
         'student': student,
-        
     }
     return render(request, 'accounts/view_student_subjects.html', context)
 
@@ -4265,14 +5663,20 @@ def student_subject_progress(request, subject_id):
     if request.user.role != 'student':
         return redirect('accounts:dashboard')
     
-    subject = get_object_or_404(Subject, id=subject_id)
+    student = request.user
+    school = student.school
     
-    # Get all submitted results for this student + subject, ordered by term/year
+    # ISOLATED: Only subject from student's school
+    subject = get_object_or_404(Subject, id=subject_id, school=school)
+    
     results = Result.objects.filter(
-        student=request.user, 
-        subject=subject, 
-        status='submitted'
+        student=student,
+        student__school=school,  # isolation
+        subject=subject,
+        subject__school=school,  # isolation
+        status='published'  # you had submitted, but parent view uses published - use published
     ).order_by('academic_year', 'term')
+    
     
     # Prepare data for chart
     labels = []
@@ -4298,8 +5702,10 @@ def view_student_results(request):
         return redirect('accounts:teacher-dashboard')
 
     student = request.user
+    
     # MULTI-SCHOOL FIX: Only show years/terms from student's school
     years = AcademicYear.objects.filter(school=student.school).order_by('-name')
+    
 
     active_term = Term.objects.filter(
         is_active=True,
@@ -4346,12 +5752,17 @@ def view_student_results(request):
             'selected_year': year_id or "", 'selected_term': term_number or "",
         })
 
-    results = Result.objects.filter(
-        student=student,
-        term__term_number=selected_term.term_number,
-        academic_year_id=selected_term.academic_year.id,
-        status='published'  
-    ).select_related('subject', 'term').order_by('subject__code')
+    results = (
+        Result.objects.filter(
+            student=student,
+            student__school=student.school,
+            term__term_number=selected_term.term_number,
+            academic_year_id=selected_term.academic_year.id,
+            status="published",
+        )
+        .select_related("subject", "term")
+        .order_by("subject__code")
+    )
     results = list(results)
 
     def ca_max(t): return float(getattr(t, 'ca_total', 0) or 0)
@@ -4366,8 +5777,23 @@ def view_student_results(request):
     grand_total_max   = grand_class_max + grand_exam_max
     percentage = round(grand_total_score / grand_total_max * 100, 1) if grand_total_max else 0
 
-    overall_grade = calculate_grade(percentage)
-    overall_remark = ''
+    grading = GradingScale.objects.filter(
+        school=student.school,
+        term=selected_term,
+        min_score__lte=percentage,
+        max_score__gte=percentage,
+    ).first()
+
+    if not grading:
+        grading = GradingScale.objects.filter(
+            school=student.school,
+            term__isnull=True,
+            min_score__lte=percentage,
+            max_score__gte=percentage,
+        ).first()
+
+    overall_grade = grading.grade if grading else "-"
+    overall_remark = grading.remark if grading else ""
     position, total_students = get_class_position(student, selected_term.term_number, selected_term.academic_year.id)
 
     term_name = getattr(selected_term, 'name', f"Term {selected_term.term_number}")
@@ -4399,9 +5825,21 @@ def view_student_results(request):
         r.total_max = ca + ex
         r.total = float(r.class_score or 0) + float(r.exam_score or 0)
 
-    if not overall_remark:
-        remark_map = {'A': 'Excellent','B': 'Very Good','C': 'Good','D': 'Credit','E': 'Pass','F': 'Fail'}
-        overall_remark = remark_map.get(overall_grade, '')
+    if not overall_remark and overall_grade != "-":
+        grading = GradingScale.objects.filter(
+            school=student.school,
+            term=selected_term,
+            grade=overall_grade,
+        ).first()
+
+        if not grading:
+            grading = GradingScale.objects.filter(
+                school=student.school,
+                term__isnull=True,
+                grade=overall_grade,
+            ).first()
+
+        overall_remark = grading.remark if grading else ""
 
     context = {
         'results': results,
@@ -4427,6 +5865,7 @@ def view_student_results(request):
         'grand_total_score': grand_total_score,
         'grand_total_max': grand_total_max,
     }
+    
     return render(request, 'accounts/view_student_results.html', context)
 
 
@@ -4484,24 +5923,32 @@ def get_class_position(student, term_number, year_id):
 
 @login_required
 def view_student_fees(request):
-    student_obj = getattr(request.user, 'student', None)
-    student = student_obj if student_obj else request.user
-    school = getattr(student, 'school', None)
+    student = getattr(request.user, "student", None) or request.user
+    school = getattr(student, "school", None)
+    if not school:
+        return redirect("accounts:dashboard")
 
-    years = AcademicYear.objects.filter(
-        id__in=Term.objects.filter(school=school).values_list('academic_year_id', flat=True)
-    ).distinct().order_by('-name') if school else AcademicYear.objects.none()
-    
-    terms = Term.objects.filter(school=school).select_related('academic_year') if school else Term.objects.none()
+    years = AcademicYear.objects.filter(school=school).order_by("-name")
+    terms = (
+        Term.objects.filter(school=school)
+        .select_related("academic_year")
+        .order_by("-start_date")
+    )
 
-    year_id = request.GET.get('year')
-    term_number = request.GET.get('term')
+    year_id = request.GET.get("year")
+    term_number = request.GET.get("term")
 
-    fees_qs = StudentFee.objects.filter(student=student).select_related('term').order_by('-academic_year')
+    # STUDENT FEE - SCHOOL ISOLATED
+    fees_qs = (
+        StudentFee.objects.filter(student=student, school=school)
+        .select_related("term")
+        .prefetch_related("dynamic_items")
+        .order_by("-academic_year")
+    )
 
     if year_id:
         try:
-            year_obj = AcademicYear.objects.get(id=year_id)
+            year_obj = AcademicYear.objects.get(id=year_id, school=school)
             fees_qs = fees_qs.filter(academic_year=year_obj.name)
         except:
             pass
@@ -4509,58 +5956,90 @@ def view_student_fees(request):
         fees_qs = fees_qs.filter(term__term_number=term_number)
 
     latest_fee = fees_qs.first()
-    transactions = PaymentTransaction.objects.filter(student=student)
-    
+
+    # TRANSACTIONS - SCHOOL ISOLATED
+    transactions = PaymentTransaction.objects.filter(
+        student=student, school=school, is_voided=False
+    ).select_related("term", "academic_year")
+
     if year_id:
         transactions = transactions.filter(academic_year_id=year_id)
     if term_number:
         transactions = transactions.filter(term__term_number=term_number)
 
-    real_total_paid = transactions.aggregate(total=Sum('total_amount'))['total'] or 0
-
-    FEE_ITEM_FIELDS = [
-        ('School Fees', 'school_fees', 'amount_paid_school_fees'),
-        ('PTA Dues', 'pta_dues', 'amount_paid_pta_dues'),
-        ('Boarding Fee', 'boarding_fee', 'amount_paid_boarding_fee'),
-        ('Hostel Fee', 'hostel_fee', 'amount_paid_hostel_fee'),
-        ('Development Fee', 'development_fee', 'amount_paid_development_fee'),
-        ('Computer Levy', 'computer_levy', 'amount_paid_computer_levy'),
-        ('Exam Fees', 'exam_fees', 'amount_paid_exam_fees'),
-        ('Feeding Fee', 'canteen_amount', 'amount_paid_canteen'),
-        ('Other Fees', 'other_fees', 'amount_paid_other_fees'),
-    ]
+    real_total_paid = transactions.aggregate(total=Sum("total_amount"))["total"] or 0
 
     real_balance = 0
     if latest_fee:
+        # DYNAMIC ITEMS - THIS IS THE FIX
+        dynamic_items = latest_fee.dynamic_items.filter(school=school).order_by("name")
+
         latest_fee.breakdown_items = []
-        for label, due_field, _ in FEE_ITEM_FIELDS:
-            value = getattr(latest_fee, due_field, 0)
-            if value and value > 0:
-                latest_fee.breakdown_items.append({'label': label, 'value': value})
-
-        paid_by_type = PaymentItem.objects.filter(transaction__in=transactions).values('fee_name').annotate(total=Sum('amount'))
-        paid_map = {p['fee_name']: float(p['total']) for p in paid_by_type}
-
         latest_fee.payment_options = []
-        for label, due_field, paid_field in FEE_ITEM_FIELDS:
-            amount_due = getattr(latest_fee, due_field, 0) or 0
-            amount_paid = paid_map.get(label, 0)
-            balance = float(amount_due) - amount_paid
-            if amount_due > 0 and balance > 0:
-                latest_fee.payment_options.append({'label': label, 'balance': balance, 'paid_field': paid_field})
 
-        real_balance = float(latest_fee.total_amount) - float(real_total_paid)
+        total_due = 0
+        total_paid_dynamic = 0
+
+        for item in dynamic_items:
+            total_due += float(item.amount_due)
+            total_paid_dynamic += float(item.amount_paid)
+            if item.amount_due > 0:
+                latest_fee.breakdown_items.append(
+                    {
+                        "label": item.name,
+                        "value": item.amount_due,
+                        "paid": item.amount_paid,
+                        "balance": item.balance,
+                        "id": item.id,
+                    }
+                )
+                if item.balance > 0:
+                    latest_fee.payment_options.append(
+                        {
+                            "label": item.name,
+                            "balance": float(item.balance),
+                            "dynamic_item_id": item.id,
+                            "paid_field": item.name,
+                        }
+                    )
+
+        # Real balance from dynamic items
+        real_balance = total_due - total_paid_dynamic
         if real_balance < 0:
             real_balance = 0
-        if not latest_fee.payment_options and real_balance > 0:
-            latest_fee.payment_options.append({'label': 'Outstanding Balance', 'balance': real_balance, 'paid_field': 'amount_paid'})
+
+        # Fallback if no dynamic items but has total_amount
+        if not dynamic_items.exists() and latest_fee.total_amount > 0:
+            real_balance = float(latest_fee.total_amount) - float(real_total_paid)
+            latest_fee.breakdown_items = [
+                {
+                    "label": "Total Fees",
+                    "value": latest_fee.total_amount,
+                    "paid": real_total_paid,
+                    "balance": real_balance,
+                }
+            ]
+            if real_balance > 0:
+                latest_fee.payment_options = [
+                    {
+                        "label": "Outstanding Balance",
+                        "balance": real_balance,
+                        "dynamic_item_id": None,
+                        "paid_field": "amount_paid",
+                    }
+                ]
+
+    if not fees_qs.exists() and (year_id or term_number):
+            latest_fee = None
+            real_balance = 0
+            real_total_paid = 0
 
     context = {
         'fees': fees_qs,
         'latest_fee': latest_fee,
-        'total_fee': latest_fee.total_amount if latest_fee else 0,
+        'total_fee': float(latest_fee.total_amount) if latest_fee else 0,
         'balance': real_balance if latest_fee else 0,
-        'amount_paid': real_total_paid if latest_fee else 0,
+        'amount_paid': float(real_total_paid) if latest_fee else 0,
         'school': school,
         'years': years,
         'terms': terms,
@@ -4575,48 +6054,49 @@ def view_student_fees(request):
 # ----------------------------
 @login_required
 def view_child_results(request):
-    if request.user.role!= "parent":
-        return redirect('accounts:dashboard')
+    if request.user.role != "parent":
+        return redirect("accounts:dashboard")
 
-    links = ParentStudentLink.objects.filter(parent=request.user).select_related(
-        'student','student__school_class','student__school_class__school', 'student__school'
-    )
+    school = request.user.school  # PARENT SCHOOL - ISOLATION ROOT
+
+    links = ParentStudentLink.objects.filter(
+        parent=request.user, student__school=school
+    ).select_related("student", "student__school_class", "student__school")
+
     children = [link.student for link in links]
     children_count = len(children)
 
-    child_id = request.GET.get('child_id') or request.session.get('selected_child_id')
+    child_id = request.GET.get("child_id") or request.session.get("selected_child_id")
     selected_child = next((c for c in children if str(c.id) == str(child_id)), None)
     if not selected_child and children:
         selected_child = children[0]
     if selected_child:
-        request.session['selected_child_id'] = selected_child.id
+        request.session["selected_child_id"] = selected_child.id
+        if selected_child.school_id != school.id:
+            messages.error(request, "Access denied.")
+            return redirect("accounts:parent_dashboard")
 
-    school = selected_child.school_class.school if selected_child and selected_child.school_class and hasattr(selected_child.school_class, 'school') else None
-    if not school:
-        school = getattr(selected_child, 'school', None)
+    selected_year_id = request.GET.get("year")
+    term_id = request.GET.get("term_id") or request.GET.get("term")
 
-    selected_year_id = request.GET.get('year')
-    term_id = request.GET.get('term_id') or request.GET.get('term')
-
-    years = []
+    years = (
+        AcademicYear.objects.filter(school=school).order_by("-name") if school else []
+    )
     all_terms = Term.objects.none()
 
     if selected_child and school:
-        years = AcademicYear.objects.filter(school=school).order_by('-name')
-
-        # FIXED: Term has no student field, only filter via result
         all_terms_qs = Term.objects.filter(
-            school=school,
-            result__student=selected_child,
-            result__status='published'
+            school=school, result__student=selected_child, result__status="published"
         ).distinct()
 
         if selected_year_id:
             all_terms_qs = all_terms_qs.filter(academic_year_id=selected_year_id)
 
-        all_terms = all_terms_qs.order_by('-start_date')
+        all_terms = all_terms_qs.order_by("-start_date")
 
-    selected_term = all_terms.filter(id=term_id).first() if term_id else all_terms.first()
+    selected_term = (
+        all_terms.filter(id=term_id).first() if term_id else all_terms.first()
+    )
 
     results = []
     summary = None
@@ -4624,28 +6104,42 @@ def view_child_results(request):
     remark = None
 
     if selected_child and selected_term:
-        results = Result.objects.filter(
-            student=selected_child,
-            term=selected_term,
-            status='published'
-        ).select_related('subject', 'term', 'term__academic_year').order_by('subject__name')
+        results = (
+            Result.objects.filter(
+                student=selected_child,
+                student__school=school,
+                term=selected_term,
+                status="published",
+            )
+            .select_related("subject", "term", "term__academic_year")
+            .order_by("subject__name")
+        )
 
         for r in results:
-            ca_val = float(ContinuousAssessment.objects.filter(
-                student=selected_child, subject=r.subject, term=selected_term
-            ).aggregate(total=Sum('score'))['total'] or r.class_score or 0)
-            ex_val = float(r.exam_score or 0)
-            r.calc_total = ca_val + ex_val
-            r.calc_ca = ca_val
-            r.calc_exam = ex_val
-            if r.calc_total >= 80: r.calc_grade, r.calc_remark = "A", "Excellent"
-            elif r.calc_total >= 70: r.calc_grade, r.calc_remark = "B", "Very Good"
-            elif r.calc_total >= 60: r.calc_grade, r.calc_remark = "C", "Good"
-            elif r.calc_total >= 50: r.calc_grade, r.calc_remark = "D", "Pass"
-            elif r.calc_total >= 40: r.calc_grade, r.calc_remark = "E", "Weak"
-            else: r.calc_grade, r.calc_remark = "F", "Fail"
+            r.calc_ca = float(r.class_score or 0)
+            r.calc_exam = float(r.exam_converted_score or 0)
+            r.calc_total = float(r.total_score or 0)
+            grading = GradingScale.objects.filter(
+                school=school,
+                term=selected_term,
+                min_score__lte=r.total_score,
+                max_score__gte=r.total_score,
+            ).first()
 
-        remark = StudentRemark.objects.filter(student=selected_child, term=selected_term).first()
+            if not grading:
+                grading = GradingScale.objects.filter(
+                    school=school,
+                    term__isnull=True,
+                    min_score__lte=r.total_score,
+                    max_score__gte=r.total_score,
+                ).first()
+
+            r.calc_grade = grading.grade if grading else "-"
+            r.calc_remark = grading.remark if grading else "-"
+
+        remark = StudentRemark.objects.filter(
+            student=selected_child, student__school=school, term=selected_term
+        ).first()
 
         class_score = sum(float(r.calc_ca or 0) for r in results)
         exam_score = sum(float(r.calc_exam or 0) for r in results)
@@ -4653,49 +6147,73 @@ def view_child_results(request):
         n = len(results) or 1
         percentage = round(total_score / n, 1)
 
-        term_name = getattr(selected_term, 'name', str(selected_term))
-        academic_year_obj = getattr(selected_term, 'academic_year', None)
-        summary_qs = StudentTermSummary.objects.filter(student=selected_child, term=term_name)
+        term_name = getattr(selected_term, "name", str(selected_term))
+        academic_year_obj = getattr(selected_term, "academic_year", None)
+        summary_qs = StudentTermSummary.objects.filter(
+            student=selected_child, student__school=school, term=term_name
+        )
         if academic_year_obj:
             summary_qs = summary_qs.filter(academic_year=academic_year_obj)
         summary = summary_qs.first()
 
         position = 1
         class_size = 1
-        overall_grade = 'F'
-        overall_remark = 'Fail'
+        overall_grade = "_"
+        overall_remark = "_"
 
         if summary:
-            if summary.term_total: total_score = float(summary.term_total)
-            if summary.term_average: percentage = float(summary.term_average)
-            if summary.term_grade: overall_grade = summary.term_grade
-            if summary.term_remark: overall_remark = summary.term_remark
-            if summary.rank: position = summary.rank
+            if summary.term_total:
+                total_score = float(summary.term_total)
+            if summary.term_average:
+                percentage = float(summary.term_average)
+            if summary.term_grade:
+                overall_grade = summary.term_grade
+            if summary.term_remark:
+                overall_remark = summary.term_remark
+            if summary.rank:
+                position = summary.rank
             if summary.school_class_id:
-                class_size = StudentTermSummary.objects.filter(
-                    school_class=summary.school_class,
-                    term=summary.term,
-                    academic_year=summary.academic_year
-                ).count() or 1
+                class_size = (
+                    StudentTermSummary.objects.filter(
+                        school_class=summary.school_class,
+                        school_class__school=school,
+                        term=summary.term,
+                        academic_year=summary.academic_year,
+                    ).count()
+                    or 1
+                )
         else:
-            if percentage >= 80: overall_grade, overall_remark = 'A', 'Excellent'
-            elif percentage >= 70: overall_grade, overall_remark = 'B', 'Very Good'
-            elif percentage >= 60: overall_grade, overall_remark = 'C', 'Good'
-            elif percentage >= 50: overall_grade, overall_remark = 'D', 'Pass'
-            else: overall_grade, overall_remark = 'F', 'Fail'
+            grading = GradingScale.objects.filter(
+                school=school,
+                term=selected_term,
+                min_score__lte=percentage,
+                max_score__gte=percentage,
+            ).first()
+
+            if not grading:
+                grading = GradingScale.objects.filter(
+                    school=school,
+                    term__isnull=True,
+                    min_score__lte=percentage,
+                    max_score__gte=percentage,
+                ).first()
+
+            if grading:
+                overall_grade = grading.grade
+                overall_remark = grading.remark
 
         term_data = {
-            'term': selected_term,
-            'results': results,
-            'grand_class_score': class_score,
-            'grand_exam_score': exam_score,
-            'grand_total_score': round(total_score,1),
-            'grand_percentage': percentage,
-            'overall_grade': overall_grade,
-            'overall_remark': overall_remark,
-            'class_position': position,
-            'class_size': class_size,
-            'summary': summary,
+            "term": selected_term,
+            "results": results,
+            "grand_class_score": class_score,
+            "grand_exam_score": exam_score,
+            "grand_total_score": round(total_score, 1),
+            "grand_percentage": percentage,
+            "overall_grade": overall_grade,
+            "overall_remark": overall_remark,
+            "class_position": position,
+            "class_size": class_size,
+            "summary": summary,
         }
 
         start = selected_term.start_date
@@ -4703,260 +6221,287 @@ def view_child_results(request):
         end = selected_term.end_date if selected_term.end_date < today else today
 
         holiday_dates = set()
-        if school:
-            events = AcademicCalendar.objects.filter(school=school, start_date__lte=end, end_date__gte=start, affects_timetable=True)
-            for event in events:
-                d = event.start_date
-                while d <= event.end_date:
-                    if start <= d <= end:
-                        holiday_dates.add(d)
-                    d += timedelta(days=1)
+        events = AcademicCalendar.objects.filter(
+            school=school,
+            start_date__lte=end,
+            end_date__gte=start,
+            affects_timetable=True,
+        )
+        for event in events:
+            d = event.start_date
+            while d <= event.end_date:
+                if start <= d <= end:
+                    holiday_dates.add(d)
+                d += timedelta(days=1)
 
-        attendance_records = AttendanceRecord.objects.filter(
-            student=selected_child,
-            session__date__gte=start,
-            session__date__lte=end
-        ).exclude(session__date__in=holiday_dates).values('session__date', 'status')
+        attendance_records = (
+            AttendanceRecord.objects.filter(
+                student=selected_child,
+                student__school=school,
+                session__date__gte=start,
+                session__date__lte=end,
+            )
+            .exclude(session__date__in=holiday_dates)
+            .values("session__date", "status")
+        )
 
         by_date = defaultdict(list)
         for rec in attendance_records:
-            by_date[rec['session__date']].append(rec['status'])
+            by_date[rec["session__date"]].append(rec["status"])
 
-        times_present = 0
-        times_absent = 0
-        for statuses in by_date.values():
-            if 'P' in statuses:
-                times_present += 1
-            else:
-                times_absent += 1
-
+        times_present = sum(1 for statuses in by_date.values() if "P" in statuses)
+        times_absent = len(by_date) - times_present
         times_late = 0
         times_excused = 0
-        days_opened = sum(1 for i in range((end-start).days+1) if (start+timedelta(days=i)).weekday()<5 and (start+timedelta(days=i)) not in holiday_dates)
-        attendance_percentage = round((times_present / days_opened * 100), 1) if days_opened else 0
+        days_opened = sum(
+            1
+            for i in range((end - start).days + 1)
+            if (start + timedelta(days=i)).weekday() < 5
+            and (start + timedelta(days=i)) not in holiday_dates
+        )
+        attendance_percentage = (
+            round((times_present / days_opened * 100), 1) if days_opened else 0
+        )
 
-        term_data.update({
-            'days_opened': days_opened,
-            'times_present': times_present,
-            'times_absent': times_absent,
-            'times_late': times_late,
-            'times_excused': times_excused,
-            'attendance_percentage': attendance_percentage,
-        })
+        term_data.update(
+            {
+                "days_opened": days_opened,
+                "times_present": times_present,
+                "times_absent": times_absent,
+                "times_late": times_late,
+                "times_excused": times_excused,
+                "attendance_percentage": attendance_percentage,
+            }
+        )
 
     context = {
-        'children': children,
-        'children_count': children_count,
-        'selected_child': selected_child,
-        'terms': all_terms,
-        'years': years,
-        'selected_term': selected_term,
-        'selected_year': selected_year_id or "",
-        'term_data': term_data,
-        'summary': summary,
-        'school': school,
-        'remark': remark,
+        "children": children,
+        "children_count": children_count,
+        "selected_child": selected_child,
+        "terms": all_terms,
+        "years": years,
+        "selected_term": selected_term,
+        "selected_year": selected_year_id or "",
+        "term_data": term_data,
+        "summary": summary,
+        "school": school,
+        "remark": remark,
     }
-    return render(request, 'accounts/view_child_results.html', context)
+    return render(request, "accounts/view_child_results.html", context)
 
 
 @login_required
 def view_child_fees(request):
-    if request.user.role!= 'parent':
-        return redirect('accounts:dashboard')
+    if request.user.role != "parent":
+        return redirect("accounts:dashboard")
 
-    links = ParentStudentLink.objects.filter(parent=request.user).select_related('student')
+    school = request.user.school  # ISOLATION
+
+    links = ParentStudentLink.objects.filter(
+        parent=request.user, student__school=school
+    ).select_related("student")
     children = [link.student for link in links]
 
     selected_child = None
     if len(children) == 1:
         selected_child = children[0]
-    else:
-        child_id = request.GET.get('child') or request.session.get('selected_child_id')
-        if child_id:
-            selected_child = next((c for c in children if str(c.id) == str(child_id)), None)
-        if not selected_child and children:
-            selected_child = children[0]
+    elif children:
+        child_id = request.GET.get("child") or request.session.get("selected_child_id")
+        selected_child = (
+            next((c for c in children if str(c.id) == str(child_id)), None)
+            or children[0]
+        )
 
     if selected_child:
-        request.session['selected_child_id'] = selected_child.id
+        request.session["selected_child_id"] = selected_child.id
 
+    # ✅ FIX: Define all variables BEFORE if, so they always exist
     student_fees = []
-    totals = {}
-    school = request.user.school
-    latest_fee = None
-    all_payment_options = []
     transactions = []
-
-    FEE_ITEM_FIELDS = [
-        ('school_fees', 'amount_paid_school_fees', 'School Fees'),
-        ('pta_dues', 'amount_paid_pta_dues', 'PTA Dues'),
-        ('boarding_fee', 'amount_paid_boarding_fee', 'Boarding Fee'),
-        ('hostel_fee', 'amount_paid_hostel_fee', 'Hostel Fee'),
-        ('development_fee', 'amount_paid_development_fee', 'Development Fee'),
-        ('computer_levy', 'amount_paid_computer_levy', 'Computer Levy'),
-        ('exam_fees', 'amount_paid_exam_fees', 'Exam Fees'),
-        ('canteen_amount', 'amount_paid_canteen', 'Feeding Fee'),
-        ('other_fees', 'amount_paid_other_fees', 'Other Fees'),
-    ]
+    all_payment_options = []
+    totals = {"total_amount": 0, "total_paid": 0, "total_balance": 0}
+    latest_fee = None
+    all_years = []
+    selected_year = None
 
     if selected_child:
-        
-        transactions = PaymentTransaction.objects.filter(
-            student=selected_child,
-            student__school=selected_child.school
-        ).prefetch_related('items').order_by('-created_at')
+        # Transactions - school isolated
+        transactions = (
+            PaymentTransaction.objects.filter(
+                student=selected_child, school=school, is_voided=False
+            )
+            .prefetch_related("items")
+            .order_by("-created_at")
+        )
+        # Year filter logic
+        all_years = list(
+            StudentFee.objects.filter(student=selected_child, school=school)
+            .values_list("academic_year", flat=True)
+            .distinct()
+            .order_by("-academic_year")
+        )
 
-        student_fees = StudentFee.objects.filter(
-            student=selected_child
-        ).select_related('term').order_by('-academic_year', '-id')
-        
+        selected_year = request.GET.get("year")
+
+        base_qs = StudentFee.objects.filter(student=selected_child, school=school)
+
+        if selected_year and selected_year != "all" and selected_year in all_years:
+            student_fees_qs = base_qs.filter(academic_year=selected_year)
+        elif selected_year == "all":
+            student_fees_qs = base_qs
+        else:
+            latest_year = (
+                base_qs.order_by("-id").values_list("academic_year", flat=True).first()
+            )
+            student_fees_qs = (
+                base_qs.filter(academic_year=latest_year) if latest_year else base_qs
+            )
+            selected_year = latest_year
+
+        student_fees = (
+            student_fees_qs.select_related("term")
+            .prefetch_related("dynamic_items")
+            .order_by("academic_year", "term__term_number")
+        )
+
         for fee in student_fees:
-            try:
-                ay_obj = AcademicYear.objects.get(name=fee.academic_year)
-            except AcademicYear.DoesNotExist:
-                ay_obj = None
-            
-            paid_sum = 0
-            if ay_obj:
-                paid_sum = PaymentTransaction.objects.filter(
-                    student=fee.student,
-                    term=fee.term,
-                    academic_year=ay_obj
-                ).aggregate(total=Sum('total_amount'))['total'] or 0
-
-            real_paid = float(paid_sum)
-            real_balance = float(fee.total_amount) - real_paid
-            if real_balance < 0:
-                real_balance = 0
-
-            fee.amount_paid_val = real_paid
-            fee.balance_val = real_balance
-            
-# Calculate real paid amount per fee type from PaymentItem - for ALL fees
-            paid_by_type = PaymentItem.objects.filter(
-                transaction__student=fee.student,
-                transaction__term=fee.term,
-                transaction__academic_year__name=fee.academic_year
-            ).values('fee_name').annotate(total=Sum('amount'))
-
-            paid_map = {p['fee_name']: float(p['total']) for p in paid_by_type}
-
             fee.breakdown_items = []
-            for due_field, paid_field, label in FEE_ITEM_FIELDS:
-                amount_due = getattr(fee, due_field, 0) or 0
-                amount_paid_field = paid_map.get(label, 0)  # ← Use PaymentItem for ALL fees
-                
-                if amount_due > 0:
-                    balance = float(amount_due) - float(amount_paid_field)
-                    fee.breakdown_items.append({
-                        'label': label,
-                        'value': amount_due,
-                        'paid': amount_paid_field,
-                        'balance': balance,
-                    })
+            total_due = 0
+            total_paid = 0
+            for item in fee.dynamic_items.all():
+                due = float(item.amount_due or 0)
+                paid = float(item.amount_paid or 0)
+                bal = max(0, due - paid)
+                total_due += due
+                total_paid += paid
+                fee.breakdown_items.append(
+                    {
+                        "label": item.name,
+                        "value": due,
+                        "paid": paid,
+                        "balance": bal,
+                        "payment_type_id": item.payment_type_id,
+                    }
+                )
+                if bal > 0.01:
+                    all_payment_options.append(
+                        {
+                            "label": item.name,
+                            "balance": bal,
+                            "fee_id": fee.id,
+                            "dynamic_item_id": item.id,
+                            "term": str(fee.term),
+                            "year": fee.academic_year,
+                        }
+                    )
+            fee.total_amount_val = total_due or float(fee.total_amount or 0)
+            fee.amount_paid_val = total_paid
+            fee.balance_val = max(0, fee.total_amount_val - total_paid)
 
+        totals["total_amount"] = sum(f.total_amount_val for f in student_fees)
+        totals["total_paid"] = sum(f.amount_paid_val for f in student_fees)
+        totals["total_balance"] = sum(f.balance_val for f in student_fees)
+        latest_fee = student_fees[0] if student_fees else None
 
-        for fee in student_fees:
-            for due_field, paid_field, label in FEE_ITEM_FIELDS:
-                amount_due = getattr(fee, due_field, 0) or 0
-                amount_paid_field = getattr(fee, paid_field, 0) or 0  # ← DELETE
-                amount_paid_field = paid_map.get(label, 0)  # ← ADD THIS
-                balance = float(amount_due) - float(amount_paid_field)
-                if amount_due > 0 and balance > 0.01:
-                    all_payment_options.append({
-                        'label': label,
-                        'paid_field': paid_field,
-                        'balance': balance,
-                        'fee_id': fee.id,
-                    })
+    return render(
+        request,
+        "accounts/view_child_fees.html",
+        {
+            "children": children,
+            "selected_child": selected_child,
+            "student_fees": student_fees,
+            "totals": totals,
+            "all_payment_options": all_payment_options,
+            "transactions": transactions,
+            "school": school,
+            "show_switcher": len(children) > 1,
+            "latest_fee": latest_fee,
+            "all_years": all_years,
+            "selected_year": selected_year,
+        },
+    )
 
-        totals['total_amount'] = sum(f.total_amount for f in student_fees)
-        totals['total_paid'] = sum(f.amount_paid_val for f in student_fees)
-        totals['total_balance'] = sum(f.balance_val for f in student_fees)
-
-        latest_fee = student_fees.first() if student_fees else None
-
-    context = {
-        'children': children,
-        'selected_child': selected_child,
-        'student_fees': student_fees,
-        'latest_fee': latest_fee,
-        'all_payment_options': all_payment_options,
-        'totals': totals,
-        'transactions': transactions,
-        'school': school,
-        'show_switcher': len(children) > 1,
-    }
-    return render(request, 'accounts/view_child_fees.html', context)
 
 @login_required
 def view_child_progress(request):
-    if request.user.role!= "parent":
-        return redirect('accounts:dashboard')
+    if request.user.role != "parent":
+        return redirect("accounts:dashboard")
 
-    def grade_from_pct(p):
-        if p >= 80: return 'A'
-        if p >= 70: return 'B'
-        if p >= 60: return 'C'
-        if p >= 50: return 'D'
-        if p >= 40: return 'E'
-        return 'F'
+    def get_grading_scale(p, term):
+        grading = GradingScale.objects.filter(
+            school=school,
+            term=term,
+            min_score__lte=p,
+            max_score__gte=p,
+        ).first()
 
-    def remark_from_grade(g):
-        return {'A':'Excellent','B':'Very Good','C':'Good','D':'Credit','E':'Pass','F':'Fail'}.get(g,'')
+        if not grading:
+            grading = GradingScale.objects.filter(
+                school=school,
+                term__isnull=True,
+                min_score__lte=p,
+                max_score__gte=p,
+            ).first()
 
-    links = ParentStudentLink.objects.filter(parent=request.user).select_related('student', 'student__school', 'student__school_class')
+        return grading
+
+    school = request.user.school  # PARENT SCHOOL - ISOLATION ROOT
+    links = ParentStudentLink.objects.filter(
+        parent=request.user, student__school=school
+    ).select_related("student", "student__school", "student__school_class")
+
     children = [link.student for link in links]
     children_count = len(children)
 
-    child_id = request.GET.get('child_id') or request.session.get('selected_child_id')
+    child_id = request.GET.get("child_id") or request.session.get("selected_child_id")
     selected_child = next((c for c in children if str(c.id) == str(child_id)), None)
     if not selected_child and children:
         selected_child = children[0]
     if selected_child:
-        request.session['selected_child_id'] = selected_child.id
+        request.session["selected_child_id"] = selected_child.id
+        # DOUBLE CHECK SCHOOL
+        if selected_child.school_id != school.id:
+            messages.error(request, "Access denied.")
+            return redirect("accounts:parent_dashboard")
 
-    selected_link = next((l for l in links if l.student_id == getattr(selected_child, 'id', None)), None)
+    selected_link = next(
+        (l for l in links if l.student_id == getattr(selected_child, "id", None)), None
+    )
 
-    # === FILTER PARAMS ===
-    selected_year_id = request.GET.get('year')
-    selected_term_id = request.GET.get('term') or request.GET.get('term_id')
+    selected_year_id = request.GET.get("year")
+    selected_term_id = request.GET.get("term") or request.GET.get("term_id")
 
     years = []
     terms = []
     terms_data = []
 
     if selected_child:
-        child_school = selected_child.school
-
-        # MULTI-SCHOOL: years and terms belong to child's school
-        years = AcademicYear.objects.filter(school=child_school).order_by('-name')
-        terms_qs = Term.objects.filter(school=child_school).order_by('-start_date')
+        years = AcademicYear.objects.filter(school=school).order_by("-name")
+        terms_qs = Term.objects.filter(school=school).order_by("-start_date")
         if selected_year_id:
             terms_qs = terms_qs.filter(academic_year_id=selected_year_id)
         terms = terms_qs
 
         qs = Result.objects.filter(
-            student=selected_child,
-            student__school=child_school,
-            status='published'
-        ).select_related('subject', 'term', 'term__academic_year')
+            student=selected_child, student__school=school, status="published"
+        ).select_related("subject", "term", "term__academic_year")
 
-        # APPLY FILTERS
         if selected_year_id:
             qs = qs.filter(term__academic_year_id=selected_year_id)
-
         if selected_term_id:
-            qs = qs.filter(term_id=selected_term_id, term__school=child_school)
+            qs = qs.filter(term_id=selected_term_id)
 
         by_term = defaultdict(list)
         for r in qs:
             by_term[r.term].append(r)
 
         for term_obj, results in by_term.items():
-            def ca_max(t): return float(getattr(t, 'ca_total', 0) or 0)
-            def exam_max(t): return float(getattr(t, 'exam_total', 0) or 0)
+
+            def ca_max(t):
+                return float(getattr(t, "ca_total", 0) or 0)
+
+            def exam_max(t):
+                return float(getattr(t, "exam_total", 0) or 0)
 
             class_score = sum(float(r.class_score or 0) for r in results)
             exam_score = sum(float(r.exam_score or 0) for r in results)
@@ -4966,23 +6511,23 @@ def view_child_progress(request):
             total_score = class_score + exam_score
             total_max = class_max + exam_max_sum
             percentage = round(total_score / total_max * 100, 2) if total_max else 0
-            overall_grade = grade_from_pct(percentage)
-            overall_remark = remark_from_grade(overall_grade)
-            position = 1
-            class_size = 1
+            grading = get_grading_scale(percentage, term_obj)
 
-            term_name = getattr(term_obj, 'name', str(term_obj))
-            academic_year_obj = getattr(term_obj, 'academic_year', None)
+            overall_grade = grading.grade if grading else "-"
+            overall_remark = grading.remark if grading else "-"
+
+            term_name = getattr(term_obj, "name", str(term_obj))
+            academic_year_obj = getattr(term_obj, "academic_year", None)
 
             summary_qs = StudentTermSummary.objects.filter(
-                student=selected_child,
-                student__school=child_school,
-                term=term_name
+                student=selected_child, student__school=school, term=term_name
             )
             if academic_year_obj:
                 summary_qs = summary_qs.filter(academic_year=academic_year_obj)
 
             summary = summary_qs.first()
+            position = 1
+            class_size = 1
             if summary:
                 if summary.term_total:
                     total_score = float(summary.term_total)
@@ -4995,43 +6540,49 @@ def view_child_progress(request):
                 if summary.rank:
                     position = summary.rank
                 if summary.school_class_id:
-                    class_size = StudentTermSummary.objects.filter(
-                        school_class=summary.school_class,
-                        school_class__school=child_school,
-                        term=summary.term,
-                        academic_year=summary.academic_year
-                    ).count() or 1
+                    class_size = (
+                        StudentTermSummary.objects.filter(
+                            school_class=summary.school_class,
+                            school_class__school=school,
+                            term=summary.term,
+                            academic_year=summary.academic_year,
+                        ).count()
+                        or 1
+                    )
 
-            terms_data.append({
-                'term': term_obj,
-                'results': results,
-                'grand_class_score': class_score,
-                'grand_class_max': class_max,
-                'grand_exam_score': exam_score,
-                'grand_exam_max': exam_max_sum,
-                'grand_total_score': total_score,
-                'grand_total_max': total_max,
-                'grand_percentage': percentage,
-                'overall_grade': overall_grade,
-                'overall_remark': overall_remark,
-                'class_position': position,
-                'class_size': class_size,
-                'term_status': 'Published',
-            })
+            terms_data.append(
+                {
+                    "term": term_obj,
+                    "results": results,
+                    "grand_class_score": class_score,
+                    "grand_class_max": class_max,
+                    "grand_exam_score": exam_score,
+                    "grand_exam_max": exam_max_sum,
+                    "grand_total_score": total_score,
+                    "grand_total_max": total_max,
+                    "grand_percentage": percentage,
+                    "overall_grade": overall_grade,
+                    "overall_remark": overall_remark,
+                    "class_position": position,
+                    "class_size": class_size,
+                    "term_status": "Published",
+                }
+            )
 
     context = {
-        'children': children,
-        'children_count': children_count,
-        'selected_child': selected_child,
-        'relationship': getattr(selected_link, 'relationship', 'Child'),
-        'terms': terms_data,
-        'years': years,
-        'terms_list': terms,
-        'selected_year': selected_year_id or "",
-        'selected_term': selected_term_id or "",
-        'school': getattr(selected_child, 'school', None),
+        "children": children,
+        "children_count": children_count,
+        "selected_child": selected_child,
+        "relationship": getattr(selected_link, "relationship", "Child"),
+        "terms": terms_data,
+        "years": years,
+        "terms_list": terms,
+        "selected_year": selected_year_id or "",
+        "selected_term": selected_term_id or "",
+        "school": school,
     }
-    return render(request, 'accounts/view_child_progress.html', context)
+    return render(request, "accounts/view_child_progress.html", context)
+
 
 # ----------------------------
 # MESSAGES
@@ -5055,14 +6606,79 @@ def send_message(request):
             return redirect('accounts:send-message')
     return render(request, 'accounts/send_message.html', {'teachers': teachers})
 
+
 # ----------------------------
 # SYSTEM SETTINGS
 # ----------------------------
 @login_required
 def system_settings(request):
-    if request.user.role != 'admin':
-        return redirect('accounts:dashboard')
-    return render(request, 'accounts/system_settings.html')
+    if request.user.role not in [
+        "admin",
+        "proprietor",
+        "proprietress",
+        "headmaster",
+        "headmistress",
+    ]:
+        return redirect("accounts:dashboard")
+
+    school = request.user.school
+    if not school:
+        messages.error(request, "Your school was not found.")
+        return redirect("accounts:dashboard")
+
+    setting, created = SystemSetting.objects.get_or_create(
+        school=school,
+        defaults={
+            "site_name": school.name,
+            "max_students": 30,
+        },
+    )
+
+    if request.method == "POST":
+        site_name = request.POST.get("site_name", "").strip()
+        max_students = request.POST.get("max_students", "30").strip()
+
+        if not site_name:
+            messages.error(request, "Site name cannot be empty.")
+            return redirect("accounts:system_settings")
+
+        try:
+            max_students = int(max_students)
+            if max_students < 1:
+                raise ValueError
+        except ValueError:
+            messages.error(
+                request, "Maximum students per class must be greater than 0."
+            )
+            return redirect("accounts:system_settings")
+
+        setting.site_name = site_name
+        setting.max_students = max_students
+        setting.save()
+
+        messages.success(request, "System settings updated successfully.")
+        return redirect("accounts:system_settings")
+
+    backup_dir = settings.BASE_DIR / "backups" / f"school_{school.id}"
+
+    if backup_dir.exists():
+        backups = sorted(
+            backup_dir.glob("school_backup_*.json"),
+            key=lambda file: file.stat().st_mtime,
+            reverse=True,
+        )
+    else:
+        backups = []
+
+    return render(
+        request,
+        "accounts/system_settings.html",
+        {
+            "school": school,
+            "setting": setting,
+            "backups": backups,
+        },
+    )
 
 
 # ----------------------------
@@ -5070,51 +6686,114 @@ def system_settings(request):
 # ----------------------------
 @login_required
 def student_performance_report(request):
-    if request.user.role not in ['admin','headmaster','hod','teacher']:
+    if request.user.role not in [
+    'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress',
+    'hod',
+    'teacher',
+]:
         return redirect('accounts:dashboard')
 
     school = request.user.school
-    classes = SchoolClass.objects.filter(school=school)
-    terms = Term.objects.all().order_by('-start_date')
+
+    # FIX 1: Teacher sees only his classes
+    if request.user.role == 'teacher':
+        assigned_class_ids = [request.user.class_teacher_of_id] if request.user.class_teacher_of_id else []
+        classes = SchoolClass.objects.filter(
+            school=school,
+            id__in=assigned_class_ids
+        )
+    else:
+        # admin = headmaster = hod sees ALL - same permission
+        classes = SchoolClass.objects.filter(school=school)
+
+    academic_years = AcademicYear.objects.filter(school=school).order_by('-name')
+    terms = Term.objects.filter(school=school).order_by('-start_date')
 
     selected_class = request.GET.get('class')
     selected_term = request.GET.get('term')
+    selected_year = request.GET.get('year')
     is_print = request.GET.get('print') == '1'
 
-    term_obj = None
-    if selected_term:
-        term_obj = Term.objects.filter(id=selected_term).first()
+    # FIX 1b: Block teacher if he tries to view class he doesn't teach
+    if request.user.role == 'teacher' and selected_class and selected_class!= 'all':
+        if int(selected_class) not in list(assigned_class_ids):
+            messages.error(request, "You are not assigned to this class.")
+            return redirect('accounts:student_performance_report')
 
-    students_qs = User.objects.filter(role='student', school_class__school=school)
-    if selected_class:
+    term_obj = None
+    if selected_term and selected_term!= 'all':
+        term_obj = Term.objects.filter(id=selected_term, school=school).first()
+
+    year_obj = None
+    if selected_year and selected_year!= 'all':
+        year_obj = AcademicYear.objects.filter(id=selected_year, school=school).first()
+
+    # FIX 2: Students query - teacher only his students
+    students_qs = User.objects.filter(role='student', school=school, is_active=True)
+    if request.user.role == 'teacher':
+        students_qs = students_qs.filter(school_class_id__in=assigned_class_ids)
+
+    if selected_class and selected_class!= 'all':
         students_qs = students_qs.filter(school_class_id=selected_class)
 
     temp_list = []
-    for student in students_qs:
+    for student in students_qs.select_related('school_class'):
+        results_filter = {'student': student, 'status': 'published', 'school': school}
         if term_obj:
-            results = Result.objects.filter(student=student, term=term_obj, status='published')
-        else:
-            results = Result.objects.filter(student=student, status='published')
+            results_filter['term'] = term_obj
+        if year_obj:
+            results_filter['academic_year'] = year_obj
+
+        results = Result.objects.filter(**results_filter)
 
         if results.count() == 0:
-            if not selected_class:
-                continue # Hide no-result students from All Classes
+            if not selected_class or selected_class == 'all':
+                continue
             avg, total, grade, remark = 0, 0, '-', 'No Results'
         else:
-            total = 0
-            for r in results:
-                try: cs = float(r.class_score or 0)
-                except: cs = 0
-                try: es = float(r.exam_score or 0)
-                except: es = 0
-                total += cs + es
-            avg = round(total / results.count(), 2)
-            if avg >= 80: grade, remark = 'A', 'Excellent'
-            elif avg >= 70: grade, remark = 'B', 'Very Good'
-            elif avg >= 60: grade, remark = 'C', 'Good'
-            elif avg >= 50: grade, remark = 'D', 'Credit'
-            elif avg >= 40: grade, remark = 'E', 'Pass'
-            else: grade, remark = 'F', 'Fail'
+                    total = 0
+
+                    for r in results:
+                        try:
+                            cs = float(r.class_score or 0)
+                        except:
+                            cs = 0
+
+                        try:
+                            es = float(r.exam_converted_score or 0)
+                        except:
+                            es = 0
+
+                        total += cs + es
+
+                    avg = round(total / results.count(), 2)
+
+                    grading = None
+
+                    # Use the selected term when one was selected
+                    if term_obj:
+                        grading = GradingScale.objects.filter(
+                            school=school,
+                            term=term_obj,
+                            min_score__lte=avg,
+                            max_score__gte=avg,
+                        ).first()
+
+                    # Fall back to school-wide grading
+                    if not grading:
+                        grading = GradingScale.objects.filter(
+                            school=school,
+                            term__isnull=True,
+                            min_score__lte=avg,
+                            max_score__gte=avg,
+                        ).first()
+
+                    grade = grading.grade if grading else "-"
+                    remark = grading.remark if grading else "-"
 
         temp_list.append({
             'student': student,
@@ -5125,18 +6804,17 @@ def student_performance_report(request):
             'term_remark': remark,
         })
 
-    # ---- NEW GROUPING LOGIC FOR ALL CLASSES ----
     grouped_summaries = None
     summaries = []
 
-    if not selected_class: # ALL CLASSES MODE
+    if not selected_class or selected_class == 'all':
         grouped = defaultdict(list)
         for item in temp_list:
-            grouped[item['school_class']].append(item)
+            if item['school_class']:
+                grouped[item['school_class']].append(item)
 
         grouped_summaries = []
-        for school_class, items in sorted(grouped.items(), key=lambda x: x[0].name):
-            # Sort inside class by average
+        for school_class, items in sorted(grouped.items(), key=lambda x: x[0].name if x[0] else ""):
             sorted_items = sorted(items, key=lambda x: x['term_average'], reverse=True)
             class_summaries = []
             for i, item in enumerate(sorted_items):
@@ -5154,11 +6832,10 @@ def student_performance_report(request):
                 'total_students': len(class_summaries),
                 'class_avg': class_avg,
             })
-            summaries.extend(class_summaries) # For overall stats
+            summaries.extend(class_summaries)
 
-        # Sort summaries for overall top student
         summaries = sorted(summaries, key=lambda x: x.term_average, reverse=True)
-    else: # SINGLE CLASS MODE (old logic)
+    else:
         temp_list = sorted(temp_list, key=lambda x: x['term_average'], reverse=True)
         for i, item in enumerate(temp_list):
             item['rank'] = i+1
@@ -5174,174 +6851,289 @@ def student_performance_report(request):
     pass_rate = round(passed / total_students * 100, 1) if total_students else 0
     top_student = summaries[0] if summaries else None
 
-    # PRINT MODE
     if is_print:
-        class_name = SchoolClass.objects.filter(id=selected_class).first().name if selected_class else "All Classes"
+        class_name = SchoolClass.objects.filter(id=selected_class, school=school).first().name if selected_class and selected_class!= 'all' else "All Classes"
         term_name = str(term_obj) if term_obj else "All Terms"
+        year_name = str(year_obj) if term_obj else "All Years"
         return render(request, 'accounts/student_performance_print.html', {
             'summaries': summaries,
             'grouped_summaries': grouped_summaries,
             'total_students': total_students,
-            'class_name': class_name, 'term_name': term_name,
+            'class_name': class_name, 'term_name': term_name, 'year_name': year_name,
             'school': school, 'avg_score': avg_score, 'pass_rate': pass_rate,
         })
 
-    # NORMAL MODE
-    if not selected_class:
-        # For grouped view, no pagination - show all class cards
-        return render(request, 'accounts/student_performance_report.html', {
-            'classes': classes, 'terms': terms,
-            'selected_class': selected_class, 'selected_term': selected_term,
-            'grouped_summaries': grouped_summaries, # <-- NEW
-            'summaries': summaries,
-            'total_students': total_students, 'avg_score': avg_score,
-            'pass_rate': pass_rate, 'top_student': top_student,
-        })
-    else:
-        paginator = Paginator(summaries, 10)
-        page_obj = paginator.get_page(request.GET.get('page'))
-        return render(request, 'accounts/student_performance_report.html', {
-            'classes': classes, 'terms': terms,
-            'selected_class': selected_class, 'selected_term': selected_term,
-            'summaries': page_obj,
-            'grouped_summaries': None,
-            'total_students': total_students, 'avg_score': avg_score,
-            'pass_rate': pass_rate, 'top_student': top_student,
-        })
+    context = {
+        'classes': classes, 'terms': terms, 'academic_years': academic_years,
+        'selected_class': selected_class or 'all',
+        'selected_term': selected_term or 'all',
+        'selected_year': selected_year or 'all',
+        'grouped_summaries': grouped_summaries,
+        'summaries': summaries if not selected_class or selected_class == 'all' else Paginator(summaries, 10).get_page(request.GET.get('page')),
+        'total_students': total_students, 'avg_score': avg_score,
+        'pass_rate': pass_rate, 'top_student': top_student,
+    }
+
+    if selected_class and selected_class!= 'all':
+        context['summaries'] = Paginator(summaries, 10).get_page(request.GET.get('page'))
+
+    return render(request, 'accounts/student_performance_report.html', context)
 
 
 @login_required
 def student_attendance_report(request):
-    if request.user.role not in ['admin','headmaster','hod','teacher']:
+    if request.user.role not in [
+    'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress',
+    'hod',
+    'teacher',
+]:
         return redirect('accounts:home')
-
     school = request.user.school
-    classes = SchoolClass.objects.filter(school=school)
+
+    # TEACHER: ONLY THEIR CLASS TEACHER CLASS
+    if request.user.role == 'teacher':
+        assigned_classes_ids = SchoolClass.objects.filter(
+            school=school,
+            class_teacher=request.user
+        ).values_list('id', flat=True)
+
+        classes = SchoolClass.objects.filter(
+            school=school,
+            id__in=assigned_classes_ids
+        )
+    else:
+        classes = SchoolClass.objects.filter(school=school)
+
+    academic_years = AcademicYear.objects.filter(school=school).order_by('-name')
+    terms = Term.objects.filter(school=school).order_by('academic_year__name', 'term_number')
+
     selected_class = request.GET.get('class')
-# Fix None string bug
-    if not selected_class or selected_class == 'None' or selected_class == 'null':
-        selected_class = None
+    selected_term = request.GET.get('term')
+    selected_year = request.GET.get('year')
     is_print = request.GET.get('print') == '1'
 
-    sessions = AttendanceSession.objects.filter(
-        school_class__school=school
-    ).select_related('school_class','subject','teacher').prefetch_related('records__student').order_by('-date')
+    s_class = selected_class
+    s_term = selected_term
+    s_year = selected_year
+
+    if not selected_class or selected_class in ['None','null','all','']:
+        selected_class = None
+    if not selected_term or selected_term in ['None','null','all','']:
+        selected_term = None
+    if not selected_year or selected_year in ['None','null','all','']:
+        selected_year = None
+
+    sessions = AttendanceSession.objects.filter(school_class__school=school).select_related('school_class','subject','teacher').prefetch_related('records__student').order_by('-date')
+
+    # FORCE TEACHER FILTER
+    if request.user.role == 'teacher':
+        sessions = sessions.filter(school_class_id__in=assigned_classes_ids)
 
     if selected_class:
-        try:
-            sessions = sessions.filter(school_class_id=int(selected_class))
-        except:
-            selected_class = None
+        try: sessions = sessions.filter(school_class_id=int(selected_class))
+        except: pass
+    if selected_term:
+        try: sessions = sessions.filter(term_id=int(selected_term))
+        except: pass
+    if selected_year:
+        try: sessions = sessions.filter(term__academic_year_id=int(selected_year))
+        except: pass
 
-    # MERGE per (date, class) - YOUR LOGIC: If ANY P that day = Present
     daily_map = defaultdict(list)
     for s in sessions:
-            # Use only date part, ignore time
-            only_date = s.date.date() if hasattr(s.date, 'date') else s.date
-            daily_map[(only_date, s.school_class_id)].append(s)
+        only_date = s.date.date() if hasattr(s.date, 'date') else s.date
+        daily_map[(only_date, s.school_class_id)].append(s)
 
     merged_days = []
-    for (date, class_id), sess_list in sorted(daily_map.items()): # Day 1 to last day
+    for (date, class_id), sess_list in sorted(daily_map.items()):
         school_class = sess_list[0].school_class
-
         student_status = {}
-        has_any_record = False # <-- NEW
+        has_any = False
         for sess in sess_list:
-            records = list(sess.records.all())
-            if records: # if this session has at least 1 student marked
-                has_any_record = True
-            for rec in records:
-                student_status.setdefault(rec.student.id, []).append(rec.status)
+            recs = list(sess.records.all())
+            if recs: has_any = True
+            for r in recs: student_status.setdefault(r.student.id, []).append(r.status)
+        if not has_any or not student_status: continue
+        p = sum(1 for v in student_status.values() if 'P' in v)
+        a = len(student_status) - p
+        merged_days.append({'date': date, 'school_class': school_class, 'present_count': p, 'absent_count': a, 'total': p+a})
 
-        # SKIP if no teacher marked attendance that day
-        if not has_any_record:
-            continue
-        if not student_status: # also skip if still empty
-            continue
-
-        present_day = 0
-        absent_day = 0
-        for statuses in student_status.values():
-            if 'P' in statuses:
-                present_day += 1
-            else:
-                absent_day += 1
-
-        merged_days.append({
-            'date': date,
-            'school_class': school_class,
-            'present_count': present_day,
-            'absent_count': absent_day,
-            'total': present_day + absent_day,
-        })
-
-
-# TERM TOTAL - Sum ALL days (NOT inside loop!)
     total_present = sum(d['present_count'] for d in merged_days)
     total_absent = sum(d['absent_count'] for d in merged_days)
     total_all = total_present + total_absent
     attendance_rate = round(total_present/total_all*100,1) if total_all else 0
 
-    selected_obj = None
-    if selected_class:
-        selected_obj = SchoolClass.objects.filter(id=selected_class).first()
-
-    # GROUP BY CLASS
     grouped_dict = defaultdict(list)
-    for day in merged_days:
-        grouped_dict[day['school_class']].append(day)
-
+    for d in merged_days: grouped_dict[d['school_class']].append(d)
     grouped_list = []
     for klass, days in grouped_dict.items():
-        days_sorted = sorted(days, key=lambda x: x['date'])
-        grouped_list.append({
-            'klass': klass,
-            'days': days_sorted,
-            'total_days': len(days_sorted)
-        })
+        grouped_list.append({'klass': klass, 'days': sorted(days, key=lambda x: x['date']), 'total_days': len(days)})
     grouped_list = sorted(grouped_list, key=lambda x: x['klass'].name)
 
-    # *** PRINT CHECK - ADD THIS ***
+    obj_class = SchoolClass.objects.filter(id=s_class).first() if s_class and s_class not in ['all','None'] else None
+    obj_term = Term.objects.filter(id=s_term).first() if s_term and s_term not in ['all','None'] else None
+    obj_year = AcademicYear.objects.filter(id=s_year).first() if s_year and s_year not in ['all','None'] else None
+
     if is_print:
         return render(request, 'accounts/student_attendance_print.html', {
-            'school': school,
-            'merged_days': merged_days,
-            'total_present': total_present,
-            'total_absent': total_absent,
-            'attendance_rate': attendance_rate,
+            'school': school, 'merged_days': merged_days,
+            'total_present': total_present, 'total_absent': total_absent, 'attendance_rate': attendance_rate,
             'grouped_by_class': grouped_list,
-            'selected_class': selected_class,
-            'selected_class_obj': selected_obj,
-            'term': request.GET.get('term', 'All Term'),
+            'selected_class_obj': obj_class,
+            'class_name': obj_class.name if obj_class else "All Classes",
+            'term_name': str(obj_term) if obj_term else "All Terms",
+            'year_name': obj_year.name if obj_year else "All Years",
         })
-
-    paginator = Paginator(merged_days, 10)
-    page_obj = paginator.get_page(request.GET.get('page'))
 
     return render(request, 'accounts/student_attendance_report.html', {
         'school': school,
-        'sessions': page_obj,
-        'classes': classes,
-        'selected_class': selected_class,
-        'total_present': total_present,
-        'total_absent': total_absent,
-        'attendance_rate': attendance_rate,
-        'grouped_by_class': grouped_list,
-        'selected_class_obj': selected_obj,
+        'sessions': Paginator(merged_days, 10).get_page(request.GET.get('page')),
+        'classes': classes, 'terms': terms, 'academic_years': academic_years,
+        'selected_class': str(s_class) if s_class else 'all',
+        'selected_term': str(s_term) if s_term else 'all',
+        'selected_year': str(s_year) if s_year else 'all',
+        'total_present': total_present, 'total_absent': total_absent,
+        'attendance_rate': attendance_rate, 'grouped_by_class': grouped_list,
+        'selected_class_obj': SchoolClass.objects.filter(id=s_class).first() if s_class else None,
     })
 
 
 @login_required
 def teacher_attendance_report(request):
-
-    # ONLY Admin and Headmaster
-    if request.user.role not in ['admin', 'headmaster']:
-        messages.error(
-            request,
-            "You do not have permission to view teacher attendance."
-        )
+    if request.user.role not in [
+    'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress'
+]:
+        messages.error(request, "You do not have permission to view teacher attendance.")
+        return redirect('accounts:home')
+    school = request.user.school
+    if not school:
+        messages.error(request, "Your account is not assigned to any school.")
         return redirect('accounts:home')
 
+    # === FILTERS ===
+    academic_years = AcademicYear.objects.filter(school=school).order_by('-name')
+    terms = Term.objects.filter(school=school).order_by('academic_year__name', 'term_number')
+    
+    selected_year = request.GET.get('year')
+    selected_term = request.GET.get('term')
+    if not selected_year or selected_year in ['None','null','all','']: selected_year = None
+    if not selected_term or selected_term in ['None','null','all','']: selected_term = None
+
+    # Determine active term based on filter
+    if selected_term:
+        active_term = Term.objects.filter(id=int(selected_term), school=school).first()
+    elif selected_year:
+        active_term = Term.objects.filter(academic_year_id=int(selected_year), school=school, is_active=True).first() or Term.objects.filter(academic_year_id=int(selected_year), school=school).first()
+    else:
+        active_term = Term.objects.filter(school=school, is_active=True).first()
+
+    # Week selection
+    week_str = request.GET.get('attendance_week')
+    selected_date = parse_date(week_str) if week_str else timezone.localdate()
+    if not selected_date: selected_date = timezone.localdate()
+    if selected_date.weekday() >= 5:
+        selected_date = selected_date - timedelta(days=selected_date.weekday() - 4)
+    week_start = selected_date - timedelta(days=selected_date.weekday())
+    week_end = week_start + timedelta(days=4)
+
+    # Term limits
+    term_start = active_term.start_date if active_term else week_start
+    term_end = active_term.end_date if active_term else week_end
+
+    # Clamp week_start inside term
+    if week_start < term_start: week_start = term_start
+    if week_start > term_end: week_start = term_end - timedelta(days=4)
+    week_end = week_start + timedelta(days=4)
+    if week_end > term_end: week_end = term_end
+
+    # Academic week number
+    attendance_week = 1
+    if active_term:
+        current_day = term_start
+        while current_day < week_start:
+            if current_day.weekday() == 4: attendance_week += 1
+            current_day += timedelta(days=1)
+
+    previous_week = week_start - timedelta(days=7)
+    next_week = week_start + timedelta(days=7)
+    is_first_week = week_start <= term_start
+    is_last_week = week_end >= term_end
+    if is_first_week: previous_week = week_start
+    if is_last_week: next_week = week_start
+
+    working_days = []
+    current = week_start
+    while current <= week_end:
+        if current.weekday() < 5: working_days.append(current)
+        current += timedelta(days=1)
+
+    teachers = User.objects.filter(school=school, role='teacher').order_by('first_name','last_name')
+    attendance_records = TeacherAttendance.objects.filter(school=school, date__range=[week_start, week_end]).select_related('teacher')
+    attendance_map = defaultdict(dict)
+    for r in attendance_records: attendance_map[r.teacher_id][r.date] = r
+
+    report = []
+    for teacher in teachers:
+        days=[]; present=absent=late=sick=excused=leave=0
+        for day in working_days:
+            att = attendance_map.get(teacher.id, {}).get(day)
+            status = att.status if att else None
+            if status=="P": present+=1
+            elif status=="A": absent+=1
+            elif status=="L": late+=1
+            elif status=="E": excused+=1
+            elif status=="S": sick+=1
+            elif status=="LV": leave+=1
+            days.append({"date": day, "attendance": att, "status": status})
+        total_days = len(working_days)
+        rate = round(((present+late)/total_days)*100,1) if total_days else 0
+        report.append({"teacher": teacher, "days": days, "present": present, "absent": absent, "late": late, "sick": sick, "leave": leave, "excused": excused, "attendance_rate": rate})
+
+    total_teachers = teachers.count()
+    base_qs = TeacherAttendance.objects.filter(school=school, date__range=[week_start, week_end])
+    total_present = base_qs.filter(status="P").count()
+    total_absent = base_qs.filter(status="A").count()
+    total_late = base_qs.filter(status="L").count()
+    total_sick = base_qs.filter(status="S").count()
+    total_excused = base_qs.filter(status="E").count()
+    total_leave = base_qs.filter(status="LV").count()
+
+    return render(request, "accounts/teacher_attendance_report.html", {
+        "school": school, "report": report, "working_days": working_days,
+        "report_week_start": week_start, "report_week_end": week_end,
+        "report_previous_week": previous_week, "report_next_week": next_week,
+        "is_first_week": is_first_week, "is_last_week": is_last_week,
+        "total_teachers": total_teachers, "total_present": total_present, "total_absent": total_absent,
+        "total_late": total_late, "total_excused": total_excused, "total_sick": total_sick, "total_leave": total_leave,
+        "attendance_week": attendance_week,
+        "academic_years": academic_years, "terms": terms,
+        "selected_year": str(selected_year) if selected_year else 'all',
+        "selected_term": str(selected_term) if selected_term else 'all',
+        "active_term": active_term,
+    })
+
+@login_required
+def teacher_attendance_print(request):
+    if request.user.role not in [
+    'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress'
+]:
+        messages.error(
+            request,
+            "You do not have permission to print teacher attendance."
+        )
+        return redirect('accounts:home')
 
     school = request.user.school
 
@@ -5352,98 +7144,90 @@ def teacher_attendance_report(request):
         )
         return redirect('accounts:home')
 
+    # =========================
+    # SELECTED FILTERS
+    # =========================
+
+    selected_year = request.GET.get('year')
+    selected_term = request.GET.get('term')
+
+    if selected_year in [None, '', 'None', 'null', 'all']:
+        selected_year = None
+
+    if selected_term in [None, '', 'None', 'null', 'all']:
+        selected_term = None
 
     # =========================
-    # WEEK SELECTION
+    # DETERMINE REPORT PERIOD
     # =========================
 
-    week_str = request.GET.get('attendance_week')
+    if selected_term:
+        # EXACT TERM SELECTED
+        term = Term.objects.filter(
+            id=int(selected_term),
+            school=school
+        ).select_related('academic_year').first()
 
+        if not term:
+            messages.error(request, "Selected term was not found.")
+            return redirect('accounts:teacher_attendance_report')
 
-    if week_str:
-        selected_date = parse_date(week_str)
+        report_start = term.start_date
+        report_end = term.end_date
+
+        year_name = term.academic_year.name
+        term_name = str(term)
+
+    elif selected_year:
+        # YEAR SELECTED, ALL TERMS IN THAT YEAR
+        year = AcademicYear.objects.filter(
+            id=int(selected_year),
+            school=school
+        ).first()
+
+        if not year:
+            messages.error(request, "Selected academic year was not found.")
+            return redirect('accounts:teacher_attendance_report')
+
+        year_terms = Term.objects.filter(
+            academic_year=year
+        ).order_by('start_date')
+
+        if not year_terms.exists():
+            messages.error(
+                request,
+                "No terms were found for the selected academic year."
+            )
+            return redirect('accounts:teacher_attendance_report')
+
+        report_start = year_terms.order_by('start_date').first().start_date
+        report_end = year_terms.order_by('-end_date').first().end_date
+
+        year_name = year.name
+        term_name = "All Terms"
+
     else:
-        selected_date = timezone.localdate()
+        # NO FILTERS
+        # =========================
+        # ALL YEARS / ALL TERMS
+        # =========================
 
+        all_terms = Term.objects.filter(
+            school=school
+        ).order_by('start_date')
 
-    if not selected_date:
-        selected_date = timezone.localdate()
+        if not all_terms.exists():
+            messages.error(
+                request,
+                "No academic terms were found."
+            )
+            return redirect('accounts:teacher_attendance_report')
 
+        report_start = all_terms.first().start_date
+        report_end = all_terms.last().end_date
 
-    # If weekend, move back to Friday
-    if selected_date.weekday() >= 5:
-        selected_date = selected_date - timedelta(
-            days=selected_date.weekday() - 4
-        )
-
-
-    # Find Monday of selected week
-    week_start = selected_date - timedelta(
-        days=selected_date.weekday()
-    )
-
-    week_end = week_start + timedelta(days=4)
-    # =========================
-    # ACADEMIC WEEK NUMBER
-    # =========================
-
-    active_term = Term.objects.filter(
-        school=school,
-        is_active=True
-    ).first()
-
-    attendance_week = None
-
-    if active_term:
-
-        term_start = active_term.start_date
-
-        attendance_week = 1
-
-        current_day = term_start
-
-        while current_day < week_start:
-
-            # Friday completes a school week
-            if current_day.weekday() == 4:
-                attendance_week += 1
-
-            current_day += timedelta(days=1)
-
-
-    # === LIMIT: Don't go beyond school term ===
-    term_start = active_term.start_date if active_term else week_start
-    term_end = active_term.end_date if active_term else week_end
-
-    previous_week = week_start - timedelta(days=7)
-    next_week = week_start + timedelta(days=7)
-
-    is_first_week = week_start <= term_start
-    is_last_week = week_end >= term_end
-
-    if is_first_week:
-        previous_week = week_start
-
-    if is_last_week:
-        next_week = week_start
-
-
-    # =========================
-    # WORKING DAYS
-    # =========================
-
-    working_days = []
-
-    current = week_start
-
-    while current <= week_end:
-
-        if current.weekday() < 5:
-            working_days.append(current)
-
-        current += timedelta(days=1)
-
-
+        year_name = "All Years"
+        term_name = "All Terms"
 
     # =========================
     # TEACHERS
@@ -5457,214 +7241,219 @@ def teacher_attendance_report(request):
         'last_name'
     )
 
-
-
     # =========================
     # ATTENDANCE RECORDS
     # =========================
 
     attendance_records = TeacherAttendance.objects.filter(
         school=school,
-        date__range=[
-            week_start,
-            week_end
-        ]
-    ).select_related(
-        'teacher'
+        date__range=[report_start, report_end]
     )
 
-
-
-    # Arrange attendance by teacher and date
-
-    attendance_map = defaultdict(dict)
-
-    for record in attendance_records:
-
-        attendance_map[
-            record.teacher_id
-        ][
-            record.date
-        ] = record
-
-
-
     # =========================
-    # BUILD REPORT
+    # BUILD TEACHER SUMMARY
     # =========================
 
     report = []
 
-
     for teacher in teachers:
 
-        days = []
+        teacher_records = attendance_records.filter(
+            teacher=teacher
+        )
 
-        present = 0
-        absent = 0
-        late = 0
-        sick = 0
-        excused = 0
-        leave = 0
+        present = teacher_records.filter(status="P").count()
+        absent = teacher_records.filter(status="A").count()
+        late = teacher_records.filter(status="L").count()
+        leave = teacher_records.filter(status="LV").count()
+        sick = teacher_records.filter(status="S").count()
+        excused = teacher_records.filter(status="E").count()
 
+        total_recorded = (
+            present +
+            absent +
+            late +
+            leave +
+            sick +
+            excused
+        )
 
-        for day in working_days:
-
-            attendance = attendance_map.get(
-                teacher.id,
-                {}
-            ).get(day)
-
-
-            status = None
-
-
-            if attendance:
-
-                status = attendance.status
-
-                if status == "P":
-                    present += 1
-
-                elif status == "A":
-                    absent += 1
-
-                elif status == "L":
-                    late += 1
-                elif status == "E":
-                    excused += 1
-                elif status == "S":
-                    sick += 1
-                elif status == "LV":
-                    leave += 1
-
-
-            days.append({
-                "date": day,
-                "attendance": attendance,
-                "status": status,
-            })
-
-
-        total_days = len(working_days)
-
-
-        attendance_rate = 0
-
-        if total_days:
-            attendance_rate = round(
-                ((present + late) / total_days) * 100,
+        attendance_rate = (
+            round(
+                ((present + late) / total_recorded) * 100,
                 1
             )
-
+            if total_recorded
+            else 0
+        )
 
         report.append({
             "teacher": teacher,
-            "days": days,
             "present": present,
             "absent": absent,
             "late": late,
-            "sick": sick,
             "leave": leave,
+            "sick": sick,
             "excused": excused,
+            "total_recorded": total_recorded,
             "attendance_rate": attendance_rate,
         })
 
-
-
     # =========================
-    # SUMMARY CARDS
+    # SUMMARY TOTALS
     # =========================
 
     total_teachers = teachers.count()
 
-
-    total_present = TeacherAttendance.objects.filter(
-        school=school,
-        date__range=[week_start, week_end],
+    total_present = attendance_records.filter(
         status="P"
     ).count()
 
-
-    total_absent = TeacherAttendance.objects.filter(
-        school=school,
-        date__range=[week_start, week_end],
+    total_absent = attendance_records.filter(
         status="A"
     ).count()
 
-
-    total_late = TeacherAttendance.objects.filter(
-        school=school,
-        date__range=[week_start, week_end],
+    total_late = attendance_records.filter(
         status="L"
     ).count()
 
-    total_sick = TeacherAttendance.objects.filter(school=school, date__range=[week_start, week_end], status="S").count()
-    total_excused = TeacherAttendance.objects.filter(school=school, date__range=[week_start, week_end], status="E").count()
-    total_leave = TeacherAttendance.objects.filter(school=school, date__range=[week_start, week_end], status="LV").count()
+    total_leave = attendance_records.filter(
+        status="LV"
+    ).count()
 
+    total_sick = attendance_records.filter(
+        status="S"
+    ).count()
 
+    total_excused = attendance_records.filter(
+        status="E"
+    ).count()
+
+    # =========================
+    # PRINT
+    # =========================
 
     return render(
-            request,
-            "accounts/teacher_attendance_report.html",
-            {
-                "school": school,
-                "report": report,
-                "working_days": working_days,
-                "report_week_start": week_start,
-                "report_week_end": week_end,
-                "report_previous_week": previous_week,
-                "report_next_week": next_week,
-                "is_first_week": is_first_week,      # <-- ADD THIS
-                "is_last_week": is_last_week,
-                "total_teachers": total_teachers,
-                "total_present": total_present,
-                "total_absent": total_absent,
-                "total_late": total_late,
-                "total_excused": total_excused,
-                "total_sick": total_sick,
-                "total_leave": total_leave,
-                "attendance_week": attendance_week,
+        request,
+        "accounts/teacher_attendance_print.html",
+        {
+            "school": school,
+            "report": report,
 
-            }
-        )
+            "total_teachers": total_teachers,
+            "total_present": total_present,
+            "total_absent": total_absent,
+            "total_late": total_late,
+            "total_leave": total_leave,
+            "total_sick": total_sick,
+            "total_excused": total_excused,
+
+            "year_name": year_name,
+            "term_name": term_name,
+
+            "report_start": report_start,
+            "report_end": report_end,
+        }
+    )
 
 
 @login_required
 def view_reports(request):
-    if request.user.role not in ['admin', 'headmaster', 'hod', 'teacher']:
-        return redirect('accounts:dashboard')
-    
+    if request.user.role not in [
+    "admin",
+    "proprietor",
+    "proprietress",
+    "headmaster",
+    "headmistress",
+    "teacher",
+]:
+        return redirect("accounts:dashboard")
+
     school = request.user.school
-    
+
+    # TEACHER FILTER
+    if request.user.role == "teacher":
+        assigned_class_ids = TeacherSubjectClass.objects.filter(
+            teacher=request.user, school=school
+        ).values_list("school_class_id", flat=True)
+
+        total_students = User.objects.filter(
+            school=school, school_class_id__in=assigned_class_ids
+        ).count()
+        total_classes = SchoolClass.objects.filter(
+            school=school, id__in=assigned_class_ids
+        ).count()
+        performance_reports = StudentTermSummary.objects.filter(
+            school_class_id__in=assigned_class_ids
+        ).count()
+        attendance_sessions = AttendanceSession.objects.filter(
+            school_class_id__in=assigned_class_ids
+        ).count()
+        last_performance = (
+            StudentTermSummary.objects.filter(school_class_id__in=assigned_class_ids)
+            .order_by("-date_created")
+            .first()
+        )
+        last_attendance = (
+            AttendanceSession.objects.filter(school_class_id__in=assigned_class_ids)
+            .order_by("-date")
+            .first()
+        )
+        total_teachers = 1  # or User.objects.filter(school=school, role='teacher').count() - but for teacher show 1
+    else:
+        total_students = User.objects.filter(school=school, role="student").count()
+        total_teachers = User.objects.filter(school=school, role="teacher").count()
+        total_classes = SchoolClass.objects.filter(school=school).count()
+        performance_reports = StudentTermSummary.objects.filter(
+            school_class__school=school
+        ).count()
+        attendance_sessions = AttendanceSession.objects.filter(
+            school_class__school=school
+        ).count()
+        last_performance = (
+            StudentTermSummary.objects.filter(school_class__school=school)
+            .order_by("-date_created")
+            .first()
+        )
+        last_attendance = (
+            AttendanceSession.objects.filter(school_class__school=school)
+            .order_by("-date")
+            .first()
+        )
+
     context = {
-        'total_students': User.objects.filter(school=school, role='student').count(),
-        'total_teachers': User.objects.filter(school=school, role='teacher').count(),
-        'total_classes': SchoolClass.objects.filter(school=school).count(),
-        'performance_reports': StudentTermSummary.objects.filter(school_class__school=school).count(),
-        'attendance_sessions': AttendanceSession.objects.filter(school_class__school=school).count(),
-        'last_performance': StudentTermSummary.objects.filter(school_class__school=school).order_by('-date_created').first(),
-        'last_attendance': AttendanceSession.objects.filter(school_class__school=school).order_by('-date').first(),
+        "total_students": total_students,
+        "total_teachers": total_teachers,
+        "total_classes": total_classes,
+        "performance_reports": performance_reports,
+        "attendance_sessions": attendance_sessions,
+        "last_performance": last_performance,
+        "last_attendance": last_attendance,
     }
-    return render(request, 'accounts/view_reports.html', context)
+    return render(request, "accounts/view_reports.html", context)
+
+
 @login_required
 def assign_student_class(request, student_id):
 
-    if request.user.role != 'admin':
+    if request.user.role not in [
+        "admin",
+        "proprietor",
+        "proprietress",
+        "headmaster",
+        "headmistress"
+    ]:
         return redirect('accounts:dashboard')
 
-    # get student
-    student = get_object_or_404(User, id=student_id, role='student')
+    student = get_object_or_404(User, id=student_id, role='student', school=request.user.school)
 
-    # get all classes
-    classes = SchoolClass.objects.all()
+    classes = SchoolClass.objects.filter(school=request.user.school)
 
     if request.method == 'POST':
         class_id = request.POST.get('class_id')
 
         if class_id:
-            selected_class = get_object_or_404(SchoolClass, id=class_id)
+            selected_class = get_object_or_404(SchoolClass, id=class_id, school=request.user.school)
 
             student.school_class = selected_class
             student.save()
@@ -5680,39 +7469,46 @@ def assign_student_class(request, student_id):
         'classes': classes
     })
 
-
 @login_required
 def export_students_excel(request):
-    if request.user.role != 'admin':
-
+    if request.user.role not in [
+    'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress'
+]:
         return redirect('accounts:dashboard')
 
-    # Create workbook and worksheet
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Students"
 
-    # Header row
     ws.append([
         "First Name", "Last Name", "Username", "Email",
-        "Phone", "Student Number", "Class", "Subjects", "Form Number"
+        "Phone", "Student Number", "Class", "Subjects"
     ])
 
-    # Get all students
-    students = User.objects.filter(role='student')
+    students = User.objects.filter(
+        role='student', 
+        school=request.user.school
+    ).select_related('school_class')
 
     for student in students:
-        subjects = ", ".join([ssc.subject.name for ssc in student.studentsubjectclass_set.all()])
+        subjects = ", ".join([
+            ssc.subject.name for ssc in 
+            student.studentsubjectclass_set.filter(school=request.user.school)
+        ])
+        
         ws.append([
             student.first_name,
             student.last_name,
             student.username,
-            student.email,
-            student.phone,
-            student.student_number,
+            student.email or "",
+            student.phone or "",
+            student.student_number or "",
             student.school_class.name if student.school_class else "Not assigned",
             subjects if subjects else "Not assigned",
-            student.form_number if student.form_number else "-"
         ])
 
     # Prepare response
@@ -5725,36 +7521,80 @@ def export_students_excel(request):
 
 
 # EDIT CLASS
+@login_required
 def edit_class(request, pk):
-    class_obj = SchoolClass.objects.get(id=pk)
+    if request.user.role not in [
+    'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress'
+]:
+        return redirect('accounts:dashboard')
+
+    class_obj = get_object_or_404(SchoolClass, id=pk, school=request.user.school)
+    
     if request.method == "POST":
         name = request.POST.get("name")
         class_obj.name = name
-        # SAVE CHECKBOX VALUE
         class_obj.allows_student_login = 'allows_student_login' in request.POST
         class_obj.save()
         messages.success(request, "Class updated successfully ✅")
         return redirect('accounts:admin_classes')
+        
     return render(request, 'accounts/edit_class.html', {'class': class_obj})
 
 # DELETE CLASS
+@login_required
 def delete_class(request, pk):
-    class_obj = SchoolClass.objects.get(id=pk)
-    if class_obj.students.exists():
+    if request.user.role not in [
+    'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress'
+]:
+        return redirect('accounts:dashboard')
+    class_obj = get_object_or_404(SchoolClass, id=pk, school=request.user.school)
+    
+    if class_obj.students.filter(school=request.user.school).exists():
         messages.error(request, "Cannot delete class. It has students ❌")
         return redirect('accounts:admin_classes')
+        
     class_obj.delete()
     messages.success(request, "Class deleted successfully 🗑️")
     return redirect('accounts:admin_classes')
 
 # CLASS DETAILS
+@login_required
 def class_detail(request, pk):
-    class_obj = SchoolClass.objects.get(pk=pk)
-    students = class_obj.students.all()  
-    subjects = class_obj.subjects.all() 
-    assignments = TeacherSubjectClass.objects.all()
+    if request.user.role not in [
+    'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress',
+    'teacher',
+]:
+        return redirect('accounts:dashboard')
+    
+    class_obj = get_object_or_404(SchoolClass, pk=pk, school=request.user.school)
+    
+    # TEACHER CHECK - only his classes
+    if request.user.role == 'teacher':
+        assigned_class_ids = TeacherSubjectClass.objects.filter(
+            teacher=request.user, school=request.user.school
+        ).values_list('school_class_id', flat=True)
+        if class_obj.id not in assigned_class_ids:
+            messages.error(request, "You are not assigned to this class ❌")
+            return redirect('accounts:dashboard')
 
-    print(assignments)
+    students = User.objects.filter(school=request.user.school, role='student', school_class=class_obj)
+    subjects = class_obj.subjects.all() 
+    assignments = TeacherSubjectClass.objects.filter(
+        school_class=class_obj, school_class__school=request.user.school
+    )
+
     return render(request, 'accounts/class_detail.html', {
         'class_obj': class_obj,
         'students': students,
@@ -5765,21 +7605,35 @@ def class_detail(request, pk):
 # ASING_TEACHER_SUBJECT
 @login_required
 def assign_teacher_subject(request):
-    teachers = User.objects.filter(role='teacher')
-    subjects = Subject.objects.all()
-    classes = SchoolClass.objects.all()
+    if request.user.role not in [
+    'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress'
+]:
+        return redirect('accounts:dashboard')
+    teachers = User.objects.filter(role='teacher', school=request.user.school)
+    subjects = Subject.objects.filter(school=request.user.school)
+    classes = SchoolClass.objects.filter(school=request.user.school)
 
     selected_class_id = request.GET.get("class")
     selected_class_obj = None
 
     if selected_class_id:
         selected_class_id = int(selected_class_id)
-        selected_class_obj = SchoolClass.objects.get(id=selected_class_id)
+        selected_class_obj = get_object_or_404(
+            SchoolClass, id=selected_class_id, school=request.user.school
+        )
 
     if request.method == "POST":
         teacher_id = request.POST.get("teacher")
         subject_id = request.POST.get("subject")
         class_id = request.POST.get("class")
+
+        teacher = get_object_or_404(User, id=teacher_id, role='teacher', school=request.user.school)
+        subject = get_object_or_404(Subject, id=subject_id, school=request.user.school)
+        school_class = get_object_or_404(SchoolClass, id=class_id, school=request.user.school)
 
         exists = TeacherSubjectClass.objects.filter(
             school_class_id=class_id,
@@ -5791,9 +7645,9 @@ def assign_teacher_subject(request):
             return redirect(f"/assign-teacher-subject/?class={class_id}")
 
         TeacherSubjectClass.objects.create(
-            teacher_id=teacher_id,
-            subject_id=subject_id,
-            school_class_id=class_id
+            teacher=teacher,
+            subject=subject,
+            school_class=school_class
         )
 
         messages.success(request, "Assignment successful ✅")
@@ -5811,87 +7665,81 @@ def assign_teacher_subject(request):
 # -------------------------------
 
 # ----------------------------------
+@login_required
 def admin_classes(request):
+    if request.user.role not in [
+    'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress',
+    'hod',
+    'teacher',
+]:
+        return redirect('accounts:dashboard')
 
     school = request.user.school
 
-    classes = SchoolClass.objects.filter(
-        school=school
-    )
+    # TEACHER - only his classes
+    if request.user.role == 'teacher':
+        assigned_class_ids = TeacherSubjectClass.objects.filter(
+            teacher=request.user, school=school
+        ).values_list('school_class_id', flat=True)
+        classes = SchoolClass.objects.filter(school=school, id__in=assigned_class_ids)
+    else:
+        classes = SchoolClass.objects.filter(school=school)
 
     order = {
-        'creche': 1,
-        'nursery': 2,
-        'kg': 3,
-        'lower_primary': 4,
-        'upper_primary': 5,
-        'jhs': 6,
-        'shs': 7
+        'creche': 1, 'nursery': 2, 'kg': 3,
+        'lower_primary': 4, 'upper_primary': 5,
+        'jhs': 6, 'shs': 7
     }
-
     STAGE_LABELS = {
-        'creche': 'Creche',
-        'nursery': 'Nursery',
-        'kg': 'KG',
-        'lower_primary': 'Lower Primary',
-        'upper_primary': 'Upper Primary',
-        'jhs': 'JHS',
-        'shs': 'SHS'
+        'creche': 'Creche', 'nursery': 'Nursery', 'kg': 'KG',
+        'lower_primary': 'Lower Primary', 'upper_primary': 'Upper Primary',
+        'jhs': 'JHS', 'shs': 'SHS'
     }
 
     grouped = defaultdict(dict)
 
     for c in classes:
-
         if not c.id:
             continue
-
-        c.student_count = c.students.count()
+        # FIX - use User model, not students
+        c.student_count = User.objects.filter(school=school, role='student', school_class=c).count()
         c.stage_label = STAGE_LABELS.get(c.stage, c.stage)
-
         name = c.name.strip()
-
         m = re.match(r"^(.*?)\s+([A-Z])$", name)
-
         if m:
             base_class = m.group(1).strip()
             section = m.group(2)
         else:
             base_class = name
             section = None
-
         c.base_class = base_class
         c.section = section
-
-        grouped[c.stage_label].setdefault(
-            base_class,
-            {"classes": []}
-        )
-
+        grouped[c.stage_label].setdefault(base_class, {"classes": []})
         grouped[c.stage_label][base_class]["classes"].append(c)
 
+    grouped = dict(sorted(grouped.items(), key=lambda x: order.get(x[0].lower(), 999)))
 
-    grouped = dict(
-        sorted(
-            grouped.items(),
-            key=lambda x: order.get(x[0].lower(), 999)
-        )
-    )
-
-
-    return render(
-        request,
-        'accounts/admin_classes.html',
-        {
-            'grouped': grouped,
-            'school': school,
-        }
-    )
+    return render(request, 'accounts/admin_classes.html', {
+        'grouped': grouped,
+        'school': school,
+    })
 # ------------------------------
 # ADD SUBJECT
 # ----------------------------------
 @login_required
 def add_subject_to_class(request, class_id):
+    if request.user.role not in [
+        'admin',
+        'proprietor',
+        'proprietress',
+        'headmaster',
+        'headmistress'
+    ]:
+        return redirect('accounts:dashboard')
     school_class = get_object_or_404(SchoolClass, id=class_id, school=request.user.school)
     
     if request.method == "POST":
@@ -5932,6 +7780,14 @@ def add_subject_to_class(request, class_id):
 # --------------------------------
 @login_required
 def subject_list(request):
+    if request.user.role not in [
+        'admin',
+        'proprietor',
+        'proprietress',
+        'headmaster',
+        'headmistress'
+    ]:
+        return redirect('accounts:dashboard')
     school = request.user.school
 
     subjects = Subject.objects.filter(
@@ -5946,6 +7802,14 @@ def subject_list(request):
 
 @login_required
 def edit_subject(request, pk):
+    if request.user.role not in [
+        'admin',
+        'proprietor',
+        'proprietress',
+        'headmaster',
+        'headmistress'
+    ]:
+        return redirect('accounts:dashboard')
     school = request.user.school
 
     subject = get_object_or_404(
@@ -5970,6 +7834,14 @@ def edit_subject(request, pk):
 
 @login_required
 def delete_subject(request, pk):
+    if request.user.role not in [
+        'admin',
+        'proprietor',
+        'proprietress',
+        'headmaster',
+        'headmistress'
+    ]:
+        return redirect('accounts:dashboard')
     school = request.user.school
 
     subject = get_object_or_404(
@@ -5987,56 +7859,81 @@ def delete_subject(request, pk):
 
 # ---------------------------------
 
+
 # --------------------------------
 @login_required
 def export_teachers_excel(request):
-    if request.user.role != 'admin':
-        return redirect('accounts:dashboard')
-    teachers = User.objects.filter(role='teacher').distinct()
+    if request.user.role not in [
+    "admin",
+    "proprietor",
+    "proprietress",
+    "headmaster",
+    "headmistress",
+]:
+        return redirect("accounts:dashboard")
 
-    # Create workbook
+    # FIX - only your school
+    teachers = User.objects.filter(
+        role="teacher", school=request.user.school
+    ).distinct()
+
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Teachers"
+    ws.append(
+        [
+            "First Name",
+            "Last Name",
+            "Username",
+            "Email",
+            "Phone",
+            "School",
+            "Classes",
+            "Subjects",
+        ]
+    )
 
-    # Header row
-    ws.append(["First Name", "Last Name", "Username", "Email", "Phone", "School", "Classes", "Subjects"])
-
-    # Data rows
     for teacher in teachers:
         classes_list = []
         subjects_list = []
-
-        for tc in teacher.teachersubjectclass_set.all():
+        for tc in teacher.teachersubjectclass_set.filter(school=request.user.school):
             if tc.school_class:
                 classes_list.append(tc.school_class.name)
             if tc.subject:
                 subjects_list.append(tc.subject.name)
 
-        classes = ", ".join(classes_list)
-        subjects = ", ".join(subjects_list)
-        
-        
-        ws.append([
-            teacher.first_name,
-            teacher.last_name,
-            teacher.username,
-            teacher.email,
-            teacher.phone or "Not provided",
-            teacher.school.name if teacher.school else "No school assigned",
-            classes or "Not assigned",
-            subjects or "Not assigned"
-        ])
+        ws.append(
+            [
+                teacher.first_name,
+                teacher.last_name,
+                teacher.username,
+                teacher.email,
+                teacher.phone or "Not provided",
+                teacher.school.name if teacher.school else "No school assigned",
+                ", ".join(classes_list) or "Not assigned",
+                ", ".join(subjects_list) or "Not assigned",
+            ]
+        )
 
-    # Prepare response
-    response = HttpResponse(content_type="application/ms-excel")
-    response['Content-Disposition'] = 'attachment; filename=teachers.xlsx'
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = "attachment; filename=teachers.xlsx"
     wb.save(response)
     return response
+
 
 # Edit_ASSIGNMENT
 @login_required
 def edit_assignment(request, id):
+    if request.user.role not in [
+        'admin',
+        'proprietor',
+        'proprietress',
+        'headmaster',
+        'headmistress'
+    ]:
+        return redirect('accounts:dashboard')
     assignment = get_object_or_404(
         TeacherSubjectClass,
         id=id,
@@ -6088,15 +7985,23 @@ def edit_assignment(request, id):
 
 @login_required
 def delete_assignment(request, id):
+    if request.user.role not in [
+        'admin',
+        'proprietor',
+        'proprietress',
+        'headmaster',
+        'headmistress'
+    ]:
+        return redirect('accounts:dashboard')
     assignment = get_object_or_404(
         TeacherSubjectClass, 
         id=id, 
         teacher__school=request.user.school  # <-- USE THIS, not school=
     )
-    
+
     if request.method != "POST":
         return redirect('accounts:view-teacher', teacher_id=assignment.teacher.id)
-    
+
     teacher_id = assignment.teacher.id
     subject_id = assignment.subject.id
     class_id = assignment.school_class.id
@@ -6104,42 +8009,51 @@ def delete_assignment(request, id):
     subject_name = assignment.subject.name
     teacher_name = assignment.teacher.get_full_name() or assignment.teacher.username
     class_name = assignment.school_class.name
-    
+
     assignment.delete()
-    
+
     Timetable.objects.filter(
         teacher_id=teacher_id,
         subject_id=subject_id,
         school_class_id=class_id
     ).delete()
-    
+
     messages.success(request, f'Removed {teacher_name} from {subject_name} in {class_name}.')
-    return redirect('accounts:view-teacher', teacher_id=teacher_id)
+    return redirect("accounts:assigned_teachers_list")
 
 @login_required
 def add_assignment(request):
+    if request.user.role not in [
+        'admin',
+        'proprietor',
+        'proprietress',
+        'headmaster',
+        'headmistress'
+    ]:
+        return redirect('accounts:dashboard')
     if request.method == 'POST':
         teacher_id = request.POST.get('teacher')
         class_id = request.POST.get('school_class')
         subject_id = request.POST.get('subject')
 
-        # Check for duplicate
+        # FIX - check school
+        teacher = get_object_or_404(User, id=teacher_id, role='teacher', school=request.user.school)
+        school_class = get_object_or_404(SchoolClass, id=class_id, school=request.user.school)
+        subject = get_object_or_404(Subject, id=subject_id, school=request.user.school)
+
         exists = TeacherSubjectClass.objects.filter(
             school_class_id=class_id,
             subject_id=subject_id
         ).exists()
 
         if exists:
-            messages.warning(
-                request,
-                "This subject is already assigned to a teacher in this class ⚠️"
-            )
+            messages.warning(request, "This subject is already assigned to a teacher in this class ⚠️")
             return redirect(f"/assign-teacher-subject/?class={class_id}")
 
         TeacherSubjectClass.objects.create(
-            teacher_id=teacher_id,
-            subject_id=subject_id,
-            school_class_id=class_id
+            teacher=teacher,
+            subject=subject,
+            school_class=school_class
         )
 
         messages.success(request, "Assignment added successfully!")
@@ -6147,12 +8061,17 @@ def add_assignment(request):
 
     return render(request, 'accounts/add_assignment.html')
 
-def test_view(request):
-    return HttpResponse("Test page works")
-
 
 @login_required
 def remove_student_subject(request, student_id, subject_id):
+    if request.user.role not in [
+        'admin',
+        'proprietor',
+        'proprietress',
+        'headmaster',
+        'headmistress'
+    ]:
+        return redirect('accounts:dashboard')
     student = get_object_or_404(
         User,
         id=student_id,
@@ -6185,50 +8104,75 @@ def remove_student_subject(request, student_id, subject_id):
 
 @login_required
 def add_subjects_to_class(request):
+    if request.user.role not in [
+    "admin",
+    "proprietor",
+    "proprietress",
+    "headmaster",
+    "headmistress",
+]:
+        return redirect("accounts:dashboard")
+
     if request.method == "POST":
         class_id = request.POST.get("class_id")
         subject_ids = request.POST.getlist("subjects")
-        
+
         if class_id and subject_ids:
-            school_class = SchoolClass.objects.get(id=class_id)
-            students = User.objects.filter(role='student', school_class=school_class)
-            # Replace 'student_class' with your actual field name that links User to SchoolClass
-            
+            # FIX - school filter
+            school_class = get_object_or_404(
+                SchoolClass, id=class_id, school=request.user.school
+            )
+            students = User.objects.filter(
+                role="student", school=request.user.school, school_class=school_class
+            )
+
             for student in students:
                 for subject_id in subject_ids:
-                    StudentSubjectClass.objects.get_or_create(
-                        student=student,
-                        subject_id=subject_id,
-                        school_class=school_class
+                    # FIX - check subject belongs to your school
+                    subject = get_object_or_404(
+                        Subject, id=subject_id, school=request.user.school
                     )
-                messages.success(request, f"Subjects added to all students in {school_class.name} ✅")
-            return redirect(request.META.get('HTTP_REFERER', '/'))
-    
-    return redirect(request.META.get('HTTP_REFERER', '/'))
+                    StudentSubjectClass.objects.get_or_create(
+                        student=student, subject=subject, school_class=school_class
+                    )
+            messages.success(
+                request, f"Subjects added to all students in {school_class.name} ✅"
+            )
+            return redirect(request.META.get("HTTP_REFERER", "/"))
+
+    return redirect(request.META.get("HTTP_REFERER", "/"))
 
 
 @login_required
 def parent_dashboard(request):
-    if request.user.role!= 'parent':
-        return redirect('accounts:dashboard')
+    if request.user.role != "parent":
+        return redirect("accounts:dashboard")
 
-    links = ParentStudentLink.objects.filter(parent=request.user).select_related('student', 'student__school_class', 'student__school')
+    school = request.user.school  # parent school
+    links = ParentStudentLink.objects.filter(
+        parent=request.user, student__school=school, student__is_active=True  # ISOLATED
+    ).select_related("student", "student__school_class", "student__school")
+
     children = [link.student for link in links]
 
-    child_id = request.GET.get('child_id') or request.session.get('selected_child_id')
+    child_id = request.GET.get("child_id") or request.session.get("selected_child_id")
     selected_child = next((c for c in children if str(c.id) == str(child_id)), None)
     if not selected_child and children:
         selected_child = children[0]
 
     if selected_child:
-        request.session['selected_child_id'] = selected_child.id
+        request.session["selected_child_id"] = selected_child.id
 
-    active_term = Term.objects.filter(is_active=True).first()
-    school = request.user.school
+    active_term = Term.objects.filter(school=school, is_active=True).first()  # ISOLATED
 
     announcement_count = 0
-    fees_status = {'text': 'No data', 'color': 'secondary', 'amount': 0, 'balance': 0}
-    academic_status = {'text': 'No data', 'color': 'secondary', 'score': 0, 'grade': '-'}
+    fees_status = {"text": "No data", "color": "secondary", "amount": 0, "balance": 0}
+    academic_status = {
+        "text": "No data",
+        "color": "secondary",
+        "score": 0,
+        "grade": "-",
+    }
     attendance_pct = 0
     attendance_text = "0%"
     present_days = 0
@@ -6237,145 +8181,208 @@ def parent_dashboard(request):
     attendance_display = "0/0"
 
     if children and active_term and selected_child:
-        # 1. ANNOUNCEMENTS
+        # 1. ANNOUNCEMENTS - ISOLATED
         today = timezone.now().date()
         all_anns = Announcement.objects.filter(
-                    school=school,
-                    created_at__date__gte=active_term.start_date,
-                    created_at__date__lte=today,
-                    is_active=True
-                ).order_by('-created_at')
+            school=school,
+            created_at__date__gte=active_term.start_date,
+            created_at__date__lte=today,
+            is_active=True,
+        ).order_by("-created_at")
 
         announcements_list = []
         for ann in all_anns:
             roles = ann.target_roles or []
             if isinstance(roles, str):
                 import ast
+
                 try:
                     roles = ast.literal_eval(roles)
                 except:
                     roles = [r.strip(" '[]") for r in roles.split(",")]
-            if any(r in roles for r in ['all', 'parents', 'students']):
+            if any(r in roles for r in ["all", "parents", "students"]):
                 if ann.created_at.weekday() < 5:
                     announcements_list.append(ann)
 
         announcements = announcements_list
         announcement_count = len(announcements)
 
-        # 2. FEES
-        fee_record = StudentFee.objects.filter(
+        # 2. FEES - DYNAMIC + ISOLATED
+        dyn_items = DynamicStudentFeeItem.objects.filter(
+            school=school,
             student=selected_child,
-            term=active_term,
-            academic_year=active_term.academic_year.name if hasattr(active_term.academic_year, 'name') else active_term.academic_year
-        ).first()
-
-        if fee_record:
-            balance = fee_record.balance()
+            student_fee__term=active_term,
+            student_fee__academic_year=str(
+                active_term.academic_year.name
+                if hasattr(active_term.academic_year, "name")
+                else active_term.academic_year
+            ),
+        )
+        if dyn_items.exists():
+            total_due = sum(float(i.amount_due) for i in dyn_items)
+            total_paid = sum(float(i.amount_paid) for i in dyn_items)
+            balance = total_due - total_paid
             if balance <= 0:
-                fees_status = {'text': 'All Paid ✓', 'color': 'success', 'amount': 0, 'balance': 0}
+                fees_status = {
+                    "text": "All Paid ✓",
+                    "color": "success",
+                    "amount": 0,
+                    "balance": 0,
+                }
             else:
-                fees_status = {'text': f'GHS {balance}', 'color': 'danger', 'amount': balance, 'balance': balance}
+                fees_status = {
+                    "text": f"GHS {balance:.2f}",
+                    "color": "danger",
+                    "amount": balance,
+                    "balance": balance,
+                }
         else:
-            fees_status = {'text': 'No fees set', 'color': 'secondary', 'amount': 0, 'balance': 0}
+            # Fallback to old StudentFee if no dynamic yet
+            fee_record = StudentFee.objects.filter(
+                school=school,
+                student=selected_child,
+                term=active_term,
+            ).first()
+            if fee_record:
+                balance = fee_record.balance()
+                if balance <= 0:
+                    fees_status = {
+                        "text": "All Paid ✓",
+                        "color": "success",
+                        "amount": 0,
+                        "balance": 0,
+                    }
+                else:
+                    fees_status = {
+                        "text": f"GHS {balance}",
+                        "color": "danger",
+                        "amount": balance,
+                        "balance": balance,
+                    }
 
-        # 3. ACADEMIC
-        results = Result.objects.filter(student=selected_child, term=active_term, status='published')
+        # 3. ACADEMIC - ISOLATED
+        results = Result.objects.filter(
+            student=selected_child,
+            student__school=school,
+            term=active_term,
+            status="published",
+        )
         percentages = [r.percentage for r in results if r.percentage is not None]
         avg_score = sum(percentages) / len(percentages) if percentages else 0
 
-        def get_grade(pct):
-            if pct >= 80: return "A"
-            elif pct >= 70: return "B"
-            elif pct >= 60: return "C"
-            elif pct >= 50: return "D"
-            elif pct >= 40: return "E"
-            else: return "F"
+        grading = GradingScale.objects.filter(
+                    school=school,
+                    term=active_term,
+                    min_score__lte=avg_score,
+                    max_score__gte=avg_score,
+                ).first()
 
-        if avg_score >= 80:
-            academic_status = {'text': 'Excellent', 'color': 'success', 'score': round(avg_score,1), 'grade': get_grade(avg_score)}
-        elif avg_score >= 70:
-            academic_status = {'text': 'Very Good', 'color': 'primary', 'score': round(avg_score,1), 'grade': get_grade(avg_score)}
-        elif avg_score >= 60:
-            academic_status = {'text': 'Good', 'color': 'info', 'score': round(avg_score,1), 'grade': get_grade(avg_score)}
-        elif avg_score >= 50:
-            academic_status = {'text': 'Pass', 'color': 'warning', 'score': round(avg_score,1), 'grade': get_grade(avg_score)}
-        elif avg_score >= 40:
-            academic_status = {'text': 'Weak', 'color': 'danger', 'score': round(avg_score,1), 'grade': get_grade(avg_score)}
+        if not grading:
+            grading = GradingScale.objects.filter(
+                school=school,
+                term__isnull=True,
+                min_score__lte=avg_score,
+                max_score__gte=avg_score,
+            ).first()
+
+        if avg_score > 0 and grading:
+            academic_status = {
+                "text": grading.remark,
+                "color": "success",
+                "score": round(avg_score, 1),
+                "grade": grading.grade,
+            }
         elif avg_score > 0:
-            academic_status = {'text': 'Fail', 'color': 'danger', 'score': round(avg_score,1), 'grade': "F"}
+            academic_status = {
+                "text": "No grading scale",
+                "color": "secondary",
+                "score": round(avg_score, 1),
+                "grade": "-",
+            }
         else:
-            academic_status = {'text': 'No grades', 'color': 'secondary', 'score': 0, 'grade': '-'}
+            academic_status = {
+                "text": "No grades",
+                "color": "secondary",
+                "score": 0,
+                "grade": "-",
+            }
 
-        # 4. ATTENDANCE - FINAL RULE: ONLY P and A, 1 P = Whole day Present
-        today = timezone.now().date()
-        spent_days = calculate_school_days(active_term.start_date, today, selected_child.school)
-        total_days = calculate_school_days(active_term.start_date, active_term.end_date, selected_child.school)
+        # 4. ATTENDANCE
+        spent_days = calculate_school_days(
+            active_term.start_date, today, selected_child.school
+        )
+        total_days = calculate_school_days(
+            active_term.start_date, active_term.end_date, selected_child.school
+        )
 
         records = AttendanceRecord.objects.filter(
             student=selected_child,
+            student__school=school,
             session__date__gte=active_term.start_date,
-            session__date__lte=today
-        ).values('session__date', 'status')
+            session__date__lte=today,
+        ).values("session__date", "status")
 
         by_date = defaultdict(list)
         for r in records:
-            by_date[r['session__date']].append(r['status'])
+            by_date[r["session__date"]].append(r["status"])
 
         present_days = 0
-        absent_days = 0
-
         for date, statuses in by_date.items():
-            # FINAL RULE: If any P that day = Present, else Absent (No Late)
-            if 'P' in statuses:
+            if "P" in statuses:
                 present_days += 1
-            else:
-                absent_days += 1
 
-        attendance_pct = round((present_days / spent_days * 100), 1) if spent_days else 0
+        attendance_pct = (
+            round((present_days / spent_days * 100), 1) if spent_days else 0
+        )
         attendance_text = f"{attendance_pct}%"
         attendance_display = f"{present_days}/{spent_days}"
 
     context = {
-        'parent': request.user,
-        'children': children,
-        'children_count': len(children),
-        'selected_child': selected_child,
-        'announcement_count': announcement_count,
-        'fees_status': fees_status,
-        'academic_status': academic_status,
-        'attendance_pct': attendance_pct,
-        'attendance_text': attendance_text,
-        'active_term': active_term,
-        'present_days': present_days,
-        'spent_days': spent_days,
-        'total_days': total_days,
-        'attendance_display': attendance_display,
-        }
-    return render(request, 'accounts/parent_dashboard.html', context)
+        "parent": request.user,
+        "children": children,
+        "children_count": len(children),
+        "selected_child": selected_child,
+        "announcement_count": announcement_count,
+        "fees_status": fees_status,
+        "academic_status": academic_status,
+        "attendance_pct": attendance_pct,
+        "attendance_text": attendance_text,
+        "active_term": active_term,
+        "present_days": present_days,
+        "spent_days": spent_days,
+        "total_days": total_days,
+        "attendance_display": attendance_display,
+    }
+    return render(request, "accounts/parent_dashboard.html", context)
+
+
 @login_required
 def student_profile(request, student_id=None):
-    if request.user.role == 'student':
+    if request.user.role == "student":
         student = request.user
+        school = student.school
     else:
-        student = get_object_or_404(User, id=student_id, role='student')
-    if request.user.role == 'parent':
+        # PARENT / TEACHER / ADMIN - MUST CHECK SCHOOL
+        school = request.user.school
+        student = get_object_or_404(User, id=student_id, role="student", school=school)
+
+    if request.user.role == "parent":
         if not ParentStudentLink.objects.filter(
             parent=request.user,
-            student=student
+            student=student,
+            student__school=school,  # <-- add isolation
+            parent__school=school,
         ).exists():
-            return redirect('accounts:parent_dashboard')
+            messages.error(request, "Access denied.")
+            return redirect("accounts:parent_dashboard")
 
-    active_term = Term.objects.filter(
-        school=student.school,
-        is_active=True
-    ).first()
+    active_term = Term.objects.filter(school=student.school, is_active=True).first()
 
     context = {
-        'student': student,
-        'active_term': active_term,
+        "student": student,
+        "active_term": active_term,
     }
-
-    return render(request, 'accounts/student_profile.html', context)
+    return render(request, "accounts/student_profile.html", context)
 
 
 @login_required
@@ -6409,13 +8416,23 @@ def download_results_pdf(request):
     max_total = subject_count * 100
     average_score = round(total_score / subject_count, 1) if subject_count > 0 else 0.0
 
-    # 3. GRADE
-    if average_score >= 80: overall_grade = "A"
-    elif average_score >= 70: overall_grade = "B"
-    elif average_score >= 60: overall_grade = "C"
-    elif average_score >= 50: overall_grade = "D"
-    elif average_score >= 40: overall_grade = "E"
-    else: overall_grade = "F"
+    # 3. GRADE — DYNAMIC
+    grading = GradingScale.objects.filter(
+        school=school,
+        term=active_term,
+        min_score__lte=average_score,
+        max_score__gte=average_score,
+    ).first()
+
+    if not grading:
+        grading = GradingScale.objects.filter(
+            school=school,
+            term__isnull=True,
+            min_score__lte=average_score,
+            max_score__gte=average_score,
+        ).first()
+
+    overall_grade = grading.grade if grading else "-"
 
     # 4. POSITION
     try:
@@ -6482,84 +8499,80 @@ def download_results_pdf(request):
 
 @login_required
 def student_attendance(request):
-    if request.user.role!= 'student':
+    if request.user.role != 'student':
         messages.error(request, "Only students can view this page.")
         return redirect('accounts:student_dashboard')
 
     student = request.user
-
-    # MULTI-SCHOOL FIX
     setting = SchoolSetting.objects.filter(school=student.school).first()
     attendance_mode = setting.attendance_mode if setting else 'subject'
 
-    # FILTERS
     years = AcademicYear.objects.filter(school=student.school).order_by('-name')
     terms = Term.objects.filter(school=student.school).order_by('-start_date')
 
     selected_year_id = request.GET.get('year')
     selected_term_id = request.GET.get('term')
 
+    if selected_year_id:
+        terms = terms.filter(academic_year_id=selected_year_id)
+
     if selected_term_id:
-        terms_qs = Term.objects.filter(id=selected_term_id, school=student.school)
-        active_term = terms_qs.first()
-        # filter terms dropdown by year if year selected
-        if selected_year_id:
-            terms = terms.filter(academic_year_id=selected_year_id)
+        active_term = Term.objects.filter(id=selected_term_id, school=student.school).first()
     elif selected_year_id:
         active_term = Term.objects.filter(academic_year_id=selected_year_id, school=student.school, is_active=True).first()
         if not active_term:
             active_term = Term.objects.filter(academic_year_id=selected_year_id, school=student.school).order_by('-start_date').first()
-        terms = terms.filter(academic_year_id=selected_year_id)
     else:
         active_term = Term.objects.filter(school=student.school, is_active=True).first()
 
-    week_offset = int(request.GET.get('s_week', 0))
-    today = timezone.now().date()
-    current_monday = today - timedelta(days=today.weekday())
-    target_monday = current_monday + timedelta(weeks=week_offset)
-    target_friday = target_monday + timedelta(days=4)
-
-    # TERM WEEK HANDLING
+    # ===== WEEK LOGIC - ONLY HERE, NOWHERE ELSE =====
     if active_term:
-        term_start = active_term.start_date
-        term_end = active_term.end_date
-        week1_end = term_start + timedelta(days=(4 - term_start.weekday()))
-        if target_friday < term_start:
-            target_monday = term_start
-            target_friday = week1_end
-        elif target_monday <= term_start <= target_friday:
-            target_monday = term_start
-            target_friday = week1_end
-        first_full_monday = term_start + timedelta(days=(7 - term_start.weekday()))
-        if target_monday < first_full_monday:
-            active_week = 1
-        else:
-            active_week = ((target_monday - first_full_monday).days // 7) + 2
-        # keep week inside selected term
-        if target_monday > term_end:
-            target_monday = term_end - timedelta(days=4)
-            target_friday = term_end
+        all_weeks = get_weeks_for_term(active_term)
+        total_weeks = len(all_weeks) if all_weeks else 1
+
+        # FIRST OPEN = ACTIVE WEEK
+        try:
+            raw = request.GET.get('s_week')
+            if raw is None or raw == '':
+                raise ValueError
+            week_offset = int(raw)
+        except:
+            today = timezone.now().date()
+            active_w = get_active_week(active_term.start_date, today, active_term.end_date)
+            week_offset = active_w - 1
+
+        # clamp
+        week_offset = max(0, min(week_offset, total_weeks - 1))
+        target_monday, target_friday = all_weeks[week_offset]
+        active_week = week_offset + 1
+        s_prev_week = max(0, week_offset - 1)
+        s_next_week = min(total_weeks - 1, week_offset + 1)
     else:
+        today = timezone.now().date()
+        target_monday = today - timedelta(days=today.weekday())
+        target_friday = target_monday + timedelta(days=4)
         active_week = 1
+        total_weeks = 1
+        week_offset = 0
+        s_prev_week = 0
+        s_next_week = 0
 
-    s_prev_week = week_offset if active_week == 1 else week_offset - 1
-
-    # ==========================
-    # CLASS TEACHER MODE - ONLY P and A
-    # ==========================
+    # ... keep your attendance_mode code same as you have ...
     if attendance_mode == 'class_teacher':
         qs = AttendanceRecord.objects.filter(
             student=student,
             school=student.school,
+            session__school=student.school,
             session__date__gte=target_monday,
             session__date__lte=target_friday
         )
-        # APPLY YEAR FILTER FOR STATS
         if selected_year_id:
-            qs = qs.filter(session__term__academic_year_id=selected_year_id)
+            term_ids = Term.objects.filter(academic_year_id=selected_year_id, school=student.school).values_list('id', flat=True)
+            qs = qs.filter(session__term_id__in=term_ids)
+        if selected_term_id:
+            qs = qs.filter(session__term_id=selected_term_id)
 
         raw = qs.values('session__date', 'status')
-
         by_date = defaultdict(list)
         for row in raw:
             by_date[row['session__date']].append(row['status'])
@@ -6568,40 +8581,40 @@ def student_attendance(request):
         for date, statuses in by_date.items():
             final_status = 'P' if 'P' in statuses else 'A'
             records.append({'session__date': date, 'status': final_status})
-
         records = sorted(records, key=lambda x: x['session__date'], reverse=True)
+
         total = len(records)
         present = len([r for r in records if r['status'] == 'P'])
-        absent = len([r for r in records if r['status'] == 'A'])
-        late = 0
+        absent = total - present
         by_subject = []
 
-    # ==========================
-    # SUBJECT TEACHER MODE
-    # ==========================
     else:
         qs = AttendanceRecord.objects.filter(
             student=student,
             school=student.school,
+            session__school=student.school,
             session__date__gte=target_monday,
             session__date__lte=target_friday,
-        ).select_related("session__subject", "session__teacher")
+        ).select_related("session__subject", "session__teacher", "session__term")
 
         if selected_year_id:
-            qs = qs.filter(session__term__academic_year_id=selected_year_id)
+            term_ids = Term.objects.filter(academic_year_id=selected_year_id, school=student.school).values_list('id', flat=True)
+            qs = qs.filter(session__term_id__in=term_ids)
+        if selected_term_id:
+            qs = qs.filter(session__term_id=selected_term_id)
 
         records = qs.order_by('-session__date')
 
         subject_data = defaultdict(lambda: {'name': '', 'total': 0, 'present': 0, 'absent': 0})
         for record in records:
             if record.session and record.session.subject:
-                subject = record.session.subject.name
-                subject_data[subject]['name'] = subject
-                subject_data[subject]['total'] += 1
+                subj_name = record.session.subject.name
+                subject_data[subj_name]['name'] = subj_name
+                subject_data[subj_name]['total'] += 1
                 if record.status == 'P':
-                    subject_data[subject]['present'] += 1
+                    subject_data[subj_name]['present'] += 1
                 else:
-                    subject_data[subject]['absent'] += 1
+                    subject_data[subj_name]['absent'] += 1
 
         by_subject = []
         for subject in subject_data.values():
@@ -6613,35 +8626,30 @@ def student_attendance(request):
             by_date_overall[r.session.date].append(r.status)
 
         total = len(by_date_overall)
-        present = 0
-        absent = 0
-        for statuses in by_date_overall.values():
-            if 'P' in statuses:
-                present += 1
-            else:
-                absent += 1
-        late = 0
+        present = sum(1 for s in by_date_overall.values() if 'P' in s)
+        absent = total - present
 
     context = {
-        'records': records,
-        'total': total,
-        'present': present,
-        'absent': absent,
-        'late': late,
-        's_week_start': target_monday,
-        's_week_end': target_friday,
-        's_prev_week': s_prev_week,
-        's_next_week': week_offset + 1,
-        's_active_week': active_week,
-        'attendance_mode': attendance_mode,
-        'active_term': active_term,
-        'by_subject': by_subject,
-        # FILTER CONTEXT
-        'years': years,
-        'terms': terms,
-        'selected_year': selected_year_id or "",
-        'selected_term': selected_term_id or "",
-        'school': student.school,
+        "records": records,
+        "total": total,
+        "present": present,
+        "absent": absent,
+        "late": 0,
+        "s_week_start": target_monday,
+        "s_week_end": target_friday,
+        "s_prev_week": s_prev_week,
+        "s_next_week": s_next_week,
+        "s_active_week": active_week,
+        "s_week": week_offset,
+        "total_weeks": total_weeks,
+        "attendance_mode": attendance_mode,
+        "active_term": active_term,
+        "by_subject": by_subject,
+        "years": years,
+        "terms": terms,
+        "selected_year": selected_year_id or "",
+        "selected_term": selected_term_id or "",
+        "school": student.school,
     }
     return render(request, 'accounts/student_attendance.html', context)
 
@@ -6718,8 +8726,18 @@ def export_attendance_excel(request, session_id):
 
 @login_required
 def admin_review_results(request):
-    if request.user.role != "admin":
+    if request.user.role in ["headmaster", "headmistress"]:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_review_results:
+                messages.error(request, "Admin has not allowed you to review results")
+                return redirect("accounts:headmaster_dashboard")
+        except:
+            return redirect("accounts:headmaster_dashboard")
+    elif request.user.role not in ["admin", "proprietor", "proprietress"]:
         return redirect("accounts:dashboard")
+
+
 
     school = request.user.school 
 
@@ -6750,21 +8768,22 @@ def admin_review_results(request):
     results = list(results)
 
     for r in results:
-        assignment = TeacherSubjectClass.objects.filter(
-            subject=r.subject,
-            school_class=r.student.school_class,
-            school_class__school=school,  
-        ).first()
+            assignment = TeacherSubjectClass.objects.filter(
+                subject=r.subject,
+                school_class=r.student.school_class,
+                school_class__school=school,
+            ).first()
 
-        r.teacher = (
-            assignment.teacher.get_full_name()
-            if assignment and assignment.teacher
-            else "No Teacher"
-        )
+            r.teacher = (
+                assignment.teacher.get_full_name()
+                if assignment and assignment.teacher
+                else "No Teacher"
+            )
 
-        ca = float(r.class_score or 0)
-        exam = float(r.exam_score or 0)
-        r.total = ca + exam
+            # NEW GRADING SYSTEM
+            r.total = float(r.total_score or 0)
+            r.review_ca = float(r.class_score or 0)
+            r.review_exam = float(r.exam_converted_score or 0)
 
     return render(
         request,
@@ -6782,35 +8801,56 @@ def admin_review_results(request):
 
 @login_required
 def approve_result(request, pk):
-    if request.user.role != 'admin':
+    if request.user.role in ["headmaster", "headmistress"]:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_review_results:
+                messages.error(request, "Not allowed")
+                return redirect("accounts:headmaster_dashboard")
+        except:
+            return redirect("accounts:headmaster_dashboard")
+    elif request.user.role not in ['admin', 'proprietor', 'proprietress']:
         return redirect('accounts:dashboard')
-    
+
     school = request.user.school 
-    
     result = get_object_or_404(Result, pk=pk, status='submitted', school=school)
-    
+
     result.status = 'published'
     result.published_at = timezone.now()
     result.save()
     messages.success(request, f'Result for {result.student.get_full_name()} approved.')
     return redirect('accounts:admin_review_results')
 
+
 @login_required
 def return_result(request, pk):
-    if request.user.role != 'admin':
-        return redirect('accounts:dashboard')
-    
+    if request.user.role in ["headmaster", "headmistress"]:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_review_results:
+                messages.error(request, "Not allowed")
+                return redirect("accounts:headmaster_dashboard")
+        except:
+            return redirect("accounts:headmaster_dashboard")
+    elif request.user.role not in ["admin", "proprietor", "proprietress"]: 
+        return redirect("accounts:dashboard")
+
     school = request.user.school
-    
-    result = get_object_or_404(Result, pk=pk, status='submitted', school=school)
-    
-    if request.method == 'POST':
-        result.status = 'returned'
-        result.returned_reason = request.POST.get('reason', '')
+
+    result = get_object_or_404(Result, pk=pk, status="submitted", school=school)
+
+    if request.method == "POST":
+        result.status = "returned"
+        result.returned_reason = request.POST.get("reason", "")
         result.save()
-        messages.warning(request, f'Result returned to teacher.')
-        
-    return redirect('accounts:admin_review_results')
+        messages.warning(request, f"Result returned to teacher.")
+
+    return redirect("accounts:admin_review_results")
+
+
+def test_view(request):
+    return HttpResponse("Test page works")
+
 
 @login_required
 def teacher_profile(request, user_id):
@@ -6844,9 +8884,14 @@ def teacher_profile(request, user_id):
 
 @login_required
 def add_subject_to_student(request, student_id):
+    if request.user.role not in ['admin', 'proprietor',
+    'proprietress', 'headmaster', 'headmistress']:
+        return redirect('accounts:dashboard')
+
     if request.method == 'POST':
         school = request.user.school
-        
+        ...
+
         student = get_object_or_404(
             User,
             id=student_id,
@@ -6855,7 +8900,7 @@ def add_subject_to_student(request, student_id):
         )
 
         subject_ids = request.POST.getlist('subject_ids')
-        
+
         if not student.school_class:
             messages.error(request, f'{student.first_name} has no class assigned')
             return redirect('accounts:view-student', student_id=student_id)
@@ -6893,34 +8938,65 @@ def add_subject_to_student(request, student_id):
 
 @login_required
 def view_student_grades(request, student_id):
+    if request.user.role not in [  'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress', "teacher"]:
+        return redirect("accounts:dashboard")
+
     school = request.user.school
-    student = get_object_or_404(User, id=student_id, role='student', school=school)
-    
+    student = get_object_or_404(User, id=student_id, role="student", school=school)
+
+    # ✅ TEACHER ISOLATION - NEW!
+    if request.user.role == "teacher":
+        # Teacher must teach this student's class
+        has_class = TeacherSubjectClass.objects.filter(
+            teacher=request.user,
+            school_class=student.school_class,
+            school_class__school=school,
+        ).exists()
+
+        if not has_class:
+            messages.error(
+                request, "You can only view grades for students in classes you teach!"
+            )
+            return redirect("accounts:dashboard")
+
     active_term = Term.objects.filter(is_active=True, school=school).first()
-    
+
     if not active_term:
-        messages.error(request, "No active term set. Ask admin to set one in Term Settings.")
-        return render(request, 'accounts/student_grades.html', {
-            'student': student,
-            'student_results': [],
-            'active_term': None,
-        })
-    
+        messages.error(request, "No active term set.")
+        return render(
+            request,
+            "accounts/student_grades.html",
+            {
+                "student": student,
+                "student_results": [],
+                "active_term": None,
+            },
+        )
+
     term = active_term
     year = active_term.academic_year
-        
-    student_results = Result.objects.filter(
-        school=school,  
-        student=student,
-        term=term,
-        academic_year=year,
-        status__in=['submitted', 'published']
-    ).select_related('subject').order_by('subject__name') 
 
+    student_results = (
+        Result.objects.filter(
+            school=school,
+            student=student,
+            term=term,
+            academic_year=year,
+            status__in=["submitted", "published"],
+        )
+        .select_related("subject")
+        .order_by("subject__name")
+    )
+
+    # ... rest same
     overall_average = 0
     overall_grade = "N/A"
     overall_remark = "N/A"
-    
+
     if student_results.exists():
         total_percentage = 0
         valid_count = 0
@@ -6931,30 +9007,45 @@ def view_student_grades(request, student_id):
                     valid_count += 1
             except (ValueError, TypeError):
                 pass
-        
-        if valid_count > 0:
-            overall_average = round(total_percentage / valid_count, 1)
-            
-            # Get overall grade from average
-            if overall_average >= 80: overall_grade, overall_remark = "A", "Excellent"
-            elif overall_average >= 70: overall_grade, overall_remark = "B", "Very Good"
-            elif overall_average >= 60: overall_grade, overall_remark = "C", "Good"
-            elif overall_average >= 50: overall_grade, overall_remark = "D", "Pass"
-            elif overall_average >= 40: overall_grade, overall_remark = "E", "Weak"
-            else: overall_grade, overall_remark = "F", "Fail"
-    
-    return render(request, 'accounts/student_grades.html', {
-        'student': student,
-        'student_results': student_results,
-        'term': term,
-        'academic_year': year,
-        'active_term': active_term,
-        'overall_average': overall_average,
-        'overall_grade': overall_grade,
-        'overall_remark': overall_remark,
-        'ca_total': active_term.ca_total,
-        'exam_total': active_term.exam_total,
-    })
+
+        grading = GradingScale.objects.filter(
+            school=school,
+            term=term,
+            min_score__lte=overall_average,
+            max_score__gte=overall_average,
+        ).first()
+
+        if not grading:
+            grading = GradingScale.objects.filter(
+                school=school,
+                term__isnull=True,
+                min_score__lte=overall_average,
+                max_score__gte=overall_average,
+            ).first()
+
+        if grading:
+            overall_grade = grading.grade
+            overall_remark = grading.remark
+        else:
+            overall_grade = "-"
+            overall_remark = "-"
+
+    return render(
+        request,
+        "accounts/student_grades.html",
+        {
+            "student": student,
+            "student_results": student_results,
+            "term": term,
+            "academic_year": year,
+            "active_term": active_term,
+            "overall_average": overall_average,
+            "overall_grade": overall_grade,
+            "overall_remark": overall_remark,
+            "ca_total": active_term.ca_total,
+            "exam_total": active_term.exam_total,
+        },
+    )
 
 
 @login_required
@@ -6968,10 +9059,26 @@ def edit_student_grade(request, assignment_id):
     assignment = get_object_or_404(StudentSubjectClass, id=assignment_id, school=school)
     
     # Role check
-    if request.user.role not in ['admin', 'teacher'] and not request.user.is_superuser:
+    if request.user.role not in [  'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress', 'teacher'] and not request.user.is_superuser:
         messages.error(request, "Permission denied")
         return redirect('accounts:dashboard')
     
+    # ✅ TEACHER ISOLATION - NEW
+    if request.user.role == 'teacher':
+        is_his = TeacherSubjectClass.objects.filter(
+            teacher=request.user,
+            subject=assignment.subject,
+            school_class=assignment.school_class,
+            school_class__school=school
+        ).exists()
+        if not is_his:
+            messages.error(request, "You can only edit grades for subjects you teach!")
+            return redirect('accounts:dashboard')
+
     if request.method == 'POST':
         score = request.POST.get('score')
         grade = request.POST.get('grade')
@@ -6993,13 +9100,21 @@ def edit_student_grade(request, assignment_id):
     
     return render(request, 'accounts/edit_grade.html', {
         'assignment': assignment
-    })        
-
+    })
 
 @login_required
 def all_results(request):
-    if not request.user.is_superuser:
-        messages.error(request, "Admin only")
+    if request.user.role not in [
+        'admin',
+        'proprietor',
+        'proprietress',
+        'headmaster',
+        'headmistress'
+    ] and not request.user.is_superuser:
+        messages.error(
+            request,
+            "Administrator, Proprietor, or Headmaster access required"
+        )
         return redirect('accounts:dashboard')
     
     school = request.user.school
@@ -7026,13 +9141,13 @@ def all_results(request):
 
 @login_required
 def results_by_class(request):
-    if request.user.role != 'admin' and not request.user.is_superuser:
+    if request.user.role not in [ 'admin', 'proprietor', 'proprietress', 'headmaster', 'headmistress'] and not request.user.is_superuser:
         return redirect('accounts:dashboard')
     
     school = request.user.school
     active_term = Term.objects.filter(is_active=True, school=school).first()
     
-    if not active_term:
+    if not active_term: 
         return render(request, 'accounts/results_by_class.html', {
             'classes': [],
             'active_term': None,
@@ -7086,7 +9201,12 @@ def results_by_class(request):
 
 @login_required
 def results_by_subject(request, class_id):
-    if request.user.role != 'admin' and not request.user.is_superuser:
+    if request.user.role not in [
+    'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress'] and not request.user.is_superuser:
         return redirect('accounts:dashboard')
 
     school = request.user.school
@@ -7147,7 +9267,12 @@ def results_by_subject(request, class_id):
 
 @login_required
 def results_detail(request, class_id, subject_id):
-    if request.user.role != "admin" and not request.user.is_superuser:
+    if request.user.role not in [
+    'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress'] and not request.user.is_superuser:
         return redirect("accounts:dashboard")
 
     school = request.user.school
@@ -7200,7 +9325,9 @@ def results_detail(request, class_id, subject_id):
     results = list(results)
 
     for r in results:
-        r.total = float(r.class_score or 0) + float(r.exam_score or 0)
+        r.total = float(r.total_score or 0)
+        r.review_ca = float(r.class_score or 0)
+        r.review_exam = float(r.exam_converted_score or 0)
 
     results.sort(key=lambda x: x.total, reverse=True)
     terms = Term.objects.filter(school=school).order_by("term_number")
@@ -7224,32 +9351,51 @@ def results_detail(request, class_id, subject_id):
 
 @login_required
 def print_class_report(request, class_id):
+    if (
+        request.user.role not in [
+            "admin",
+            "proprietor",
+            "proprietress",
+            "headmaster",
+            "headmistress",
+        ]
+        and not request.user.is_superuser
+    ):
+        return redirect("accounts:dashboard")
 
     school = request.user.school
+
     school_class = get_object_or_404(SchoolClass, id=class_id, school=school)
+
     active_term = Term.objects.filter(is_active=True, school=school).first()
 
     if not active_term:
-        return HttpResponse("No active term set. Ask admin to set one in Term Settings.", status=400)
+        return HttpResponse(
+            "No active term set. Ask admin to set one in Term Settings.", status=400
+        )
 
-    term = int(request.GET.get('term', active_term.term_number))
-    year = request.GET.get('year', active_term.academic_year.id)
-    year = int(year)
+    term = int(request.GET.get("term", active_term.term_number))
+
+    year = int(request.GET.get("year", active_term.academic_year.id))
 
     results = Result.objects.filter(
-        school=school, # ✅ FIX 1 - direct school filter, more safe
+        school=school,
         student__school_class=school_class,
         term__term_number=term,
         academic_year_id=year,
-        status='published',
-    ).select_related('student', 'subject') # ✅ add select_related for speed
+        status="published",
+    ).select_related("student", "subject", "term", "term__academic_year")
 
     student_data = {}
     subjects = set()
 
-    for r in results:
-        student_name = f"{r.student.first_name} {r.student.last_name}"
-        student_number = r.student.student_number
+    for result in results:
+
+        student = result.student
+        subject = result.subject
+
+        student_name = student.get_full_name()
+        student_number = student.student_number
 
         if student_name not in student_data:
             student_data[student_name] = {
@@ -7258,43 +9404,45 @@ def print_class_report(request, class_id):
                 "total": 0,
             }
 
-        ca_total = ContinuousAssessment.objects.filter(
-            school=school, # ✅ FIX 2 - add school if your model has it
-            student=r.student,
-            subject=r.subject,
-            term__term_number=term,
-            academic_year_id=year
-        ).aggregate(total=Sum('score'))['total'] or 0
+        # Use the current grading system
+        ca_total = float(result.class_score or 0)
+        exam = float(result.exam_converted_score or 0)
+        total = float(result.total_score or 0)
 
-        exam = float(r.exam_score or 0)
-        ca_total = float(ca_total or 0)
-        total = ca_total + exam
+        subject_code = subject.code or subject.name
 
-        subject_code = r.subject.code or r.subject.name
         subjects.add(subject_code)
 
         student_data[student_name]["subjects"][subject_code] = {
             "ca": ca_total,
             "exam": exam,
-            "total": total
+            "total": total,
         }
 
         student_data[student_name]["total"] += total
 
-    sorted_students = sorted(student_data.items(), key=lambda x: x[1]['total'], reverse=True)
+    # Rank students by total score
+    sorted_students = sorted(
+        student_data.items(), key=lambda x: x[1]["total"], reverse=True
+    )
 
-    for i, (name, data) in enumerate(sorted_students, 1):
-        data['position'] = i
+    for position, (name, data) in enumerate(sorted_students, start=1):
+        data["position"] = position
 
     subjects = sorted(list(subjects))
-    return render(request, 'accounts/print_class_report.html', {
-        'school_class': school_class,
-        'term': term,
-        'year': year,
-        'active_term': active_term,
-        'students': sorted_students,
-        'subjects': subjects,
-    })
+
+    return render(
+        request,
+        "accounts/print_class_report.html",
+        {
+            "school_class": school_class,
+            "term": term,
+            "year": year,
+            "active_term": active_term,
+            "students": sorted_students,
+            "subjects": subjects,
+        },
+    )
 
 
 def get_position_suffix(pos):
@@ -7305,6 +9453,15 @@ def get_position_suffix(pos):
 
 @login_required
 def print_student_report(request, student_id):
+    if request.user.role not in [
+    'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress'
+] and not request.user.is_superuser:
+        return redirect('accounts:dashboard')
+
     school = request.user.school
     active_term = Term.objects.filter(is_active=True, school=school).first()
     if not active_term:
@@ -7320,6 +9477,7 @@ def print_student_report(request, student_id):
 
     if student_id == 0:
         class_id = request.GET.get("class_id")
+        get_object_or_404(SchoolClass, id=class_id, school=school)
         students = User.objects.filter(
             school_class_id=class_id, school=school, role="student"
         ).order_by("student_number")
@@ -7337,17 +9495,8 @@ def print_student_report(request, student_id):
         )
         student_total = 0
         for r in results:
-            ca_total = (
-                ContinuousAssessment.objects.filter(
-                    school=school,  # ✅ FIX 2
-                    student=r.student,
-                    subject=r.subject,
-                    term__term_number=term_number,
-                    academic_year_id=year_id,
-                ).aggregate(total=Sum("score"))["total"]
-                or 0
-            )
-            student_total += float(ca_total or 0) + float(r.exam_score or 0)
+
+            student_total += float(r.total_score or 0) 
         students_with_scores.append({"student": s, "total": student_total})
 
     students_with_scores.sort(key=lambda x: x["total"], reverse=True)
@@ -7385,22 +9534,18 @@ def print_student_report(request, student_id):
                 ).aggregate(total=Sum("score"))["total"]
                 or 0
             )
-            exam = float(r.exam_score or 0)
-            ca_total = float(ca_total or 0)
-            total = ca_total + exam
+            ca_total = float(r.class_score or 0)
+            exam = float(r.exam_converted_score or 0)
+            total = float(r.total_score or 0)
             grand_total += total
-            if total >= 80:
-                grade, remark = "A", "Excellent"
-            elif total >= 70:
-                grade, remark = "B", "Very Good"
-            elif total >= 60:
-                grade, remark = "C", "Good"
-            elif total >= 50:
-                grade, remark = "D", "Pass"
-            elif total >= 40:
-                grade, remark = "E", "Weak"
-            else:
-                grade, remark = "F", "Fail"
+            grading = get_grading_scale(
+                school,
+                term_obj,
+                total
+            )
+
+            grade = grading.grade if grading else "-"
+            remark = grading.remark if grading else "-"
             subject_code = r.subject.code or r.subject.name
             subjects_data[subject_code] = {
                 "ca": ca_total,
@@ -7462,25 +9607,33 @@ def print_student_report(request, student_id):
             round((times_present / days_opened) * 100, 1) if days_opened > 0 else 0
         )
 
-        if average >= 80:
-            overall_grade, overall_remark = "A", "Excellent"
-        elif average >= 70:
-            overall_grade, overall_remark = "B", "Very Good"
-        elif average >= 60:
-            overall_grade, overall_remark = "C", "Good"
-        elif average >= 50:
-            overall_grade, overall_remark = "D", "Pass"
-        elif average >= 40:
-            overall_grade, overall_remark = "E", "Weak"
+        grading = get_grading_scale(
+            school,
+            term_obj,
+            average
+        )
+        if grading:
+            overall_grade = grading.grade
+            overall_remark = grading.remark
         else:
-            overall_grade, overall_remark = "F", "Fail"
+            overall_grade = "-"
+            overall_remark = "-"
 
-        remark_obj = StudentRemark.objects.filter(
-            school=school,  # ✅ FIX 6 - if your model has school, if not use student__school=school
-            student=student,
-            term__term_number=term_number,
-            term__academic_year_id=year_id,
+        active_term_for_remark = Term.objects.filter(
+            is_active=True, school=school
         ).first()
+        remark_obj = StudentRemark.objects.filter(
+            school=school,
+            student=student,
+            term=active_term_for_remark,
+        ).first()
+
+        if not remark_obj:
+            remark_obj = (
+                StudentRemark.objects.filter(school=school, student=student)
+                .order_by("-id")
+                .first()
+            )
 
         students_data.append(
             {
@@ -7504,8 +9657,8 @@ def print_student_report(request, student_id):
                 "class_teacher_remark": (
                     remark_obj.class_teacher_remark if remark_obj else ""
                 ),
-                "headteacher_remark": (
-                    remark_obj.headteacher_remark if remark_obj else ""
+                "headmaster_remark": (
+                    remark_obj.headmaster_remark if remark_obj else ""
                 ),
             }
         )
@@ -7524,109 +9677,173 @@ def print_student_report(request, student_id):
 
 @login_required
 def class_remarks_list(request):
-    if not request.user.is_class_teacher and request.user.role != 'admin':
+    if (
+        not request.user.is_class_teacher
+        and request.user.role not in [
+    "admin",
+    "proprietor",
+    "proprietress",
+    "headmaster",
+    "headmistress",
+]
+        and not request.user.is_superuser
+    ):
         return HttpResponse("Only class teachers can access this", status=403)
-    
+
     school = request.user.school
-    class_obj = request.user.class_teacher_of
-    
-    # ✅ Also verify class belongs to same school
-    if not class_obj or class_obj.school_id != school.id:
-        return HttpResponse("You are not assigned as class teacher of any class", status=403)
-    
+
+    # If headmaster/admin - allow to choose class via ?class_id=
+    class_id = request.GET.get("class_id")
+    if request.user.role in ["admin", "proprietor", "proprietress", "headmaster", "headmistress"] or request.user.is_superuser:
+        if class_id:
+            class_obj = get_object_or_404(SchoolClass, id=class_id, school=school)
+        else:
+            # Show first class or list
+            class_obj = SchoolClass.objects.filter(school=school).first()
+            if not class_obj:
+                return HttpResponse("No class found", status=404)
+    else:
+        # Class teacher - only his class
+        class_obj = request.user.class_teacher_of
+        if not class_obj or class_obj.school_id != school.id:
+            return HttpResponse("You are not assigned as class teacher", status=403)
+
     term = Term.objects.filter(is_active=True, school=school).first()
     if not term:
         return HttpResponse("No active term found", status=403)
-    
+
     students = User.objects.filter(
-        role='student',
-        school_class=class_obj,
-        school=school
-    ).order_by('last_name', 'first_name')
-    
+        role="student", school_class=class_obj, school=school
+    ).order_by("last_name", "first_name")
+
     remarks = []
     for student in students:
         remark, created = StudentRemark.objects.get_or_create(
-            student=student,
-            term=term,
-            school=school, # ✅ FIX 1 - add school if model has it, if not add student__school=school check via filter before
-            defaults={'school': school} # ✅ include in defaults too
+            student=student, term=term, school=school, defaults={"school": school}
         )
-        remarks.append({'student': student, 'remark': remark})
-    
-    setting = SchoolSetting.objects.filter(school=school).first() # ✅ FIX 2 - was .first() for all schools
+        remarks.append({"student": student, "remark": remark})
+
+    setting = SchoolSetting.objects.filter(school=school).first()
     attendance_mode = setting.attendance_mode if setting else "subject"
-    
-    return render(request, 'accounts/class_remarks.html', {
-        'remarks': remarks, 
-        'class_obj': class_obj,
-        'attendance_mode': attendance_mode,
-        'term': term,
-    })
+
+    # For headmaster to switch classes
+    all_classes = (
+        SchoolClass.objects.filter(school=school)
+        if request.user.role in [
+    "admin",
+    "proprietor",
+    "proprietress",
+    "headmaster",
+    "headmistress",
+]
+        else None
+    )
+
+    return render(
+        request,
+        "accounts/class_remarks.html",
+        {
+            "remarks": remarks,
+            "class_obj": class_obj,
+            "all_classes": all_classes,
+            "attendance_mode": attendance_mode,
+            "term": term,
+        },
+    )
+
 
 @login_required
 def save_student_remark(request, student_id):
-    if request.method == 'POST':
-        school = request.user.school
-        student = get_object_or_404(User, id=student_id, school=school)
-        term = Term.objects.filter(is_active=True, school=school).first()
-        
-        if not term:
-            return HttpResponse("No active term found", status=403)
-        
-        # ✅ Also check class school
-        if not request.user.is_class_teacher or student.school_class != request.user.class_teacher_of or student.school_class.school_id != school.id:
-            return HttpResponse("You can only edit remarks for your own class", status=403)
-        
-        remark, created = StudentRemark.objects.get_or_create(
-            student=student,
-            term=term,
-            school=school, # ✅ FIX - add if your model has school field
-            defaults={'school': school}
+    if request.method != "POST":
+        return HttpResponse("Invalid request", status=400)
+
+    school = request.user.school
+    student = get_object_or_404(User, id=student_id, school=school)
+    term = Term.objects.filter(is_active=True, school=school).first()
+
+    if not term:
+        return HttpResponse("No active term found", status=403)
+
+    # FIXED PERMISSION - Allow Class Teacher OR Head Teacher OR Admin
+    is_owner_class_teacher = (
+        request.user.is_class_teacher
+        and student.school_class == request.user.class_teacher_of
+    )
+    is_head_or_admin = (
+        request.user.role in [
+    "admin",
+    "proprietor",
+    "proprietress",
+    "headmaster",
+    "headmistress",
+]
+        or request.user.is_superuser
+    )
+
+    if not (is_owner_class_teacher or is_head_or_admin):
+        return HttpResponse(
+            "You can only edit remarks for your own class or as head teacher",
+            status=403,
         )
-        
-        if request.user.is_class_teacher:
-            remark.class_teacher_remark = request.POST.get('class_teacher_remark', '')
-        
-        if request.user.role in ['headteacher', 'admin', 'headmaster']:
-            remark.headteacher_remark = request.POST.get('headteacher_remark', '')
-            
-        remark.save()
-        return HttpResponse("Remarks saved successfully")
-    
-    return HttpResponse("Invalid request", status=400)
+
+    remark, created = StudentRemark.objects.get_or_create(
+        student=student, term=term, school=school, defaults={"school": school}
+    )
+
+    # Class teacher can save class remark
+    if is_owner_class_teacher or request.user.role in [
+    "admin",
+    "proprietor",
+    "proprietress",
+    "headmaster",
+    "headmistress",
+]:
+        new_class_remark = request.POST.get("class_teacher_remark")
+        if new_class_remark is not None:
+            remark.class_teacher_remark = new_class_remark.strip()
+
+    # Head teacher / Admin can save head remark
+    if is_head_or_admin:
+        new_head_remark = request.POST.get("headmaster_remark")
+        if new_head_remark is not None:
+            remark.headmaster_remark = new_head_remark.strip()
+
+    remark.save()
+    return HttpResponse("Remarks saved successfully")
 
 
 @login_required
 def add_subject(request):
-    if request.user.role != 'admin':
-        return redirect('accounts:dashboard')
+    if request.user.role not in ["admin", "proprietor", "proprietress", "headmaster", "headmistress"]:
+        return redirect("accounts:dashboard")
 
-    if request.method == 'POST':
-        name = request.POST.get('name')
-        code = request.POST.get('code')
+    # If headmaster, check permission
+    if request.user.role in ["headmaster", "headmistress"]:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_add_subject:
+                messages.error(request, "Admin has not allowed you")
+                return redirect("accounts:headmaster_dashboard")
+        except:
+            return redirect("accounts:headmaster_dashboard")
+
+    if request.method == "POST":
+        name = request.POST.get("name")
+        code = request.POST.get("code")
 
         existing_subject = Subject.objects.filter(
-            school=request.user.school,
-            name__iexact=name
+            school=request.user.school, name__iexact=name
         ).first()
 
         if existing_subject:
-            messages.warning(request, 'Subject already exists in your school.')
-            return redirect('accounts:add_subject')
+            messages.warning(request, "Subject already exists in your school.")
+            return redirect("accounts:add_subject")
 
-        Subject.objects.create(
-            name=name,
-            code=code,
-            school=request.user.school
-        )
+        Subject.objects.create(name=name, code=code, school=request.user.school)
+        messages.success(request, "Subject added successfully")
+        return redirect("accounts:subject_list")
 
-        messages.success(request, 'Subject added successfully')
-        return redirect('accounts:subject_list')
-
-    return render(request, 'accounts/add_subject.html', {
-    'school': request.user.school
-})
+    return render(request, "accounts/add_subject.html", {"school": request.user.school})
 
 
 @login_required
@@ -7640,47 +9857,60 @@ def set_active_term(request):
 
         if not term_id:
             messages.error(request, "Select a term to activate")
-            return redirect("term_settings")
+            return redirect("accounts:term_settings")
 
-        # ✅ FIX 1: Verify term belongs to my school
         term = get_object_or_404(Term, id=term_id, school=school)
 
-        # ✅ FIX 2: Deactivate only MY school terms
-        Term.objects.filter(is_active=True, school=school).update(is_active=False)
+        Term.objects.filter(is_active=True, school=school).exclude(pk=term.pk).update(
+            is_active=False
+        )
 
-        # Activate the selected term
+        try:
+            term.days_opened = calculate_school_days(
+                term.start_date, term.end_date, school
+            )
+        except:
+            pass
+
         term.is_active = True
         term.save()
 
-        # Update CA/Exam totals if provided
-        if ca is not None and exam is not None:
+        if ca and exam:
             TermSetting.objects.update_or_create(
                 term=term, defaults={"ca_total": ca, "exam_total": exam}
             )
 
         messages.success(
-            request, f"Active term set to: {term.academic_year} Term {term.term_number}"
+            request,
+            f"Active term set to: {term.academic_year} - Term {term.term_number} (Extended to {term.end_date})",
         )
 
-    return redirect("term_settings")
+    return redirect("accounts:term_settings")
 
 
 @login_required
 def term_settings(request):
-    
+    if request.user.role not in [
+    'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress'
+] and not request.user.is_superuser:
+        messages.error(request, "Permission denied")
+        return redirect('accounts:dashboard')
+
     active_term = Term.objects.filter(
         is_active=True,
         school=request.user.school
     ).first()
-    
 
     if request.method == 'POST':
-        form = TermSettingForm(request.POST)
+        form = TermSettingForm(request.POST, school=request.user.school)
 
         if form.is_valid():
             term = form.save(commit=False)
             term.school = request.user.school
-            
 
             # calculate TOTAL school days
             total_days = calculate_school_days(
@@ -7690,13 +9920,20 @@ def term_settings(request):
             )
             term.days_opened = total_days
 
-
-
             if term.is_active:
                 Term.objects.filter(
                     school=request.user.school,
                     is_active=True
                 ).update(is_active=False)
+
+                # Make this academic year the active academic year
+                AcademicYear.objects.filter(
+                    school=request.user.school,
+                    is_active=True
+                ).update(is_active=False)
+
+                term.academic_year.is_active = True
+                term.academic_year.save()
 
             term.save()
 
@@ -7704,14 +9941,13 @@ def term_settings(request):
             return redirect('accounts:term_settings')
 
     else:
-        form = TermSettingForm()
+        form = TermSettingForm(school=request.user.school)
 
     terms = Term.objects.filter(
         school=request.user.school
     ).order_by('-academic_year', '-term_number')
 
     # ALSO calculate for active banner
-
 
     return render(request, 'accounts/term_settings.html', {
         'form': form,
@@ -7722,41 +9958,68 @@ def term_settings(request):
 
 @login_required
 def edit_term(request, pk):
+    if request.user.role not in [
+    'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress'
+] and not request.user.is_superuser:
+        messages.error(request, "Permission denied")
+        return redirect('accounts:dashboard')
     school = request.user.school
     term = get_object_or_404(Term, pk=pk, school=school)
-    
-    if request.method == 'POST':
+
+    if request.method == "POST":
         form = TermForm(request.POST, instance=term)
         if form.is_valid():
-            if form.cleaned_data['is_active']:
-                Term.objects.filter(is_active=True, school=school).update(is_active=False) 
-            
+            if form.cleaned_data["is_active"]:
+                Term.objects.filter(is_active=True, school=school).exclude(
+                    pk=pk
+                ).update(is_active=False)
+
             edited_term = form.save(commit=False)
             edited_term.school = school
+            edited_term.days_opened = calculate_school_days(
+                edited_term.start_date, edited_term.end_date, school
+            )
             edited_term.save()
-            
+
             messages.success(request, "Term updated")
-            return redirect('accounts:term_settings')
+            return redirect("accounts:term_settings")
         else:
             messages.error(request, "Error: " + str(form.errors))
     else:
         form = TermForm(instance=term)
-        
-    return render(request, 'accounts/edit_term.html', {'form': form})
+
+    return render(request, "accounts/edit_term.html", {"form": form, "term": term})
 
 
 @login_required
-@user_passes_test(lambda u: u.is_staff)
 def delete_term(request, pk):
+    if request.user.role not in ['admin','headmaster'] and not request.user.is_superuser:
+        messages.error(request, "Permission denied")
+        return redirect('accounts:dashboard')
+    
+    if request.method != "POST":  # ✅ Prevent GET delete via link!
+        return HttpResponse("Use POST", status=405)
+        
     school = request.user.school
-    term = get_object_or_404(Term, pk=pk, school=school) 
+    term = get_object_or_404(Term, pk=pk, school=school)
     term.delete()
     messages.success(request, "Term deleted")
     return redirect('accounts:term_settings')
 
-
 @login_required
 def add_class(request):
+    if request.user.role not in [
+    'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress'] and not request.user.is_superuser:
+        messages.error(request, "Permission denied")
+        return redirect('accounts:dashboard')
     school = request.user.school
 
     if request.method == "POST":
@@ -7801,9 +10064,24 @@ def get_item(dictionary, key):
     return dictionary.get(key)
 
 
-@role_required(['hod', 'admin'])
+@role_required(["admin", "hod", "proprietor", "proprietress", "headmaster", "headmistress"])
 def timetable_manager_create_timetable(request):
+    if request.user.role not in ["admin", "proprietor", "proprietress", "headmaster", "headmistress"]:
+        messages.error(request, "Permission denied")
+        return redirect("accounts:dashboard")
+
+    if request.user.role in ["headmaster", "headmistress"]:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_create_timetable:
+                messages.error(request, "Not allowed by admin")
+                return redirect("accounts:headmaster_dashboard")
+        except:
+            return redirect("accounts:headmaster_dashboard")
+
     school = request.user.school
+    # ... rest of your code
+
     if request.method == 'POST':
         teacher_id = request.POST.get('teacher_id')
         subject_id = request.POST.get('subject_id')
@@ -7822,12 +10100,10 @@ def timetable_manager_create_timetable(request):
             break_start = datetime.strptime(break_start, "%H:%M").time()
             break_end = datetime.strptime(break_end, "%H:%M").time()
 
-
             lessons = Timetable.objects.filter(
                 school_class__school=school,
                 school_class__stage=stage
             )
-
 
             for lesson in lessons:
 
@@ -7882,7 +10158,6 @@ def timetable_manager_create_timetable(request):
                 stage=school_class.stage
             )
 
-
             lesson_start = datetime.strptime(start_time, "%H:%M").time()
             lesson_end = datetime.strptime(end_time, "%H:%M").time()
 
@@ -7907,10 +10182,25 @@ def timetable_manager_create_timetable(request):
 
             # If no clash, create it
             try:
+                active_term = Term.objects.filter(
+                    school=school,
+                    is_active=True
+                ).select_related('academic_year').first()
+
+                if not active_term:
+                    messages.error(
+                        request,
+                        "Please set an active term before creating a timetable."
+                    )
+                    return redirect("accounts:timetable_create")
+
                 Timetable.objects.create(
+                    school=school,
                     teacher_id=teacher_id,
                     subject_id=subject_id,
                     school_class_id=class_id,
+                    term=active_term,
+                    academic_year=active_term.academic_year,
                     weekday=weekday,
                     period=period,
                     start_time=start_time,
@@ -7919,7 +10209,7 @@ def timetable_manager_create_timetable(request):
                 messages.success(request, "Timetable entry created successfully")
             except Exception as e:
                 messages.error(request, f"Error: {str(e)}")
-            
+
             return redirect('accounts:timetable_create')
 
     # GET request - show the page
@@ -7949,8 +10239,18 @@ def timetable_manager_create_timetable(request):
         'weekdays': weekdays,
     })
 
+
 @login_required
 def manage_timetable(request):
+    if request.user.role not in [
+    'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress'
+] and not request.user.is_superuser:
+        messages.error(request, "Permission denied")
+        return redirect('accounts:dashboard')
 
     school = request.user.school
     selected_stage = request.GET.get("stage")
@@ -7961,16 +10261,13 @@ def manage_timetable(request):
         school=school
     ).order_by('first_name')
 
-
     subjects = Subject.objects.filter(
         school=school
     ).order_by('name')
 
-
     classes = SchoolClass.objects.filter(
         school=school
     ).order_by('name')
-
 
     existing_timetables = Timetable.objects.select_related(
         'teacher',
@@ -7983,14 +10280,12 @@ def manage_timetable(request):
         'start_time'
     )
 
-
     breaks = Break.objects.filter(
         school=school
     ).order_by(
         'stage',
         'start_time'
     )
-
 
     weekdays = [
         (0, 'Monday'),
@@ -8007,12 +10302,10 @@ def manage_timetable(request):
 
         timetable_data[stage][class_name].append(item)
 
-
     classes_by_stage = {}
 
     for stage, class_dict in timetable_data.items():
         classes_by_stage[stage] = list(class_dict.keys())
-
 
     stages = timetable_data.keys()
     filtered_timetable = Timetable.objects.filter(
@@ -8050,11 +10343,9 @@ def manage_timetable(request):
         "start_time"
     )
 
-
     timetable_grid = defaultdict(dict)
 
     time_slots = set()
-
 
     # Add lessons to timetable grid
     for item in filtered_timetable:
@@ -8068,8 +10359,6 @@ def manage_timetable(request):
 
         timetable_grid[item.weekday][time_range] = item
 
-
-
     # Add break times to timeline
     for br in breaks.filter(stage=selected_stage):
 
@@ -8080,20 +10369,14 @@ def manage_timetable(request):
 
         time_slots.add(break_range)
 
-
-
     # Ensure all weekdays exist
     for day_value, _ in weekdays:
 
         if day_value not in timetable_grid:
             timetable_grid[day_value] = {}
 
-
-
     # Sort timeline
     time_slots = sorted(time_slots)
-
-
 
     # Break data
     break_slots = []
@@ -8111,174 +10394,489 @@ def manage_timetable(request):
                 f"{br.end_time.strftime('%H:%M')}"
             )
         })
-        break_times = []
+    break_times = []
 
-        for br in breaks.filter(stage=selected_stage):
+    for br in breaks.filter(stage=selected_stage):
+        break_times.append(f"{br.start_time.strftime('%H:%M')} - {br.end_time.strftime('%H:%M')}")
 
-            break_times.append(
-                f"{br.start_time.strftime('%H:%M')} - {br.end_time.strftime('%H:%M')}"
-            )
-        
+        # FIXED - moved outside loop + fixed filter
+    all_terms = Term.objects.filter(school=school).order_by('-academic_year__start_date', 'term_number')
 
+    # For copy - need active_term
+    active_term = Term.objects.filter(school=school, is_active=True).first() or Term.objects.filter(school=school).first()
+    selected_year = active_term.academic_year.id if active_term and active_term.academic_year else None
 
     return render(request, "accounts/manage_timetable.html", {
-        "teachers": teachers,
-        "subjects": subjects,
-        "school_classes": classes,
-        "timetables": existing_timetables,
-        "breaks": breaks,
-        "stages": stages,
-        "weekdays": weekdays,
-        "time_slots": time_slots,
-        "break_slots": break_slots,
-        "break_times": break_times,
-        "classes_by_stage": classes_by_stage,
-        "timetable_data": timetable_data,
-        "filtered_timetable": filtered_timetable,
-        "timetable_grid": timetable_grid,
-        "selected_stage": selected_stage,
-        "selected_class": selected_class,
-    })
+                "teachers": teachers,
+                "subjects": subjects,
+                "school_classes": classes,
+                "timetables": existing_timetables,
+                "breaks": breaks,
+                "stages": stages,
+                "weekdays": weekdays,
+                "time_slots": time_slots,
+                "break_slots": break_slots,
+                "break_times": break_times,
+                "classes_by_stage": classes_by_stage,
+                "timetable_data": timetable_data,
+                "filtered_timetable": filtered_timetable,
+                "timetable_grid": timetable_grid,
+                "selected_stage": selected_stage,
+                "selected_class": selected_class,
+                'all_terms': all_terms,
+                'active_term': active_term,
+                'selected_year': selected_year,
+            })
 
 
-@role_required(['hod', 'admin'])
-def timetable_manager_delete(request, timetable_id):
+@login_required
+def copy_timetable_to_term(request):
+    if request.user.role not in [
+    'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress'
+] and not request.user.is_superuser:
+        messages.error(request, "Permission denied")
+        return redirect("accounts:dashboard")
 
     school = request.user.school
+    from_term = request.GET.get("from_term")
+    to_term = request.GET.get("to_term")
 
-    timetable = get_object_or_404(
-        Timetable,
-        id=timetable_id,
-        school_class__school=school
-    )
+    if not from_term or not to_term:
+        messages.error(request, "Select target term")
+        return redirect("/timetable/manage/")
 
-    timetable.delete()
+    from_term_obj = get_object_or_404(Term, id=from_term, school=school)
+    to_term_obj = get_object_or_404(Term, id=to_term, school=school)
+    # BULK - copy ALL classes, ALL stages for that term
+    old_qs = Timetable.objects.filter(school=school, term=from_term_obj)
+
+    count = 0
+    for tt in old_qs:
+        if not Timetable.objects.filter(
+            school=school,
+            school_class=tt.school_class,
+            academic_year=to_term_obj.academic_year,
+            term=to_term_obj,
+            weekday=tt.weekday,
+            start_time=tt.start_time,
+        ).exists():
+            Timetable.objects.create(
+                school=school,
+                school_class=tt.school_class,
+                academic_year=to_term_obj.academic_year,
+                term=to_term_obj,
+                weekday=tt.weekday,
+                start_time=tt.start_time,
+                end_time=tt.end_time,
+                subject=tt.subject,
+                teacher=tt.teacher,
+            )
+            count += 1
 
     messages.success(
         request,
-        "Timetable entry deleted"
+        f"Copied WHOLE TERM: {count} periods from {from_term_obj} to {to_term_obj} - All classes!",
     )
+    return redirect(f"/timetable/manage/")
 
-    return redirect('accounts:timetable_create')
+
+@role_required(["admin","proprietor","proprietress","headmaster","headmistress"])  # ✅ Same as other functions
+def timetable_manager_delete(request, timetable_id):
+    if (
+        request.user.role not in ["admin","proprietor","proprietress","headmaster","headmistress",]
+        and not request.user.is_superuser
+    ):
+        messages.error(request, "Permission denied")
+        return redirect("accounts:dashboard")
+
+    school = request.user.school
+    timetable = get_object_or_404(
+        Timetable, id=timetable_id, school_class__school=school
+    )
+    timetable.delete()
+    messages.success(request, "Timetable entry deleted")
+    return redirect("accounts:timetable_create")
 
 
 @login_required
 def student_timetable(request):
-    if request.user.role != 'student':
-        return redirect('accounts:student_dashboard')
+    if request.user.role != "student":
+        return redirect("accounts:student_dashboard")
 
     student = request.user
-    filter_data = get_term_year_filter(request, student.school)
+    school = student.school
+
+    if not school:
+        messages.error(request, "No school assigned.")
+        return redirect("accounts:student_dashboard")
+
+    filter_data = get_term_year_filter(request, school)
     years = filter_data["years"]
-    today_date = timezone.now().date()
 
-    # Get selected values
-    selected_year = request.GET.get('year')
-    selected_term = request.GET.get('term')
+    today_date = timezone.localtime(timezone.now()).date()
 
-    # First time = use default from system
+    # =========================================================
+    # YEAR / TERM SELECTION
+    # =========================================================
+
+    selected_year = request.GET.get("year")
+    selected_term = request.GET.get("term")
+
+    # ---------------------------------------------------------
+    # DEFAULT TO CURRENT ACTIVE TERM
+    # ---------------------------------------------------------
+
     if not selected_year and not selected_term:
-        selected_year = filter_data.get("selected_year")
-        selected_term = filter_data.get("selected_term")
 
+        active_term_default = (
+            Term.objects.filter(school=school, is_active=True)
+            .select_related("academic_year")
+            .first()
+        )
+
+        if active_term_default:
+
+            selected_year = active_term_default.academic_year_id
+            selected_term = active_term_default.term_number
+
+        else:
+
+            # Fallback: find the term containing today's date
+            active_term_default = (
+                Term.objects.filter(
+                    school=school, start_date__lte=today_date, end_date__gte=today_date
+                )
+                .select_related("academic_year")
+                .first()
+            )
+
+            if active_term_default:
+
+                selected_year = active_term_default.academic_year_id
+                selected_term = active_term_default.term_number
+
+    # Convert to strings for template comparisons
     sy = str(selected_year) if selected_year else ""
     st = str(selected_term) if selected_term else ""
 
-    # If one is missing, show empty
-    if not sy or not st:
-        return render(request, 'accounts/student_timetable.html', {
-            **filter_data, 'years': years,
-            'selected_year': sy, 'selected_term': st,
-            'timetable_by_day': [], 'today': today_date,
-            'need_both': True, 'timetable_total_weeks': 1,
-            'timetable_active_week': 1, 'timetable_today_week': 1
-        })
+    # =========================================================
+    # IF YEAR OR TERM IS STILL MISSING
+    # =========================================================
 
-    active_term = Term.objects.filter(
-        school=student.school,
-        academic_year_id=sy,
-        term_number=st
-    ).first()
+    if not sy or not st:
+
+        return render(
+            request,
+            "accounts/student_timetable.html",
+            {
+                **filter_data,
+                "years": years,
+                "selected_year": sy,
+                "selected_term": st,
+                "timetable_by_day": [],
+                "today": today_date,
+                "need_both": True,
+                "timetable_total_weeks": 1,
+                "timetable_active_week": 1,
+                "timetable_today_week": 1,
+                "time_slots": [],
+                "break_slots": [],
+                "break_times": [],
+            },
+        )
+
+    # =========================================================
+    # FIND SELECTED TERM
+    # =========================================================
+
+    active_term = (
+        Term.objects.filter(school=school, academic_year_id=sy, term_number=st)
+        .select_related("academic_year")
+        .first()
+    )
 
     if not active_term:
-        return render(request, 'accounts/student_timetable.html', {
-            **filter_data, 'years': years,
-            'selected_year': sy, 'selected_term': st,
-            'timetable_by_day': [], 'today': today_date,
-            'no_timetable': True, 'timetable_total_weeks': 1,
-            'timetable_active_week': 1, 'timetable_today_week': 1
-        })
 
-    # Week calculation (same as before)
+        return render(
+            request,
+            "accounts/student_timetable.html",
+            {
+                **filter_data,
+                "years": years,
+                "selected_year": sy,
+                "selected_term": st,
+                "timetable_by_day": [],
+                "today": today_date,
+                "no_timetable": True,
+                "timetable_total_weeks": 1,
+                "timetable_active_week": 1,
+                "timetable_today_week": 1,
+                "time_slots": [],
+                "break_slots": [],
+                "break_times": [],
+            },
+        )
+
+    # =========================================================
+    # TERM DATES
+    # =========================================================
+
     term_start = active_term.start_date
     term_end = active_term.end_date
 
-    # Calculate what is the CURRENT week number
+    # =========================================================
+    # CURRENT WEEK
+    # =========================================================
+
     current_week_num = 1
+
     cur = term_start
-    today = today_date
     week_counter = 1
+
     while cur <= term_end:
+
         friday = cur + timedelta(days=(4 - cur.weekday()))
-        week_end_calc = friday if friday <= term_end else term_end
-        if cur <= today <= week_end_calc:
+
+        week_end_calc = min(friday, term_end)
+
+        if cur <= today_date <= week_end_calc:
+
             current_week_num = week_counter
             break
+
         cur = friday + timedelta(days=3)
         week_counter += 1
 
-    week_param = request.GET.get('t_week') or request.GET.get('week')
+    # =========================================================
+    # ACTIVE WEEK
+    # =========================================================
+
+    week_param = request.GET.get("t_week") or request.GET.get("week")
+
     try:
+
         active_week = int(week_param) if week_param else current_week_num
-    except:
+
+    except (TypeError, ValueError):
+
         active_week = current_week_num
+
+    # =========================================================
+    # TOTAL WEEKS
+    # =========================================================
 
     total_weeks = 0
     cur = term_start
+
     while cur <= term_end:
+
         total_weeks += 1
+
         friday = cur + timedelta(days=(4 - cur.weekday()))
+
         cur = friday + timedelta(days=3)
 
-    active_week = max(1, min(active_week, total_weeks))
+    active_week = max(1, min(active_week, total_weeks or 1))
+
+    # =========================================================
+    # WEEK START / END
+    # =========================================================
 
     week_start = term_start
+
     for _ in range(active_week - 1):
+
         friday = week_start + timedelta(days=(4 - week_start.weekday()))
+
         week_start = friday + timedelta(days=3)
+
     week_end = week_start + timedelta(days=(4 - week_start.weekday()))
+
     if week_end > term_end:
         week_end = term_end
 
-    timetable = Timetable.objects.filter(school_class=student.school_class).select_related('subject').order_by('weekday', 'period')
-    
+    # =========================================================
+    # TIMETABLE
+    # =========================================================
+
+    timetable_grid = {}
+
+    if not student.school_class:
+
+        timetable = Timetable.objects.none()
+        breaks = Break.objects.none()
+
+    else:
+
+        timetable = (
+            Timetable.objects.filter(
+                school_class=student.school_class, school_class__school=school
+            )
+            .select_related("subject", "teacher")
+            .order_by("weekday", "period")
+        )
+
+        breaks = Break.objects.filter(
+            school=school, stage=student.school_class.stage
+        ).order_by("start_time")
+
+    # =========================================================
+    # TIMETABLE GRID
+    # =========================================================
+
+    for entry in timetable:
+
+        slot = (
+            f"{entry.start_time.strftime('%H:%M')} - "
+            f"{entry.end_time.strftime('%H:%M')}"
+        )
+
+        timetable_grid.setdefault(entry.weekday, {})
+
+        timetable_grid[entry.weekday][slot] = entry
+
+    # =========================================================
+    # TIME SLOTS
+    # =========================================================
+
+    time_slots = set()
+
+    for entry in timetable:
+
+        if entry.start_time and entry.end_time:
+
+            time_slots.add(
+                f"{entry.start_time.strftime('%H:%M')} - "
+                f"{entry.end_time.strftime('%H:%M')}"
+            )
+
+    # =========================================================
+    # BREAKS
+    # =========================================================
+
+    break_slots = []
+
+    for br in breaks:
+
+        label = (
+            f"{br.start_time.strftime('%H:%M')} - " f"{br.end_time.strftime('%H:%M')}"
+        )
+
+        time_slots.add(label)
+
+        break_slots.append(
+            {
+                "id": br.id,
+                "name": br.name,
+                "start": br.start_time,
+                "end": br.end_time,
+                "label": label,
+            }
+        )
+
+    time_slots = sorted(time_slots)
+
+    break_times = [br["label"] for br in break_slots]
+
+    # =========================================================
+    # DAYS
+    # =========================================================
+
     timetable_by_day = []
+
     cur_date = week_start
+
     while cur_date <= week_end:
+
         if cur_date.weekday() < 5:
-            event = AcademicCalendar.objects.filter(start_date__lte=cur_date, end_date__gte=cur_date).first()
+
+            event = AcademicCalendar.objects.filter(
+                school=school, start_date__lte=cur_date, end_date__gte=cur_date
+            ).first()
+
             entries = [e for e in timetable if e.weekday == cur_date.weekday()]
+
             if event and event.affects_timetable:
+
                 entries = []
-            timetable_by_day.append({'num': cur_date.weekday(), 'name': cur_date.strftime("%A"), 'date': cur_date, 'entries': entries, 'event': event})
+
+            else:
+
+                for e in entries:
+
+                    is_break = False
+
+                    if getattr(e, "is_break", False):
+
+                        is_break = True
+
+                    elif not e.subject:
+
+                        is_break = True
+
+                    elif getattr(getattr(e, "subject", None), "name", "").upper() in [
+                        "BREAK",
+                        "RECESS",
+                        "LUNCH",
+                        "BREAK TIME",
+                    ]:
+
+                        is_break = True
+
+                    e.is_break_entry = is_break
+
+            timetable_by_day.append(
+                {
+                    "num": cur_date.weekday(),
+                    "name": cur_date.strftime("%A"),
+                    "date": cur_date,
+                    "entries": entries,
+                    "event": event,
+                }
+            )
+
         cur_date += timedelta(days=1)
-        if cur_date.weekday() == 0 and timetable_by_day:
-            break
 
-    return render(request, 'accounts/student_timetable.html', {
-        **filter_data, 'years': years, 'selected_year': sy, 'selected_term': st,
-        'timetable_by_day': timetable_by_day, 'today': today_date,
-        'today_weekday': today_date.weekday() if term_start <= today_date <= term_end else -1,
-        'timetable_active_week': active_week,
-        'timetable_prev_week': active_week - 1 if active_week > 1 else None,
-        'timetable_next_week': active_week + 1 if active_week < total_weeks else None,
-        'timetable_total_weeks': total_weeks,
-        'current_week_start': week_start, 'current_week_end': week_end,
-        'active_term': active_term, 'timetable_today_week': current_week_num,
-    })
+    # =========================================================
+    # FINAL CONTEXT
+    # =========================================================
+
+    return render(
+        request,
+        "accounts/student_timetable.html",
+        {
+            **filter_data,
+            "years": years,
+            "selected_year": sy,
+            "selected_term": st,
+            "timetable_by_day": timetable_by_day,
+            "today": today_date,
+            "today_weekday": (
+                today_date.weekday() if term_start <= today_date <= term_end else -1
+            ),
+            "timetable_active_week": active_week,
+            "timetable_prev_week": (active_week - 1 if active_week > 1 else None),
+            "timetable_next_week": (
+                active_week + 1 if active_week < total_weeks else None
+            ),
+            "timetable_total_weeks": total_weeks,
+            "current_week_start": week_start,
+            "current_week_end": week_end,
+            "active_term": active_term,
+            "timetable_today_week": current_week_num,
+            "time_slots": time_slots,
+            "break_slots": break_slots,
+            "break_times": break_times,
+            "timetable_grid": timetable_grid,
+        },
+    )
 
 
-@role_required(['hod', 'admin'])
+@role_required(['hod', 'headmaster', 'admin'])
 def timetable_manager_edit(request, timetable_id):
 
     school = request.user.school
@@ -8369,9 +10967,11 @@ def timetable_manager_edit(request, timetable_id):
                 timetable_id=timetable.id
             )
 
+        teacher = get_object_or_404(User, id=teacher_id, school=school, role='teacher')
+        subject = get_object_or_404(Subject, id=subject_id, school=school)
 
-        timetable.teacher_id = teacher_id
-        timetable.subject_id = subject_id
+        timetable.teacher = teacher
+        timetable.subject = subject
         timetable.school_class = school_class
         timetable.weekday = weekday
         timetable.period = period
@@ -8389,7 +10989,7 @@ def timetable_manager_edit(request, timetable_id):
     return redirect('accounts:timetable_create')
 
 
-@role_required(['hod','admin'])
+@role_required(['hod','headmaster','admin'])
 def break_edit(request, break_id):
 
     school = request.user.school
@@ -8423,8 +11023,6 @@ def break_edit(request, break_id):
         lessons = Timetable.objects.filter(
             school_class__school=school,
             school_class__stage=stage
-        ).exclude(
-            id=getattr(br, 'timetable_id', None)
         )
 
 
@@ -8446,8 +11044,8 @@ def break_edit(request, break_id):
 
         br.stage = stage
         br.name = name
-        br.start_time = start
-        br.end_time = end
+        br.start_time = start_time
+        br.end_time = end_time
 
         br.save()
 
@@ -8481,8 +11079,13 @@ def calendar_list(request):
     )
 
 
+@role_required(['admin', 'proprietor', 'proprietress', 'headmaster', 'headmistress'])
 @login_required
 def add_calendar_event(request):
+    if request.user.role not in ['admin', 'proprietor', 'proprietress', 'headmaster', 'headmistress'] and not request.user.is_superuser:
+        messages.error(request, "Permission denied")
+        return redirect('accounts:dashboard')
+    
     if request.method == 'POST':
         form = AcademicCalendarForm(request.POST)
 
@@ -8541,7 +11144,9 @@ def add_calendar_event(request):
 
     return render(request, 'accounts/add_event.html', {'form': form})
 
+@role_required(['admin', 'proprietor', 'proprietress', 'headmaster', 'headmistress'])
 @login_required
+
 def edit_event(request, pk):
 
     event = get_object_or_404(
@@ -8598,6 +11203,7 @@ def edit_event(request, pk):
         "accounts:calendar_list"
     )
 
+@role_required(['admin', 'proprietor', 'proprietress', 'headmaster', 'headmistress'])  # ✅ ADD THIS
 @login_required
 def delete_event(request, pk):
 
@@ -8620,16 +11226,412 @@ def delete_event(request, pk):
 
 
 @login_required
-def add_accountant(request):
-    credentials = None
-
-    if request.user.role != 'admin':
-        return redirect('accounts:home')
+def add_headmaster(request):
+    if request.user.role not in ["admin", "proprietor", "proprietress"]:
+        return redirect("accounts:home")
 
     if not request.user.school:
         messages.error(request, "You are not assigned to a school.")
+        return redirect("accounts:home")
+
+    if request.method == "POST":
+        form = HeadmasterForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            headmaster = form.save(commit=False)
+            headmaster.role = form.cleaned_data.get("role")
+            headmaster.school = request.user.school
+            headmaster.is_password_changed = False
+            headmaster.is_active = True
+
+            base_username = (
+                f"{headmaster.first_name.lower()}.{headmaster.last_name.lower()}"
+            )
+            username = base_username
+            counter = 1
+            while User.objects.filter(username=username).exists():
+                username = f"{base_username}{counter}"
+                counter += 1
+            headmaster.username = username
+
+            password = form.cleaned_data.get("password") or "Staff2026"
+            headmaster.set_password(password)
+            headmaster.save()
+            form.save_m2m()
+
+            request.session["credentials"] = {
+                "title": "Headmaster Login Credentials",
+                "username": headmaster.username,
+                "staff_id": headmaster.staff_id,
+                "password": password,
+            }
+
+            return redirect("accounts:manage_headmaster_grid")
+
+        else:
+            messages.error(request, "Please fix the errors below.")
+    else:
+        form = HeadmasterForm()
+
+    return render(request, "accounts/add_headmaster.html", {"form": form})
+
+@login_required
+def manage_headmaster_grid(request):
+    if request.user.role not in ['admin', 'proprietor', 'proprietress']:
+        return redirect('accounts:home')
+    credentials = request.session.pop("credentials", None)
+    
+    search_query = request.GET.get('q', '')
+    
+    headmasters = User.objects.filter(
+        role__in=['headmaster', 'headmistress'],
+        is_active=True,
+        school=request.user.school
+    )
+    
+    if search_query:
+        headmasters = headmasters.filter(
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query) |
+            Q(username__icontains=search_query) |
+            Q(staff_id__icontains=search_query)   
+        )
+    
+    headmasters = headmasters.order_by('first_name')
+    paginator = Paginator(headmasters, 10)
+    page = request.GET.get('page')
+    headmasters = paginator.get_page(page)
+    
+    return render(request, "accounts/manage_headmaster_grid.html", {
+        "headmasters": headmasters,
+        "search_query": search_query,
+            'credentials': credentials
+    })
+
+@login_required
+def headmaster_my_profile(request):
+    if request.user.role not in ["headmaster", "headmistress"]:
+        messages.error(request, "You are not authorized to view this page.")
+        return redirect("accounts:dashboard")
+
+    school = request.user.school
+
+    if not school:
+        messages.error(request, "No school is assigned to your account.")
+        return redirect("accounts:dashboard")
+
+    headmaster = User.objects.get(
+        id=request.user.id,
+        school=school,
+        role=request.user.role,
+    )
+
+    return render(
+        request,
+        "accounts/headmaster_my_profile.html",
+        {
+            "headmaster": headmaster,
+            "school": school,
+        },
+    )
+
+@login_required
+def view_headmaster(request, headmaster_id):
+    if request.user.role not in ['admin', 'proprietor', 'proprietress']:
+        return redirect('accounts:home')
+    
+    headmaster = get_object_or_404(
+        User,
+        id=headmaster_id,
+        role__in=['headmaster', 'headmistress'],
+        school=request.user.school
+    )
+    return render(request, "accounts/view_headmaster.html", {"headmaster": headmaster})
+
+@login_required
+def edit_headmaster(request, headmaster_id):
+    if request.user.role not in ['admin', 'proprietor', 'proprietress']:
         return redirect('accounts:home')
 
+    headmaster = get_object_or_404(
+    User,
+    id=headmaster_id,
+    role__in=['headmaster', 'headmistress'],
+    school=request.user.school
+)
+    
+    if request.method == 'POST':
+        form = HeadmasterEditForm(request.POST, request.FILES, instance=headmaster)  
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Headmaster updated successfully.')
+            return redirect('accounts:view_headmaster', headmaster_id=headmaster.id)
+    else:
+        form = HeadmasterEditForm(instance=headmaster)  
+    
+    return render(request, "accounts/edit_headmaster.html", {
+        "form": form,
+        "headmaster": headmaster
+    })
+
+
+@login_required
+def delete_headmaster(request, headmaster_id):
+    if request.user.role not in ['admin', 'proprietor', 'proprietress']:
+        return redirect('accounts:home')
+    if request.method == "POST":
+        User.objects.filter(
+            id=headmaster_id, 
+            role__in=['headmaster', 'headmistress'],
+            school=request.user.school  # ✅ add this
+        ).update(is_active=False)
+        messages.success(request, "Head Teacher deactivated.")
+    return redirect('accounts:manage_headmaster_grid')
+
+@login_required
+def deactivated_headmasters(request):
+    if request.user.role not in ['admin', 'proprietor', 'proprietress']:
+        return redirect('accounts:home')
+        
+    headmasters = User.objects.filter(
+        role__in=['headmaster', 'headmistress'],
+        is_active=False,  
+        school=request.user.school
+    ).order_by('-date_joined')
+    return render(request, "accounts/deactivated_headmasters.html", {"headmasters": headmasters})
+
+@login_required
+def headmaster_profile(request):
+    # If logged in user is headmaster, pass them as 'headmaster'
+    context = {
+        'headmaster': request.user
+    }
+    return render(request, 'accounts/headmaster_profile.html', context)
+
+
+@login_required
+def reactivate_headmaster(request, user_id):
+    if request.user.role not in ["admin", "proprietor", "proprietress"]:
+        return redirect('accounts:home')
+
+    headmaster = get_object_or_404(
+        User,
+        id=user_id,
+        role__in=["headmaster", "headmistress"],
+        school=request.user.school,
+    )
+    headmaster.is_active = True
+    headmaster.save()
+    messages.success(request, f"{headmaster.get_full_name()} has been reactivated.")
+    return redirect('accounts:deactivated_headmasters')
+
+
+@login_required(login_url="accounts:login")
+def headmaster_dashboard(request):
+    if request.user.role not in ["headmaster", "headmistress"]:
+        return redirect("accounts:login")
+
+    school = request.user.school
+
+    if not school:
+        return redirect("accounts:login")
+
+    User = request.user.__class__
+
+    # ============================
+    # TOTAL ACCOUNTS
+    # ============================
+
+    total_students = User.objects.filter(school=school, role="student").count()
+
+    total_teachers = User.objects.filter(school=school, role="teacher").count()
+
+    total_parents = User.objects.filter(school=school, role="parent").count()
+
+    total_accountants = User.objects.filter(school=school, role="accountant").count()
+
+    if school.edition == "basic":
+        total_users = User.objects.filter(
+            school=school
+        ).exclude(
+            role__in=["parent", "accountant"]
+        ).count()
+    else:
+        total_users = User.objects.filter(
+            school=school
+        ).count()
+
+    # ============================
+    # ACADEMICS
+    # ============================
+
+    total_subjects = Subject.objects.filter(school=school).count()
+
+    total_classes = SchoolClass.objects.filter(school=school).count()
+
+    # ============================
+    # HEADMASTER PERMISSIONS
+    # ============================
+
+    # ============================
+    # HEADMASTER PERMISSIONS
+    # ============================
+
+    owner_exists = User.objects.filter(
+        school=school,
+        role__in=["admin", "proprietor", "proprietress"]
+    ).exists()
+
+    if owner_exists:
+        # Owner-controlled school:
+        # Headmaster permissions start disabled.
+        perms, created = HeadmasterPermission.objects.get_or_create(
+            school=school
+        )
+    else:
+        # Headmaster-only school:
+        # Headmaster becomes the highest authority.
+        perms, created = HeadmasterPermission.objects.get_or_create(
+            school=school,
+            defaults={
+                "can_add_class": True,
+                "can_add_subject": True,
+                "can_assigned_teachers": True,
+                "can_create_timetable": True,
+                "can_manage_timetable": True,
+                "can_calendar": True,
+
+                "can_add_student": True,
+                "can_add_parent": True,
+                "can_add_teacher": True,
+                "can_add_accountant": True,
+                "can_add_headmaster": True,
+
+                "can_attendance": True,
+                "can_teacher_attendance": True,
+                "can_review_results": True,
+                "can_published_results": True,
+
+                "can_fees": True,
+                "can_edit_student_fees": True,
+                "can_expenses": True,
+                "can_fee_monitoring": True,
+
+                "can_create_announcements": True,
+                "can_notifications": True,
+
+                "can_view_reports": True,
+                "can_headmaster_remarks": True,
+
+                "can_school_settings": True,
+                "can_user_management": True,
+                "can_system_settings": True,
+            },
+        )
+    # ============================
+    # ACTIVE ACADEMIC YEAR / TERM
+    # ============================
+
+    academic_year = AcademicYear.objects.filter(school=school, is_active=True).first()
+
+    current_term = Term.objects.filter(school=school, is_active=True).first()
+
+    context = {
+        "school": school,
+        "current_term": current_term,
+        "academic_year": academic_year,
+        # Accounts
+        "total_students": total_students,
+        "total_teachers": total_teachers,
+        "total_parents": total_parents,
+        "total_accountants": total_accountants,
+        "total_users": total_users,
+        # Academics
+        "total_subjects": total_subjects,
+        "total_classes": total_classes,
+        # Permissions
+        "perms": perms,
+        "today": timezone.localdate(),
+    }
+
+    return render(request, "accounts/headmaster_dashboard.html", context)
+
+
+@login_required
+def manage_headmaster_permissions(request, school_id):
+    # only admin can do this
+    if request.user.role not in ["admin", "proprietor", "proprietress"]:
+        return redirect('accounts:dashboard')
+
+    school = get_object_or_404(School, id=school_id)
+    perm, created = HeadmasterPermission.objects.get_or_create(school=school)
+
+    if request.method == 'POST':
+        # update all checkboxes
+        perm.can_add_class = 'can_add_class' in request.POST
+        perm.can_add_subject = 'can_add_subject' in request.POST
+        perm.can_assigned_teachers = 'can_assigned_teachers' in request.POST
+        perm.can_create_timetable = 'can_create_timetable' in request.POST
+        perm.can_manage_timetable = 'can_manage_timetable' in request.POST
+        perm.can_calendar = 'can_calendar' in request.POST
+
+        perm.can_add_student = 'can_add_student' in request.POST
+        perm.can_add_parent = 'can_add_parent' in request.POST
+        perm.can_add_teacher = 'can_add_teacher' in request.POST
+        perm.can_add_accountant = 'can_add_accountant' in request.POST
+        perm.can_add_headmaster = 'can_add_headmaster' in request.POST
+
+        perm.can_attendance = 'can_attendance' in request.POST
+        perm.can_teacher_attendance = 'can_teacher_attendance' in request.POST
+        perm.can_review_results = 'can_review_results' in request.POST
+        perm.can_published_results = 'can_published_results' in request.POST
+
+        perm.can_fees = 'can_fees' in request.POST
+        perm.can_edit_student_fees = 'can_edit_student_fees' in request.POST
+        perm.can_expenses = 'can_expenses' in request.POST
+        perm.can_fee_monitoring = 'can_fee_monitoring' in request.POST
+
+        perm.can_create_announcements = 'can_create_announcements' in request.POST
+        perm.can_notifications = 'can_notifications' in request.POST
+
+        perm.can_view_reports = 'can_view_reports' in request.POST
+        perm.can_headmaster_remarks = 'can_headmaster_remarks' in request.POST
+
+        perm.can_school_settings = 'can_school_settings' in request.POST
+        perm.can_user_management = 'can_user_management' in request.POST
+        perm.can_system_settings = 'can_system_settings' in request.POST
+
+        perm.save()
+        messages.success(request, f"Permissions saved for {school.name}")
+        return redirect('accounts:manage_headmaster_grid')
+
+    return render(request, 'accounts/manage_headmaster_permissions.html', {
+        'school': school,
+        'perm': perm
+    })
+
+
+@login_required
+def add_accountant(request):
+    credentials = None
+
+    if not request.user.school:
+        messages.error(request, "You are not assigned to a school.")
+        return redirect("accounts:home")
+
+    # --- FIXED PERMISSION - CORRECT ---
+    if request.user.role in ["headmaster", "headmistress"]:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_add_accountant:  # <-- was can_add_student before!
+                messages.error(request, "Admin has not allowed you to add accountants")
+                return redirect("accounts:headmaster_dashboard")
+        except:
+            return redirect("accounts:headmaster_dashboard")
+    elif request.user.role not in ["admin", "proprietor", "proprietress"]:
+        return redirect("accounts:home")
+
+    # ... keep rest of your code ...
     if request.method == "POST":
         form = AccountantForm(request.POST, request.FILES)
 
@@ -8682,8 +11684,24 @@ def add_accountant(request):
 
 @login_required
 def manage_accountant_grid(request):
-    if request.user.role != 'admin':
+    if request.user.role not in [
+        'admin',
+        'proprietor',
+        'proprietress',
+        'headmaster',
+        'headmistress'
+    ]:
         return redirect('accounts:home')
+
+    # If headmaster, check permission too
+    if request.user.role in ["headmaster", "headmistress"]:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_add_accountant:
+                messages.error(request, "Not allowed")
+                return redirect("accounts:headmaster_dashboard")
+        except:
+            return redirect("accounts:headmaster_dashboard")
     credentials = request.session.pop("credentials", None)
     
     search_query = request.GET.get('q', '')
@@ -8714,16 +11732,46 @@ def manage_accountant_grid(request):
 
 @login_required
 def view_accountant(request, accountant_id):
-    if request.user.role != 'admin':
+    if request.user.role not in [
+        'admin',
+        'proprietor',
+        'proprietress',
+        'headmaster',
+        'headmistress'
+    ]:
         return redirect('accounts:home')
     
+    if request.user.role in ["headmaster", "headmistress"]:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_add_accountant: # or can_view_accountant permission
+                messages.error(request, "Not allowed")
+                return redirect("accounts:headmaster_dashboard")
+        except:
+            return redirect("accounts:headmaster_dashboard")
+
     accountant = get_object_or_404(User, id=accountant_id, role='accountant', school=request.user.school)
     return render(request, "accounts/view_accountant.html", {"accountant": accountant})
 
+
 @login_required
 def edit_accountant(request, accountant_id):
-    if request.user.role != 'admin':
+    if request.user.role not in [
+        'admin',
+        'proprietor',
+        'proprietress',
+        'headmaster',
+        'headmistress'
+    ]:
         return redirect('accounts:home')
+    if request.user.role in ["headmaster", "headmistress"]:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_add_accountant:
+                messages.error(request, "Not allowed")
+                return redirect("accounts:headmaster_dashboard")
+        except:
+            return redirect("accounts:headmaster_dashboard")
         
     accountant = get_object_or_404(User, id=accountant_id, role='accountant', school=request.user.school)
     
@@ -8743,7 +11791,6 @@ def edit_accountant(request, accountant_id):
 
 @login_required
 def accountant_profile(request):
-    # If logged in user is accountant, pass them as 'accountant'
     context = {
         'accountant': request.user
     }
@@ -8752,8 +11799,22 @@ def accountant_profile(request):
 
 @login_required
 def delete_accountant(request, accountant_id):
-    if request.user.role != 'admin':
+    if request.user.role not in [
+        'admin',
+        'proprietor',
+        'proprietress',
+        'headmaster',
+        'headmistress'
+    ]:
         return redirect('accounts:home')
+    if request.user.role in ["headmaster", "headmistress"]:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_add_accountant:
+                messages.error(request, "Not allowed")
+                return redirect("accounts:headmaster_dashboard")
+        except:
+            return redirect("accounts:headmaster_dashboard")
     if request.method == "POST":
         User.objects.filter(
             id=accountant_id, 
@@ -8765,8 +11826,22 @@ def delete_accountant(request, accountant_id):
 
 @login_required
 def deactivated_accountants(request):
-    if request.user.role != 'admin':
+    if request.user.role not in [
+        'admin',
+        'proprietor',
+        'proprietress',
+        'headmaster',
+        'headmistress'
+    ]:
         return redirect('accounts:home')
+    if request.user.role in ["headmaster", "headmistress"]:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_add_accountant:
+                messages.error(request, "Not allowed")
+                return redirect("accounts:headmaster_dashboard")
+        except:
+            return redirect("accounts:headmaster_dashboard")
         
     accountants = User.objects.filter(
         role='accountant', 
@@ -8777,9 +11852,24 @@ def deactivated_accountants(request):
 
 @login_required  
 def reactivate_accountant(request, user_id):
-    if request.user.role != 'admin':
+    if request.user.role not in [
+        'admin',
+        'proprietor',
+        'proprietress',
+        'headmaster',
+        'headmistress'
+    ]:
         return redirect('accounts:home')
-        
+
+    if request.user.role in ["headmaster", "headmistress"]:
+        try:
+            hp = request.user.school.headmaster_permissions
+            if not hp.can_add_accountant:
+                messages.error(request, "Not allowed")
+                return redirect("accounts:headmaster_dashboard")
+        except:
+            return redirect("accounts:headmaster_dashboard")
+
     accountant = get_object_or_404(User, id=user_id, role='accountant', school=request.user.school)
     accountant.is_active = True  
     accountant.save()
@@ -8789,436 +11879,393 @@ def reactivate_accountant(request, user_id):
 
 @login_required
 def accountant_dashboard(request):
-    if request.user.role!= 'accountant':
-        return redirect('accounts:home')
+    if request.user.role != "accountant":
+        return redirect("accounts:home")
 
     school = request.user.school
     today = date.today()
 
     active_term = Term.objects.filter(school=school, is_active=True).first()
-
     if not active_term:
-        messages.error(request, "No active term set. Ask admin to set one in Term Settings.")
-        return render(request, 'accounts/accountant_dashboard.html', {
-            'active_term': None,
-            'total_collected': 0,
-            'total_outstanding': 0,
-            'total_expected': 0,
-            'total_defaulters': 0,
-        })
+        messages.error(request, "No active term set. Ask admin to set one.")
+        return render(
+            request,
+            "accounts/accountant_dashboard.html",
+            {
+                "active_term": None,
+                "total_collected": 0,
+                "total_outstanding": 0,
+                "total_expected": 0,
+                "total_defaulters": 0,
+            },
+        )
 
-    term_label = f"Term {active_term.term_number}"
     academic_year = active_term.academic_year
 
-    # Base querysets
-    fees_this_term = StudentFee.objects.filter(
-        student__school=school,
-        term=active_term,
-        academic_year=academic_year
-    ).select_related('student', 'student__school_class')
+    # Base querysets - ISOLATED ✅
+    fees_this_term = (
+        StudentFee.objects.filter(
+            school=school, term=active_term, academic_year=academic_year
+        )
+        .select_related("student", "student__school_class")
+        .prefetch_related("dynamic_items")
+    )
 
     payments_this_term = PaymentTransaction.objects.filter(
         student__school=school,
         term=active_term,
-        academic_year=academic_year
+        academic_year=academic_year,
+        is_voided=False,
     )
 
-    # 1. Total Collected This Term - FIXED: use total_amount not amount_paid
-    total_collected = payments_this_term.aggregate(total=Sum('total_amount'))['total'] or 0
+    # 1 & 2. Collected / Expected / Outstanding from REAL transactions
+    total_collected = (
+        payments_this_term.aggregate(total=Sum("total_amount"))["total"] or 0
+    )
+    total_expected = fees_this_term.aggregate(total=Sum("total_amount"))["total"] or 0
 
-    # 2. Outstanding + Expected - FIXED: calculate from transactions not fee.balance()
-    total_expected = fees_this_term.aggregate(total=Sum('total_amount'))['total'] or 0
-
-    # Get real paid amounts per student from transactions
     student_paid_map = {}
     for txn in payments_this_term:
-        sid = txn.student_id
-        student_paid_map[sid] = student_paid_map.get(sid, 0) + float(txn.total_amount or 0)
+        student_paid_map[txn.student_id] = student_paid_map.get(
+            txn.student_id, 0
+        ) + float(txn.total_amount or 0)
 
     total_outstanding = 0
     for fee in fees_this_term:
         paid = student_paid_map.get(fee.student_id, 0)
-        balance = float(fee.total_amount) - paid
-        if balance > 0:
-            total_outstanding += balance
+        bal = float(fee.total_amount) - paid
+        if bal > 0:
+            total_outstanding += bal
 
-    # 3. Today's collections - FIXED
+    # 3. Today
     display_date = today
-    today_collections = payments_this_term.filter(
-        created_at__date=today
-    ).aggregate(total=Sum('total_amount'))['total'] or 0
+    today_collections = (
+        payments_this_term.filter(created_at__date=today).aggregate(
+            total=Sum("total_amount")
+        )["total"]
+        or 0
+    )
 
-    # 4. Total Expenses This Term - filter by term date range, not year
-    total_expenses = Expense.objects.filter(
-        school=school,
-        expense_date__range=(active_term.start_date, active_term.end_date)
-    ).aggregate(total=Sum('amount'))['total'] or 0
+    # 4. Expenses
+    total_expenses = (
+        Expense.objects.filter(
+            school=school,
+            expense_date__range=(active_term.start_date, active_term.end_date),
+        ).aggregate(total=Sum("amount"))["total"]
+        or 0
+    )
 
-    # 5. Total Students
-    total_students = User.objects.filter(school=school, role='student', is_active=True).count()
+    total_students = User.objects.filter(
+        school=school, role="student", is_active=True
+    ).count()
 
-    # 6. TODAY'S payments grouped by class - limit 5 per class
-    today_payments = PaymentTransaction.objects.filter(
-        student__school=school,
-        created_at__date=today
-    ).select_related(
-        'student',
-        'student__school_class'
-    ).order_by('-created_at')
+    # 6. Today's payments by class
+    today_payments = (
+        PaymentTransaction.objects.filter(
+            student__school=school, created_at__date=today
+        )
+        .select_related("student", "student__school_class")
+        .order_by("-created_at")
+    )
 
     payments_by_class = {}
     for payment in today_payments:
-        class_name = payment.student.school_class.name if payment.student and payment.student.school_class else "No Class"
-
+        class_name = (
+            payment.student.school_class.name
+            if payment.student and payment.student.school_class
+            else "No Class"
+        )
         payments_by_class.setdefault(class_name, [])
         if len(payments_by_class[class_name]) < 5:
             payments_by_class[class_name].append(payment)
 
-    # 7. Fee defaulters COUNT ONLY + GROUP BY STAGE - FIXED: use transaction sums
+    # 7. Defaulters
     defaulter_counts = {}
     defaulter_counts_by_stage = {stage: 0 for stage in STAGE_GROUP_MAP.keys()}
     total_defaulters = 0
-
-    for fee in fees_this_term.select_related('student__school_class'):
+    for fee in fees_this_term:
         paid = student_paid_map.get(fee.student_id, 0)
-        balance = float(fee.total_amount) - paid
-
-        if balance > 0:
-            class_name = fee.student.school_class.name if fee.student.school_class else "Unassigned"
+        if float(fee.total_amount) - paid > 0:
+            class_name = (
+                fee.student.school_class.name
+                if fee.student.school_class
+                else "Unassigned"
+            )
             defaulter_counts[class_name] = defaulter_counts.get(class_name, 0) + 1
             total_defaulters += 1
+            stage = fee.student.school_class.stage if fee.student.school_class else None
+            if stage in defaulter_counts_by_stage:
+                defaulter_counts_by_stage[stage] += 1
 
-            for stage, classes in STAGE_GROUP_MAP.items():
-                if class_name in classes:
-                    defaulter_counts_by_stage[stage] += 1
-                    break
+    # 8. Fees + Canteen/Feeding by stage - FIXED
+    fees_by_stage = {
+        stage: {"expected": 0, "collected": 0, "outstanding": 0, "student_count": 0}
+        for stage in STAGE_GROUP_MAP.keys()
+    }
+    canteen_by_stage = {
+        stage: {"expected": 0, "collected": 0, "outstanding": 0}
+        for stage in STAGE_GROUP_MAP.keys()
+    }
 
-    defaulter_counts = dict(sorted(defaulter_counts.items()))
+    # Build real feeding collected from PaymentItem
 
-    # 8. Aggregate fees + canteen by stage - FIXED: use transaction sums
-    fees_by_stage = {stage: {'expected': 0, 'collected': 0, 'outstanding': 0, 'student_count': 0}
-                    for stage in STAGE_GROUP_MAP.keys()}
-    canteen_by_stage = {stage: {'expected': 0, 'collected': 0, 'outstanding': 0}
-                        for stage in STAGE_GROUP_MAP.keys()}
+    feeding_collected_by_student = defaultdict(Decimal)
 
-    for fee in fees_this_term.select_related('student__school_class'):
-        if not fee.student.school_class:
+    feeding_items = (
+        PaymentItem.objects.filter(
+            transaction__school=school,
+            transaction__term=active_term,
+            transaction__academic_year=academic_year,
+            transaction__is_voided=False,
+        )
+        .filter(Q(fee_name__icontains="canteen") | Q(fee_name__icontains="feed"))
+        .values("transaction__student_id")
+        .annotate(total=Sum("amount"))
+    )
+
+    for row in feeding_items:
+        feeding_collected_by_student[row["transaction__student_id"]] = row[
+            "total"
+        ] or Decimal("0")
+
+    for fee in fees_this_term:
+        stage_match = (
+            fee.student.school_class.stage if fee.student.school_class else None
+        )
+        if not stage_match or stage_match not in fees_by_stage:
             continue
 
-        stage_match = fee.student.school_class.stage
-        if not stage_match:
-            continue
+        paid = Decimal(str(student_paid_map.get(fee.student_id, 0)))
+        total_amt = Decimal(str(fee.total_amount))
+        bal = total_amt - paid
 
-        paid = student_paid_map.get(fee.student_id, 0)
-        balance = float(fee.total_amount) - paid
+        fees_by_stage[stage_match]["expected"] += float(total_amt)
+        fees_by_stage[stage_match]["collected"] += float(paid)
+        fees_by_stage[stage_match]["outstanding"] += float(bal) if bal > 0 else 0
+        fees_by_stage[stage_match]["student_count"] += 1
 
-        fees_by_stage[stage_match]['expected'] += float(fee.total_amount)
-        fees_by_stage[stage_match]['collected'] += paid
-        fees_by_stage[stage_match]['outstanding'] += balance if balance > 0 else 0
-        fees_by_stage[stage_match]['student_count'] += 1
+        # FEEDING
+        canteen_expected = Decimal("0")
+        for i in fee.dynamic_items.all():
+            name = i.name.lower()
+            if "canteen" in name or "feed" in name:
+                canteen_expected += Decimal(str(i.amount_due))
 
-        canteen_expected = float(fee.canteen_amount or 0)
-        # Note: amount_paid_canteen might still be outdated - better to track in PaymentTransactionItem
-        canteen_collected = float(fee.amount_paid_canteen or 0)
-        canteen_outstanding = canteen_expected - canteen_collected
+        canteen_collected = feeding_collected_by_student.get(
+            fee.student_id, Decimal("0")
+        )
 
-        canteen_by_stage[stage_match]['expected'] += canteen_expected
-        canteen_by_stage[stage_match]['collected'] += canteen_collected
-        canteen_by_stage[stage_match]['outstanding'] += canteen_outstanding
+        canteen_by_stage[stage_match]["expected"] += float(canteen_expected)
+        canteen_by_stage[stage_match]["collected"] += float(canteen_collected)
+        canteen_by_stage[stage_match]["outstanding"] += float(
+            canteen_expected - canteen_collected
+        )
 
     canteen_totals = {
-        'expected': sum(s['expected'] for s in canteen_by_stage.values()),
-        'collected': sum(s['collected'] for s in canteen_by_stage.values()),
-        'outstanding': sum(s['outstanding'] for s in canteen_by_stage.values()),
+        "expected": sum(s["expected"] for s in canteen_by_stage.values()),
+        "collected": sum(s["collected"] for s in canteen_by_stage.values()),
+        "outstanding": sum(s["outstanding"] for s in canteen_by_stage.values()),
     }
 
-    # 8b. Fee structure by stage
+    # 8b. Fee structure by stage - DYNAMIC
     fee_structure_by_stage = {}
-    fee_structures = FeeStructure.objects.filter(
-        term=active_term,
-        academic_year=academic_year,
-        school=school,
-        is_active=True
-    )
+    fee_structures = DynamicFeeStructure.objects.filter(
+        term=active_term, academic_year=academic_year, school=school, is_published=True
+    ).prefetch_related("items")
     for fs in fee_structures:
-        fee_structure_by_stage[fs.stage] = {
-            'school_fees': float(fs.school_fees),
-            'pta_dues': float(fs.pta_dues),
-            'computer_levy': float(fs.computer_levy),
-            'exam_fees': float(fs.exam_fees),
-            'canteen': float(fs.canteen_amount),
-            'boarding': float(fs.boarding_fee),
-            'hostel': float(fs.hostel_fee),
-            'development': float(fs.development_fee),
-            'other_fees': float(fs.other_fees),
-            'total': float(fs.total_amount),
-        }
+        breakdown = {item.name: float(item.amount) for item in fs.items.all()}
+        breakdown["total"] = float(fs.total_amount)
+        fee_structure_by_stage[fs.stage] = breakdown
 
-    # 9. Recent Expenses
-    recent_expenses = Expense.objects.filter(school=school).order_by('-expense_date')[:5]
-
-    class_payment_counts = FeePayment.objects.filter(
-        recorded_at__date=today
-    ).values('fee__student__school_class__name').annotate(total=Count('id'))
-    payment_counts = {item['fee__student__school_class__name']: item['total'] for item in class_payment_counts}
+    recent_expenses = Expense.objects.filter(school=school).order_by("-expense_date")[
+        :5
+    ]
 
     context = {
-        'active_term': active_term,
-        'current_term': f"Term {active_term.term_number}",
-        'current_year': academic_year,
-        'total_collected': total_collected,
-        'total_outstanding': total_outstanding,
-        'total_expected': total_expected,
-        'today_collections': today_collections,
-        'display_date': display_date,
-        'total_expenses': total_expenses,
-        'net_balance': total_collected - total_expenses,
-        'total_students': total_students,
-        'collection_rate': round((total_collected / total_expected * 100), 1) if total_expected > 0 else 0,
-
-        'payments_by_class': payments_by_class,
-        'today_payments': today_payments,
-        'payment_counts': payment_counts,
-
-        'defaulter_counts': defaulter_counts,
-        'defaulter_counts_by_stage': defaulter_counts_by_stage,
-        'total_defaulters': total_defaulters,
-
-        'fees_by_stage': fees_by_stage,
-        'canteen_by_stage': canteen_by_stage,
-        'canteen_totals': canteen_totals,
-        'fee_structure_by_stage': fee_structure_by_stage,
-
-        'recent_expenses': recent_expenses,
-        'today': today,
-        'STAGE_GROUP_MAP': STAGE_GROUP_MAP,
+        "active_term": active_term,
+        "current_term": f"Term {active_term.term_number}",
+        "current_year": academic_year,
+        "total_collected": total_collected,
+        "total_outstanding": total_outstanding,
+        "total_expected": total_expected,
+        "today_collections": today_collections,
+        "display_date": display_date,
+        "total_expenses": total_expenses,
+        "net_balance": float(total_collected) - float(total_expenses),
+        "total_students": total_students,
+        "collection_rate": (
+            round((float(total_collected) / float(total_expected) * 100), 1)
+            if total_expected > 0
+            else 0
+        ),
+        "payments_by_class": payments_by_class,
+        "today_payments": today_payments,
+        "defaulter_counts": defaulter_counts,
+        "defaulter_counts_by_stage": defaulter_counts_by_stage,
+        "total_defaulters": total_defaulters,
+        "fees_by_stage": fees_by_stage,
+        "canteen_by_stage": canteen_by_stage,
+        "canteen_totals": canteen_totals,
+        "fee_structure_by_stage": fee_structure_by_stage,
+        "recent_expenses": recent_expenses,
+        "today": today,
+        "STAGE_GROUP_MAP": STAGE_GROUP_MAP,
     }
-
-    return render(request, 'accounts/accountant_dashboard.html', context)
+    return render(request, "accounts/accountant_dashboard.html", context)
 
 
 @login_required
 def record_payment(request, fee_id=None):
-    if request.user.role!= 'accountant':
-        return redirect('accounts:home')
+    if request.user.role != "accountant":
+        return redirect("accounts:home")
 
     school = request.user.school
-    search_query = request.GET.get('search', '')
-
-    # Get active term - no fallback
+    search_query = request.GET.get("search", "")
     active_term = Term.objects.filter(school=school, is_active=True).first()
     if not active_term:
-        messages.error(request, "No active term set. Ask admin to set one.")
-        return redirect('accounts:accountant_dashboard')
+        messages.error(request, "No active term set.")
+        return redirect("accounts:accountant_dashboard")
 
-    current_term = active_term
     academic_year = active_term.academic_year
-
     fee = None
     student = None
     search_results = None
 
-    # CASE 1: fee_id provided
     if fee_id:
-        fee = get_object_or_404(StudentFee, id=fee_id, student__school=school)
+        fee = get_object_or_404(
+            StudentFee.objects.prefetch_related("dynamic_items"),
+            id=fee_id,
+            student__school=school,
+        )
         student = fee.student
-
-    # CASE 2: Search submitted
     elif search_query:
         query = search_query.strip()
-
-        search_results = User.objects.filter(
-            school=school,
-            role='student',
-            is_active=True
-        ).filter(
-            Q(student_number__icontains=query) |
-            Q(username__icontains=query) |
-            Q(first_name__icontains=query) |
-            Q(last_name__icontains=query) |
-            Q(first_name__icontains=query.split(' ')[0]) |
-            Q(last_name__icontains=query.split(' ')[-1])
+        base = User.objects.filter(school=school, role="student", is_active=True)
+        base = base.annotate(full_name=Concat("first_name", Value(" "), "last_name"))
+        search_results = base.filter(
+            Q(student_number__icontains=query)
+            | Q(username__icontains=query)
+            | Q(first_name__icontains=query)
+            | Q(last_name__icontains=query)
+            | Q(full_name__icontains=query)
         ).distinct()[:10]
-
         exact_match = User.objects.filter(
-            school=school,
-            role='student',
-            student_number__iexact=search_query
+            school=school, role="student", student_number__iexact=search_query
         ).first()
-
         if exact_match:
-            try:
-                fee = StudentFee.objects.get(
+            fee = (
+                StudentFee.objects.filter(
                     student=exact_match,
-                    term=current_term,
-                    academic_year=academic_year
+                    term=active_term,
+                    academic_year=str(academic_year),
                 )
+                .prefetch_related("dynamic_items")
+                .first()
+            )
+            if fee:
                 student = exact_match
                 search_results = None
-            except StudentFee.DoesNotExist:
-                messages.error(request, f"No fee record for {exact_match.get_full_name()} in Term {active_term.term_number}")
-                return redirect('accounts:payment_history')
 
-    # Calculate real balance from transactions BEFORE POST check
-    real_balance = 0
-    real_paid = 0
+    # Build fee_map
+    real_balance = Decimal("0")
+    real_paid = Decimal("0")
+    fee_map = {}
     if fee:
-        # FIXED: Get paid amount from PaymentTransaction, not fee.amount_paid()
-        paid_sum = PaymentTransaction.objects.filter(
-            student=fee.student,
-            term=fee.term,
-            academic_year=AcademicYear.objects.get(name=fee.academic_year)
-        ).aggregate(total=Sum('total_amount'))['total'] or 0
+        for item in fee.dynamic_items.all():
+            balance_item = item.amount_due - item.amount_paid
+            fee_map[item.name] = {
+                "id": item.id,
+                "due": item.amount_due,
+                "paid": item.amount_paid,
+                "balance": balance_item,
+            }
+            real_balance += balance_item
+            real_paid += item.amount_paid
 
-        real_paid = float(paid_sum)
-        real_balance = float(fee.total_amount) - real_paid
-        if real_balance < 0:
-            real_balance = 0
-
-    # CASE 3: POST - Save payment
-    if request.method == 'POST' and fee:
-        school_fees = Decimal(request.POST.get('school_fees_paid') or 0)
-        canteen = Decimal(request.POST.get('canteen_paid') or 0)
-        boarding = Decimal(request.POST.get('boarding_paid') or 0)
-        hostel = Decimal(request.POST.get('hostel_paid') or 0)
-        development = Decimal(request.POST.get('development_paid') or 0)
-        pta = Decimal(request.POST.get('pta_paid') or 0)
-        computer = Decimal(request.POST.get('computer_paid') or 0)
-        exam = Decimal(request.POST.get('exam_paid') or 0)
-        other = Decimal(request.POST.get('other_paid') or 0)
-
-        total_amount = school_fees + canteen + boarding + hostel + development + pta + computer + exam + other
+    if request.method == "POST" and fee:
+        total_amount = Decimal("0")
+        allocations = []
+        for item in fee.dynamic_items.all():
+            raw = request.POST.get(f"item_{item.id}", "").strip()
+            if not raw:
+                continue
+            try:
+                amt = Decimal(raw)
+            except:
+                continue
+            if amt <= 0:
+                continue
+            if amt > (item.amount_due - item.amount_paid):
+                messages.error(
+                    request,
+                    f"{item.name} exceeds balance GH₵ {item.amount_due - item.amount_paid}",
+                )
+                return redirect("accounts:record_payment", fee_id=fee.id)
+            allocations.append((item, amt))
+            total_amount += amt
 
         if total_amount <= 0:
-            messages.error(request, "Amount must be greater than 0")
-            return redirect('accounts:record_payment', fee_id=fee.id)
-
-        # FIXED: Check against real_balance, not fee.balance()
-        if total_amount > real_balance:
-            messages.error(request, f"Amount cannot exceed balance of GH₵ {real_balance:.2f}")
-            return redirect('accounts:record_payment', fee_id=fee.id)
+            messages.error(request, "Enter at least one amount > 0")
+            return redirect("accounts:record_payment", fee_id=fee.id)
 
         try:
             with transaction.atomic():
-                # FIXED: total_amount = payment amount, NOT fee.total_amount
                 payment_txn = PaymentTransaction.objects.create(
-                    term=fee.term,
-                    academic_year=AcademicYear.objects.get(name=fee.academic_year),
                     student=fee.student,
-                    total_amount=total_amount, 
-                    recorded_by=request.user
+                    student_fee=fee,
+                    school=school,
+                    term=active_term,
+                    academic_year=active_term.academic_year,
+                    total_amount=total_amount,
+                    amount_paid=total_amount,
+                    payment_method="cash",
+                    recorded_by=request.user,
                 )
 
-                # Build payment types list
-                payment_types = []
-                if school_fees > 0: payment_types.append("School Fees")
-                if canteen > 0: payment_types.append("Feeding Fee")
-                if boarding > 0: payment_types.append("Boarding Fee")
-                if hostel > 0: payment_types.append("Hostel Fee")
-                if development > 0: payment_types.append("Development Fee")
-                if pta > 0: payment_types.append("PTA Dues")
-                if computer > 0: payment_types.append("Computer Levy")
-                if exam > 0: payment_types.append("Exam Fees")
-                if other > 0: payment_types.append("Other Fees")
-
-                # Add payment types to transaction
-                for name in payment_types:
-                    code = name.upper().replace(" ", "_")
-                    pt, created = PaymentType.objects.get_or_create(
-                        code=code,
-                        defaults={"name": name}
+                for item_obj, amt in allocations:
+                    PaymentItem.objects.create(
+                        transaction=payment_txn,
+                        fee_name=item_obj.name,
+                        amount=amt,
+                        payment_type=item_obj.payment_type,
+                    )
+                    item_obj.amount_paid += amt
+                    item_obj.save(update_fields=["amount_paid"])
+                    code = item_obj.name.upper().replace(" ", "_")
+                    pt, _ = PaymentType.objects.get_or_create(
+                        school=school, code=code, defaults={"name": item_obj.name}
                     )
                     payment_txn.payment_types.add(pt)
 
-                # Create PaymentItems - DO NOT update StudentFee fields anymore
-                allocations = [
-                    ('School Fees', school_fees),
-                    ('Feeding Fee', canteen),
-                    ('Boarding Fee', boarding),
-                    ('Hostel Fee', hostel),
-                    ('Development Fee', development),
-                    ('PTA Dues', pta),
-                    ('Computer Levy', computer),
-                    ('Exam Fees', exam),
-                    ('Other Fees', other),
-                ]
-
-                for fee_name, amount_paid in allocations:
-                    if amount_paid > 0:
-                        PaymentItem.objects.create(
-                            transaction=payment_txn,
-                            fee_name=fee_name,
-                            amount=amount_paid
-                        )
-
-                # === NEW: ADMIN MONITORING - Audit Log ===
                 FeeAuditLog.objects.create(
                     transaction=payment_txn,
-                    action='COLLECTED',
+                    action="COLLECTED",
                     done_by=request.user,
-                    details=f"Collected GHS {total_amount} for {fee.student.get_full_name()} ({fee.student.student_number}) - {', '.join(payment_types)}"
+                    details=f"Collected GHS {total_amount} for {fee.student.get_full_name()}",
                 )
 
-                messages.success(request, f"Payment of GH₵ {total_amount} recorded. Receipt: {payment_txn.receipt_number}")
-                return redirect('accounts:record_payment', fee_id=fee.id)
-
+            messages.success(
+                request,
+                f"Payment GH₵ {total_amount} recorded. Receipt: {payment_txn.receipt_number}",
+            )
+            return redirect("accounts:payment_history")
         except Exception as e:
-            messages.error(request, f"Error processing payment: {str(e)}")
-            return redirect('accounts:record_payment', fee_id=fee.id)
-
-    # Recalculate total_amount on fee for display
-    if fee:
-        fee.total_amount = sum([
-            fee.school_fees or 0,
-            fee.pta_dues or 0,
-            fee.computer_levy or 0,
-            fee.exam_fees or 0,
-            fee.canteen_amount or 0,
-            fee.boarding_fee or 0,
-            fee.hostel_fee or 0,
-            fee.development_fee or 0,
-            fee.other_fees or 0
-        ])
-        fee.save(update_fields=['total_amount'])
-
-    fee_map = {}
-
-    if fee:
-        fs = FeeStructure.objects.filter(
-            school=school,
-            term=fee.term,
-            academic_year=fee.academic_year,
-            stage=fee.student.school_class.stage,
-            is_active=True
-        ).first()
-
-        if fs:
-            fee_map = {
-                "School Fees": fs.school_fees,
-                "Feeding": fs.canteen_amount,
-                "Boarding": fs.boarding_fee,
-                "Hostel": fs.hostel_fee,
-                "Development": fs.development_fee,
-                "PTA": fs.pta_dues,
-                "Computer": fs.computer_levy,
-                "Exam": fs.exam_fees,
-                "Other": fs.other_fees,
-            }
-            fee_map = {k: v for k, v in fee_map.items() if v not in [None, 0, ""]}
+            messages.error(request, f"Error: {e}")
+            return redirect("accounts:record_payment", fee_id=fee.id)
 
     context = {
-        'fee': fee,
-        'student': student,
-        'balance': real_balance, # FIXED: Use calculated balance
-        'total_paid': real_paid, # ADD THIS for template
-        'term': active_term.get_term_number_display(),
-        'academic_year': academic_year,
-        'active_term': active_term,
-        'search_query': search_query,
-        'fee_map': fee_map,
-        'search_results': search_results,
+        "fee": fee,
+        "student": student,
+        "balance": real_balance,
+        "total_paid": real_paid,
+        "term": active_term.get_term_number_display(),
+        "academic_year": academic_year,
+        "active_term": active_term,
+        "search_query": search_query,
+        "fee_map": fee_map,
+        "search_results": search_results,
     }
-    return render(request, 'accounts/record_payment.html', context)
+    return render(request, "accounts/record_payment.html", context)
 
 
 @login_required
@@ -9242,7 +12289,7 @@ def add_expense(request):
 
 @login_required
 def expense_list(request):
-    if request.user.role not in ['admin', 'accountant', 'bursar', 'head']:
+    if request.user.role not in ['admin', 'accountant', 'bursar', 'headmaster', 'headmistress', 'proprietor', 'proprietress']:
         return redirect('accounts:home')
 
     school = request.user.school
@@ -9307,7 +12354,7 @@ def expense_list(request):
 
 @login_required
 def verify_expense(request, pk):
-    if request.user.role not in ['admin', 'bursar', 'head']:
+    if request.user.role not in ['admin', 'bursar', 'headmaster', 'headmistress', 'proprietor', 'proprietress']:
         return redirect('accounts:home') 
     
     expense = get_object_or_404(Expense, pk=pk, school=request.user.school)
@@ -9323,15 +12370,15 @@ def verify_expense(request, pk):
 @login_required
 def edit_expense(request, pk):
     expense = get_object_or_404(Expense, pk=pk, school=request.user.school)
-    
+
     if expense.verified:
         messages.error(request, "Cannot edit a verified expense")
         return redirect('accounts:expense_list')
-    
+
     if expense.recorded_by != request.user:
         messages.error(request, "You can only edit your own expenses")
         return redirect('accounts:expense_list')
-    
+
     if request.method == 'POST':
         form = ExpenseForm(request.POST, request.FILES, instance=expense)
         if form.is_valid():
@@ -9339,27 +12386,28 @@ def edit_expense(request, pk):
             return redirect('accounts:expense_list')
     else:
         form = ExpenseForm(instance=expense)
-    
+
     return render(request, 'accounts/edit_expense.html', {'form': form, 'expense': expense})
+
 
 @login_required
 def delete_expense(request, pk):
     expense = get_object_or_404(Expense, pk=pk, school=request.user.school)
-    
+
     if expense.verified:
         messages.error(request, "Cannot delete a verified expense")
-        return redirect('accounts:expense_list')
-    
-    if expense.created_by != request.user:
+        return redirect("accounts:expense_list")
+
+    if expense.recorded_by != request.user:  # ✅ FIXED! recorded_by not created_by
         messages.error(request, "You can only delete your own expenses")
-        return redirect('accounts:expense_list')
-    
-    if request.method == 'POST':
+        return redirect("accounts:expense_list")
+
+    if request.method == "POST":
         expense.delete()
         messages.success(request, "Expense deleted")
-        return redirect('accounts:expense_list')
-    
-    return render(request, 'accounts/confirm_delete.html', {'expense': expense})
+        return redirect("accounts:expense_list")
+
+    return render(request, "accounts/confirm_delete.html", {"expense": expense})
 
 
 @login_required
@@ -9445,163 +12493,160 @@ def set_student_fee(request):
     students = User.objects.filter(school=school, role='student', is_active=True).order_by('first_name')
     classes = SchoolClass.objects.filter(school=school)
 
-    try:
-        active_term = Term.objects.get(school=school, is_active=True)
-        academic_year = active_term.academic_year
-    except Term.DoesNotExist:
+    # === FILTER PART - NEW ===
+    selected_term_id = request.GET.get('term')
+    selected_year = request.GET.get('academic_year')
+
+    if selected_term_id:
+        active_term = Term.objects.filter(id=selected_term_id, school=school).first()
+    else:
+        active_term = Term.objects.filter(school=school, is_active=True).first()
+
+    if not active_term:
         messages.error(request, "No active term set. Ask admin to set one.")
         return redirect('accounts:accountant_dashboard')
 
+    # Year from filter or from term
+    if selected_year:
+        academic_year_str = selected_year
+        academic_year_obj = active_term.academic_year # for generation still need object? we use str
+    else:
+        academic_year_str = str(active_term.academic_year)
+        selected_year = academic_year_str
+
+    academic_year = active_term.academic_year # keep object for later if needed
+
+    # === For dropdowns (10 years, 1000 years data) ===
+    all_terms = Term.objects.filter(school=school).order_by('-academic_year__name', 'term_number')
+    all_years = AcademicYear.objects.filter(school=school).order_by('-name')
+
     if request.method == 'POST':
-        # Bulk set by class
-        if 'bulk_set' in request.POST:
-            class_id = request.POST.get('school_class')
-            term_id = request.POST.get('term')
-            term = Term.objects.get(id=term_id)
-            year_id = request.POST.get('academic_year')
-            academic_year_obj = AcademicYear.objects.get(id=year_id)
-            due_date = request.POST.get('due_date')
+        # Generate fees from DynamicFeeStructure (same as before)
+        class_id = request.POST.get('school_class')
+        stage = SchoolClass.objects.get(id=class_id).stage if class_id else request.POST.get('stage')
 
-            school_fees = request.POST.get('school_fees') or 0
-            pta_dues = request.POST.get('pta_dues') or 0
-            computer_levy = request.POST.get('computer_levy') or 0
-            exam_fees = request.POST.get('exam_fees') or 0
-            other_fees = request.POST.get('other_fees') or 0
+        fee_structure = DynamicFeeStructure.objects.filter(
+            school=school, stage=stage, term=active_term, academic_year=str(academic_year_str), is_published=True
+        ).first()
 
-            students_in_class = User.objects.filter(
-                school=school, role='student',
-                school_class_id=class_id, is_active=True
+        if not fee_structure:
+            messages.error(request, f"No published fee structure for {stage} - {active_term} - {academic_year_str}")
+            return redirect('accounts:set_student_fee')
+
+        students_in_class = User.objects.filter(school=school, role='student', school_class_id=class_id, is_active=True) if class_id else User.objects.filter(school=school, role='student', is_active=True)
+
+        for student in students_in_class:
+            student_fee, created = StudentFee.objects.update_or_create(
+                student=student,
+                school=school,
+                term=active_term,
+                academic_year=str(academic_year_str),
+                stage=stage,
+                defaults={'total_amount': fee_structure.total_amount}
             )
-            for student in students_in_class:
-                StudentFee.objects.update_or_create(
-                    student=student, term=term, academic_year=academic_year_obj,
-                    defaults={
-                        'school_fees': school_fees,
-                        'pta_dues': pta_dues,
-                        'computer_levy': computer_levy,
-                        'exam_fees': exam_fees,
-                        'other_fees': other_fees,
-                        'due_date': due_date
-                    }
+            for item in fee_structure.items.all():
+                DynamicStudentFeeItem.objects.update_or_create(
+                    school=school,
+                    student_fee=student_fee,
+                    student=student,
+                    name=item.name,
+                    defaults={'amount_due': item.amount, 'payment_type': item.payment_type}
                 )
-            messages.success(request, f"Fees set for {students_in_class.count()} students in class")
-            return redirect('accounts:set_student_fee')
-        # Single student set
-        else:
-            student_id = request.POST.get('student')
-            term_id = request.POST.get('term')
-            term = Term.objects.get(id=term_id)
-            year_id = request.POST.get('academic_year')
-            academic_year_obj = AcademicYear.objects.get(id=year_id)
-            due_date = request.POST.get('due_date')
 
-            school_fees = request.POST.get('school_fees') or 0
-            pta_dues = request.POST.get('pta_dues') or 0
-            computer_levy = request.POST.get('computer_levy') or 0
-            exam_fees = request.POST.get('exam_fees') or 0
-            other_fees = request.POST.get('other_fees') or 0
+        messages.success(request, f"Fees generated for {students_in_class.count()} students - {stage} - {academic_year_str}")
+        return redirect(f"{request.path}?term={active_term.id}&academic_year={academic_year_str}")
 
-            student = get_object_or_404(User, id=student_id, school=school)
-            StudentFee.objects.update_or_create(
-                student=student, term=term, academic_year=academic_year_obj,
-                defaults={
-                    'school_fees': school_fees,
-                    'pta_dues': pta_dues,
-                    'computer_levy': computer_levy,
-                    'exam_fees': exam_fees,
-                    'other_fees': other_fees,
-                    'due_date': due_date
-                }
-            )
-            messages.success(request, f"Fee set for {student.get_full_name()}")
-            return redirect('accounts:set_student_fee')
-
-    # GET request
-    fee_structure_by_stage = {}
-    fee_structures = FeeStructure.objects.filter(
-        term=active_term,
-        academic_year=academic_year,
-        school=school,
-        is_active=True,
+    # GET - Filtered fee structure
+    fee_structures = DynamicFeeStructure.objects.filter(
+        term=active_term, 
+        academic_year=str(academic_year_str), 
+        school=school, 
         is_published=True
-    ).order_by('stage')
+    ).prefetch_related('items')
 
+    fee_structure_by_stage = {}
     for fs in fee_structures:
-        data = {"stage": fs.stage, "total": float(fs.total_amount)}
-        if fs.school_fees not in [None, 0, ""]:
-            data["school_fees"] = float(fs.school_fees)
-        if fs.canteen_amount not in [None, 0, ""]:
-            data["canteen"] = float(fs.canteen_amount)
-        if fs.boarding_fee not in [None, 0, ""]:
-            data["boarding_fee"] = float(fs.boarding_fee)
-        if fs.hostel_fee not in [None, 0, ""]:
-            data["hostel_fee"] = float(fs.hostel_fee)
-        if fs.exam_fees not in [None, 0, ""]:
-            data["exam_fees"] = float(fs.exam_fees)
-        if fs.development_fee not in [None, 0, ""]:
-            data["development_fee"] = float(fs.development_fee)
-        if fs.pta_dues not in [None, 0, ""]:
-            data["pta_dues"] = float(fs.pta_dues)
-        if fs.computer_levy not in [None, 0, ""]:
-            data["computer_levy"] = float(fs.computer_levy)
-        if fs.other_fees not in [None, 0, ""]:
-            data["other_fees"] = float(fs.other_fees)
-        fee_structure_by_stage[fs.stage] = data
+        breakdown = {item.name: float(item.amount) for item in fs.items.all()}
+        breakdown["total"] = float(fs.total_amount)
+        fee_structure_by_stage[fs.stage] = breakdown
 
-    # context is OUTSIDE the for loop now
     context = {
         'students': students,
         'classes': classes,
-        'term': getattr(active_term, "name", str(active_term)),
-        'academic_year': str(active_term.academic_year),
+        'term': active_term,
+        'academic_year': str(academic_year_str),
         'fee_structure_by_stage': fee_structure_by_stage,
+        # FILTER DATA
+        'all_terms': all_terms,
+        'all_years': all_years,
+        'selected_term_id': str(active_term.id) if active_term else "",
+        'selected_year': academic_year_str,
     }
     return render(request, 'accounts/set_student_fee.html', context)
 
 
 @login_required
 def all_students_fees_list(request):
-    if request.user.role != 'accountant':
-        return redirect('accounts:home')
+    if request.user.role != "accountant":
+        return redirect("accounts:home")
 
     school = request.user.school
 
     active_term = Term.objects.filter(school=school, is_active=True).first()
     if not active_term:
-        messages.error(request, "No active term set. Ask admin to set one in Term Settings.")
-        return render(request, 'accounts/all_students_fees_list.html', {
-            'class_data': [],
-            'total_owing': 0,
-            'total_defaulters': 0,
-            'active_term': None,
-            'generated_on': date.today(),
-        })
+        messages.error(
+            request, "No active term set. Ask admin to set one in Term Settings."
+        )
+        return render(
+            request,
+            "accounts/all_students_fees_list.html",
+            {
+                "class_data": [],
+                "total_owing": 0,
+                "total_defaulters": 0,
+                "active_term": None,
+                "generated_on": date.today(),
+            },
+        )
 
-    current_term = active_term
-    academic_year = active_term.academic_year
+    # FIX: academic_year as string for StudentFee (CharField)
+    academic_year_obj = active_term.academic_year
+    academic_year_str = str(
+        academic_year_obj.name
+        if hasattr(academic_year_obj, "name")
+        else academic_year_obj
+    )
 
     classes = SchoolClass.objects.filter(school=school).prefetch_related(
         Prefetch(
-            'students',
-            queryset=User.objects.filter(role='student', is_active=True).select_related('school_class'),
-            to_attr='students_list'
+            "students",
+            queryset=User.objects.filter(role="student", is_active=True).select_related(
+                "school_class"
+            ),
+            to_attr="students_list",
         )
     )
-    
+
     class_data = []
     total_owing = 0
     total_defaulters = 0
     generated_on = date.today()
 
-    # Get all payments for this term in one query
-    all_payments = PaymentTransaction.objects.filter(
-        student__school=school,
-        term=active_term,
-        academic_year=academic_year
-    ).values('student_id').annotate(total_paid=Sum('total_amount'))
-    
-    # Build map: student_id -> total_paid
-    student_paid_map = {p['student_id']: float(p['total_paid'] or 0) for p in all_payments}
+    # FIX: Use string for year + school isolation
+    all_payments = (
+        PaymentTransaction.objects.filter(
+            student__school=school,
+            school=school,
+            term=active_term,
+            academic_year=academic_year_obj,
+        )
+        .values("student_id")
+        .annotate(total_paid=Sum("total_amount"))
+    )
+
+    student_paid_map = {
+        p["student_id"]: float(p["total_paid"] or 0) for p in all_payments
+    }
 
     for school_class in classes:
         students = school_class.students_list
@@ -9611,9 +12656,10 @@ def all_students_fees_list(request):
         student_ids = [s.id for s in students]
         fees = StudentFee.objects.filter(
             student_id__in=student_ids,
+            school=school,  # isolation
             term_id=active_term.id,
-            academic_year=academic_year
-        ).select_related('student')
+            academic_year=academic_year_str,  # FIXED STRING
+        ).select_related("student")
 
         fees_by_student = {f.student_id: f for f in fees}
 
@@ -9625,186 +12671,316 @@ def all_students_fees_list(request):
             if not fee:
                 continue
 
-            # FIXED: Calculate from PaymentTransaction, not fee.balance()
             paid = student_paid_map.get(student.id, 0)
             balance = float(fee.total_amount) - paid
 
             if balance > 0:
-                students_data.append({
-                    'student': student,
-                    'student_number': student.student_number,
-                    'total': fee.total_amount,
-                    'paid': paid,  # Use real sum from transactions
-                    'balance': balance,  # Calculated balance
-                    'fee_id': fee.id,
-                    'status': 'Owing'
-                })
+                students_data.append(
+                    {
+                        "student": student,
+                        "student_number": student.student_number,
+                        "total": fee.total_amount,
+                        "paid": paid,
+                        "balance": balance,
+                        "fee_id": fee.id,
+                        "status": "Owing",
+                    }
+                )
                 total_owing += balance
                 class_total += balance
                 total_defaulters += 1
 
         if students_data:
-            class_data.append({
-                'class_name': school_class.name,
-                'students': students_data,
-                'class_id': school_class.id,
-                'count': len(students_data),
-                'total_owing': class_total
-            })
+            class_data.append(
+                {
+                    "class_name": school_class.name,
+                    "stage": school_class.stage,  # ADDED for Lower / Upper print
+                    "students": students_data,
+                    "class_id": school_class.id,
+                    "count": len(students_data),
+                    "total_owing": class_total,
+                }
+            )
 
     context = {
-        'class_data': class_data,
-        'current_term': active_term.get_term_number_display(),
-        'current_year': academic_year,
-        'active_term': active_term,
-        'total_owing': total_owing,
-        'total_defaulters': total_defaulters,
-        'page_title': 'Fee Defaulters Report',
-        'generated_on': generated_on,
+        "class_data": class_data,
+        "current_term": active_term.get_term_number_display(),
+        "current_year": academic_year_str,
+        "active_term": active_term,
+        "total_owing": total_owing,
+        "total_defaulters": total_defaulters,
+        "page_title": "Fee Defaulters Report",
+        "generated_on": generated_on,
+        "school": school,
     }
-    return render(request, 'accounts/all_students_fees_list.html', context)
+    return render(request, "accounts/all_students_fees_list.html", context)
 
 
 @login_required
 def payment_history(request):
-    
-    if request.user.role!= 'accountant':
-        return redirect('accounts:home')
+    if request.user.role != 'accountant':
+        messages.error(request, "Not authorized.")
+        return redirect('accounts:dashboard')
 
     school = request.user.school
 
+    # ISOLATION: direct school filter
     transactions = PaymentTransaction.objects.filter(
+        school=school,
         student__school=school
     ).select_related(
         'student',
         'recorded_by',
-        'student__school_class'
-    ).prefetch_related('payment_types').order_by('-created_at') # keep it on the same chain
-
-    if not transactions:
-        return render(request, 'accounts/payment_history.html', {
-            'transactions': [],
-            'grouped_transactions': {},
-        })
-
-    # Build lookup for StudentFee objects
-    student_ids = set(tx.student_id for tx in transactions)
-    fee_keys = {(tx.term, tx.academic_year, tx.student_id) for tx in transactions}
-
-    fees = StudentFee.objects.filter(
-        student_id__in=student_ids,
-        term__in={k[0] for k in fee_keys},
-        academic_year__in={k[1] for k in fee_keys}
-    )
-
-    fees_map = {(f.term, f.academic_year, f.student_id): f for f in fees}
+        'student__school_class',
+        'term',
+        'academic_year'
+    ).prefetch_related(
+        'payment_types',
+        'items' # dynamic items
+    ).order_by('-created_at')
 
     grouped = defaultdict(list)
 
     for tx in transactions:
-        key = (tx.term, str(tx.academic_year), tx.student_id)
-        fee = fees_map.get(key)
+        # DYNAMIC BALANCE - from DynamicStudentFeeItem, not hard-coded fields
+        dyn_items = DynamicStudentFeeItem.objects.filter(
+            school=school,
+            student=tx.student,
+            student_fee__term=tx.term,
+            student_fee__academic_year=str(tx.academic_year)  # StudentFee academic_year is CharField
+        )
 
-        tx.student_fee = fee
-        tx.payment_list = [pt.name for pt in tx.payment_types.all()]
-
-        # ADD THIS
-        if fee:
-            tx.fee_balance = fee.balance()
+        if dyn_items.exists():
+            total_due = sum(float(i.amount_due) for i in dyn_items)
+            total_paid = sum(float(i.amount_paid) for i in dyn_items)
+            tx.fee_balance = total_due - total_paid
+            tx.fee_total = total_due
+            tx.fee_total_paid = total_paid
         else:
-            tx.fee_balance = 0
+            # fallback to old StudentFee if dynamic not created yet
+            try:
+                fee = StudentFee.objects.get(
+                    school=school,
+                    student=tx.student,
+                    term=tx.term,
+                    academic_year=str(tx.academic_year)
+                )
+                tx.fee_balance = float(fee.balance())
+                tx.fee_total = float(fee.total_amount)
+                tx.fee_total_paid = float(tx.amount_paid) 
+
+                tx.student_fee = fee
+            except StudentFee.DoesNotExist:
+                tx.fee_balance = 0
+                tx.fee_total = float(tx.total_amount)
+                tx.student_fee = None
+
+        tx.payment_list = [pt.name for pt in tx.payment_types.all()] or [i.fee_name for i in tx.items.all()]
 
         class_name = tx.student.school_class.name if tx.student.school_class else "Unassigned"
         grouped[class_name].append(tx)
 
-    return render(request, 'accounts/payment_history.html', {
+    context = {
         'transactions': transactions,
         'grouped_transactions': dict(grouped),
-        'active_term': Term.objects.filter(school=school, is_active=True).first()
-    })
+        'school': school,
+        'active_term': Term.objects.filter(school=school, is_active=True).first(),
+    }
+    return render(request, 'accounts/payment_history.html', context)
 
 
 @login_required
 def view_receipt(request, payment_id):
     payment = get_object_or_404(
-        PaymentTransaction.objects.select_related('student', 'recorded_by'),
-        id=payment_id
+        PaymentTransaction.objects.select_related(
+            "student", "recorded_by", "student__school_class"
+        ),
+        id=payment_id,
+        student__school=request.user.school,
     )
 
-    # Get fee breakdown from StudentFee instead of payment_type
-    try:
-        student_fee = StudentFee.objects.get(
+    # === FIX: Get breakdown from PaymentItem ===
+    payment_items = PaymentItem.objects.filter(transaction=payment)
+    fee_items = [(item.fee_name, float(item.amount)) for item in payment_items]
+
+    if not fee_items:
+        fee_items = [("School Fees", float(payment.total_amount))]
+
+    # === FIX: Balance left ===
+    student_fee = (
+        StudentFee.objects.filter(
             student=payment.student,
             term=payment.term,
-            academic_year=payment.academic_year
+            academic_year=str(payment.academic_year),
         )
-        payment_types = [p.fee_type.name for p in student_fee.payments.all()]
-    except StudentFee.DoesNotExist:
-        payment_types = []
+        .prefetch_related("dynamic_items")
+        .first()
+    )
+
+    total_balance = 0
+    if student_fee:
+        for di in student_fee.dynamic_items.all():
+            total_balance += float(di.amount_due - di.amount_paid)
+
+    # ==================================================
+    # QR CODE
+    # ==================================================
+
+    verification_url = request.build_absolute_uri(
+        f"/verify-receipt/{payment.verification_token}/"
+    )
+
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=8,
+        border=4,
+    )
+
+    qr.add_data(verification_url)
+    qr.make(fit=True)
+
+    qr_image = qr.make_image(fill_color="black", back_color="white")
+
+    qr_buffer = BytesIO()
+    qr_image.save(qr_buffer, format="PNG")
+
+    qr_code = base64.b64encode(qr_buffer.getvalue()).decode("utf-8")
+
+    # ==================================================
 
     context = {
-        'payment': payment,
-        'school': payment.student.school,
-        'accountant': payment.recorded_by,
-        'payment_types': payment_types,
-        'total_paid': payment.total_amount,
+        "payment": payment,
+        "school": payment.student.school,
+        "accountant": payment.recorded_by,
+        "fee_items": fee_items,
+        "balance": total_balance,
+        "total_paid": payment.total_amount,
+        # QR CODE
+        "qr_code": qr_code,
+        "verification_url": verification_url,
     }
 
-    return render(request, 'accounts/receipt.html', context)
+    return render(request, "accounts/receipt.html", context)
+
 
 @login_required
 def verify_payment(request):
-    if request.user.role != 'accountant':
-        return redirect('accounts:home')
+    if request.user.role != "accountant":
+        return redirect("accounts:home")
 
     school = request.user.school
-    query = request.GET.get('query', '')
+    query = request.GET.get("query", "")
 
     receipt = None
     student = None
     payments = None
 
     if query:
-        # 1. Try receipt search first
-        receipt = PaymentTransaction.objects.filter(
-            receipt_number__iexact=query,
-            student__school=school
-        ).select_related('student', 'student__school_class').first()
+        # 1. Try receipt search first - ISOLATED
+        receipt = (
+            PaymentTransaction.objects.filter(
+                school=school, receipt_number__iexact=query, student__school=school
+            )
+            .select_related("student", "student__school_class")
+            .first()
+        )
 
         # 2. If receipt found
         if receipt:
             student = receipt.student
             payments = PaymentTransaction.objects.filter(
+                school=school,
                 student=student,
+                student__school=school,
                 term=receipt.term,
-                academic_year=receipt.academic_year
-            ).order_by('-created_at')
+                academic_year=receipt.academic_year,
+            ).order_by("-created_at")
 
         else:
-            # 3. Student search fallback
-            student = User.objects.filter(
-                school=school,
-                role='student',
-                is_active=True
-            ).filter(
-                Q(student_number__iexact=query) |
-                Q(first_name__icontains=query) |
-                Q(last_name__icontains=query)
-            ).first()
+            # 3. Student search fallback - ISOLATED
+            student = (
+                User.objects.filter(
+                    school=school,
+                    role="student",
+                    is_active=True
+                )
+                .annotate(
+                    full_name=Concat(
+                        "first_name",
+                        Value(" "),
+                        "last_name"
+                    )
+                )
+                .filter(
+                    Q(student_number__iexact=query)
+                    | Q(first_name__icontains=query)
+                    | Q(last_name__icontains=query)
+                    | Q(full_name__icontains=query)
+                )
+                .first()
+            )
 
             if student:
                 payments = PaymentTransaction.objects.filter(
-                    student=student
-                ).order_by('-created_at')
+                    school=school, student=student, student__school=school
+                ).order_by("-created_at")
+
+        # ADD DYNAMIC BALANCE TO EACH PAYMENT
+        if payments:
+            for tx in payments:
+                dyn_items = DynamicStudentFeeItem.objects.filter(
+                    school=school,
+                    student=tx.student,
+                    student_fee__term=tx.term,
+                    student_fee__academic_year=str(tx.academic_year),
+                )
+                if dyn_items.exists():
+                    total_due = sum(float(i.amount_due) for i in dyn_items)
+                    total_paid = sum(float(i.amount_paid) for i in dyn_items)
+                    tx.fee_total_paid = total_paid
+                    tx.fee_balance = total_due - total_paid
+                    tx.fee_total = total_due
+                else:
+                    tx.fee_total_paid = float(tx.amount_paid)
+                    tx.fee_balance = 0
+                    tx.fee_total = float(tx.total_amount)
 
     context = {
-        'query': query,
-        'receipt': receipt,
-        'student': student,
-        'payments': payments,
+        "query": query,
+        "receipt": receipt,
+        "student": student,
+        "payments": payments,
+    }
+    return render(request, "accounts/verify_payment.html", context)
+
+def verify_receipt(request, verification_token):
+    payment = get_object_or_404(
+        PaymentTransaction.objects.select_related(
+            "student",
+            "recorded_by",
+            "student__school_class",
+            "term",
+            "academic_year",
+        ),
+        verification_token=verification_token,
+    )
+
+    context = {
+        "payment": payment,
+        "school": payment.student.school,
+        "student": payment.student,
+        "student_number": payment.student.student_number,
+        "receipt_number": payment.receipt_number,
+        "amount_paid": payment.total_amount,
+        "payment_method": payment.get_payment_method_display(),
     }
 
-    return render(request, 'accounts/verify_payment.html', context)
+    return render(
+        request,
+        "accounts/verify_receipt.html",
+        context
+    )
 
 
 @login_required
@@ -10339,7 +13515,7 @@ def apply_fee_structure(request):
         return redirect('accounts:home')
 
     school = request.user.school
-    fee_structures = FeeStructure.objects.filter(school=school, is_active=True)
+    fee_structures = DynamicFeeStructure.objects.filter(school=school, is_published=True)
     
     STAGE_GROUP_MAP = {
         'creche': ['creche'],
@@ -10353,10 +13529,10 @@ def apply_fee_structure(request):
 
     if request.method == 'POST':
         structure_id = request.POST.get('fee_structure')
-        stage_group = request.POST.get('stage_group')  # CHANGED from school_class
+        stage_group = request.POST.get('stage_group')
         due_date = request.POST.get('due_date')
 
-        structure = get_object_or_404(FeeStructure, id=structure_id, school=school)
+        structure = get_object_or_404(DynamicFeeStructure, id=structure_id, school=school)
         
         student_stages = STAGE_GROUP_MAP.get(stage_group, [])
         students = User.objects.filter(
@@ -10369,24 +13545,28 @@ def apply_fee_structure(request):
         created = 0
         updated = 0
         for student in students:
-            obj, created_flag = StudentFee.objects.update_or_create(
+            # 1. Create StudentFee header
+            student_fee, created_flag = StudentFee.objects.update_or_create(
                 student=student,
                 term=structure.term,
                 academic_year=structure.academic_year,
                 defaults={
-                    'school_fees': structure.school_fees,
-                    'pta_dues': structure.pta_dues,
-                    'boarding_fee': structure.boarding_fee,
-                    'hostel_fee': structure.hostel_fee,
-                    'development_fee': structure.development_fee,
-                    'computer_levy': structure.computer_levy,
-                    'canteen_amount': structure.canteen_amount,
-                    'exam_fees': structure.exam_fees,
-                    'other_fees': structure.other_fees,
+                    'school': school,
                     'total_amount': structure.total_amount,
                     'due_date': due_date
                 }
             )
+            # 2. Delete old breakdown and recreate dynamic breakdown
+            student_fee.dynamic_items.all().delete()
+            for item in structure.items.all():
+                DynamicStudentFeeItem.objects.create(
+                    school=school,
+                    student_fee=student_fee,
+                    payment_type=item.payment_type,
+                    name=item.name,
+                    amount=item.amount
+                )
+
             if created_flag:
                 created += 1
             else:
@@ -10397,7 +13577,7 @@ def apply_fee_structure(request):
 
     context = {
         'fee_structures': fee_structures,
-        'stage_groups': FeeStructure.STAGE_CHOICES,  
+        'stage_groups': DynamicFeeStructure.STAGE_CHOICES,  
     }
     return render(request, 'accounts/apply_fee_structure.html', context)
 
@@ -10407,32 +13587,52 @@ from django.urls import reverse
 
 @login_required
 def fee_structure_settings(request):
-    if request.user.role != 'admin':
-        messages.error(request, "Only school owners can access this page.")
+    if request.user.role not in [
+        'admin',
+        'proprietor',
+        'proprietress',
+        'headmaster',
+        'headmistress'
+    ]:
+        messages.error(request, "Only admin and headmaster can access this page.")
         return redirect('accounts:dashboard')
 
     school = request.user.school
 
-    years = FeeStructure.objects.filter(school=school).values_list('academic_year', flat=True).distinct().order_by('-academic_year')
+    # Use DynamicFeeStructure for years
+    years = DynamicFeeStructure.objects.filter(school=school).values_list('academic_year', flat=True).distinct().order_by('-academic_year')
+    if not years:
+        # fallback to old FeeStructure for years
+        years = FeeStructure.objects.filter(school=school).values_list('academic_year', flat=True).distinct().order_by('-academic_year')
 
     selected_year = request.GET.get('year')
     if not selected_year:
         active_term = Term.objects.filter(is_active=True, school=school).first()
-        selected_year = active_term.academic_year if active_term else (years.first() if years else '')
+        if active_term:
+            selected_year = active_term.academic_year.name if hasattr(active_term.academic_year, 'name') else str(active_term.academic_year)
+        else:
+            selected_year = years.first() if years else ''
 
-    fee_structures = FeeStructure.objects.filter(school=school, academic_year=selected_year).order_by('stage', 'term')
+    # For list table
+    fee_structures = DynamicFeeStructure.objects.filter(school=school, academic_year=selected_year).order_by('stage', 'term') if selected_year else DynamicFeeStructure.objects.filter(school=school).order_by('-created_at')
 
-    if request.method == 'POST':
+    if request.method == 'POST' and 'create_fee_structure' in request.POST:
         stage = request.POST.get('stage')
         term_id = request.POST.get('term')
-        term = Term.objects.filter(term_number=term_id, school=school).first()
+        academic_year = request.POST.get('academic_year')
+        due_date = request.POST.get('due_date') or None
+
+        term = Term.objects.filter(id=term_id, school=school).first()
+        if not term:
+            # try term_number
+            term = Term.objects.filter(term_number=term_id, school=school).first()
 
         if not term:
             messages.error(request, "Term not found for this school.")
             return redirect('accounts:fee_structure_settings')
 
-        academic_year = request.POST.get('academic_year')
-        due_date = request.POST.get('due_date') or None
+        fee_names = request.POST.getlist("fee_name[]")
+        fee_amounts = request.POST.getlist("fee_amount[]")
 
         def to_decimal(val):
             try:
@@ -10440,46 +13640,55 @@ def fee_structure_settings(request):
             except:
                 return Decimal('0')
 
-        school_fees = to_decimal(request.POST.get('school_fees'))
-        boarding_fee = to_decimal(request.POST.get('boarding_fee'))
-        hostel_fee = to_decimal(request.POST.get('hostel_fee'))
-        development_fee = to_decimal(request.POST.get('development_fee'))
-        pta_dues = to_decimal(request.POST.get('pta_dues'))
-        computer_levy = to_decimal(request.POST.get('computer_levy'))
-        exam_fees = to_decimal(request.POST.get('exam_fees'))
-        other_fees = to_decimal(request.POST.get('other_fees'))
-        canteen_amount = to_decimal(request.POST.get('canteen_amount'))
-        canteen_type = request.POST.get('canteen_type', 'terminal')
-
-        total = school_fees + pta_dues + computer_levy + exam_fees + other_fees + canteen_amount + boarding_fee + hostel_fee + development_fee
-
-        obj, created = FeeStructure.objects.update_or_create(
-            school=school, 
+        # Create or update fee structure
+        fee_struct, created = DynamicFeeStructure.objects.update_or_create(
+            school=school,
+            stage=stage,
             term=term,
-            stage=stage, 
             academic_year=academic_year,
             defaults={
-                'school_fees': school_fees,
-                'boarding_fee': boarding_fee,
-                'hostel_fee': hostel_fee,
-                'development_fee': development_fee,
-                'pta_dues': pta_dues,
-                'computer_levy': computer_levy,
-                'exam_fees': exam_fees,
-                'other_fees': other_fees,
-                'canteen_amount': canteen_amount,
-                'canteen_type': canteen_type,
                 'due_date': due_date,
-                'total_amount': total,
                 'is_published': False,
-                'is_active': True
             }
         )
 
-        if created:
-            messages.success(request, f"Fee structure for {obj.get_stage_display()} - Term {obj.term.term_number} {academic_year} created.")
+        # If updating, clear old items
+        if not created:
+            fee_struct.items.all().delete()
+
+        saved_count = 0
+        for name, amount in zip(fee_names, fee_amounts):
+            name = name.strip()
+            if not name or not amount:
+                continue
+            amt = to_decimal(amount)
+            if amt <= 0:
+                continue
+
+            # Auto create PaymentType for this school
+            code = name.lower().replace(" ", "_").replace("-", "_")
+            payment_type, _ = PaymentType.objects.get_or_create(
+                school=school,
+                code=code,
+                defaults={"name": name}
+            )
+
+            DynamicFeeStructureItem.objects.update_or_create(
+                school=school,
+                fee_structure=fee_struct,
+                name=name,
+                defaults={
+                    'amount': amt,
+                    'payment_type': payment_type
+                }
+            )
+            saved_count += 1
+
+        if saved_count == 0:
+            fee_struct.delete()
+            messages.error(request, "Add at least one valid fee item.")
         else:
-            messages.success(request, f"Fee structure for {obj.get_stage_display()} - Term {obj.term.term_number} {academic_year} updated.")
+            messages.success(request, f"Fee for {fee_struct.get_stage_display()} - {term} - {academic_year} saved with {saved_count} items. Total: GHS {fee_struct.total_amount}")
 
         request.session['last_fee_stage'] = stage
         request.session['last_fee_term'] = term.id
@@ -10487,19 +13696,19 @@ def fee_structure_settings(request):
 
         return redirect(f"{reverse('accounts:fee_structure_settings')}?stage={stage}&term={term.id}&year={academic_year}")
 
+    # For summary display
     selected_stage = request.GET.get('stage')
     selected_term_id = request.GET.get('term')
     selected_year_param = request.GET.get('year') or selected_year
 
     fee_breakdown = None
     if selected_stage and selected_term_id and selected_year_param:
-        fee_breakdown = FeeStructure.objects.filter(
+        fee_breakdown = DynamicFeeStructure.objects.filter(
             school=school,
             stage=selected_stage,
             term_id=selected_term_id,
             academic_year=selected_year_param,
-            is_active=True
-        ).first()
+        ).prefetch_related('items').first()
         if fee_breakdown:
             request.session['last_fee_stage'] = selected_stage
             request.session['last_fee_term'] = selected_term_id
@@ -10510,147 +13719,155 @@ def fee_structure_settings(request):
         last_term = request.session.get('last_fee_term')
         last_year = request.session.get('last_fee_year')
         if last_stage and last_term and last_year:
-            fee_breakdown = FeeStructure.objects.filter(
+            fee_breakdown = DynamicFeeStructure.objects.filter(
                 school=school,
                 stage=last_stage,
                 term_id=last_term,
                 academic_year=last_year,
-                is_active=True
-            ).first()
+            ).prefetch_related('items').first()
 
         if not fee_breakdown:
-            fee_breakdown = FeeStructure.objects.filter(
-                school=school, is_active=True
-            ).order_by('-id').first()
+            fee_breakdown = DynamicFeeStructure.objects.filter(
+                school=school
+            ).order_by('-id').prefetch_related('items').first()
 
     return render(request, 'accounts/fee_structure_settings.html', {
         'school': school,
         'fee_structures': fee_structures,
         'years': years,
         'selected_year': selected_year,
-        'stage_choices': FeeStructure.STAGE_CHOICES,
+        'stage_choices': STAGE_CHOICES,
         'fee_breakdown': fee_breakdown,
     })
 
 
+def is_admin_or_headmaster(user):
+    return user.role in  [
+    'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress'
+]
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(is_admin_or_headmaster) #
 def generate_fees_for_term(request):
     school = request.user.school
-    
-    if request.method == 'POST':
-        stage_group = request.POST.get('stage_group')  
-        academic_year_str = request.POST.get('academic_year')  # "2025/2026"
-        
-        if not academic_year_str:  # fix variable name
+
+    if request.method == "POST":
+        stage_group = request.POST.get("stage_group")
+        academic_year_str = request.POST.get("academic_year")
+
+        if not academic_year_str:
             messages.error(request, "Invalid academic year.")
-            return redirect('accounts:fee_structure_settings')  # STAY ON SAME PAGE
-        
-        term_id = request.POST.get('term')
+            return redirect("accounts:fee_structure_settings")
 
-
-        term_obj = Term.objects.filter(
-            school=school,
-            id=term_id,
-        ).first()
+        term_id = request.POST.get("term")
+        term_obj = Term.objects.filter(school=school, id=term_id).first()
 
         if not term_obj:
             messages.error(request, "Term not found.")
-            return redirect('accounts:fee_structure_settings')  # STAY ON SAME PAGE
-        
+            return redirect("accounts:fee_structure_settings")
+
         STAGE_GROUP_MAP = {
-            'creche': ['Creche'],
-            'nursery': ['Nursery 1', 'Nursery 2'], 
-            'kg': ['KG 1', 'KG 2'],
-            'lower_primary': ['Primary 1', 'Primary 2', 'Primary 3'],
-            'upper_primary': ['Primary 4', 'Primary 5', 'Primary 6'],
-            'jhs': ['JHS 1', 'JHS 2', 'JHS 3'],
-            'shs': ['SHS 1', 'SHS 2', 'SHS 3'],
-        }  
-        
-        student_stages = STAGE_GROUP_MAP.get(stage_group, [])
-        if not student_stages:
-            messages.error(request, "Invalid stage selected.")
-            return redirect('accounts:fee_structure_settings')  
-        
-        # Get fee structure for the group
-        fee_structure = FeeStructure.objects.filter(
-            school=school, 
-            stage=stage_group, 
-            term=term_obj,
-            academic_year=academic_year_str,
-            is_active=True
-        ).first()  # add .first()
-        
+            "creche": ["Creche"],
+            "nursery": ["Nursery 1", "Nursery 2"],
+            "kg": ["KG 1", "KG 2"],
+            "lower_primary": ["Primary 1", "Primary 2", "Primary 3"],
+            "upper_primary": ["Primary 4", "Primary 5", "Primary 6"],
+            "jhs": ["JHS 1", "JHS 2", "JHS 3"],
+            "shs": ["SHS 1", "SHS 2", "SHS 3"],
+        }
+
+        # NEW: Use DynamicFeeStructure
+        fee_structure = (
+            DynamicFeeStructure.objects.filter(
+                school=school,
+                stage=stage_group,
+                term=term_obj,
+                academic_year=academic_year_str,
+            )
+            .prefetch_related("items")
+            .first()
+        )
+
         if not fee_structure:
-            messages.error(request, f"No fee structure set for {stage_group} {academic_year_str}.")
-            return redirect('accounts:fee_structure_settings') 
+            messages.error(
+                request,
+                f"No fee structure set for {stage_group} {academic_year_str}. Save it first.",
+            )
+            return redirect("accounts:fee_structure_settings")
+
         # Publish it
         fee_structure.is_published = True
-        fee_structure.save(update_fields=['is_published'])
+        fee_structure.save(update_fields=["is_published"])
 
-        # Get students in those classes
+        # Get students in those classes - YOUR SAME LOGIC
         students = User.objects.filter(
             school=school,
             school_class__stage=stage_group,
-            role__iexact='student',
-            is_active=True
-        ).select_related('school_class')
-                
+            role__iexact="student",
+            is_active=True,
+        ).select_related("school_class")
+
         if not students.exists():
-            messages.warning(request, f"No students found in {', '.join(student_stages)}.")
-            return redirect('accounts:fee_structure_settings')  # STAY ON SAME PAGE
+            messages.warning(request, f"No students found in {stage_group}.")
+            return redirect("accounts:fee_structure_settings")
+
         updated = 0
         created = 0
-        
+
         for student in students:
-            obj, created_flag = StudentFee.objects.update_or_create(
+            # IMPORTANT: update_or_create to avoid duplicate fee
+            student_fee, created_flag = StudentFee.objects.update_or_create(
                 student=student,
                 school=school,
-                term=term_obj,  
-                academic_year=academic_year_str, 
+                term=term_obj,
+                academic_year=academic_year_str,
+                stage=stage_group,  # added stage for safety
                 defaults={
-                    'school': school,
-                    'school_fees': fee_structure.school_fees,
-                    'canteen_amount': fee_structure.canteen_amount,
-                    'pta_dues': fee_structure.pta_dues,
-                    'computer_levy': fee_structure.computer_levy,
-                    'exam_fees': fee_structure.exam_fees,
-                    'other_fees': fee_structure.other_fees,
-                    'development_fee': fee_structure.development_fee,
-                    'boarding_fee': fee_structure.boarding_fee,
-                    'hostel_fee': fee_structure.hostel_fee,
-                    'due_date': fee_structure.due_date,
-                    'total_amount': (
-                        fee_structure.school_fees +
-                        fee_structure.canteen_amount +
-                        fee_structure.pta_dues +
-                        fee_structure.development_fee +
-                        fee_structure.boarding_fee +
-                        fee_structure.hostel_fee +
-                        fee_structure.computer_levy +
-                        fee_structure.exam_fees +
-                        fee_structure.other_fees
-                    )
-                }
+                    "total_amount": sum([item.amount for item in fee_structure.items.all()]),
+                    "due_date": fee_structure.due_date,
+                },
             )
             if created_flag:
                 created += 1
             else:
                 updated += 1
-        
+                # If updating, delete old dynamic items to avoid duplicate
+                student_fee.dynamic_items.all().delete()
+
+            # Create dynamic breakdown for this student
+            for fs_item in fee_structure.items.all():
+                DynamicStudentFeeItem.objects.create(
+                    school=school,
+                    student_fee=student_fee,
+                    student=student,
+                    name=fs_item.name,
+                    amount_due=fs_item.amount,
+                    amount_paid=0,
+                    payment_type=fs_item.payment_type,
+                )
+
         messages.success(
-            request, 
-            f"Done. Created {created} new fees, updated {updated} existing fees for {stage_group} - Term {term_obj} - {academic_year_str}"
+            request,
+            f"Done. Created {created} new fees, updated {updated} existing fees for {stage_group} - {term_obj} - {academic_year_str}. Per student Total: GHS {fee_structure.total_amount}",
         )
-        return redirect('accounts:fee_structure_settings')    
-    return redirect('accounts:fee_structure_settings')  
+        return redirect("accounts:fee_structure_settings")
+    return redirect("accounts:fee_structure_settings")
 
 
-def is_admin(user):
-    return user.is_superuser or user.is_staff
+def is_admin_headmaster(user):
+    return user.role in [
+        'admin',
+        'proprietor',
+        'proprietress',
+        'headmaster',
+        'headmistress'
+    ]
 
 @login_required
+@user_passes_test(is_admin_headmaster) # ✅ All 3 can see fees list
 def student_fees_list(request):
     school = request.user.school  
     
@@ -10662,22 +13879,26 @@ def student_fees_list(request):
     terms = Term.objects.filter(school=school).order_by('term_number')  
     year_choices = AcademicYear.objects.filter(school=school).order_by('-name')
     
-    fees = StudentFee.objects.filter(school=school).select_related('student', 'term')
-    selected_year = year_choices.filter(id=year_id).first()
-
-    if selected_year:
-        fees = fees.filter(academic_year=selected_year.name)
-    
-    if term_id and term_id.isdigit():
-        fees = fees.filter(term_id=term_id)
-    
-    current_year = AcademicYear.objects.filter(school=school).last()
+    current_year = AcademicYear.objects.filter(school=school).order_by('-name').first()
     current_term = Term.objects.filter(school=school, is_active=True).first()
 
+    # Default to current if not selected
     if not year_id and current_year:
         year_id = str(current_year.id)
     if not term_id and current_term:
         term_id = str(current_term.id)
+    
+    # Base queryset - NEW: prefetch dynamic_items for breakdown
+    fees = StudentFee.objects.filter(school=school).select_related('student', 'term', 'student__school_class').prefetch_related('dynamic_items')
+    
+    selected_year = None
+    if year_id and year_id.isdigit():
+        selected_year = year_choices.filter(id=year_id).first()
+        if selected_year:
+            fees = fees.filter(academic_year=selected_year.name)
+    
+    if term_id and term_id.isdigit():
+        fees = fees.filter(term_id=term_id)
     
     if search:
         fees = fees.filter(
@@ -10686,13 +13907,18 @@ def student_fees_list(request):
             Q(student__student_number__icontains=search)
         )
     
+    if new_only and selected_year:
+
+        pass
+    
     selected_term_id = term_id if term_id and term_id.isdigit() else ''
     selected_term_obj = terms.filter(id=selected_term_id).first() if selected_term_id else None
     
-    selected_year = year_choices.filter(id=year_id).first()
-    
+    if not selected_year and year_id and year_id.isdigit():
+        selected_year = year_choices.filter(id=year_id).first()
+
     context = {
-        'fees': fees,
+        'fees': fees.order_by('student__first_name'),
         'selected_year': selected_year,
         'terms': terms,
         'year_choices': year_choices,
@@ -10704,67 +13930,189 @@ def student_fees_list(request):
     return render(request, 'accounts/student_fees_list.html', context)
 
 @login_required
+@user_passes_test(is_admin_headmaster)
 def edit_student_fee(request, fee_id):
     school = request.user.school
-    fee = get_object_or_404(StudentFee, id=fee_id, school=school) 
-    
+    fee = get_object_or_404(
+        StudentFee.objects.select_related('student','term').prefetch_related('dynamic_items'), 
+        id=fee_id, school=school
+    ) 
+
+    items = fee.dynamic_items.all()
+
     if request.method == 'POST':
-        form = StudentFeeForm(request.POST, instance=fee)
-        if form.is_valid():
-            form.save()
-            messages.success(request, f"Fees updated for {fee.student.get_full_name()}")
-            return redirect(f"{reverse('accounts:student_fees_list')}?term={fee.term.id}")  
-        else:
-            messages.error(request, "Please fix the errors below")
-    else:
-        form = StudentFeeForm(instance=fee)
-    
+        due_date = request.POST.get('due_date')
+        if due_date:
+            fee.due_date = due_date
+
+        total = 0
+        for item in items:
+            amount_key = f"item_{item.id}"
+            paid_key = f"paid_{item.id}"
+
+            if amount_key in request.POST:
+                try:
+                    new_amount = float(request.POST.get(amount_key) or 0)
+                    item.amount_due = new_amount
+                except:
+                    pass
+
+            if paid_key in request.POST:
+                try:
+                    new_paid = float(request.POST.get(paid_key) or 0)
+                    item.amount_paid = new_paid
+                except:
+                    pass
+
+            item.save()
+            total += float(item.amount_due)
+
+        fee.total_amount = total
+        fee.save(update_fields=['total_amount', 'due_date'])
+
+        messages.success(request, f"Fees updated for {fee.student.get_full_name()} - New total GH₵ {total}")
+        return redirect(f"{reverse('accounts:student_fees_list')}?term={fee.term.id}")  
+
     return render(request, 'accounts/edit_student_fee.html', {
-        'form': form,
-        'fee': fee
+        'fee': fee,
+        'items': items,
     })
 
+
+def is_accountant_student_parent(user):
+    return user.role in ['accountant', 'student', 'parent']
 @login_required
+@user_passes_test(is_accountant_student_parent) 
 def receipt_pdf(request, payment_id):
     school = request.user.school
     payment = get_object_or_404(
-        PaymentTransaction.objects.select_related('student', 'recorded_by'),
+        PaymentTransaction.objects.select_related(
+            "student", "recorded_by", "student__school_class"
+        ),
         id=payment_id,
-        student__school=school  
+        student__school=school,  
     )
 
-    display_text = payment.get_payment_types_display()
-    if display_text == "—":
-        fee_items = [('School Fees', payment.total_amount)]
+    if request.user.role == 'student':
+        if payment.student != request.user:
+            return redirect('student:payment_history')
+
+    if request.user.role == 'parent':
+        if payment.student not in request.user.children.all():
+            return redirect('parent:dashboard')
+    try:
+        payment_items = payment.items.all()
+    except:
+        payment_items = PaymentItem.objects.filter(transaction=payment)
+
+    if not payment_items.exists():
+        try:
+            payment_items = payment.payment_items.all()
+        except:
+            pass
+
+    if not payment_items.exists():
+        display_text = payment.get_payment_types_display()
+        if display_text == "—":
+            fee_items = [("School Fees", float(payment.total_amount))]
+        else:
+            names = [n.strip() for n in display_text.split("\n") if n.strip()]
+            amount_per_item = (
+                float(payment.total_amount) / len(names)
+                if names
+                else float(payment.total_amount)
+            )
+            fee_items = [(name, amount_per_item) for name in names]
     else:
-        names = display_text.split('\n')
-        amount_per_item = payment.total_amount / len(names)
-        fee_items = [(name, amount_per_item) for name in names]
+        fee_items = [(item.fee_name, float(item.amount)) for item in payment_items]
+
+    student_fee = (
+        StudentFee.objects.filter(
+            student=payment.student,
+            term=payment.term,
+            academic_year=str(payment.academic_year),
+        )
+        .prefetch_related("dynamic_items")
+        .first()
+    )
+
+    total_balance = 0
+    if student_fee:
+        for di in student_fee.dynamic_items.all():
+            total_balance += float(di.amount_due - di.amount_paid)
+        # =========================================================
+    # QR CODE VERIFICATION
+    # =========================================================
+
+    verification_url = request.build_absolute_uri(
+        reverse(
+            "accounts:verify_payment",
+            kwargs={
+                "token": str(payment.verification_token)
+            }
+        )
+    )
+
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=8,
+        border=2,
+    )
+
+    qr.add_data(verification_url)
+    qr.make(fit=True)
+
+    qr_image = qr.make_image(fill_color="black", back_color="white")
+
+    qr_buffer = BytesIO()
+    qr_image.save(qr_buffer, format="PNG")
+
+    qr_base64 = base64.b64encode(
+        qr_buffer.getvalue()
+    ).decode("utf-8")
+
+    qr_code_data = f"data:image/png;base64,{qr_base64}"
 
     context = {
-        'payment': payment,
-        'school': school, 
-        'accountant': payment.recorded_by,
-        'total_paid': payment.total_amount,
-        'fee_items': fee_items,
+        "payment": payment,
+        "school": school,
+        "accountant": payment.recorded_by,
+        "total_paid": payment.total_amount,
+        "fee_items": fee_items,
+        "balance": total_balance,  # your receipt.html uses {{ balance }}
+        "qr_code_data": qr_code_data,  # Add this line
     }
 
-    html_string = render_to_string('accounts/receipt_pdf.html', context)
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'inline; filename=receipt-{payment.receipt_number}.pdf'
+    # === YOUR CORRECT TEMPLATE IS receipt.html NOT receipt_pdf.html ===
+    html_string = render_to_string("accounts/receipt.html", context)
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = (
+        f"inline; filename=receipt-{payment.receipt_number}.pdf"
+    )
 
-    pisa_status = pisa.CreatePDF(io.StringIO(html_string), dest=response)
+    pisa_status = pisa.CreatePDF(BytesIO(html_string.encode("UTF-8")), dest=response)
     if pisa_status.err:
         return HttpResponse(f"PDF error: {pisa_status.err}", status=500)
     return response
 
 
-class CustomLoginView(LoginView):
-    def get_success_url(self):
-        user = self.request.user
-        if user.is_superuser or user.is_staff:
-            return '/accountant/'
-        return '/student/dashboard/'
+def get_success_url(self):
+    user = self.request.user
+    role = getattr(user, "role", None)
+    if role in ["admin", "proprietor", "proprietress"]:
+        return "/accounts/dashboard/"
+    if role in ["headmaster", "headmistress"]:
+        return "/accounts/dashboard/"  # or headmaster dashboard
+    if role == "accountant":
+        return "/accountant/"
+    if role == "teacher":
+        return "/teacher/dashboard/"
+    if role == "student":
+        return "/student/dashboard/"
+    if user.is_superuser:
+        return "/admin/"
+    return "/accounts/dashboard/"
 
 
 from django.views.decorators.http import require_GET
@@ -10774,155 +14122,252 @@ from django.views.decorators.http import require_GET
 def mark_announcements_read(request):
     ann_id = request.GET.get('id')
     if ann_id:
-        announcement = get_object_or_404(Announcement, pk=ann_id)
+        announcement = get_object_or_404(
+            Announcement, 
+            pk=ann_id, 
+            school=request.user.school
+        )
         announcement.acknowledged_by.add(request.user)
         return JsonResponse({'status': 'success'})
     return JsonResponse({'status': 'error', 'message': 'No ID provided'})
 
 @login_required
 def acknowledge_announcement(request, pk):
-    """For HIGH priority: Mark as acknowledged when user clicks 'I Understand'"""
-    announcement = get_object_or_404(Announcement, pk=pk)
+    announcement = get_object_or_404(
+        Announcement, 
+        pk=pk, 
+        school=request.user.school
+    )
     
-    # Mark as acknowledged
+    # Check if this announcement is for you
+    if announcement.target_roles:
+        target_roles = [r.lower() for r in announcement.target_roles]
+        if 'all' not in target_roles and request.user.role.lower() not in target_roles:
+            messages.error(request, "Not for you")
+            return redirect('accounts:student_dashboard')
+    
     announcement.acknowledged_by.add(request.user)
     
-    # Also mark as read
     AnnouncementRead.objects.get_or_create(
         announcement=announcement,
         user=request.user
     )
     
-    # If there's a button link, go there
     if announcement.action_url:
         return redirect(announcement.action_url)
     
-    # Otherwise go back to dashboard
     return redirect('accounts:student_dashboard')
 
 
-def is_admin(user):
-    return user.role == 'admin'
-
 from .sms_service import send_sms_to_school, format_ghana_number
 
+def is_admin_headmaster(user):
+    return user.role in [
+    'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress'
+]
+
 @login_required
+@user_passes_test(is_admin_headmaster) # ✅ FIX HERE!
 def create_announcement(request):
-    if request.method == 'POST':
-        form = AnnouncementForm(request.POST)
-        send_sms = request.POST.get('send_sms') == 'on'  # checkbox
-        
+    # your code same...
+    if request.method == "POST":
+        form = AnnouncementForm(request.POST, school=request.user.school)
+        send_sms = request.POST.get("send_sms") == "on"
+
         if form.is_valid():
             ann = form.save(commit=False)
             ann.school = request.user.school
             ann.created_by = request.user
-            ann.target_roles = form.cleaned_data['target_roles']
+            ann.target_roles = form.cleaned_data["target_roles"]
             ann.save()
+            selected_classes = list(form.cleaned_data.get('target_classes') or [])
+            if selected_classes:
+                ann.target_classes.set(selected_classes)
+                ann.target_class_id = selected_classes[0].id
+                ann.save()
+            else:
+                ann.target_classes.clear()
+                ann.target_class_id = None
+                ann.save()
 
             target_roles = [r.lower() for r in (ann.target_roles or [])]
-            
+
             users = User.objects.none()
             group_name = ""
 
-            if 'all' in target_roles:
+            if "all" in target_roles:
                 users = User.objects.filter(school=request.user.school)
                 group_name = "All Users"
             else:
                 q = Q()
                 for r in target_roles:
+                    if r == "specific class":
+                        continue
                     q |= Q(role__icontains=r)
-                users = User.objects.filter(school=request.user.school).filter(q)
-                group_name = ", ".join(target_roles).title()
+                if q:
+                    users = User.objects.filter(school=request.user.school).filter(q)
+                group_name = (
+                    ", ".join(
+                        [r for r in target_roles if r != "specific class"]
+                    ).title()
+                    or "Specific Class"
+                )
 
-                if 'student' in target_roles:
-                    student_qs = users.filter(role__icontains='student')
-                    if ann.target_class:
-                        try:
-                            student_qs = student_qs.filter(school_class=ann.target_class)
-                        except:
-                            pass
+                if "student" in target_roles:
+                    student_qs = users.filter(role__icontains="student")
+                    # Also auto-add parents of those students
                     for stu in student_qs:
                         try:
-                            if hasattr(stu, 'parent') and stu.parent:
+                            if hasattr(stu, "parent") and stu.parent:
                                 users = users | User.objects.filter(id=stu.parent.id)
                         except:
                             pass
 
-            if ann.target_class:
-                class_name = ann.target_class.name
-                group_name = f"{class_name}" if 'all' in target_roles else f"{group_name} - {class_name}"
-                if 'student' in target_roles:
-                    non_students = users.exclude(role__icontains='student')
-                    students_in_class = User.objects.filter(school=request.user.school, role__icontains='student', school_class=ann.target_class)
-                    users = non_students | students_in_class
+            # ===== FIXED: Handle BOTH old and new class fields =====
+            has_new_classes = ann.target_classes.exists()
+            has_old_class = ann.target_class_id is not None
+
+            if has_new_classes or has_old_class:
+                if has_new_classes:
+                    class_names = ", ".join([c.name for c in ann.target_classes.all()])
+                    class_ids = list(ann.target_classes.values_list("id", flat=True))
+                else:
+                    class_names = ann.target_class.name
+                    class_ids = [ann.target_class_id]
+
+                group_name = (
+                    f"{class_names}"
+                    if "all" in target_roles
+                    else f"{group_name} - {class_names}"
+                )
+
+                # Filter students to only those classes
+                if "student" in target_roles or "specific class" in target_roles:
+                    non_students = users.exclude(role__icontains="student")
+                    students_in_class = User.objects.filter(
+                        school=request.user.school,
+                        role__icontains="student",
+                        school_class_id__in=class_ids,
+                    )
+                    print(
+                        f"DEBUG class_ids={class_ids} found={students_in_class.count()} students"
+                    )
+                    # If 'all' or only specific class, include all students in class
+                    if "all" in target_roles or not users.exists():
+                        users = students_in_class
+                        # Also add parents of those students if parent role wanted
+                        if "parent" in target_roles or "all" in target_roles:
+                            parent_ids = []
+                            for stu in students_in_class:
+                                if hasattr(stu, "parent") and stu.parent:
+                                    parent_ids.append(stu.parent.id)
+                            if parent_ids:
+                                users = users | User.objects.filter(id__in=parent_ids)
+                    else:
+                        users = non_students | students_in_class
 
             notif = Notification.objects.create(
+                school=request.user.school,
                 title=ann.title,
                 message=ann.message,
                 created_by=request.user,
-                target_group=group_name
+                target_group=group_name,
+                announcement=ann,
             )
             users = users.distinct().exclude(id=request.user.id)
-            
-            NotificationRecipient.objects.bulk_create([
-                NotificationRecipient(notification=notif, user=u) for u in users
-            ], ignore_conflicts=True)
-            
-            NotificationRecipient.objects.get_or_create(notification=notif, user=request.user)
 
-            # ===== SMS PART - FREE TEST / LIVE =====
+            NotificationRecipient.objects.bulk_create(
+                [NotificationRecipient(notification=notif, user=u) for u in users],
+                ignore_conflicts=True,
+            )
+
+            NotificationRecipient.objects.get_or_create(
+                notification=notif, user=request.user
+            )
+
             sms_result = ""
             if send_sms and request.user.school.sms_enabled:
-                # Collect phone numbers from target users
                 phone_numbers = []
                 for u in users:
-                    # Try all possible phone fields
                     if u.phone:
                         phone_numbers.append(u.phone)
-                    if hasattr(u, 'parent_guardian_phone') and u.parent_guardian_phone:
+                    if hasattr(u, "parent_guardian_phone") and u.parent_guardian_phone:
                         phone_numbers.append(u.parent_guardian_phone)
-                    if hasattr(u, 'parent') and u.parent and u.parent.phone:
+                    if hasattr(u, "parent") and u.parent and u.parent.phone:
                         phone_numbers.append(u.parent.phone)
-                
-                # Shorten message for SMS (160 chars best)
+
                 sms_msg = f"{ann.title}: {ann.message[:100]}"
-                
+
                 success, result_msg = send_sms_to_school(
-                    request.user.school,
-                    phone_numbers,
-                    sms_msg
+                    request.user.school, phone_numbers, sms_msg
                 )
                 if success:
                     sms_result = f" | SMS: {result_msg}"
                 else:
                     sms_result = f" | SMS Failed: {result_msg}"
 
-            messages.success(request, f"Sent to {users.count()} users: {group_name}{sms_result}")
-            return HttpResponseRedirect('/notifications/')
+            messages.success(
+                request, f"Sent to {users.count()} users: {group_name}{sms_result}"
+            )
+            return HttpResponseRedirect("/notifications/")
+        else:
+            print("FORM ERRORS:", form.errors)
+            print("POST:", dict(request.POST))
     else:
-        form = AnnouncementForm()
-    return render(request, 'accounts/create_announcement.html', {'form': form, 'school': request.user.school})
+        form = AnnouncementForm(school=request.user.school)
+    return render(
+        request,
+        "accounts/create_announcement.html",
+        {"form": form, "school": request.user.school},
+    )
 
 
+@login_required
 def delete_announcement(request, pk):
-    notif = Notification.objects.filter(pk=pk).first()
-    if not notif:
-        from .models import NotificationRecipient
-        rec = NotificationRecipient.objects.filter(pk=pk).first()
-        if rec:
-            notif = rec.notification
+    notif = Notification.objects.filter(
+        pk=pk, 
+        school=request.user.school
+    ).first()
     
-    if notif:
-        Announcement.objects.filter(title=notif.title).delete()
+    if not notif:
+        messages.error(request, "Not found")
+        return HttpResponseRedirect('/notifications/')
+    
+    # Only creator or admin can delete
+    if notif.created_by != request.user and request.user.role not in [
+    'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress'
+]:
+        messages.error(request, "Not allowed")
+        return HttpResponseRedirect('/notifications/')
+    
+    if request.method == 'POST':  
+        Announcement.objects.filter(
+            school=request.user.school,
+            title=notif.title,
+            created_by=notif.created_by
+        ).delete()
         notif.delete()
-        return HttpResponseRedirect('/notifications/')
+        messages.success(request, "Deleted")
+    
+    return HttpResponseRedirect('/notifications/')
 
+@login_required
+@user_passes_test(is_admin_headmaster)
 def edit_announcement(request, pk):
-    notif = Notification.objects.filter(pk=pk).first()
+    notif = Notification.objects.filter(pk=pk, school=request.user.school).first()
     if not notif:
         return HttpResponseRedirect('/notifications/')
     
-    ann = Announcement.objects.filter(title=notif.title).first()
+    ann = notif.announcement  # ✅ USE THIS NOW, not title filter!
+    
     if request.method == 'POST':
         notif.title = request.POST.get('title')
         notif.message = request.POST.get('message')
@@ -10931,11 +14376,21 @@ def edit_announcement(request, pk):
             ann.title = notif.title
             ann.message = notif.message
             ann.save()
+        messages.success(request, "Updated")
         return HttpResponseRedirect('/notifications/')
     
     return render(request, 'accounts/edit_announcement.html', {'notif': notif, 'ann': ann})
 
+
+from django.contrib.auth.decorators import login_required
+
+@login_required
+@user_passes_test(is_admin_headmaster) # admin + headmaster
 def school_payment_settings(request):
+    if not hasattr(request.user, 'school') or not request.user.school:
+        messages.error(request, "No school assigned to your account")
+        return redirect('accounts:dashboard')
+    
     school = request.user.school  
     
     if request.method == 'POST':
@@ -10943,7 +14398,7 @@ def school_payment_settings(request):
         if form.is_valid():
             form.save()
             messages.success(request, "Payment settings saved successfully!")
-            return redirect('/settings/payment/')
+            return redirect('accounts:school_payment_settings')
     else:
         form = SchoolPaymentSettingsForm(instance=school)
     
@@ -10951,19 +14406,51 @@ def school_payment_settings(request):
 
 @login_required
 def fee_list_page(request):
-    fee_structures = FeeStructure.objects.filter(school=request.user.school, is_published=True)
-    years = FeeStructure.objects.filter(school=request.user.school).values_list('academic_year', flat=True).distinct()
-    terms = Term.objects.filter(school=request.user.school)
-    fee_breakdown = FeeStructure.objects.filter(school=request.user.school, is_active=True, is_published=True).first()
+    if not hasattr(request.user, 'school') or not request.user.school:
+        messages.error(request, "No school assigned")
+        return redirect('accounts:dashboard')
+        
+    school = request.user.school
+    
+    # NEW: Use DynamicFeeStructure
+    fee_structures = DynamicFeeStructure.objects.filter(
+        school=school, is_published=True
+    ).select_related('term').prefetch_related('items').order_by('-created_at')
+    
+    years = DynamicFeeStructure.objects.filter(school=school).values_list('academic_year', flat=True).distinct().order_by('-academic_year')
+    terms = Term.objects.filter(school=school).order_by('-id')
+    
+    # For summary card on top - latest fee
+    fee_breakdown = DynamicFeeStructure.objects.filter(school=school, is_published=True).prefetch_related('items').first()
     
     selected_year = request.GET.get('year')
     selected_term = request.GET.get('term')
     
     if selected_year:
         fee_structures = fee_structures.filter(academic_year=selected_year)
+        fee_breakdown = DynamicFeeStructure.objects.filter(school=school, academic_year=selected_year, is_published=True).prefetch_related('items').first()
+        
     if selected_term:
         fee_structures = fee_structures.filter(term_id=selected_term)
     
+
+    student_fees = StudentFee.objects.filter(school=school).select_related('student', 'term').prefetch_related('dynamic_items').order_by('-id')
+    
+    
+    if selected_year:
+        student_fees = student_fees.filter(academic_year=selected_year)
+    if selected_term:
+        student_fees = student_fees.filter(term_id=selected_term)
+
+    # ADD HERE:
+    if request.user.role == 'student':
+        student_fees = student_fees.filter(student=request.user)
+    elif request.user.role == 'parent':
+        student_ids = ParentStudentLink.objects.filter(parent=request.user, school=school).values_list('student_id', flat=True)
+        student_fees = student_fees.filter(student_id__in=student_ids)
+
+    student_fees = student_fees[:100]  # LAST
+
     return render(request, 'accounts/finance_fee_list.html', {
         'fee_structures': fee_structures,
         'years': years,
@@ -10971,117 +14458,471 @@ def fee_list_page(request):
         'selected_year': selected_year,
         'selected_term': selected_term,
         'fee_breakdown': fee_breakdown,
+        'student_fees': student_fees, # new for table
     })
 
 
 @login_required
-@csrf_exempt
+@require_POST
 def verify_paystack_payment(request):
     try:
         data = json.loads(request.body)
         reference = data.get('reference')
-        fee_id = data.get('fee_id')
-        items = data.get('items', [])
-        
+        items = data.get('items', []) # [{fee_name, dynamic_item_id, fee_id, amount}]
+
         if not items:
             return JsonResponse({'status': False, 'message': 'No fees selected'})
-        if not fee_id:
-            return JsonResponse({'status': False, 'message': 'Fee ID missing'})
-        
-        school = School.objects.first()
+
+        school = request.user.school
         if not school or not school.paystack_secret_key:
-            return JsonResponse({'status': False, 'message': 'School secret key missing'})
-        
+            return JsonResponse({'status': False, 'message': 'School payment not configured'})
+
+
+        # Verify with Paystack
         r = requests.get(
             f'https://api.paystack.co/transaction/verify/{reference}',
-            headers={'Authorization': f'Bearer {school.paystack_secret_key}'}
+            headers={'Authorization': f'Bearer {school.paystack_secret_key}'},
+            timeout=15
         )
         res = r.json()
-        
-        if not res.get('status') or res['data']['status'] != 'success':
+        if not res.get('status') or res['data']['status']!= 'success':
             return JsonResponse({'status': False, 'message': 'Payment verification failed'})
-        
+
         amount_ghs = Decimal(res['data']['amount']) / Decimal(100)
-        fee = StudentFee.objects.get(id=fee_id)
-        
-        items_total = sum(Decimal(str(item['amount'])) for item in items)
+        items_total = sum(Decimal(str(i['amount'])) for i in items)
         if abs(items_total - amount_ghs) > Decimal('0.01'):
             return JsonResponse({'status': False, 'message': 'Amount mismatch'})
-        
+
+        # Get first fee to get term/year - school isolated
+        first_item = items[0]
+        fee = get_object_or_404(StudentFee, id=first_item["fee_id"], school=school)
+        student = fee.student
+        if request.user.role == 'student' and fee.student != request.user:
+            return JsonResponse({'status': False, 'message': 'Not your fee'})
+        if request.user.role == 'parent':
+            if not ParentStudentLink.objects.filter(parent=request.user, student=fee.student, school=school).exists():
+                return JsonResponse({'status': False, 'message': 'Not your child'})
+
+        # ADD: Check all items belong to same student & same school
+        for item in items:
+            dyn_check = get_object_or_404(
+                DynamicStudentFeeItem, id=item["dynamic_item_id"], school=school
+            )
+            if dyn_check.student != student:
+                return JsonResponse({"status": False, "message": "Student mismatch"})
+
         ay_obj, _ = AcademicYear.objects.get_or_create(
             name=fee.academic_year,
+            school=school, # isolation
             defaults={'is_active': False}
         )
-        
-        with transaction.atomic():  # Added atomic for safety
+
+        with transaction.atomic():
             txn = PaymentTransaction.objects.create(
-                student = fee.student,
-                total_amount = amount_ghs,
-                amount_paid = amount_ghs,
-                term = fee.term,
-                academic_year = ay_obj,
-                payment_method = 'paystack',
-                recorded_by = request.user
+                student=fee.student,
+                school=school,
+                total_amount=amount_ghs,
+                amount_paid=amount_ghs,
+                term=fee.term,
+                academic_year=ay_obj,
+                payment_method='paystack',
+                transaction_id=reference,
+                recorded_by=request.user
             )
-            
+
             for item in items:
                 fee_name = item.get('fee_name')
-                paid_field = item.get('paid_field')
+                dyn_id = item.get('dynamic_item_id')
                 item_amount = Decimal(str(item['amount']))
-                
-                if not paid_field:
-                    return JsonResponse({'status': False, 'message': f'Fee type not specified for {fee_name}'})
-                if not hasattr(fee, paid_field):
-                    return JsonResponse({'status': False, 'message': f'Invalid fee field: {paid_field}'})
-                
-                current_paid = getattr(fee, paid_field) or Decimal(0)
-                setattr(fee, paid_field, current_paid + item_amount)
-                
-                PaymentItem.objects.create(
-                    transaction = txn,
-                    fee_name = fee_name,
-                    amount = item_amount
-                )
-            
-            fee.save()
 
-            # ===== NEW - ADD THIS FOR ADMIN MONITORING =====
+                # DYNAMIC UPDATE - no paid_field!
+                dyn_fee_item = get_object_or_404(
+                    DynamicStudentFeeItem,
+                    id=dyn_id,
+                    school=school,
+                    student=fee.student
+                )
+                dyn_fee_item.amount_paid = (dyn_fee_item.amount_paid or 0) + item_amount
+                dyn_fee_item.save()
+
+                # For PaymentItem history - dynamic
+                payment_type_obj = dyn_fee_item.payment_type
+                PaymentItem.objects.create(
+                    transaction=txn,
+                    payment_type=payment_type_obj,
+                    fee_name=fee_name,
+                    amount=item_amount
+                )
+
             FeeAuditLog.objects.create(
                 transaction=txn,
                 action='COLLECTED',
                 done_by=request.user,
                 details=f"PAYSTACK Auto - GHS {amount_ghs} - Ref {reference} - {fee.student.get_full_name()} - {', '.join([i['fee_name'] for i in items])}"
             )
-            # ===== END NEW =====
-        
+
+        # Return new balance
+        total_bal = sum([i.balance for i in DynamicStudentFeeItem.objects.filter(student=fee.student, school=school, student_fee__term=fee.term)])
+
         return JsonResponse({
             'status': True,
             'receipt': txn.receipt_number,
-            'balance': float(fee.balance())
+            'balance': float(total_bal)
         })
-        
-    except StudentFee.DoesNotExist:
-        return JsonResponse({'status': False, 'message': 'Fee record not found'}, status=404)
+
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return JsonResponse({'status': False, 'message': str(e)}, status=500)
+
+
+@login_required
+@require_POST
+def verify_hubtel_payment(request):
+    try:
+        data = json.loads(request.body)
+        reference = data.get("reference")  # will be HUBTEL-TEST-...
+        items = data.get("items", [])
+
+        if not items:
+            return JsonResponse({"status": False, "message": "No fees selected"})
+
+        school = request.user.school
+        if not reference.startswith("HUBTEL-TEST-"):
+            return JsonResponse({"status": False, "message": "Invalid test ref"})
+        # For TEST MODE, we don't check hubtel keys - allow fake keys
+
+        # === WE SKIP Hubtel API verification for TEST MODE ===
+        # Calculate total from items - like Paystack does
+        amount_ghs = sum(Decimal(str(i["amount"])) for i in items)
+
+        # Get first fee to get term/year - same as your Paystack
+        first_item = items[0]
+        fee = get_object_or_404(StudentFee, id=first_item["fee_id"], school=school)
+        student = fee.student
+
+        # ADD permission:
+        if request.user.role == 'student' and student!= request.user:
+            return JsonResponse({"status": False, "message": "Not your fee"})
+        if request.user.role == 'parent':
+            if not ParentStudentLink.objects.filter(parent=request.user, student=student, school=school).exists():
+                return JsonResponse({"status": False, "message": "Not your child"})
+
+        # ADD student mismatch:
+        for item in items:
+            dyn_check = get_object_or_404(DynamicStudentFeeItem, id=item["dynamic_item_id"], school=school)
+            if dyn_check.student!= student:
+                return JsonResponse({"status": False, "message": "Student mismatch"})
+
+        ay_obj, _ = AcademicYear.objects.get_or_create(
+            name=fee.academic_year, school=school, defaults={"is_active": False}
+        )
+
+        with transaction.atomic():
+            txn = PaymentTransaction.objects.create(
+                student=fee.student,
+                school=school,
+                total_amount=amount_ghs,
+                amount_paid=amount_ghs,
+                term=fee.term,
+                academic_year=ay_obj,
+                payment_method="hubtel",  # <-- only change here
+                transaction_id=reference,
+                recorded_by=request.user,
+            )
+
+            for item in items:
+                fee_name = item.get("fee_name")
+                dyn_id = item.get("dynamic_item_id")
+                item_amount = Decimal(str(item["amount"]))
+
+                dyn_fee_item = get_object_or_404(
+                    DynamicStudentFeeItem, id=dyn_id, school=school, student=fee.student
+                )
+                dyn_fee_item.amount_paid = (dyn_fee_item.amount_paid or 0) + item_amount
+                dyn_fee_item.save()
+
+                payment_type_obj = dyn_fee_item.payment_type
+                PaymentItem.objects.create(
+                    transaction=txn,
+                    payment_type=payment_type_obj,
+                    fee_name=fee_name,
+                    amount=item_amount,
+                )
+
+            FeeAuditLog.objects.create(
+                transaction=txn,
+                action="COLLECTED",
+                done_by=request.user,
+                details=f"HUBTEL TEST - GHS {amount_ghs} - Ref {reference} - {fee.student.get_full_name()} - {', '.join([i['fee_name'] for i in items])}",
+            )
+
+        total_bal = sum(
+            [
+                i.balance
+                for i in DynamicStudentFeeItem.objects.filter(
+                    student=fee.student, school=school, student_fee__term=fee.term
+                )
+            ]
+        )
+
+        return JsonResponse(
+            {"status": True, "receipt": txn.receipt_number, "balance": float(total_bal)}
+        )
+
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return JsonResponse({"status": False, "message": str(e)}, status=500)
+
+
+@login_required
+@require_POST
+def verify_flutterwave_payment(request):
+    try:
+        data = json.loads(request.body)
+        reference = data.get("reference", "")  # FLW-TEST-...
+        transaction_id = data.get("transaction_id")
+        tx_ref = data.get("tx_ref")
+        items = data.get("items", [])
+        is_test = data.get("is_test", False)
+
+        if not items:
+            return JsonResponse({"status": False, "message": "No fees selected"})
+
+        school = request.user.school
+        if reference and not reference.startswith("FLW-TEST") and is_test:
+            # block fake is_test flag from frontend
+            is_test = False
+
+        # === FAKE / TEST MODE - INSTANT SUCCESS (same as Hubtel) ===
+        if (
+            is_test
+            or (reference and reference.startswith("FLW-TEST"))
+            or not transaction_id
+        ):
+            amount_ghs = sum(Decimal(str(i["amount"])) for i in items)
+            first_item = items[0]
+            fee = get_object_or_404(StudentFee, id=first_item["fee_id"], school=school)
+            student = fee.student
+
+            if request.user.role == "student" and student != request.user:
+                return JsonResponse({"status": False, "message": "Not your fee"})
+            if request.user.role == "parent":
+                if not ParentStudentLink.objects.filter(
+                    parent=request.user, student=student, school=school
+                ).exists():
+                    return JsonResponse({"status": False, "message": "Not your child"})
+            for item in items:
+                dyn_check = get_object_or_404(
+                    DynamicStudentFeeItem, id=item["dynamic_item_id"], school=school
+                )
+                if dyn_check.student != student:
+                    return JsonResponse(
+                        {"status": False, "message": "Student mismatch"}
+                    )
+            ay_obj, _ = AcademicYear.objects.get_or_create(
+                name=fee.academic_year, school=school, defaults={"is_active": False}
+            )
+
+            with transaction.atomic():
+                txn = PaymentTransaction.objects.create(
+                    student=fee.student,
+                    school=school,
+                    total_amount=amount_ghs,
+                    amount_paid=amount_ghs,
+                    term=fee.term,
+                    academic_year=ay_obj,
+                    payment_method="flutterwave",
+                    transaction_id=reference,
+                    recorded_by=request.user,
+                )
+                for item in items:
+                    dyn_id = item.get("dynamic_item_id")
+                    item_amount = Decimal(str(item["amount"]))
+                    fee_name = item.get("fee_name")
+                    dyn_fee_item = get_object_or_404(
+                        DynamicStudentFeeItem,
+                        id=dyn_id,
+                        school=school,
+                        student=fee.student,
+                    )
+                    dyn_fee_item.amount_paid = (
+                        dyn_fee_item.amount_paid or 0
+                    ) + item_amount
+                    dyn_fee_item.save()
+                    PaymentItem.objects.create(
+                        transaction=txn,
+                        payment_type=dyn_fee_item.payment_type,
+                        fee_name=fee_name,
+                        amount=item_amount,
+                    )
+                FeeAuditLog.objects.create(
+                    transaction=txn,
+                    action="COLLECTED",
+                    done_by=request.user,
+                    details=f"FLUTTERWAVE TEST - GHS {amount_ghs} - Ref {reference} - {fee.student.get_full_name()} - {', '.join([i['fee_name'] for i in items])}",
+                )
+
+            total_bal = sum(
+                [
+                    i.balance
+                    for i in DynamicStudentFeeItem.objects.filter(
+                        student=fee.student, school=school, student_fee__term=fee.term
+                    )
+                ]
+            )
+            return JsonResponse(
+                {
+                    "status": True,
+                    "receipt": txn.receipt_number,
+                    "balance": float(total_bal),
+                }
+            )
+
+        # === REAL MODE ===
+        if not school.flutterwave_secret_key:
+            return JsonResponse(
+                {"status": False, "message": "School payment not configured"}
+            )
+
+        headers = {"Authorization": f"Bearer {school.flutterwave_secret_key}"}
+        url = f"https://api.flutterwave.com/v3/transactions/{transaction_id}/verify"
+        resp = requests.get(url, headers=headers, timeout=15).json()
+
+        if resp.get("status") == "success" and resp["data"]["status"] == "successful":
+            amount_ghs = Decimal(str(resp["data"]["amount"]))
+            first_item = items[0]
+            fee = get_object_or_404(StudentFee, id=first_item["fee_id"], school=school)
+            student = fee.student
+            if request.user.role == "student" and student != request.user:
+                return JsonResponse({"status": False, "message": "Not your fee"})
+            if request.user.role == "parent":
+                if not ParentStudentLink.objects.filter(
+                    parent=request.user, student=student, school=school
+                ).exists():
+                    return JsonResponse({"status": False, "message": "Not your child"})
+            for item in items:
+                dyn_check = get_object_or_404(
+                    DynamicStudentFeeItem, id=item["dynamic_item_id"], school=school
+                )
+                if dyn_check.student != student:
+                    return JsonResponse(
+                        {"status": False, "message": "Student mismatch"}
+                    )
+            ay_obj, _ = AcademicYear.objects.get_or_create(
+                name=fee.academic_year, school=school, defaults={"is_active": False}
+            )
+            with transaction.atomic():
+                txn = PaymentTransaction.objects.create(
+                    student=fee.student,
+                    school=school,
+                    total_amount=amount_ghs,
+                    amount_paid=amount_ghs,
+                    term=fee.term,
+                    academic_year=ay_obj,
+                    payment_method="flutterwave",
+                    transaction_id=tx_ref or str(transaction_id),
+                    recorded_by=request.user,
+                )
+                for item in items:
+                    dyn_id = item.get("dynamic_item_id")
+                    item_amount = Decimal(str(item["amount"]))
+                    fee_name = item.get("fee_name")
+                    dyn_fee_item = get_object_or_404(
+                        DynamicStudentFeeItem,
+                        id=dyn_id,
+                        school=school,
+                        student=fee.student,
+                    )
+                    dyn_fee_item.amount_paid = (
+                        dyn_fee_item.amount_paid or 0
+                    ) + item_amount
+                    dyn_fee_item.save()
+                    PaymentItem.objects.create(
+                        transaction=txn,
+                        payment_type=dyn_fee_item.payment_type,
+                        fee_name=fee_name,
+                        amount=item_amount,
+                    )
+                FeeAuditLog.objects.create(
+                    transaction=txn,
+                    action="COLLECTED",
+                    done_by=request.user,
+                    details=f"FLUTTERWAVE - GHS {amount_ghs} - Ref {tx_ref} - {fee.student.get_full_name()}",
+                )
+
+            total_bal = sum(
+                [
+                    i.balance
+                    for i in DynamicStudentFeeItem.objects.filter(
+                        student=fee.student, school=school, student_fee__term=fee.term
+                    )
+                ]
+            )
+            return JsonResponse(
+                {
+                    "status": True,
+                    "receipt": txn.receipt_number,
+                    "balance": float(total_bal),
+                }
+            )
+        else:
+            return JsonResponse(
+                {"status": False, "message": "Flutterwave verification failed"}
+            )
+
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return JsonResponse({"status": False, "message": str(e)}, status=500)
+
 
 @login_required
 def fee_history(request, fee_id):
-    fee = get_object_or_404(StudentFee, id=fee_id)
-    
-    # Get the AcademicYear object from the string in StudentFee
-    try:
-        academic_year_obj = AcademicYear.objects.get(name=fee.academic_year)
-    except AcademicYear.DoesNotExist:
-        academic_year_obj = None
-    
-    # Filter PaymentTransaction using the AcademicYear object, not the string
-    transactions = PaymentTransaction.objects.filter(
-        student=fee.student,
-        term=fee.term,
-        academic_year=academic_year_obj  # Pass the object, not '2025/2026'
-    ).prefetch_related('items').order_by('-created_at') if academic_year_obj else PaymentTransaction.objects.none()
-    
+    school = request.user.school
+    if not school:
+        messages.error(request, "No school assigned")
+        return redirect('accounts:dashboard')
+
+    # Permission: admin + headmaster only (admission view)
+    if request.user.role not in [
+        "admin",
+        "proprietor",
+        "proprietress",
+        "headmaster",
+        "headmistress",
+        "accountant",
+        "bursar",
+    ]:
+        messages.error(request, "Access denied - admin/headmaster only")
+        return redirect('accounts:dashboard')
+
+    fee = get_object_or_404(StudentFee, id=fee_id, school=school, student__school=school)
+
+    # FIXED: filter by school, use .filter().first() to avoid crash
+    academic_year_obj = AcademicYear.objects.filter(
+        name=fee.academic_year, 
+        school=school
+    ).first()
+
+    if academic_year_obj:
+        transactions = PaymentTransaction.objects.filter(
+            student=fee.student,
+            term=fee.term,
+            academic_year=academic_year_obj,
+            school=school
+        ).prefetch_related('items').order_by('-created_at')
+    else:
+        # Fallback if AcademicYear object not created yet - show by term only
+        transactions = PaymentTransaction.objects.filter(
+            student=fee.student,
+            term=fee.term,
+            school=school
+        ).prefetch_related('items').order_by('-created_at')
+
     return render(request, 'accounts/fee_history.html', {
         'fee': fee,
         'transactions': transactions,
@@ -11093,36 +14934,49 @@ def fee_history(request, fee_id):
 def student_payment_history(request):
     if request.user.role != 'student':
         return redirect('accounts:dashboard')
-    
+
     student = request.user
 
-    # MULTI-SCHOOL FIX
+    # SCHOOL ISOLATED
     years = AcademicYear.objects.filter(school=student.school).order_by('-name')
     terms = Term.objects.filter(school=student.school).order_by('-start_date')
 
-    year_id = request.GET.get('year')
-    term_id = request.GET.get('term')
+    year_id = request.GET.get('year') or ""
+    term_id = request.GET.get('term') or ""
+    year_id = year_id if year_id != "" else None
+    term_id = term_id if term_id != "" else None
 
+    # APPROVED PAYMENTS
     payments_qs = PaymentTransaction.objects.filter(
-        student=student
-    ).select_related('student', 'term', 'academic_year')
+        student=student,
+        school=student.school,
+        is_voided=False
+    ).select_related('term', 'academic_year', 'recorded_by')
 
-    pending_base_qs = PendingPayment.objects.filter(student=student).select_related('student', 'term', 'academic_year')
+    # PENDING PAYMENTS - THIS WAS THE PROBLEM BEFORE
+    pending_base_qs = PendingPayment.objects.filter(
+        student=student,
+        school=student.school
+    ).select_related('term', 'academic_year', 'student_fee')
 
     if year_id:
         payments_qs = payments_qs.filter(academic_year_id=year_id)
         pending_base_qs = pending_base_qs.filter(academic_year_id=year_id)
-    
     if term_id:
         payments_qs = payments_qs.filter(term_id=term_id)
         pending_base_qs = pending_base_qs.filter(term_id=term_id)
 
-    payments = payments_qs.order_by('-created_at')
+    payments_all = payments_qs.order_by('-created_at')
     total_amount = payments_qs.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
 
-    all_pending_records = pending_base_qs.order_by('-submitted_at')
-    pending_payments = all_pending_records.filter(status='pending')
-    rejected_payments = all_pending_records.filter(status='rejected')
+    # PAGINATOR 10 per page
+    paginator = Paginator(payments_all, 10)
+    page_number = request.GET.get('page')
+    payments = paginator.get_page(page_number)
+
+    all_pending = pending_base_qs.order_by('-submitted_at')
+    pending_payments = all_pending.filter(status='pending')
+    rejected_payments = all_pending.filter(status='rejected')
 
     pending_count = pending_payments.count()
     pending_amount = pending_payments.aggregate(total=Sum('amount'))['total'] or 0
@@ -11145,70 +14999,66 @@ def student_payment_history(request):
 
 @login_required
 def link_students_to_parent(request, parent_id):
-    if request.user.role != 'admin':
-        return redirect('accounts:dashboard')
+    if request.user.role not in ["admin", "proprietor", "proprietress", "headmaster", "headmistress"]:
+        return redirect("accounts:dashboard")
 
-    parent = get_object_or_404(User, id=parent_id, role='parent')
-    
-    classes = SchoolClass.objects.filter(school=request.user.school).order_by('name')
-    selected_class_id = request.GET.get('class_id')
-    search_q = request.GET.get('q', '')
+    school = request.user.school
+    parent = get_object_or_404(User, id=parent_id, role="parent", school=school)
 
-    students = User.objects.filter(role='student', school=request.user.school, is_active=True)
+    classes = SchoolClass.objects.filter(school=school).order_by("name")
+    selected_class_id = request.GET.get("class_id")
+    search_q = request.GET.get("q", "")
+
+    students = User.objects.filter(role="student", school=school, is_active=True)
 
     if selected_class_id:
         students = students.filter(school_class_id=selected_class_id)
-    
     if search_q:
         students = students.filter(
-            models.Q(first_name__icontains=search_q) | 
-            models.Q(last_name__icontains=search_q) |
-            models.Q(student_number__icontains=search_q)
+            models.Q(first_name__icontains=search_q)
+            | models.Q(last_name__icontains=search_q)
+            | models.Q(student_number__icontains=search_q)
         )
 
-    students = students.order_by('last_name')
-
-    # === PAGINATION - 10 per page ===
+    students = students.order_by("last_name")
     paginator = Paginator(students, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    # ================================
+    page_obj = paginator.get_page(request.GET.get("page"))
 
     if request.method == "POST":
-        selected_class_id_post = request.POST.get('selected_class_id')
-        selected_students = request.POST.getlist('students')
-        
+        selected_class_id_post = request.POST.get("selected_class_id")
+        selected_students = request.POST.getlist("students")
+
         if selected_class_id_post:
             class_student_ids = User.objects.filter(
-                school_class_id=selected_class_id_post,
-                school=request.user.school,
-                role='student'
-            ).values_list('id', flat=True)
-            ParentStudentLink.objects.filter(parent=parent, student_id__in=class_student_ids).delete()
+                school_class_id=selected_class_id_post, school=school, role="student"
+            ).values_list("id", flat=True)
+            ParentStudentLink.objects.filter(parent=parent, student_id__in=class_student_ids, student__school=school).delete()
         else:
-            ParentStudentLink.objects.filter(parent=parent).delete()
+            ParentStudentLink.objects.filter(parent=parent, student__school=school).delete()
 
         for student_id in selected_students:
-            rel = request.POST.get(f'relationship_{student_id}') or None
-            student = User.objects.get(id=student_id, role='student')
-            ParentStudentLink.objects.create(parent=parent, student=student, relationship=rel)
+            rel = request.POST.get(f"relationship_{student_id}") or None
+            student = User.objects.get(id=student_id, role="student", school=school)
+            obj, is_new = ParentStudentLink.objects.get_or_create(
+                parent=parent, student=student,
+                defaults={"relationship": rel, "school": school}
+            )
+            obj.relationship = rel
+            obj.school = school
+            obj.save()
 
         messages.success(request, "Students linked successfully!")
         if selected_class_id_post:
             return redirect(f"{request.path}?class_id={selected_class_id_post}")
-        return redirect('accounts:manage-parents')
+        return redirect("accounts:manage-parents")
 
-    linked_map = dict(ParentStudentLink.objects.filter(parent=parent).values_list('student_id', 'relationship'))
+    linked_map = dict(ParentStudentLink.objects.filter(parent=parent, student__school=school).values_list("student_id", "relationship"))
     for s in page_obj:
-        s.link_relationship = linked_map.get(s.id, '')
+        s.link_relationship = linked_map.get(s.id, "")
 
-    return render(request, 'accounts/link_students_to_parent.html', {
-        'parent': parent,
-        'students': page_obj,  # <-- send page_obj
-        'classes': classes,
-        'selected_class_id': selected_class_id,
-        'search_q': search_q,
-        'total_linked': len(linked_map),
+    return render(request, "accounts/link_students_to_parent.html", {
+        "parent": parent, "students": page_obj, "classes": classes,
+        "selected_class_id": selected_class_id, "search_q": search_q, "total_linked": len(linked_map),
     })
 
 
@@ -11217,12 +15067,16 @@ def my_children(request):
     if request.user.role != 'parent':
         return redirect('accounts:parent_dashboard')
 
+    school = request.user.school
     children = ParentStudentLink.objects.filter(
-        parent=request.user
-    ).select_related('student', 'student__school_class')
+        parent=request.user,
+        student__school=school,  
+        student__is_active=True
+    ).select_related('student', 'student__school_class', 'student__school')
 
     return render(request, 'accounts/my_children.html', {
-        'children': children
+        'children': children,
+        'child_count': children.count(),
     })
 
 
@@ -11230,10 +15084,13 @@ def my_children(request):
 def parent_payment_history(request):
     if request.user.role!= 'parent':
         return redirect('accounts:dashboard')
-    school = request.user.school
+    school = request.user.school # ISOLATION
 
-    # Get all children linked to this parent
-    links = ParentStudentLink.objects.filter(parent=request.user).select_related('student')
+    # 1. SCHOOL ISOLATED children
+    links = ParentStudentLink.objects.filter(
+        parent=request.user,
+        student__school=school # <-- FIX
+    ).select_related('student')
     children = [link.student for link in links]
 
     selected_child = None
@@ -11246,84 +15103,85 @@ def parent_payment_history(request):
                 if str(child.id) == str(child_id):
                     selected_child = child
                     break
+        if not selected_child and children:
+            selected_child = children[0]
 
     if selected_child:
         request.session['selected_child_id'] = selected_child.id
 
-    # Get approved payments from PaymentTransaction
+    # 2. APPROVED payments — already isolated by school=school (good)
     if selected_child:
-        payments = PaymentTransaction.objects.filter(
+        payments_qs = PaymentTransaction.objects.filter(
             school=school,
-            student=selected_child
-
+            student=selected_child,
+            is_voided=False
         ).select_related('student', 'term', 'academic_year').order_by('-created_at')
     else:
         children_ids = [c.id for c in children]
-        payments = PaymentTransaction.objects.filter(
+        payments_qs = PaymentTransaction.objects.filter(
             school=school,
-            student__id__in=children_ids
+            student__id__in=children_ids,
+            is_voided=False
         ).select_related('student', 'term', 'academic_year').order_by('-created_at')
 
-    
-
-    # Get ONLY LATEST PendingPayment per student_fee to avoid duplicates
-    from django.db.models import OuterRef, Subquery
-
+    # 3. PENDING — SCHOOL ISOLATED FIX
     if selected_child:
-        base_pending_qs = PendingPayment.objects.filter(student=selected_child)
+        base_pending_qs = PendingPayment.objects.filter(student=selected_child, school=school)
     else:
-        base_pending_qs = PendingPayment.objects.filter(student__in=children)
+        base_pending_qs = PendingPayment.objects.filter(student__in=children, school=school)
 
-    all_pending_records = base_pending_qs.select_related(
-        'student', 'term', 'academic_year'
-    ).order_by('-submitted_at')
+    all_pending_records = base_pending_qs.select_related('student', 'term', 'academic_year').order_by('-submitted_at')
+    pending_payments_qs = all_pending_records.filter(status='pending')
+    rejected_payments_qs = all_pending_records.filter(status='rejected')
 
-    # Split by status for your tabs/cards
-    pending_payments = all_pending_records.filter(status='pending')
-    rejected_payments = all_pending_records.filter(status='rejected')
+    # Filters
     academic_year_id = request.GET.get("academic_year")
     term_id = request.GET.get("term")
-
     if academic_year_id:
-        payments = payments.filter(academic_year_id=academic_year_id)
-        pending_payments = pending_payments.filter(academic_year_id=academic_year_id)
-        rejected_payments = rejected_payments.filter(academic_year_id=academic_year_id)
-
+        payments_qs = payments_qs.filter(academic_year_id=academic_year_id)
+        pending_payments_qs = pending_payments_qs.filter(academic_year_id=academic_year_id)
+        rejected_payments_qs = rejected_payments_qs.filter(academic_year_id=academic_year_id)
     if term_id:
-        payments = payments.filter(term_id=term_id)
-        pending_payments = pending_payments.filter(term_id=term_id)
-        rejected_payments = rejected_payments.filter(term_id=term_id)
+        payments_qs = payments_qs.filter(term_id=term_id)
+        pending_payments_qs = pending_payments_qs.filter(term_id=term_id)
+        rejected_payments_qs = rejected_payments_qs.filter(term_id=term_id)
 
-    # Calculate after filtering
-    total_amount = payments.aggregate(
-        Sum('total_amount')
-    )['total_amount__sum'] or 0
+    # 4. PAGINATOR — 10 per page, with View All
+    view_all = request.GET.get("view") == "all"
+    total_count = payments_qs.count()
 
-    pending_count = pending_payments.count()
-    pending_amount = pending_payments.aggregate(total=Sum('amount'))['total'] or 0
-    academic_years = AcademicYear.objects.filter(
-        school=school
-    ).order_by("-name")
+    if view_all:
+        payments = payments_qs
+        page_obj = None
+    else:
+        paginator = Paginator(payments_qs, 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        payments = page_obj
 
-    terms = Term.objects.filter(
-        school=school
-    ).select_related("academic_year").order_by(
-        "-academic_year__name",
-        "term_number"
-    )
+    total_amount = payments_qs.aggregate(total=Sum('total_amount'))['total'] or 0
+    pending_count = pending_payments_qs.count()
+    pending_amount = pending_payments_qs.aggregate(total=Sum('amount'))['total'] or 0
+
+    academic_years = AcademicYear.objects.filter(school=school).order_by("-name")
+    terms = Term.objects.filter(school=school).select_related("academic_year").order_by("-academic_year__name", "term_number")
 
     return render(request, 'accounts/parent_payment_history.html', {
         "academic_years": academic_years,
         "terms": terms,
         'payments': payments,
-        'pending_payments': pending_payments,
-        'rejected_payments': rejected_payments,
+        'page_obj': page_obj,
+        'show_all': view_all,
+        'total_count': total_count,
+        'pending_payments': pending_payments_qs,
+        'rejected_payments': rejected_payments_qs,
         'pending_count': pending_count,
         'pending_amount': pending_amount,
         'total_amount': total_amount,
         'children': children,
         'selected_child': selected_child,
         'show_switcher': len(children) > 1,
+        'school': school,
     })
 
 
@@ -11333,7 +15191,8 @@ def student_terminal_report(request):
         return redirect('accounts:dashboard')
 
     student = request.user
-    school = student.school_class.school if student.school_class else student.school
+    school = student.school
+    years = AcademicYear.objects.filter(school=school).order_by('-name')
 
     all_terms = Term.objects.filter(
         result__student=student,
@@ -11362,12 +15221,23 @@ def student_terminal_report(request):
             r.calc_total = ca_val + ex_val
             r.calc_ca = ca_val
             r.calc_exam = ex_val
-            if r.calc_total >= 80: r.calc_grade, r.calc_remark = "A", "Excellent"
-            elif r.calc_total >= 70: r.calc_grade, r.calc_remark = "B", "Very Good"
-            elif r.calc_total >= 60: r.calc_grade, r.calc_remark = "C", "Good"
-            elif r.calc_total >= 50: r.calc_grade, r.calc_remark = "D", "Pass"
-            elif r.calc_total >= 40: r.calc_grade, r.calc_remark = "E", "Weak"
-            else: r.calc_grade, r.calc_remark = "F", "Fail"
+            grading = GradingScale.objects.filter(
+                school=school,
+                term=selected_term,
+                min_score__lte=r.calc_total,
+                max_score__gte=r.calc_total,
+            ).first()
+
+            if not grading:
+                grading = GradingScale.objects.filter(
+                    school=school,
+                    term__isnull=True,
+                    min_score__lte=r.calc_total,
+                    max_score__gte=r.calc_total,
+                ).first()
+
+            r.calc_grade = grading.grade if grading else "-"
+            r.calc_remark = grading.remark if grading else "-"
 
         remark = StudentRemark.objects.filter(student=student, term=selected_term).first()
 
@@ -11396,12 +15266,27 @@ def student_terminal_report(request):
             if summary.term_remark: overall_remark = summary.term_remark
             if summary.rank: position = summary.rank
         else:
-            if percentage >= 80: overall_grade, overall_remark = 'A', 'Excellent'
-            elif percentage >= 70: overall_grade, overall_remark = 'B', 'Very Good'
-            elif percentage >= 60: overall_grade, overall_remark = 'C', 'Good'
-            elif percentage >= 50: overall_grade, overall_remark = 'D', 'Pass'
-            else: overall_grade, overall_remark = 'F', 'Fail'
+            grading = GradingScale.objects.filter(
+                school=school,
+                term=selected_term,
+                min_score__lte=percentage,
+                max_score__gte=percentage,
+            ).first()
 
+            if not grading:
+                grading = GradingScale.objects.filter(
+                    school=school,
+                    term__isnull=True,
+                    min_score__lte=percentage,
+                    max_score__gte=percentage,
+                ).first()
+
+            if grading:
+                overall_grade = grading.grade
+                overall_remark = grading.remark
+            else:
+                overall_grade = '-'
+                overall_remark = '-'
         # === FIXED ATTENDANCE - FINAL RULE: ONLY P and A, 1 P = Whole day Present ===
         start = selected_term.start_date
         today = timezone.now().date()
@@ -11458,6 +15343,7 @@ def student_terminal_report(request):
 
     context = {
         'terms': all_terms,
+        'years': years,
         'selected_term': selected_term,
         'term_data': term_data,
         'summary': summary,
@@ -11474,187 +15360,135 @@ def submit_manual_payment(request, student_fee_id):
         messages.error(request, "Access denied.")
         return redirect('accounts:dashboard')
     
-    student_fee = get_object_or_404(StudentFee, id=student_fee_id)
-    school = student_fee.student.school
-    
-    # Security check: Different logic for parent vs student
+    school = request.user.school
+
     if request.user.role == 'parent':
+        student_fee = get_object_or_404(StudentFee, id=student_fee_id, school=school)
+        # Check link WITH school
         is_linked = ParentStudentLink.objects.filter(
-            parent=request.user,
-            student=student_fee.student
+            parent=request.user, 
+            student=student_fee.student,
+            student__school=school
         ).exists()
         if not is_linked:
-            messages.error(request, "You are not authorized to submit payment for this student.")
+            messages.error(request, "Not authorized.")
             return redirect('accounts:parent_dashboard')
-    
+    else:
+        student_fee = get_object_or_404(StudentFee, id=student_fee_id, school=school, student=request.user)
+
+    # ===== SAFE + SCHOOL ISOLATED CHECK =====
+    if request.user.role == 'parent':
+        # Check link without school (your table has school=NULL)
+        is_linked = ParentStudentLink.objects.filter(
+            parent=request.user, 
+            student=student_fee.student
+        ).exists()
+        
+        if not is_linked:
+            # Also try parent__children if you use different relation
+            try:
+                is_linked = ParentStudentLink.objects.filter(
+                    parent=request.user, 
+                    student_id=student_fee.student.id
+                ).exists()
+            except:
+                pass
+        
+        if not is_linked:
+            messages.error(request, "Not authorized for this student.")
+            return redirect('accounts:parent_dashboard')
+            
     elif request.user.role == 'student':
         if student_fee.student != request.user:
-            messages.error(request, "You can only submit payment for your own fees.")
-            return redirect('accounts:student_payment_history') 
-        # DELETE THE ELSE BLOCK - let student continue
-    
+            messages.error(request, "You can only pay your own fees.")
+            return redirect('accounts:view-student-fees')
+
+    # Term handling
+    term = student_fee.term
+    academic_year = AcademicYear.objects.filter(name=student_fee.academic_year, school=school).first() or (term.academic_year if hasattr(term, 'academic_year') else None)
+    if not academic_year:
+        try:
+            academic_year = AcademicYear.objects.get(name=student_fee.academic_year, school=school)
+        except:
+            messages.error(request, "Academic year not found.")
+            return redirect('accounts:parent_dashboard')
+
     rejected_payment = None
     resubmit_id = request.GET.get('resubmit')
     if resubmit_id:
-        # Remove submitted_by=request.user so parent can resubmit student's rejected payment
-        rejected_payment = PendingPayment.objects.filter(
-            id=resubmit_id,
-            student_fee=student_fee,
-            status='rejected'
-            # submitted_by=request.user  <-- REMOVE THIS
-        ).first()
-    
-    try:
-        term = Term.objects.get(
-            term_number=student_fee.term.term_number if hasattr(student_fee.term, 'term_number') else student_fee.term,
-            academic_year__name=student_fee.academic_year
-        )
-        academic_year = term.academic_year
-    except Term.DoesNotExist:
-        messages.error(request, "Term not found for this fee record.")
-        if request.user.role == 'student':
-            return redirect('accounts:view-student-fees')  # Use correct URL name
-        else:
-            return redirect('accounts:parent_dashboard')
-    
-    # Initialize form
-    if rejected_payment:
-        form = PendingPaymentForm(request.POST or None, request.FILES or None, instance=rejected_payment, school=school)
-        if request.method == 'GET':
-            messages.info(request, f"Resubmitting rejected payment. Previous reason: {rejected_payment.rejection_reason}")
+        rejected_payment = PendingPayment.objects.filter(id=resubmit_id, student_fee=student_fee, school=school, status='rejected').first()
+
+    if request.method == 'POST':
+        form = PendingPaymentForm(request.POST, request.FILES, instance=rejected_payment, school=school) if rejected_payment else PendingPaymentForm(request.POST, request.FILES, school=school)
+        if form.is_valid():
+            pending = form.save(commit=False)
+            pending.school = school
+            pending.student = student_fee.student
+            pending.student_fee = student_fee
+            pending.term = term
+            pending.academic_year = academic_year
+            pending.submitted_by = request.user
+            pending.status = 'pending'
+            pending.rejection_reason = None
+            pending.save()
+
+            pending.items.all().delete()
+            items = json.loads(request.POST.get("selected_items", "[]"))
+            total = Decimal('0')
+            for item in items:
+                PendingPaymentItem.objects.create(
+                    pending_payment=pending,
+                    fee_name=item["fee_name"],
+                    paid_field=item.get("paid_field", item["fee_name"]),
+                    amount=Decimal(item["amount"]),
+                    dynamic_item_id=item.get("dynamic_item_id")
+                )
+                total += Decimal(item["amount"])
+            pending.amount = total
+            pending.save()
+
+            messages.success(request, "Payment proof submitted. Awaiting verification.")
+            return redirect("accounts:view-student-fees" if request.user.role == 'student' else "accounts:parent_payment_history")
     else:
-        form = PendingPaymentForm(request.POST or None, request.FILES or None, school=school)
-    
-    if request.method == 'POST':
-        if form.is_valid():
-            pending = form.save(commit=False)
-            pending.student = student_fee.student
-            pending.student_fee = student_fee
-            pending.term = term
-            pending.academic_year = academic_year
-            pending.submitted_by = request.user
-            pending.status = 'pending'
-            pending.rejection_reason = None
-            pending.save()
-
-            if rejected_payment:
-                pending.items.all().delete()
-
-            items = json.loads(request.POST.get("selected_items", "[]"))
-            for item in items:
-                PendingPaymentItem.objects.create(
-                    pending_payment=pending,
-                    fee_name=item["fee_name"],
-                    paid_field=item["paid_field"],
-                    amount=Decimal(item["amount"])
-                )
-
-            if rejected_payment:
-                messages.success(request, "Payment proof updated and resubmitted. Awaiting accountant verification.")
-            else:
-                messages.success(request, "Payment proof submitted. Awaiting accountant verification.")
-            
-            if request.user.role == 'student':
-                return redirect("accounts:view-student-fees")  # Use correct URL name
-            else:
-                return redirect("accounts:parent_payment_history")
-    
+        form = PendingPaymentForm(instance=rejected_payment, school=school) if rejected_payment else PendingPaymentForm(school=school)
         if rejected_payment:
-            form = PendingPaymentForm(request.POST or None, request.FILES or None, instance=rejected_payment, school=school)
-            if request.method == 'GET' and not request.session.get(f'shown_resubmit_{resubmit_id}'):
-                messages.info(request, f"Resubmitting rejected payment. Previous reason: {rejected_payment.rejection_reason}")
-                request.session[f'shown_resubmit_{resubmit_id}'] = True
-        else:
-            form = PendingPaymentForm(request.POST or None, request.FILES or None, school=school)
-    
-    if request.method == 'POST':
-        if form.is_valid():
-            pending = form.save(commit=False)
-            pending.student = student_fee.student
-            pending.student_fee = student_fee
-            pending.term = term
-            pending.academic_year = academic_year
-            pending.submitted_by = request.user
-            pending.status = 'pending'
-            pending.rejection_reason = None
-            pending.save()
+            messages.info(request, f"Resubmitting rejected payment. Reason: {rejected_payment.rejection_reason}")
 
-            if rejected_payment:
-                pending.items.all().delete()
+    # DYNAMIC - from DynamicStudentFeeItem only
+    dynamic_items = DynamicStudentFeeItem.objects.filter(
+        school=school,
+        student_fee=student_fee
+    )
 
-            items = json.loads(request.POST.get("selected_items", "[]"))
-            for item in items:
-                PendingPaymentItem.objects.create(
-                    pending_payment=pending,
-                    fee_name=item["fee_name"],
-                    paid_field=item["paid_field"],
-                    amount=Decimal(item["amount"])
-                )
+    payment_options = []
+    for item in dynamic_items:
+        balance = float(item.amount_due) - float(item.amount_paid)
+        if balance > 0.01:
+            payment_options.append({
+                "label": item.payment_type.name if hasattr(item, 'payment_type') and item.payment_type else item.name,
+                "paid_field": item.name,
+                "balance": balance,
+                "due": float(item.amount_due),
+                "paid": float(item.amount_paid),
+                "dynamic_item_id": item.id,  
+            })
 
-            if rejected_payment:
-                messages.success(request, "Payment proof updated and resubmitted. Awaiting accountant verification.")
-            else:
-                messages.success(request, "Payment proof submitted. Awaiting accountant verification.")
-            
-            if request.user.role == 'student':
-                return redirect("accounts:student_view_fees")
-            else:
-                return redirect("accounts:parent_payment_history")
-        # If form is NOT valid, it falls through to render below with errors
-    
-    # FIXED: Calculate real balance from PaymentTransaction
-    real_total_paid = PaymentTransaction.objects.filter(
-        student=student_fee.student,
-        student__school=school
-    ).aggregate(total=Sum('total_amount'))['total'] or 0
-
-    real_balance = float(student_fee.total_amount) - float(real_total_paid)
+    total_due = sum(float(i.amount_due) for i in dynamic_items) or float(student_fee.total_amount)
+    total_paid = sum(float(i.amount_paid) for i in dynamic_items)
+    real_balance = total_due - total_paid
     if real_balance < 0:
         real_balance = 0
 
-    # Build payment_options
-    payment_options = []
-    fee_fields = [
-        ("School Fees", "school_fees", "amount_paid_school_fees"),
-        ("Feeding Fee", "canteen_amount", "amount_paid_canteen"),
-        ("Boarding Fee", "boarding_fee", "amount_paid_boarding_fee"),
-        ("Hostel Fee", "hostel_fee", "amount_paid_hostel_fee"),
-        ("Development Fee", "development_fee", "amount_paid_development_fee"),
-        ("PTA Dues", "pta_dues", "amount_paid_pta_dues"),
-        ("Computer Levy", "computer_levy", "amount_paid_computer_levy"),
-        ("Exam Fees", "exam_fees", "amount_paid_exam_fees"),
-        ("Other Fees", "other_fees", "amount_paid_other_fees"),
-    ]
-
-    paid_by_type = PaymentItem.objects.filter(
-        transaction__student=student_fee.student,
-        transaction__term=student_fee.term,
-        transaction__academic_year__name=student_fee.academic_year
-    ).values('fee_name').annotate(total=Sum('amount'))
-
-    paid_map = {p['fee_name']: float(p['total']) for p in paid_by_type}
-
-    for label, fee_field, paid_field in fee_fields:
-        total = getattr(student_fee, fee_field, 0) or 0
-        paid = paid_map.get(label, 0)
-        balance = float(total) - paid
-        if balance > 0:
-            payment_options.append({
-                "label": label,
-                "paid_field": paid_field,
-                "balance": balance,
-            })
-    
     context = {
-        'form': form,  # This will now contain errors if validation failed
+        'form': form,
         'student_fee': student_fee,
         'student': student_fee.student,
-        'balance': real_balance,  # Fixed
+        'balance': real_balance,
         'school': school,
-        'payment_options': payment_options,
+        'payment_options': payment_options, 
         'is_resubmitting': rejected_payment is not None,
     }
-    return render(request, 'accounts/submit_manual_payment.html', context)  # THIS ALWAYS RUNS NOW
+    return render(request, 'accounts/submit_manual_payment.html', context)
 
 
 @login_required
@@ -11667,6 +15501,7 @@ def pending_payments(request):
 
     pending_payments = PendingPayment.objects.filter(
         student__school=school,
+        school=school,  
         status='pending'
     ).select_related(
         'student',
@@ -11674,18 +15509,15 @@ def pending_payments(request):
         'term',
         'academic_year',
         'submitted_by'
+    ).prefetch_related(
+        'items'  
     ).order_by('-submitted_at')
-
 
     context = {
         'pending_payments': pending_payments,
+        'school': school,
     }
-
-    return render(
-        request,
-        'accounts/pending_payments.html',
-        context
-    )
+    return render(request, 'accounts/pending_payments.html', context)
 
 
 @login_required
@@ -11695,36 +15527,43 @@ def pending_payment_detail(request, payment_id):
         messages.error(request, "You are not authorized to view this page.")
         return redirect('accounts:dashboard')
 
+    school = request.user.school
+
     payment = get_object_or_404(
-        PendingPayment.objects.prefetch_related('items'),
+        PendingPayment.objects.select_related(
+            'student',
+            'student_fee',
+            'term',
+            'academic_year',
+            'submitted_by',
+            'school'
+        ).prefetch_related('items'),
         id=payment_id,
-        student__school=request.user.school
+        school=school, 
+        student__school=school  
     )
 
     context = {
         'payment': payment,
-        'payment_items': payment.items.all(),
+        'payment_items': payment.items.all(), 
+        'school': school,
     }
 
-    return render(
-        request,
-        'accounts/pending_payment_detail.html',
-        context
-    )
-
+    return render(request, 'accounts/pending_payment_detail.html', context)
 
 @login_required
 def approve_manual_payment(request, payment_id):
-
     if request.user.role != "accountant":
-        messages.error(request, "You are not authorized to perform this action.")
+        messages.error(request, "Not authorized.")
         return redirect("accounts:dashboard")
 
+    school = request.user.school
     payment = get_object_or_404(
         PendingPayment.objects.prefetch_related("items"),
         id=payment_id,
-        student__school=request.user.school,
-        status="pending"
+        school=school,  
+        student__school=school,
+        status="pending",
     )
 
     if request.method != "POST":
@@ -11735,6 +15574,7 @@ def approve_manual_payment(request, payment_id):
             fee = payment.student_fee
 
             txn = PaymentTransaction.objects.create(
+                school=school,  # ISOLATION
                 student=payment.student,
                 total_amount=payment.amount,
                 amount_paid=payment.amount,
@@ -11746,19 +15586,35 @@ def approve_manual_payment(request, payment_id):
             )
 
             for item in payment.items.all():
+                # 1. Create PaymentItem
                 PaymentItem.objects.create(
                     transaction=txn,
                     fee_name=item.fee_name,
                     amount=item.amount,
                 )
-                current_paid = getattr(fee, item.paid_field, Decimal("0"))
-                setattr(fee, item.paid_field, current_paid + item.amount)
-                code = item.fee_name.upper().replace(" ", "_")
-                payment_type, created = PaymentType.objects.get_or_create(
-                    code=code, defaults={"name": item.fee_name}
+
+                # 2. DYNAMIC UPDATE - Update DynamicStudentFeeItem, not StudentFee field
+                dyn_item, created = DynamicStudentFeeItem.objects.get_or_create(
+                    school=school,
+                    student_fee=fee,
+                    student=payment.student,
+                    name=item.fee_name,
+                    defaults={"amount_due": item.amount, "amount_paid": Decimal("0")},
+                )
+                dyn_item.amount_paid = (
+                    dyn_item.amount_paid or Decimal("0")
+                ) + item.amount
+                dyn_item.save()
+
+                # 3. PaymentType with school isolation
+                code = item.fee_name.upper().replace(" ", "_")[:50]
+                payment_type, _ = PaymentType.objects.get_or_create(
+                    school=school, code=code, defaults={"name": item.fee_name}
                 )
                 txn.payment_types.add(payment_type)
-            fee.save()
+
+            # Update StudentFee total paid cache if you have
+            # fee.amount_paid = sum of dyn items - optional
 
             payment.status = "approved"
             payment.verified_by = request.user
@@ -11766,41 +15622,44 @@ def approve_manual_payment(request, payment_id):
             payment.payment_transaction = txn
             payment.save()
 
-            # === NEW: ADMIN MONITORING - Log online payment approval ===
             FeeAuditLog.objects.create(
                 transaction=txn,
-                action='COLLECTED',
+                action="COLLECTED",
                 done_by=request.user,
-                details=f"ONLINE Approved - {payment.payment_method} {payment.reference_number} - GHS {payment.amount} for {payment.student.get_full_name()}"
+                details=f"ONLINE Approved - {payment.payment_method} {payment.reference_number} - GHS {payment.amount} for {payment.student.get_full_name()} | {school.name}",
             )
-            # === END NEW ===
 
-            messages.success(request, f"Payment approved successfully. Receipt: {txn.receipt_number}")
+            messages.success(
+                request, f"Payment approved. Receipt: {txn.receipt_number}"
+            )
             return redirect("accounts:pending_payments")
 
     except Exception as e:
-        messages.error(request, f"Error approving payment: {e}")
+        messages.error(request, f"Error approving: {e}")
 
     return redirect("accounts:pending_payment_detail", payment_id=payment.id)
 
 
 @login_required
 def reject_manual_payment(request, payment_id):
-
     if request.user.role != "accountant":
-        messages.error(request, "You are not authorized to perform this action.")
+        messages.error(request, "Not authorized.")
         return redirect("accounts:dashboard")
 
+    school = request.user.school
     payment = get_object_or_404(
         PendingPayment,
         id=payment_id,
-        student__school=request.user.school,
-        status="pending"
+        school=school,
+        student__school=school,
+        status="pending",
     )
 
     if request.method == "POST":
-
-        reason = request.POST.get("rejection_reason")
+        reason = request.POST.get("rejection_reason", "").strip()
+        if not reason:
+            messages.error(request, "Please provide rejection reason.")
+            return redirect("accounts:pending_payment_detail", payment_id=payment.id)
 
         payment.status = "rejected"
         payment.rejection_reason = reason
@@ -11808,114 +15667,188 @@ def reject_manual_payment(request, payment_id):
         payment.verified_at = timezone.now()
         payment.save()
 
-        messages.success(
-            request,
-            "Payment has been rejected."
-        )
-
+        messages.success(request, "Payment rejected.")
         return redirect("accounts:pending_payments")
 
-    return redirect(
-        "accounts:pending_payment_detail",
-        payment_id=payment.id
-    )
+    return redirect("accounts:pending_payment_detail", payment_id=payment.id)
 
 
 @login_required
 def parent_timetable(request):
-    if request.user.role!= 'parent':
-        return redirect('accounts:dashboard')
+    if request.user.role != "parent":
+        return redirect("accounts:dashboard")
+    school = request.user.school
+    if not school:
+        messages.error(request, "No school assigned.")
+        return redirect("accounts:parent_dashboard")
 
-    # SAME CHILD SWITCHER LOGIC AS YOUR parent_payment_history
-    links = ParentStudentLink.objects.filter(parent=request.user).select_related('student__school_class')
+    links = ParentStudentLink.objects.filter(
+        parent=request.user, student__school=school, student__is_active=True
+    ).select_related("student", "student__school_class")
     children = [link.student for link in links]
-
     selected_child = None
-    if len(children) == 1:
-        selected_child = children[0]
-    else:
-        child_id = request.GET.get('child') or request.session.get('selected_child_id')
-        if child_id:
-            for child in children:
-                if str(child.id) == str(child_id):
-                    selected_child = child
-                    break
-
-    if selected_child:
-        request.session['selected_child_id'] = selected_child.id
-
-    # FALLBACK TO FIRST CHILD ONLY IF NO CHILD IN URL/SESSION
+    child_id = request.GET.get("child") or request.session.get(
+        "parent_timetable_child_id"
+    )
+    if child_id:
+        for child in children:
+            if str(child.id) == str(child_id):
+                selected_child = child
+                break
     if not selected_child and children:
         selected_child = children[0]
+    if selected_child:
+        request.session["parent_timetable_child_id"] = selected_child.id
 
-    # CRITICAL FIX: Reset everything if child has no class
+    filter_data = get_term_year_filter(request, school)
+    years = filter_data["years"]
+    selected_year = request.GET.get("year") or filter_data.get("selected_year")
+    selected_term = request.GET.get("term") or filter_data.get("selected_term")
+    sy = str(selected_year) if selected_year else ""
+    st = str(selected_term) if selected_term else ""
+
+    try:
+        timetable_week = int(request.GET.get("timetable_week", "0") or 0)
+    except:
+        timetable_week = 0
+
+    today = timezone.localdate()
+    start_of_week = (
+        today - timedelta(days=today.weekday()) + timedelta(weeks=timetable_week)
+    )
+    end_of_week = start_of_week + timedelta(days=4)
+
+    timetable_grid = defaultdict(dict)
+    time_slots = set()
+    break_slots = []
+    break_times = []
     timetable_by_day = []
-    today_date = timezone.now().date()
-    today_weekday = timezone.now().weekday()
-    week_offset = 0
-    start_of_week = None
+    has_timetable = False
+    active_term = None
+    current_week_number = 1
+    weekdays = [
+        (0, "Monday"),
+        (1, "Tuesday"),
+        (2, "Wednesday"),
+        (3, "Thursday"),
+        (4, "Friday"),
+    ]
 
-    if selected_child and selected_child.school_class: # CHECK CLASS EXISTS
+    if selected_child and selected_child.school_class:
         student_class = selected_child.school_class
+        if sy and st:
+            active_term = Term.objects.filter(
+                school=school, academic_year_id=sy, term_number=st
+            ).first()
+        else:
+            active_term = Term.objects.filter(school=school, is_active=True).first()
 
-        try:
-            week_offset = int(request.GET.get('week', '0') or 0)
-        except ValueError:
-            week_offset = 0
+        if active_term:
+            term_start = active_term.start_date
+            first_monday = term_start - timedelta(days=term_start.weekday())
+            current_week_number = ((start_of_week - first_monday).days // 7) + 1
 
-        start_of_week = today_date - timedelta(days=today_date.weekday())
-        start_of_week += timedelta(weeks=week_offset)
-        current_week_number = start_of_week.isocalendar()[1]
+        # >>> FIXED: MUST FILTER BY TERM <<<
+        if not active_term:
+            filtered_timetable = Timetable.objects.none()
+        else:
+            filtered_timetable = (
+                Timetable.objects.filter(
+                    school_class=student_class,
+                    school_class__school=school,
+                    term=active_term,
+                )
+                .select_related("teacher", "subject", "school_class")
+                .order_by("weekday", "start_time")
+            )
 
-# ONLY QUERY TIMETABLE FOR THIS CHILD'S CLASS
-        timetable = Timetable.objects.filter(
-            school_class=student_class
-        ).select_related('subject', 'teacher').order_by('weekday', 'period')
+        for item in filtered_timetable:
+            time_range = f"{item.start_time.strftime('%H:%M')} - {item.end_time.strftime('%H:%M')}"
+            time_slots.add(time_range)
+            timetable_grid[item.weekday][time_range] = item
 
-        # FIX: Check if any timetable entries exist BEFORE building days
-        has_timetable = timetable.exists() # ← ADD THIS LINE
+        breaks = Break.objects.filter(
+            school=school, stage=student_class.stage
+        ).order_by("start_time")
+        for br in breaks:
+            break_range = (
+                f"{br.start_time.strftime('%H:%M')} - {br.end_time.strftime('%H:%M')}"
+            )
+            time_slots.add(break_range)
+            break_slots.append(
+                {
+                    "id": br.id,
+                    "stage": br.stage,
+                    "name": br.name,
+                    "start": br.start_time,
+                    "end": br.end_time,
+                    "label": break_range,
+                }
+            )
+            break_times.append(break_range)
 
-        days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+        time_slots = sorted(time_slots)
+        for day_value, _ in weekdays:
+            if day_value not in timetable_grid:
+                timetable_grid[day_value] = {}
+        has_timetable = filtered_timetable.exists()
 
-        # Only build timetable_by_day if there are actual entries
-        if has_timetable: # ← WRAP THE LOOP IN THIS
-            for day_num in range(5):
-                current_date = start_of_week + timedelta(days=day_num)
+        for day_value, day_name in weekdays:
+            current_date = start_of_week + timedelta(days=day_value)
+            event = AcademicCalendar.objects.filter(
+                school=school, start_date__lte=current_date, end_date__gte=current_date
+            ).first()
+            timetable_by_day.append(
+                {
+                    "num": day_value,
+                    "name": day_name,
+                    "date": current_date,
+                    "event": event,
+                    "is_today": (current_date == today and timetable_week == 0),
+                }
+            )
 
-                event = AcademicCalendar.objects.filter(
-                    start_date__lte=current_date,
-                    end_date__gte=current_date
-                ).first()
-
-                entries = [e for e in timetable if e.weekday == day_num]
-
-                if event and event.affects_timetable:
-                    entries = []
-
-                timetable_by_day.append({
-                    'num': day_num,
-                    'name': days[day_num],
-                    'date': current_date,
-                    'entries': entries,
-                    'event': event,
-                })
+    timetable_total_weeks = 1
+    if active_term:
+        cur = active_term.start_date
+        total = 0
+        while cur <= active_term.end_date:
+            total += 1
+            friday = cur + timedelta(days=(4 - cur.weekday()))
+            cur = friday + timedelta(days=3)
+        timetable_total_weeks = total or 1
 
     context = {
-        'children': children,
-        'selected_child': selected_child,
-        'show_switcher': len(children) > 1,
-        'timetable_by_day': timetable_by_day,
-        'has_timetable': has_timetable, 
-        'today': today_date,
-        'today_weekday': today_weekday if week_offset == 0 else -1,
-        'week_offset': week_offset,
-        'prev_week': week_offset - 1,
-        'next_week': week_offset + 1,
-        'current_week_start': start_of_week,
-        'current_week_number': current_week_number,
-        'has_timetable': bool(timetable_by_day), # NEW: For template check
+        **filter_data,
+        "years": years,
+        "selected_year": sy,
+        "selected_term": st,
+        "children": children,
+        "selected_child": selected_child,
+        "show_switcher": len(children) > 1,
+        "timetable_grid": timetable_grid,
+        "time_slots": time_slots,
+        "break_slots": break_slots,
+        "break_times": break_times,
+        "weekdays": weekdays,
+        "week_dates": {
+            day_value: start_of_week + timedelta(days=day_value)
+            for day_value, _ in weekdays
+        },
+        "has_timetable": has_timetable,
+        "timetable_by_day": timetable_by_day,
+        "timetable_week": timetable_week,
+        "prev_timetable_week": timetable_week - 1,
+        "next_timetable_week": timetable_week + 1,
+        "current_week_number": current_week_number,
+        "current_week_start": start_of_week,
+        "current_week_end": end_of_week,
+        "today": today,
+        "today_weekday": today.weekday() if timetable_week == 0 else -1,
+        "active_term": active_term,
+        "timetable_total_weeks": timetable_total_weeks,
     }
-    return render(request, 'accounts/parent_timetable.html', context)
+    return render(request, "accounts/parent_timetable.html", context)
 
 
 @login_required
@@ -11924,7 +15857,16 @@ def parent_attendance(request):
         messages.error(request, "Only parents can view this page.")
         return redirect('accounts:dashboard')
 
-    links = ParentStudentLink.objects.filter(parent=request.user).select_related('student')
+    school = request.user.school # ISOLATION — Source of truth
+    if not school:
+        messages.error(request, "School not set for your account.")
+        return redirect('accounts:dashboard')
+
+    # 1. SCHOOL ISOLATED children
+    links = ParentStudentLink.objects.filter(
+        parent=request.user,
+        student__school=school # <-- FIX
+    ).select_related('student')
     children = [link.student for link in links]
 
     selected_child = None
@@ -11937,113 +15879,149 @@ def parent_attendance(request):
                 if str(child.id) == str(child_id):
                     selected_child = child
                     break
+        if not selected_child and children:
+            selected_child = children[0]
+
     if selected_child:
         request.session['selected_child_id'] = selected_child.id
-    if not selected_child and children:
-        selected_child = children[0]
 
     if not selected_child:
-        return render(request, 'accounts/parent_attendance.html', {'children': [], 'has_records': False})
-    school = selected_child.school
+        return render(request, 'accounts/parent_attendance.html', {
+            'children': [], 'has_records': False, 'school': school
+        })
+
+    # Double check child belongs to parent's school
+    if selected_child.school_id!= school.id:
+        messages.error(request, "Invalid child selection.")
+        return redirect('accounts:parent_attendance')
 
     setting = SchoolSetting.objects.filter(school=school).first()
     attendance_mode = setting.attendance_mode if setting else 'subject'
-    term_id = request.GET.get('term')
-
-    if term_id:
-        active_term = Term.objects.filter(
-            id=term_id,
-            school=school
-        ).first()
-
-        if not active_term:
-            active_term = Term.objects.filter(
-                school=school,
-                is_active=True
-            ).first()
-    else:
-        active_term = Term.objects.filter(
-            school=school,
-            is_active=True
-        ).first()
-
-        if not active_term:
-            active_term = Term.objects.filter(
-                school=school
-            ).order_by('-end_date').first()
-    today = active_term.start_date if active_term else timezone.now().date()
-
 
     term_id = request.GET.get("term")
+    if term_id:
+        active_term = Term.objects.filter(id=term_id, school=school).first()
+        if not active_term:
+            active_term = Term.objects.filter(school=school, is_active=True).first()
+    else:
+        active_term = Term.objects.filter(school=school, is_active=True).first()
+        if not active_term:
+            active_term = Term.objects.filter(school=school).order_by('-end_date').first()
+
+    today = active_term.start_date if active_term else timezone.now().date()
 
     try:
-        week_offset = int(request.GET.get("att_week", 0))
+        if "att_week" in request.GET:
+            week_offset = int(request.GET.get("att_week", 0))
+        else:
+            week_offset = None
     except (TypeError, ValueError):
         week_offset = 0
+
     if active_term and active_term.start_date:
 
         term_start = active_term.start_date
-            # If no attendance week is supplied, open the current week
-    if "att_week" not in request.GET:
-        if active_term.start_date <= timezone.now().date():
-            days_since_start = (timezone.now().date() - active_term.start_date).days
-            if days_since_start < 0:
+        term_end = active_term.end_date
+
+        # Determine the current active week when page opens
+        if week_offset is None:
+
+            current_date = timezone.now().date()
+
+            first_week_end = term_start + timedelta(
+                days=4 - term_start.weekday()
+            )
+
+            if current_date <= first_week_end:
                 week_offset = 0
+
             else:
-                week_offset = days_since_start // 7
+                first_monday = first_week_end + timedelta(days=3)
 
-        # Week starts exactly from admin's selected opening date
-# Week 1 = opening day to that week's Friday
-        if week_offset == 0:
-            target_monday = term_start
+                if current_date < first_monday:
+                    week_offset = 0
+                else:
+                    week_offset = 1 + (
+                        (current_date - first_monday).days // 7
+                    )
 
-            days_to_friday = 4 - term_start.weekday()
-            if days_to_friday < 0:
-                days_to_friday = 0
+        # ==========================================
+        # WEEK 1 — STARTS ON TERM START DATE
+        # ==========================================
+        if term_start.weekday() != 0:
 
-            target_friday = term_start + timedelta(days=days_to_friday)
+            first_week_start = term_start
+            first_week_end = term_start + timedelta(
+                days=4 - term_start.weekday()
+            )
 
-        # Week 2 onwards = Monday to Friday
+            if week_offset == 0:
+                target_monday = first_week_start
+                target_friday = min(first_week_end, term_end)
+
+            else:
+                # Week 2 starts on the following Monday
+                first_monday = first_week_end + timedelta(days=3)
+
+                target_monday = first_monday + timedelta(
+                    weeks=week_offset - 1
+                )
+
+                target_friday = min(
+                    target_monday + timedelta(days=4),
+                    term_end
+                )
+
+        # ==========================================
+        # TERM STARTS ON MONDAY
+        # ==========================================
         else:
-            first_monday = term_start + timedelta(days=(7 - term_start.weekday()))
 
-            target_monday = first_monday + timedelta(weeks=week_offset - 1)
-            target_friday = target_monday + timedelta(days=4)
+            target_monday = term_start + timedelta(
+                weeks=week_offset
+            )
+
+            target_friday = min(
+                target_monday + timedelta(days=4),
+                term_end
+            )
 
     else:
 
         current_monday = today - timedelta(days=today.weekday())
-        target_monday = current_monday + timedelta(weeks=week_offset)
+
+        target_monday = current_monday + timedelta(
+            weeks=week_offset
+        )
+
         target_friday = target_monday + timedelta(days=4)
-    if active_term and target_friday > active_term.end_date:
-        target_friday = active_term.end_date
 
     if active_term and active_term.start_date:
+
         term_start = active_term.start_date
 
-        # Week 1 starts exactly from admin's start date
-        days_from_start = (target_monday - term_start).days
+        if term_start.weekday() == 0:
+            # Term starts Monday
+            att_active_week = week_offset + 1
 
-        if days_from_start < 0:
-            att_active_week = 1
         else:
-            att_active_week = ((days_from_start + 1) // 7) + 1
+            # First week is the partial week
+            # from the term start date to Friday
+            att_active_week = week_offset + 1
 
     else:
         att_active_week = 1
 
     att_prev = week_offset - 1 if week_offset > 0 else None
 
-    # ==========================
-    # CLASS TEACHER MODE - ONLY P and A
-    # ==========================
+    # ATTENDANCE QUERY — SCHOOL ISOLATED
     if attendance_mode == 'class_teacher':
         raw = AttendanceRecord.objects.filter(
-                student=selected_child,
-                session__school_class__school=school,
-                session__date__gte=target_monday,
-                session__date__lte=target_friday
-            ).values('session__date', 'status')
+            student=selected_child,
+            session__school_class__school=school,
+            session__date__gte=target_monday,
+            session__date__lte=target_friday
+        ).values('session__date', 'status')
 
         by_date = defaultdict(list)
         for r in raw:
@@ -12051,7 +16029,6 @@ def parent_attendance(request):
 
         records_list = []
         for date, statuses in by_date.items():
-            # FINAL RULE: If any P that day = P, else A
             final_status = 'P' if 'P' in statuses else 'A'
             records_list.append({'session__date': date, 'status': final_status})
 
@@ -12062,22 +16039,14 @@ def parent_attendance(request):
         late_count = 0
         by_subject = []
         has_records = total_count > 0
-
-    # ==========================
-    # SUBJECT MODE - FINAL RULE YOU WANT
-    # ==========================
     else:
         records_qs = AttendanceRecord.objects.filter(
-                student=selected_child,
-                session__school_class__school=school,
-                session__date__gte=target_monday,
-                session__date__lte=target_friday
-            ).select_related(
-            'session__subject',
-            'session__teacher'
-        ).order_by('-session__date')
+            student=selected_child,
+            session__school_class__school=school, # isolation
+            session__date__gte=target_monday,
+            session__date__lte=target_friday
+        ).select_related('session__subject', 'session__teacher').order_by('-session__date')
 
-        # 1. Per Subject Breakdown - Truth
         subject_data = defaultdict(lambda: {'name': '', 'present': 0, 'absent': 0, 'total': 0})
         for r in records_qs:
             if r.session and r.session.subject:
@@ -12094,44 +16063,49 @@ def parent_attendance(request):
             data['percentage'] = round((data['present'] / data['total']) * 100) if data['total'] > 0 else 0
             by_subject.append(data)
 
-        # 2. Overall Rate - If present for 1 class that day, whole day = Present
         by_date_overall = defaultdict(list)
         for r in records_qs:
             by_date_overall[r.session.date].append(r.status)
 
-        total_count = len(by_date_overall) # Total DAYS
-        present_count = 0
-        absent_count = 0
-        for statuses in by_date_overall.values():
-            if 'P' in statuses:
-                present_count += 1
-            else:
-                absent_count += 1
-
+        total_count = len(by_date_overall)
+        present_count = sum(1 for s in by_date_overall.values() if 'P' in s)
+        absent_count = total_count - present_count
         late_count = 0
         has_records = records_qs.exists()
         records = records_qs
-    if active_term:
-        total_term_days = (active_term.end_date - active_term.start_date).days + 1
-        last_attendance_week = ((total_term_days - 1) // 7) + 1
+
+    if active_term and active_term.start_date and active_term.end_date:
+
+        term_start = active_term.start_date
+        term_end = active_term.end_date
+
+        # Week 1: term start date → Friday
+        first_week_end = term_start + timedelta(
+            days=4 - term_start.weekday()
+        )
+
+        if term_end <= first_week_end:
+            # Entire term fits inside Week 1
+            last_attendance_week = 1
+
+        else:
+            # Remaining weeks start on Monday
+            first_monday = first_week_end + timedelta(days=3)
+
+            remaining_days = (term_end - first_monday).days
+
+            last_attendance_week = 2 + (remaining_days // 7)
+
     else:
         last_attendance_week = 1
-    academic_years = AcademicYear.objects.filter(
-        school=school
-    ).order_by("-name")
 
-    terms = Term.objects.filter(
-        school=school
-    ).select_related(
-        "academic_year"
-    ).order_by(
-        "-academic_year__name",
-        "term_number"
-    )
+    academic_years = AcademicYear.objects.filter(school=school).order_by("-name")
+    terms = Term.objects.filter(school=school).select_related("academic_year").order_by("-academic_year__name", "term_number")
 
     context = {
         'children': children,
         'selected_child': selected_child,
+        'school': school,
         'academic_years': academic_years,
         'terms': terms,
         'show_switcher': len(children) > 1,
@@ -12155,12 +16129,14 @@ def parent_attendance(request):
     }
     return render(request, 'accounts/parent_attendance.html', context)
 
+
 @login_required
 def notifications_list(request):
     filter_type = request.GET.get('filter', 'all')
     
     notifs = NotificationRecipient.objects.filter(
-        user=request.user
+        user=request.user,
+        notification__school=request.user.school
     ).select_related('notification', 'notification__created_by').order_by('-notification__created_at')
 
     now = timezone.now()
@@ -12168,23 +16144,47 @@ def notifications_list(request):
     
     if filter_type == 'today':
         notifs = notifs.filter(notification__created_at__date=today)
+        
     elif filter_type == 'week':
-        start_of_week = today - timedelta(days=today.weekday())
-        notifs = notifs.filter(notification__created_at__date__gte=start_of_week)
+        monday = today - timedelta(days=today.weekday())
+        friday = monday + timedelta(days=4)
+        notifs = notifs.filter(
+            notification__created_at__date__gte=monday,
+            notification__created_at__date__lte=friday
+        )
+        
+    elif filter_type == 'term':
+        current_term = Term.objects.filter(
+            school=request.user.school, 
+            is_active=True
+        ).first()
+        if current_term:
+            notifs = notifs.filter(
+                notification__created_at__date__gte=current_term.start_date,
+                notification__created_at__date__lte=current_term.end_date
+            )
+    
+    elif filter_type == 'year':
+        notifs = notifs.filter(notification__created_at__year=today.year)
+        
+    elif filter_type == 'all':
+        pass
 
-    # --- PAGINATION: 10 per page ---
-    paginator = Paginator(notifs, 4)
+    paginator = Paginator(notifs, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    # Group only the current page
     grouped = defaultdict(list)
     for n in page_obj:
         created = n.notification.created_at
         date_key = created.strftime('%B %d, %Y') if created else "Recent"
         grouped[date_key].append(n)
 
-    NotificationRecipient.objects.filter(user=request.user, is_read=False).update(is_read=True)
+    # mark only shown page as read
+    NotificationRecipient.objects.filter(
+        id__in=[n.id for n in page_obj],
+        is_read=False
+    ).update(is_read=True)
 
     return render(request, 'accounts/notifications.html', {
         'grouped_notifications': dict(grouped),
@@ -12195,107 +16195,241 @@ def notifications_list(request):
 
 @login_required
 def get_notification_count(request):
-    from .models import NotificationRecipient
-    count = NotificationRecipient.objects.filter(user=request.user, is_read=False).count()
+    count = NotificationRecipient.objects.filter(
+        user=request.user, 
+        is_read=False,
+        notification__school=request.user.school 
+    ).count()
     return JsonResponse({'count': count})
 
 
-def _filter_announcements_by_date(queryset, filter_type):
+def _filter_announcements_by_date(queryset, filter_type, school):
     today = timezone.now().date()
+
     if filter_type == 'today':
         return queryset.filter(created_at__date=today)
+
     elif filter_type == 'week':
-        start_of_week = today - timedelta(days=today.weekday()) # Monday
-        return queryset.filter(created_at__date__gte=start_of_week)
-    return queryset # all
+        monday = today - timedelta(days=today.weekday())
+        friday = monday + timedelta(days=4)
+        return queryset.filter(
+            created_at__date__gte=monday,
+            created_at__date__lte=friday
+        )
+
+    elif filter_type == 'term':
+
+        current_term = Term.objects.filter(is_active=True, school=school).first()
+        if current_term:
+            return queryset.filter(
+                created_at__date__gte=current_term.start_date,
+                created_at__date__lte=current_term.end_date
+            )
+        return queryset
+
+    elif filter_type == 'year':
+        return queryset.filter(created_at__year=today.year)
+
+    elif filter_type == 'all':
+        return queryset  
+
+    return queryset
+
 
 @login_required
 def parent_notifications(request):
-    filter_type = request.GET.get('filter', 'all')
-    all_anns = Announcement.objects.all().order_by('-created_at')
-    
-    # 1. Date filter first (fast)
-    all_anns = _filter_announcements_by_date(all_anns, filter_type)
+    if request.user.role != "parent":
+        return redirect("accounts:dashboard")
 
-    # 2. Role filter
-    filtered = []
+    filter_type = request.GET.get("filter", "all")
+    school = request.user.school
+
+    if not school:
+        messages.error(request, "School not assigned to parent.")
+        return redirect("accounts:dashboard")
+
+    links = ParentStudentLink.objects.filter(
+        parent=request.user, student__school=school
+    ).select_related("student", "student__school_class")
+
+    children = [l.student for l in links]
+
+    selected_child = None
+    if children:
+        child_id = request.GET.get("child")
+        if not child_id:
+            try:
+                child_id = request.session.get("selected_child_id")
+            except:
+                child_id = None
+
+        for c in children:
+            if str(c.id) == str(child_id):
+                selected_child = c
+                break
+        if not selected_child:
+            selected_child = children[0]
+
+        try:
+            request.session["selected_child_id"] = selected_child.id
+        except:
+            pass
+
+    all_anns = (
+        Announcement.objects.filter(school=school)
+        .prefetch_related("target_classes")
+        .order_by("-created_at")
+    )
+    all_anns = _filter_announcements_by_date(all_anns, filter_type, school)
+
+    general_list = []
+    child_list = []
+
     for ann in all_anns:
         roles = [str(r).lower().strip() for r in (ann.target_roles or [])]
-        if 'parent' in roles or 'parents' in roles or 'all' in roles:
-            filtered.append(ann)
+        is_for_parent = "parent" in roles or "parents" in roles or "all" in roles
+        is_for_student = "student" in roles or "students" in roles
+        is_specific = "specific class" in roles
 
-    # 3. Pagination - 4 per page
+        if not (is_for_parent or is_for_student or is_specific or "all" in roles):
+            continue
+
+        has_class_filter = ann.target_class_id or ann.target_classes.exists()
+
+        if not has_class_filter:
+            if is_for_parent or is_for_student or is_specific or "all" in roles:
+                general_list.append(ann)
+        else:
+            if selected_child and selected_child.school_class:
+                if is_for_parent or is_for_student or is_specific or "all" in roles:
+                    old_match = ann.target_class_id == selected_child.school_class_id
+                    new_match = ann.target_classes.filter(
+                        id=selected_child.school_class_id
+                    ).exists()
+                    if old_match or new_match:
+                        child_list.append(ann)
+
+    filtered = general_list + child_list
+    filtered = sorted(filtered, key=lambda x: x.created_at, reverse=True)
+
     paginator = Paginator(filtered, 4)
-    page_obj = paginator.get_page(request.GET.get('page'))
+    page_obj = paginator.get_page(request.GET.get("page"))
 
-    return render(request, 'accounts/parent_notifications.html', {
-        'announcements': page_obj,
-        'page_obj': page_obj,
-        'filter': filter_type,
-        'total': len(filtered)
-    })
-
-@login_required
-def teacher_notifications(request):
-    filter_type = request.GET.get('filter', 'all')
-    all_anns = _filter_announcements_by_date(
-        Announcement.objects.all().order_by('-created_at'), filter_type
+    return render(
+        request,
+        "accounts/parent_notifications.html",
+        {
+            "children": children,
+            "selected_child": selected_child,
+            "show_switcher": len(children) > 1,
+            "announcements": page_obj,
+            "page_obj": page_obj,
+            "filter": filter_type,
+            "total": len(filtered),
+        },
     )
-    filtered = [ann for ann in all_anns if any(r in [str(x).lower().strip() for x in (ann.target_roles or [])] for r in ['teacher','teachers','all'])]
 
-    paginator = Paginator(filtered, 4)
-    page_obj = paginator.get_page(request.GET.get('page'))
-
-    return render(request, 'accounts/teacher_notifications.html', {
-        'announcements': page_obj,
-        'page_obj': page_obj,
-        'filter': filter_type,
-        'total': len(filtered)
-    })
 
 @login_required
 def student_notifications(request):
-    filter_type = request.GET.get('filter', 'all')
-    all_anns = _filter_announcements_by_date(
-        Announcement.objects.all().order_by('-created_at'), filter_type
+    if request.user.role != "student":
+        return redirect("accounts:dashboard")
+
+    filter_type = request.GET.get("filter", "all")
+    school = request.user.school
+
+    all_anns = (
+        Announcement.objects.filter(school=school)
+        .prefetch_related("target_classes")
+        .order_by("-created_at")
     )
-    filtered = [ann for ann in all_anns if any(r in [str(x).lower().strip() for x in (ann.target_roles or [])] for r in ['student','students','all'])]
+    all_anns = _filter_announcements_by_date(all_anns, filter_type, school)
+
+    filtered = []
+    for ann in all_anns:
+        roles = [str(r).lower().strip() for r in (ann.target_roles or [])]
+        if not any(
+            x in roles
+            for x in ["student", "students", "all", "specific class", "specific_class"]
+        ):
+            continue
+
+        if ann.target_class_id or ann.target_classes.exists():
+            if not request.user.school_class:
+                continue
+            if (
+                ann.target_class_id == request.user.school_class_id
+                or ann.target_classes.filter(id=request.user.school_class_id).exists()
+            ):
+                filtered.append(ann)
+        else:
+            filtered.append(ann)
 
     paginator = Paginator(filtered, 4)
-    page_obj = paginator.get_page(request.GET.get('page'))
+    page_obj = paginator.get_page(request.GET.get("page"))
 
-    return render(request, 'accounts/student_notifications.html', {
-        'announcements': page_obj,
-        'page_obj': page_obj,
-        'filter': filter_type,
-        'total': len(filtered)
-    })
+    return render(
+        request,
+        "accounts/student_notifications.html",
+        {
+            "announcements": page_obj,
+            "page_obj": page_obj,
+            "filter": filter_type,
+            "total": len(filtered),
+        },
+    )
+
+
+@login_required
+def teacher_notifications(request):
+    if request.user.role != "teacher":
+        return redirect("accounts:dashboard")
+    filter_type = request.GET.get("filter", "all")
+    all_anns = _filter_announcements_by_date(
+        Announcement.objects.filter(school=request.user.school).order_by("-created_at"), 
+        filter_type, 
+        request.user.school
+    )
+    filtered = [
+        ann
+        for ann in all_anns
+        if any(
+            r in [str(x).lower().strip() for x in (ann.target_roles or [])]
+            for r in ["teacher", "teachers", "all"]
+        )
+    ]
+
+    paginator = Paginator(filtered, 4)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    return render(
+        request,
+        "accounts/teacher_notifications.html",
+        {
+            "announcements": page_obj,
+            "page_obj": page_obj,
+            "filter": filter_type,
+            "total": len(filtered),
+        },
+    )
 
 
 @login_required
 def accountant_notifications(request):
+    if request.user.role != "accountant":
+        return redirect("accounts:dashboard")
     filter_type = request.GET.get('filter', 'all')
     
-    # Date filter
-    all_anns = Announcement.objects.all().order_by('-created_at')
-    today = timezone.now().date()
-    if filter_type == 'today':
-        all_anns = all_anns.filter(created_at__date=today)
-    elif filter_type == 'week':
-        start_of_week = today - timedelta(days=today.weekday())
-        all_anns = all_anns.filter(created_at__date__gte=start_of_week)
+    all_anns = _filter_announcements_by_date(
+        Announcement.objects.filter(school=request.user.school).order_by('-created_at'),
+        filter_type,
+        request.user.school
+    )
 
-    # Role filter for accountant
-    filtered = []
-    for ann in all_anns:
-        roles = [str(r).lower().strip() for r in (ann.target_roles or [])]
-        if 'accountant' in roles or 'accountants' in roles or 'all' in roles:
-            filtered.append(ann)
+    filtered = [ann for ann in all_anns if any(r in [str(x).lower().strip() for x in (ann.target_roles or [])] for r in ["accountant","accountants","all"])]
 
-    # Pagination - 4 per page
     paginator = Paginator(filtered, 4)
     page_obj = paginator.get_page(request.GET.get('page'))
-
     return render(request, 'accounts/accountant_notifications.html', {
         'announcements': page_obj,
         'page_obj': page_obj,
@@ -12303,126 +16437,249 @@ def accountant_notifications(request):
         'total': len(filtered)
     })
 
-
 @login_required
 def school_sms_settings(request):
+    if request.user.role not in ["admin", "proprietor", "proprietress", "headmaster", "headmistress"]:  
+        messages.error(request, "Permission denied.")
+        return redirect("accounts:dashboard")
+
     school = request.user.school
     if not school:
-        school = School.objects.first()
-    
+        messages.error(request, "No school assigned.")
+        return redirect("accounts:dashboard")
+
     if request.method == 'POST':
         form = SchoolSmsSettingsForm(request.POST, instance=school)
         if form.is_valid():
             form.save()
-            messages.success(request, "SMS Settings saved! Now go test announcement.")
+            messages.success(request, "SMS Settings saved!")
             return redirect('accounts:school_sms_settings')
     else:
         form = SchoolSmsSettingsForm(instance=school)
-    
+
     return render(request, 'accounts/school_sms_settings.html', {'form': form, 'school': school})
 
 
 @login_required
 def admin_fee_monitoring(request):
-    if request.user.role != 'admin':
-        return redirect('accounts:home')
-    
+    if request.user.role not in ["admin", "proprietor", "proprietress", "headmaster", "headmistress"]:
+        return redirect("accounts:home")
+
     school = request.user.school
     today = date.today()
-    period = request.GET.get('period', 'today')
+    period = request.GET.get("period", "today")
+    selected_term_id = request.GET.get("term")
+    selected_year_id = request.GET.get("year")
 
-    # Base queries
-    base_tx = PaymentTransaction.objects.filter(
-        student__school=school,
-        is_voided=False
-    )
+    # Base queries - always school filtered ✅
+    base_tx = PaymentTransaction.objects.filter(student__school=school, is_voided=False)
     voided_qs = PaymentTransaction.objects.filter(
-        student__school=school,
-        is_voided=True
+        student__school=school, is_voided=True
     )
     expense_qs = Expense.objects.filter(school=school)
     log_qs = FeeAuditLog.objects.filter(done_by__school=school)
-    pending_qs = PendingPayment.objects.filter(student__school=school, status='pending')
+    pending_qs = PendingPayment.objects.filter(student__school=school, status="pending")
 
-    if period == 'today':
+    all_terms = (
+        Term.objects.filter(school=school)
+        .select_related("academic_year")
+        .order_by("-academic_year__name", "-term_number")
+    )
+    all_years = AcademicYear.objects.filter(school=school).order_by("-name")
+    active_term = all_terms.filter(is_active=True).first()
+
+    # Determine date range
+    start_date = None
+    end_date = None
+    title = ""
+
+    if period == "today":
         base_tx = base_tx.filter(created_at__date=today)
         voided_qs = voided_qs.filter(voided_at__date=today)
         expense_qs = expense_qs.filter(expense_date=today)
         log_qs = log_qs.filter(created_at__date=today)
         title = f"Today - {today}"
-    elif period == 'week':
+
+    elif period == "week":
         start_date = today - timedelta(days=7)
         base_tx = base_tx.filter(created_at__date__gte=start_date)
         voided_qs = voided_qs.filter(voided_at__date__gte=start_date)
         expense_qs = expense_qs.filter(expense_date__gte=start_date)
         log_qs = log_qs.filter(created_at__date__gte=start_date)
         title = "Last 7 Days"
-    elif period == 'month':
-        base_tx = base_tx.filter(created_at__month=today.month, created_at__year=today.year)
-        voided_qs = voided_qs.filter(voided_at__month=today.month, voided_at__year=today.year)
-        expense_qs = expense_qs.filter(expense_date__month=today.month, expense_date__year=today.year)
-        log_qs = log_qs.filter(created_at_month=today.month, created_at_year=today.year)  
-        title = f"This Month - {today.strftime('%B %Y')}"
-    else:  # all
-        period = 'all'
-        title = "All Time - Everything"
 
+    elif period == "month":
+        base_tx = base_tx.filter(
+            created_at__month=today.month, created_at__year=today.year
+        )
+        voided_qs = voided_qs.filter(
+            voided_at__month=today.month, voided_at__year=today.year
+        )
+        expense_qs = expense_qs.filter(
+            expense_date__month=today.month, expense_date__year=today.year
+        )
+        log_qs = log_qs.filter(
+            created_at__month=today.month, created_at__year=today.year
+        )
+        title = f"This Month - {today.strftime('%B %Y')}"
+
+    elif period == "term":
+        if selected_term_id and selected_term_id.isdigit():
+            term_obj = all_terms.filter(id=selected_term_id).first()
+        else:
+            term_obj = active_term
+
+        if term_obj:
+            base_tx = base_tx.filter(
+                created_at__date__gte=term_obj.start_date,
+                created_at__date__lte=term_obj.end_date,
+            )
+            voided_qs = voided_qs.filter(
+                voided_at__date__gte=term_obj.start_date,
+                voided_at__date__lte=term_obj.end_date,
+            )
+            expense_qs = expense_qs.filter(
+                expense_date__gte=term_obj.start_date,
+                expense_date__lte=term_obj.end_date,
+            )
+            log_qs = log_qs.filter(
+                created_at__date__gte=term_obj.start_date,
+                created_at__date__lte=term_obj.end_date,
+            )
+            title = f"{term_obj.academic_year.name} - {term_obj.get_term_number_display()}"
+        else:
+            title = "No Active Term"
+
+    elif period == "year":
+        if selected_year_id and selected_year_id.isdigit():
+            year_obj = all_years.filter(id=selected_year_id).first()
+        else:
+            year_obj = active_term.academic_year if active_term else all_years.first()
+
+        if year_obj:
+            terms_in_year = all_terms.filter(academic_year=year_obj)
+            if terms_in_year.exists():
+                first = terms_in_year.order_by("start_date").first()
+                last = terms_in_year.order_by("-end_date").first()
+                base_tx = base_tx.filter(
+                    created_at__date__gte=first.start_date,
+                    created_at__date__lte=last.end_date,
+                )
+                voided_qs = voided_qs.filter(
+                    voided_at__date__gte=first.start_date,
+                    voided_at__date__lte=last.end_date,
+                )
+                expense_qs = expense_qs.filter(
+                    expense_date__gte=first.start_date, expense_date__lte=last.end_date
+                )
+                log_qs = log_qs.filter(
+                    created_at__date__gte=first.start_date,
+                    created_at__date__lte=last.end_date,
+                )
+                title = f"Year - {year_obj.name}"
+    else:  # all
+        period = "all"
+        title = "All Time - Everything Since Started"
+
+    # Aggregations
     today_tx = base_tx
-    today_total = today_tx.aggregate(total=Sum('total_amount'))['total'] or 0
+    today_total = today_tx.aggregate(total=Sum("total_amount"))["total"] or 0
     today_count = today_tx.count()
 
-    cash_total = today_tx.filter(payment_method__iexact='cash').aggregate(total=Sum('total_amount'))['total'] or 0
-    bank_total = today_tx.exclude(payment_method__iexact='cash').aggregate(total=Sum('total_amount'))['total'] or 0
-
-    by_accountant = today_tx.filter(payment_method__iexact='cash').values(
-        'recorded_by__username', 'recorded_by__first_name', 'recorded_by__last_name'
-    ).annotate(total=Sum('total_amount'), count=Count('id')).order_by('-total')
-
-    by_online = today_tx.exclude(payment_method__iexact='cash').select_related('student').order_by('-created_at')[:20]
-    
-    by_method = today_tx.values('payment_method').annotate(
-        total=Sum('total_amount'), count=Count('id')
+    cash_total = (
+        today_tx.filter(payment_method__iexact="cash").aggregate(
+            total=Sum("total_amount")
+        )["total"]
+        or 0
+    )
+    bank_total = (
+        today_tx.exclude(payment_method__iexact="cash").aggregate(
+            total=Sum("total_amount")
+        )["total"]
+        or 0
     )
 
-    voided_today = voided_qs.select_related('student', 'voided_by').order_by('-voided_at')[:20]
-    expenses_today = expense_qs.order_by('-expense_date')[:20]
-    expense_total = expense_qs.aggregate(total=Sum('amount'))['total'] or 0
+    by_accountant = (
+        today_tx.filter(payment_method__iexact="cash")
+        .values(
+            "recorded_by__username", "recorded_by__first_name", "recorded_by__last_name"
+        )
+        .annotate(total=Sum("total_amount"), count=Count("id"))
+        .order_by("-total")
+    )
+
+    by_online = (
+        today_tx.exclude(payment_method__iexact="cash")
+        .select_related("student")
+        .order_by("-created_at")[:20]
+    )
+
+    by_method = today_tx.values("payment_method").annotate(
+        total=Sum("total_amount"), count=Count("id")
+    )
+
+    voided_today = voided_qs.select_related("student", "voided_by").order_by(
+        "-voided_at"
+    )[:20]
+    expenses_today = expense_qs.order_by("-expense_date")[:20]
+    expense_total = expense_qs.aggregate(total=Sum("amount"))["total"] or 0
 
     cash_in_hand = float(cash_total) - float(expense_total)
-    net_balance = float(today_total) - float(expense_total)  # NEW
+    net_balance = float(today_total) - float(expense_total)
 
-    recent_logs = log_qs.select_related('transaction__student', 'done_by').order_by('-created_at')[:30]
+    recent_logs = log_qs.select_related("transaction__student", "done_by").order_by(
+        "-created_at"
+    )[:30]
     pending_count = pending_qs.count()
 
     context = {
-        'today_total': today_total,
-        'today_count': today_count,
-        'cash_total': cash_total,
-        'bank_total': bank_total,
-        'by_accountant': by_accountant,
-        'by_method': by_method,
-        'voided_today': voided_today,
-        'expenses_today': expenses_today,
-        'expense_total': expense_total,
-        'cash_in_hand': cash_in_hand,
-        'net_balance': net_balance,  # NEW
-        'recent_logs': recent_logs,
-        'pending_count': pending_count,
-        'today': title,
-        'period': period,
-        'by_online': by_online,
+        "today_total": today_total,
+        "today_count": today_count,
+        "cash_total": cash_total,
+        "bank_total": bank_total,
+        "by_accountant": by_accountant,
+        "by_method": by_method,
+        "voided_today": voided_today,
+        "expenses_today": expenses_today,
+        "expense_total": expense_total,
+        "cash_in_hand": cash_in_hand,
+        "net_balance": net_balance,
+        "recent_logs": recent_logs,
+        "pending_count": pending_count,
+        "today": title,
+        "period": period,
+        "by_online": by_online,
+        "all_terms": all_terms,
+        "all_years": all_years,
+        "selected_term_id": selected_term_id,
+        "selected_year_id": selected_year_id,
     }
-    return render(request, 'accounts/admin_fee_monitoring.html', context)
+    return render(request, "accounts/admin_fee_monitoring.html", context)
+
 
 @login_required
 def void_transaction(request, txn_id):
-    if request.user.role != 'admin':
+    if request.user.role not in [
+    'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress'
+]:
         return redirect('accounts:home')
 
     txn = get_object_or_404(PaymentTransaction, id=txn_id, student__school=request.user.school)
 
+    if txn.is_voided:
+        messages.error(request, "Already voided.")
+        return redirect('accounts:admin_fee_monitoring')
+
     if request.method == 'POST':
-        reason = request.POST.get('void_reason', '')
+        reason = request.POST.get('void_reason', '').strip()
+        if not reason:
+            messages.error(request, "Reason required.")
+            return render(request, 'accounts/void_confirm.html', {'txn': txn})
+            
         txn.is_voided = True
         txn.voided_by = request.user
         txn.voided_at = timezone.now()
@@ -12440,12 +16697,11 @@ def void_transaction(request, txn_id):
 
     return render(request, 'accounts/void_confirm.html', {'txn': txn})
 
-
 @login_required
 @require_http_methods(["GET", "POST"])
 def mark_teacher_attendance(request):
 
-    if request.user.role not in ["admin", "headmaster"]:
+    if request.user.role not in ["admin", "proprietor", "proprietress", "headmaster", "headmistress"]:
         messages.error(
             request, "You do not have permission to mark teacher attendance."
         )
@@ -12464,7 +16720,7 @@ def mark_teacher_attendance(request):
     active_term = Term.objects.filter(school=school, is_active=True).first()
     if not active_term:
         messages.error(request, "There is no active term.")
-        return redirect("accounts:home")
+        return redirect("accounts:headmaster_dashboard")
 
     is_weekend = attendance_date.weekday() >= 5
 
@@ -12545,7 +16801,13 @@ def mark_teacher_attendance(request):
 @login_required
 def edit_teacher_attendance(request, attendance_id):
 
-    if request.user.role not in ['admin', 'headmaster']:
+    if request.user.role not in [
+    'admin',
+    'proprietor',
+    'proprietress',
+    'headmaster',
+    'headmistress'
+]:
         messages.error(
             request,
             "You do not have permission to edit attendance."
@@ -12607,9 +16869,11 @@ def my_attendance(request):
             "You do not have permission to view this page."
         )
         return redirect("accounts:home")
-
     teacher = request.user
     school = teacher.school
+    # =========================================================
+    # ACTIVE TERM
+    # =========================================================
     try:
         active_term = Term.objects.get(
             school=school,
@@ -12617,112 +16881,170 @@ def my_attendance(request):
         )
     except Term.DoesNotExist:
         active_term = None
-
+    # =========================================================
+    # YEAR / TERM FILTERS
+    # =========================================================
+    selected_year = request.GET.get("year")
+    selected_term = request.GET.get("term")
+    selected_term_obj = None
+    # Available academic years for this school
+    academic_years = AcademicYear.objects.filter(
+        school=school
+    ).order_by("-name")
+    # Available terms for this school
+    terms = Term.objects.filter(
+        school=school
+    ).select_related(
+        "academic_year"
+    ).order_by(
+        "-academic_year__name",
+        "term_number"
+    )
+    # =========================================================
+    # APPLY YEAR / TERM FILTER
+    # =========================================================
+    if selected_term:
+        try:
+            selected_term_obj = terms.get(
+                id=selected_term
+            )
+        except Term.DoesNotExist:
+            selected_term_obj = None
+    # If a year is selected, make sure the selected term
+    # belongs to that academic year.
+    if selected_year and selected_term_obj:
+        if str(selected_term_obj.academic_year_id) != str(selected_year):
+            selected_term_obj = None
+    # If only a year is selected, use the first available
+    # term belonging to that academic year.
+    if selected_year and not selected_term_obj:
+        year_terms = terms.filter(
+            academic_year_id=selected_year
+        )
+        selected_term_obj = year_terms.first()
+    # If a specific term was selected, use its academic year
+    # as the selected year.
+    if selected_term_obj:
+        selected_year = str(
+            selected_term_obj.academic_year_id
+        )
+    # If no filter was selected, continue using the active term.
+    if not selected_year and not selected_term:
+        selected_term_obj = active_term
+        if active_term:
+            selected_year = str(
+                active_term.academic_year_id
+            )
+    # =========================================================
+    # WEEK SELECTION
+    # =========================================================
     week_str = request.GET.get("attendance_week")
-
     if week_str:
         selected_date = parse_date(week_str)
     else:
-        selected_date = timezone.localdate()
-
+        # When looking at a historical term, start from that
+        # term's beginning instead of today's date.
+        if selected_term_obj and selected_term_obj != active_term:
+            selected_date = selected_term_obj.start_date
+        else:
+            selected_date = timezone.localdate()
     if not selected_date:
         selected_date = timezone.localdate()
+    # =========================================================
+    # WEEK NUMBER
+    # =========================================================
     def get_active_week(start_date, current_date):
         if current_date < start_date:
             return 1
-
         days_diff = (current_date - start_date).days
         start_weekday = start_date.weekday()
-
         return (days_diff + start_weekday) // 7 + 1
-
-
     def get_week_number(start_date, target_date):
         if target_date < start_date:
             return 1
-
         days_diff = (target_date - start_date).days
         start_weekday = start_date.weekday()
-
         return (days_diff + start_weekday) // 7 + 1
-
-    # Move weekends to Friday
+    # =========================================================
+    # MOVE WEEKENDS TO FRIDAY
+    # =========================================================
     if selected_date.weekday() >= 5:
         selected_date = selected_date - timedelta(
             days=selected_date.weekday() - 4
         )
-
+    # =========================================================
+    # WEEK RANGE
+    # =========================================================
     week_start = selected_date - timedelta(
         days=selected_date.weekday()
     )
-
     week_end = week_start + timedelta(days=4)
-# WEEK NAVIGATION - FIXED
+    # =========================================================
+    # WEEK NAVIGATION
+    # =========================================================
     attendance_previous_week = week_start - timedelta(days=7)
     attendance_next_week = week_start + timedelta(days=7)
     is_first_week = False
     is_last_week = False
-    
-    if active_term:
-        first_week_start = active_term.start_date - timedelta(
-            days=active_term.start_date.weekday()
+    # Use selected term for navigation when filtering
+    # historical attendance.
+    navigation_term = selected_term_obj or active_term
+    if navigation_term:
+        first_week_start = navigation_term.start_date - timedelta(
+            days=navigation_term.start_date.weekday()
         )
-        last_week_start = active_term.end_date - timedelta(
-            days=active_term.end_date.weekday()
+        last_week_start = navigation_term.end_date - timedelta(
+            days=navigation_term.end_date.weekday()
         )
-        
         if week_start <= first_week_start:
             is_first_week = True
-            previous_week = week_start  # stay, but button disabled
+            previous_week = week_start
         if week_start >= last_week_start:
             is_last_week = True
-            next_week = week_start  # stay, but button disabled
-
+            next_week = week_start
+    # =========================================================
+    # CURRENT WEEK
+    # =========================================================
     current_week_start = timezone.localdate() - timedelta(
         days=timezone.localdate().weekday()
     )
-
     is_current_week = week_start == current_week_start
-
+    # =========================================================
+    # WORKING DAYS
+    # =========================================================
     working_days = []
-
     current = week_start
-
     while current <= week_end:
         if current.weekday() < 5:
             working_days.append(current)
         current += timedelta(days=1)
-
+    # =========================================================
+    # ATTENDANCE RECORDS
+    # =========================================================
     attendance_records = TeacherAttendance.objects.filter(
         teacher=teacher,
         school=school,
         date__range=[week_start, week_end]
     )
-
     attendance_map = {
         attendance.date: attendance
         for attendance in attendance_records
     }
-
+    # =========================================================
+    # ATTENDANCE SUMMARY
+    # =========================================================
     days = []
-
     present = 0
     late = 0
     absent = 0
     sick = 0
     leave = 0
     excused = 0
-
     for day in working_days:
-
         attendance = attendance_map.get(day)
-
         status = None
-
         if attendance:
-
             status = attendance.status
-
             if status == "P":
                 present += 1
             elif status == "L":
@@ -12735,7 +17057,6 @@ def my_attendance(request):
                 leave += 1
             elif status == "E":
                 excused += 1
-
         days.append({
             "date": day,
             "attendance": attendance,
@@ -12745,31 +17066,33 @@ def my_attendance(request):
             "note": attendance.note if attendance else None,
             "marked_by": attendance.marked_by if attendance else None,
         })
-
+    # =========================================================
+    # ATTENDANCE RATE
+    # =========================================================
     attendance_rate = 0
-
     if working_days:
         attendance_rate = round(
             ((present + late) / len(working_days)) * 100,
             1
         )
+    # =========================================================
+    # ATTENDANCE WEEK NUMBER
+    # =========================================================
     attendance_week_number = 1
-
-    if active_term:
+    if navigation_term:
         attendance_week_number = get_week_number(
-            active_term.start_date,
+            navigation_term.start_date,
             selected_date
-    )
-        print("Selected date:", selected_date)
-        print("Attendance week number:", attendance_week_number)
-
+        )
+    # =========================================================
+    # RENDER
+    # =========================================================
     return render(
         request,
         "accounts/my_attendance.html",
         {
             "working_days": working_days,
             "attendance_days": days,
-
             "total_present": present,
             "total_late": late,
             "total_absent": absent,
@@ -12777,20 +17100,27 @@ def my_attendance(request):
             "total_sick": sick,
             "total_excused": excused,
             "attendance_week_number": attendance_week_number,
-
             "attendance_rate": attendance_rate,
-
             "attendance_week_start": week_start,
             "attendance_week_end": week_end,
-
             "attendance_previous_week": attendance_previous_week,
             "attendance_next_week": attendance_next_week,
             "is_current_week": is_current_week,
-
             "report_week_start": week_start,
             "report_week_end": week_end,
             "is_first_week": is_first_week,
             "is_last_week": is_last_week,
+            # =================================================
+            # NEW FILTER VARIABLES
+            # =================================================
+            "academic_years": academic_years,
+            "terms": terms,
+            "selected_year": selected_year,
+            "selected_term": (
+                str(selected_term_obj.id)
+                if selected_term_obj
+                else ""
+            ),
         },
     )
 
@@ -12890,11 +17220,9 @@ def teacher_check_out(request):
         )
         return redirect("accounts:home")
 
-
     school = request.user.school
 
     today = timezone.localdate()
-
 
     attendance = get_object_or_404(
         TeacherAttendance,
@@ -12902,7 +17230,6 @@ def teacher_check_out(request):
         teacher=request.user,
         date=today
     )
-
 
     if attendance.time_out:
         messages.info(
@@ -12913,20 +17240,1632 @@ def teacher_check_out(request):
             "accounts:my-attendance"
         )
 
-
     attendance.time_out = (
         timezone.localtime().time()
     )
 
     attendance.save()
 
-
     messages.success(
         request,
         "Check-out successful."
     )
 
-
     return redirect(
         "accounts:my-attendance"
+    )
+
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+import urllib.parse
+from xml.sax.saxutils import escape
+
+
+@login_required
+def print_admission_letter(request, student_id):
+    if request.user.role not in ["admin", "proprietor", "proprietress", "headmaster", "headmistress"]:
+        return redirect("accounts:home")
+
+    from reportlab.lib import colors
+    from reportlab.platypus import (
+        SimpleDocTemplate,
+        Paragraph,
+        Spacer,
+        Table,
+        TableStyle,
+        Image,
+    )
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
+    import os
+    from io import BytesIO
+   
+    student = get_object_or_404(
+        User, id=student_id, school=request.user.school, role="student"
+    )
+    school = student.school
+    login_enabled = (
+        school.allows_student_login
+        and student.school_class
+        and student.school_class.allows_student_login
+    )
+
+    raw_password = request.GET.get("pwd", "")
+    if raw_password:
+        raw_password = urllib.parse.unquote(raw_password)
+    else:
+        raw_password = "***"
+
+    school_name = getattr(school, "name", "") or "My School"
+    school_address = getattr(school, "address", "") or ""
+    school_gps = getattr(school, "gps_address", "") or ""
+    school_email = getattr(school, "email", "") or ""
+    school_phone = getattr(school, "phone", "") or ""
+    school_logo = getattr(school, "logo", None)
+    school_motto = getattr(school, "motto", "") or "Knowledge, Discipline, Service"
+
+    active_term = Term.objects.filter(school=school, is_active=True).first()
+    if active_term and active_term.academic_year:
+        acad_year = (
+            active_term.academic_year.name
+            if hasattr(active_term.academic_year, "name")
+            else str(active_term.academic_year)
+        )
+    else:
+        active_year_obj = AcademicYear.objects.filter(
+            school=school, is_active=True
+        ).first()
+        acad_year = (
+            active_year_obj.name
+            if active_year_obj
+            else f"{datetime.now().year}/{datetime.now().year+1}"
+        )
+
+    gender_val = getattr(student, "gender", "")
+    gender_display = (
+        student.get_gender_display()
+        if hasattr(student, "get_gender_display") and gender_val
+        else (gender_val.capitalize() if gender_val else "N/A")
+    )
+
+    # === CUSTOM WORDING HELPER ===
+    def fill(text):
+        if not text:
+            return ""
+        return (
+            text.replace("{school_name}", school_name)
+            .replace("{student_name}", student.get_full_name())
+            .replace(
+                "{class_name}",
+                student.school_class.name if student.school_class else "the school",
+            )
+            .replace("{academic_year}", acad_year)
+        )
+
+    custom_title = getattr(school, "admission_letter_title", "") or "ADMISSION LETTER"
+    custom_body = getattr(school, "admission_letter_body", "") or ""
+    custom_footer = (
+        getattr(school, "admission_letter_footer", "")
+        or "We look forward to welcoming you to the {school_name} family."
+    )
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=55,
+        leftMargin=55,
+        topMargin=30,
+        bottomMargin=40,
+    )
+
+    BLUE = colors.HexColor("#1e40af")
+    LIGHT_BLUE = colors.HexColor("#dbeafe")
+    GOLD = colors.HexColor("#f59e0b")
+
+    story = []
+
+    def add_watermark(canvas, doc):
+        canvas.saveState()
+        canvas.setFont("Helvetica-Bold", 48)
+        canvas.setFillColor(colors.Color(0, 0, 0, alpha=0.04))
+        canvas.translate(A4[0] / 2, A4[1] / 2)
+        canvas.rotate(40)
+        words = school_name.upper().split()
+        if len(words) >= 2:
+            mid = len(words) // 2
+            line1 = " ".join(words[:mid])
+            line2 = " ".join(words[mid:])
+            canvas.drawCentredString(0, 25, line1)
+            canvas.drawCentredString(0, -25, line2)
+        else:
+            canvas.drawCentredString(0, 0, school_name.upper())
+        canvas.restoreState()
+
+    styles_main = ParagraphStyle(
+        "main", fontName="Helvetica", fontSize=10, leading=14, alignment=TA_JUSTIFY
+    )
+
+    if (
+        school_logo
+        and hasattr(school_logo, "path")
+        and os.path.exists(school_logo.path)
+    ):
+        try:
+            logo = Image(school_logo.path, width=75, height=75)
+            header = [
+                [
+                    logo,
+                    Paragraph(
+                        f"""
+                <font size=15 color="#1e40af"><b>{escape(school_name.upper())}</b></font><br/>
+                <font size=8.5 color="#444">{escape(school_address)} | GPS: {escape(school_gps)}<br/>
+                Tel: {escape(school_phone)} | Email: {escape(school_email)}<br/>
+                <i><b>Motto: {escape(school_motto)}</b></i></font>
+            """,
+                        ParagraphStyle("h", fontSize=9, leading=11),
+                    ),
+                ]
+            ]
+            ht = Table(header, colWidths=[85, 395])
+        except:
+            ht = Table(
+                [
+                    [
+                        Paragraph(
+                            f"<font size=15 color='#1e40af'><b>{escape(school_name.upper())}</b></font>",
+                            ParagraphStyle("h2", alignment=TA_CENTER),
+                        )
+                    ]
+                ],
+                colWidths=[480],
+            )
+    else:
+        ht = Table(
+            [
+                [
+                    Paragraph(
+                        f"<font size=15 color='#1e40af'><b>{escape(school_name.upper())}</b></font><br/><font size=8>{escape(school_address)}</font>",
+                        ParagraphStyle("h2", alignment=TA_CENTER),
+                    )
+                ]
+            ],
+            colWidths=[480],
+        )
+
+    ht.setStyle(
+        TableStyle(
+            [
+                ("LINEBELOW", (0, 0), (-1, -1), 2.5, BLUE),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ]
+        )
+    )
+    story.append(ht)
+    story.append(Spacer(1, 18))
+
+    # TITLE - NOW CUSTOM
+    title_style = ParagraphStyle(
+        "title",
+        fontName="Helvetica-Bold",
+        fontSize=17,
+        textColor=BLUE,
+        alignment=TA_CENTER,
+        spaceAfter=6,
+    )
+    story.append(Paragraph(escape(fill(custom_title)), title_style))
+
+    adm_style = ParagraphStyle(
+        "adm",
+        fontName="Helvetica-Bold",
+        fontSize=10,
+        textColor=colors.white,
+        alignment=TA_CENTER,
+    )
+    adm_box = Table(
+        [[Paragraph(f"ADMISSION NO: {escape(student.student_number)}", adm_style)]],
+        colWidths=[220],
+    )
+    adm_box.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, -1), BLUE),
+                ("ROUNDEDCORNERS", [6, 6, 6, 6]),
+                ("PADDING", (0, 0), (-1, -1), 7),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ]
+        )
+    )
+    adm_wrap = Table([[adm_box]], colWidths=[480])
+    adm_wrap.setStyle(TableStyle([("ALIGN", (0, 0), (-1, -1), "CENTER")]))
+    story.append(adm_wrap)
+    story.append(Spacer(1, 16))
+
+    story.append(
+        Paragraph(
+            f"Date: <b>{datetime.now().strftime('%B %d, %Y')}</b>",
+            ParagraphStyle("date", fontSize=9, alignment=0),
+        )
+    )
+    story.append(Spacer(1, 10))
+    story.append(
+        Paragraph(
+            f"Dear <b>{escape(student.get_full_name())}</b>,",
+            ParagraphStyle("dear", fontName="Helvetica-Bold", fontSize=11),
+        )
+    )
+    story.append(Spacer(1, 8))
+
+    # BODY - NOW CUSTOM
+    if custom_body.strip():
+        filled_body = fill(custom_body)
+        letter_text = "<br/><br/>".join(escape(p) for p in filled_body.split("\n"))
+    else:
+        letter_text = f"""
+        We are delighted to inform you that following your successful application and interview,
+        you have been offered admission to <b>{escape(school_name)}</b> as a pupil of <b>{escape(student.school_class.name) if student.school_class else 'the school'}</b>
+        for the <b>{escape(acad_year)}</b> academic year.<br/><br/>
+        At {escape(school_name)}, we are committed to providing holistic education...
+        """
+    story.append(Paragraph(letter_text, styles_main))
+    story.append(Spacer(1, 14))
+
+    details = [
+        [
+            Paragraph("<b>Student Name:</b>", ParagraphStyle("l", fontSize=9)),
+            Paragraph(escape(student.get_full_name()), ParagraphStyle("v", fontSize=9)),
+        ],
+        [
+            Paragraph("<b>Student ID:</b>", ParagraphStyle("l", fontSize=9)),
+            Paragraph(
+                f"<b><font color='#1e40af'>{escape(student.student_number)}</font></b>",
+                ParagraphStyle("v", fontSize=9),
+            ),
+        ],
+        [
+            Paragraph("<b>Class Admitted:</b>", ParagraphStyle("l", fontSize=9)),
+            Paragraph(
+                escape(student.school_class.name) if student.school_class else "N/A",
+                ParagraphStyle("v", fontSize=9),
+            ),
+        ],
+        [
+            Paragraph("<b>Gender:</b>", ParagraphStyle("l", fontSize=9)),
+            Paragraph(escape(gender_display), ParagraphStyle("v", fontSize=9)),
+        ],
+        [
+            Paragraph("<b>Academic Year:</b>", ParagraphStyle("l", fontSize=9)),
+            Paragraph(escape(acad_year), ParagraphStyle("v", fontSize=9)),
+        ],
+    ]
+    t = Table(details, colWidths=[130, 350])
+    t.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#eff6ff")),
+                ("BACKGROUND", (1, 0), (1, -1), colors.white),
+                ("TEXTCOLOR", (0, 0), (0, -1), BLUE),
+                ("GRID", (0, 0), (-1, -1), 0.6, LIGHT_BLUE),
+                ("PADDING", (0, 0), (-1, -1), 9),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("ROUNDEDCORNERS", [8, 8, 8, 8]),
+            ]
+        )
+    )
+    story.append(t)
+    story.append(Spacer(1, 16))
+
+    if login_enabled:
+        story.append(
+            Paragraph(
+                "<b><font color='#92400e'>Student Portal Login Credentials (Keep Confidential)</font></b>",
+                ParagraphStyle("credh", fontSize=10, spaceAfter=6),
+            )
+        )
+
+        creds = [
+            ["Portal URL:", f"{request.get_host()}/login/"],
+            ["Username:", escape(student.username)],
+            ["Student ID:", escape(student.student_number)],
+            ["Temporary Password:", escape(raw_password)],
+        ]
+
+        ct = Table(creds, colWidths=[120, 360])
+        ct.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#fffbeb")),
+                    ("BOX", (0, 0), (-1, -1), 1.2, GOLD),
+                    ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 9),
+                    ("PADDING", (0, 0), (-1, -1), 8),
+                ]
+            )
+        )
+
+        story.append(ct)
+        story.append(Spacer(1, 20))
+
+    # FOOTER - NOW CUSTOM
+    footer_filled = fill(custom_footer)
+    footer_html = "<br/>".join(escape(p) for p in footer_filled.split("\n"))
+    story.append(
+        Paragraph(
+            f"{footer_html}<br/><br/><br/>_________________________<br/><b>Headmaster</b><br/>{escape(school_name)}",
+            ParagraphStyle("sign", fontSize=10, leading=13),
+        )
+    )
+
+    doc.build(story, onFirstPage=add_watermark, onLaterPages=add_watermark)
+    buffer.seek(0)
+    from django.http import HttpResponse
+
+    response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
+    response["Content-Disposition"] = (
+        f'inline; filename="Admission_{student.student_number}.pdf"'
+    )
+    return response
+
+
+@login_required
+def student_transcript(request, student_id):
+    if request.user.role not in ["admin", "proprietor", "proprietress", "headmaster", "headmistress"]:
+        return redirect("accounts:home")
+    school = request.user.school
+    student = get_object_or_404(User, id=student_id, role="student", school=school)
+
+    setting = SchoolSetting.objects.filter(school=school).first()
+    default_ca = setting.class_score_total if setting else 0
+    default_exam = setting.exam_score_total if setting else 0
+
+    results = (
+        Result.objects.filter(student=student, school=school)
+        .select_related("subject", "term", "academic_year")
+        .order_by("academic_year__name", "term__term_number", "subject__name")
+    )
+
+    # Use normal dict - no defaultdict needed
+    grouped = {}
+    for r in results:
+        if not r.term:
+            continue
+        ay = r.academic_year.name if r.academic_year else "N/A"
+        term_id = r.term.id
+        if ay not in grouped:
+            grouped[ay] = {}
+        if term_id not in grouped[ay]:
+            grouped[ay][term_id] = {"term_obj": r.term, "list": []}
+        grouped[ay][term_id]["list"].append(r)
+
+    transcript_data = []
+    grand_total = 0
+    grand_max = 0
+
+    for ay, terms_dict in grouped.items():
+        for term_id, data in terms_dict.items():
+            term_obj = data["term_obj"]
+            res_list = data["list"]
+            ca_total = (
+                term_obj.ca_total if term_obj.ca_total is not None else default_ca
+            )
+            exam_total = (
+                term_obj.exam_total if term_obj.exam_total is not None else default_exam
+            )
+            max_total = ca_total + exam_total
+            avg = (
+                sum([x.total_score for x in res_list]) / len(res_list)
+                if res_list
+                else 0
+            )
+            grand_total += sum([x.total_score for x in res_list])
+            grand_max += max_total * len(res_list)
+
+            transcript_data.append(
+                {
+                    "academic_year": ay,
+                    "term": term_obj.get_term_number_display(),
+                    "term_obj": term_obj,
+                    "ca_total": ca_total,
+                    "exam_total": exam_total,
+                    "max_total": max_total,
+                    "results": res_list,
+                    "average": round(avg, 2),
+                }
+            )
+
+    cumulative_percent = round((grand_total / grand_max * 100) if grand_max else 0, 2)
+    first_year = transcript_data[0]["academic_year"] if transcript_data else "N/A"
+    last_year = transcript_data[-1]["academic_year"] if transcript_data else "N/A"
+
+    # --- ATTENDANCE FINAL - ELAPSED DAYS ---
+    current_term = Term.objects.filter(school=school, is_active=True).first()
+
+    if current_term:
+
+        try:
+            total_school_days = calculate_school_days(current_term.start_date, date.today())
+        except:
+            # fallback: use days_opened if function fails
+            # If you want elapsed not total, calculate working days
+            total_school_days = current_term.days_opened
+            # Better manual: count Mon-Fri from start_date to today
+            delta = (date.today() - current_term.start_date).days + 1
+            count = 0
+            for i in range(delta):
+                d = current_term.start_date + timedelta(days=i)
+                if d.weekday() < 5: # Mon-Fri
+                    count += 1
+            total_school_days = count
+    else:
+        total_school_days = AttendanceSession.objects.filter(school=school).values('date').distinct().count()
+
+    # FIX for 0 present - don't filter by term if term is null in old data
+    attendance_qs = AttendanceRecord.objects.filter(student=student, school=school).select_related('session')
+    if current_term:
+        # Try to get records for this term by date range, not just term FK
+        attendance_qs = attendance_qs.filter(
+            session__date__gte=current_term.start_date,
+            session__date__lte=current_term.end_date
+        )
+
+    # Group by date without defaultdict
+    date_map = {}
+    for rec in attendance_qs.select_related("session"):
+        d = rec.session.date
+        if d not in date_map:
+            date_map[d] = []
+        date_map[d].append(rec.status)
+
+    present_dates = set()
+    absent_dates = set()
+    for d, statuses in date_map.items():
+        if "P" in statuses:
+            present_dates.add(d)
+        elif "A" in statuses:
+            absent_dates.add(d)
+
+    days_present = len(present_dates)
+    days_absent = len(absent_dates)
+    days_marked = len(present_dates | absent_dates)
+    attendance_percent = round(
+        (days_present / total_school_days * 100) if total_school_days else 0, 1
+    )
+    attendance_rate_marked = round(
+        (days_present / days_marked * 100) if days_marked else 0, 1
+    )
+    # --- REMARKS ---
+    remarks = None
+    if current_term:
+        remarks = StudentRemark.objects.filter(student=student, term=current_term).first()
+
+    # Fallback: if no term remark, get latest
+    if not remarks:
+        remarks = StudentRemark.objects.filter(student=student).order_by('-created_at').first()
+
+    # If still no remark, create empty object for template
+    if not remarks:
+        remarks = {'class_teacher_remark': 'No remark yet', 'headmaster_remark': 'No remark yet'}
+
+    return render(
+        request,
+        "accounts/transcript.html",
+        {
+            "student": student,
+            "school": school,
+            "first_year": first_year,
+            "last_year": last_year,
+            "setting": setting,
+            "transcript_data": transcript_data,
+            "cumulative_avg": cumulative_percent,
+            "total_subjects": results.count(),
+            "date_issued": timezone.now().date(),
+            "total_school_days": total_school_days,
+            "days_marked": days_marked,
+            "days_present": days_present,
+            "days_absent": days_absent,
+            "attendance_percent": attendance_percent,
+            "attendance_rate_marked": attendance_rate_marked,
+            "current_term": current_term,
+            "remarks": remarks,
+        },
+    )
+
+
+@login_required
+def headmaster_remarks(request):
+    school = request.user.school
+    current_term = Term.objects.filter(school=school, is_active=True).first()
+
+    all_classes = SchoolClass.objects.filter(school=school).order_by("name")
+
+    selected_class_id = request.GET.get("class_id") or request.POST.get("class_id")
+
+    students = []
+
+    if selected_class_id:
+        try:
+            selected_class_id_int = int(selected_class_id)
+        except:
+            selected_class_id_int = selected_class_id
+
+        student_qs = User.objects.filter(
+            school=school, role="student", school_class_id=selected_class_id_int
+        ).order_by("first_name")
+
+        # ============================================
+        # PAGINATION
+        # ============================================
+        paginator = Paginator(student_qs, 10)
+
+        page_number = request.GET.get("page", 1)
+        page_obj = paginator.get_page(page_number)
+
+        students = page_obj.object_list
+
+        # ============================================
+        # LOAD EXISTING REMARKS
+        # ============================================
+        student_ids = [s.id for s in students]
+
+        remarks = StudentRemark.objects.filter(
+            school=school, term=current_term, student_id__in=student_ids
+        )
+
+        existing = {r.student_id: r for r in remarks}
+
+        for s in students:
+            r = existing.get(s.id)
+
+            if r and r.headmaster_remark:
+                s.head_remark = r.headmaster_remark
+            else:
+                s.head_remark = ""
+
+    else:
+        page_obj = None
+
+    # ============================================
+    # SAVE REMARKS
+    # ============================================
+    if request.method == "POST":
+
+        class_id = request.POST.get("class_id")
+        page_number = request.POST.get("page", "1")
+
+        for key, value in request.POST.items():
+
+            if key.startswith("head_"):
+
+                try:
+                    student_id = int(key.replace("head_", ""))
+
+                    h_remark = value.strip()
+
+                    if h_remark:
+                        StudentRemark.objects.update_or_create(
+                            student_id=student_id,
+                            term=current_term,
+                            defaults={"school": school, "headmaster_remark": h_remark},
+                        )
+
+                except:
+                    pass
+
+        messages.success(request, "Remarks saved successfully.")
+
+        return redirect(
+            f"/headmaster/remarks/" f"?class_id={class_id}" f"&page={page_number}"
+        )
+
+    return render(
+        request,
+        "accounts/headmaster_remarks.html",
+        {
+            "all_classes": all_classes,
+            "students": students,
+            "selected_class_id": (str(selected_class_id) if selected_class_id else ""),
+            "current_term": current_term,
+            # Pagination
+            "page_obj": page_obj,
+            "paginator": (page_obj.paginator if page_obj else None),
+        },
+    )
+
+
+@login_required
+def school_backup(request):
+    if request.user.role not in [
+        "admin", "proprietor", "proprietress",
+        "headmaster", "headmistress"
+    ]:
+        return redirect("accounts:dashboard")
+
+    school = request.user.school
+
+    if not school:
+        messages.error(request, "No school assigned.")
+        return redirect("accounts:dashboard")
+
+    backup_objects = []
+
+    related_querysets = [
+        FeePayment.objects.filter(fee__school=school),
+        CanteenPayment.objects.filter(student_fee__school=school),
+        StudentTermSummary.objects.filter(student__school=school),
+        FeeAuditLog.objects.filter(transaction__school=school),
+        PaymentItem.objects.filter(transaction__school=school),
+        PendingPaymentItem.objects.filter(pending_payment__school=school),
+        AnnouncementRead.objects.filter(announcement__school=school),
+        NotificationRecipient.objects.filter(notification__school=school),
+    ]
+
+    for queryset in related_querysets:
+        backup_objects.extend(
+            json.loads(serializers.serialize("json", queryset))
+        )
+
+    for model in apps.get_app_config("accounts").get_models():
+
+        if model.__name__ == "School":
+            queryset = model.objects.filter(pk=school.pk)
+
+        elif any(field.name == "school" for field in model._meta.fields):
+            queryset = model.objects.filter(school=school)
+
+        else:
+            continue
+
+        backup_objects.extend(
+            json.loads(serializers.serialize("json", queryset))
+        )
+
+
+    backup_dir = settings.BASE_DIR / "backups" / f"school_{school.id}"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+
+    filename = (
+        f"school_backup_{school.id}_"
+        f"{timezone.now().strftime('%Y%m%d_%H%M%S')}.zip"
+    )
+
+    backup_file = backup_dir / filename
+
+    with zipfile.ZipFile(backup_file, "w", zipfile.ZIP_DEFLATED) as zip_file:
+
+        zip_file.writestr(
+            "database.json",
+            json.dumps(backup_objects, indent=2)
+        )
+
+        media_root = settings.MEDIA_ROOT
+
+        for obj in backup_objects:
+            fields = obj.get("fields", {})
+
+            for value in fields.values():
+
+                if isinstance(value, str):
+                    file_path = media_root / value
+
+                    if file_path.is_file():
+                        zip_file.write(
+                            file_path,
+                            f"media/{value}"
+                        )
+
+    response = HttpResponse(
+        backup_file.read_bytes(),
+        content_type="application/zip"
+    )
+
+    response["Content-Disposition"] = (
+        f'attachment; filename="{filename}"'
+    )
+
+    return response
+
+
+@login_required
+def restore_school_backup(request):
+
+    if request.method != "POST":
+        return redirect("accounts:system-settings")
+
+    if request.user.role not in [
+        "admin",
+        "proprietor",
+        "proprietress",
+        "headmaster",
+        "headmistress",
+    ]:
+        return redirect("accounts:dashboard")
+
+    school = request.user.school
+
+    if not school:
+        messages.error(request, "No school assigned.")
+        return redirect("accounts:system-settings")
+
+    backup_file = request.FILES.get("backup_file")
+
+    if not backup_file:
+        messages.error(request, "Please select a backup file.")
+        return redirect("accounts:system-settings")
+
+    if not backup_file.name.lower().endswith(".zip"):
+        messages.error(request, "Only ZIP backup files are allowed.")
+        return redirect("accounts:system-settings")
+
+    try:
+
+        with zipfile.ZipFile(backup_file, "r") as zip_file:
+
+            # -------------------------------------------------
+            # Validate ZIP
+            # -------------------------------------------------
+            if "database.json" not in zip_file.namelist():
+                messages.error(
+                    request, "Invalid backup file. database.json was not found."
+                )
+                return redirect("accounts:system-settings")
+
+            try:
+                data = json.loads(zip_file.read("database.json").decode("utf-8"))
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                messages.error(request, "Invalid backup database file.")
+                return redirect("accounts:system-settings")
+
+            # -------------------------------------------------
+            # Validate School
+            # -------------------------------------------------
+            backup_school = next(
+                (obj for obj in data if obj.get("model") == "accounts.school"), None
+            )
+
+            if not backup_school:
+                messages.error(
+                    request, "Invalid backup. School information was not found."
+                )
+                return redirect("accounts:system-settings")
+
+            if backup_school.get("pk") != school.pk:
+                messages.error(request, "This backup belongs to a different school.")
+                return redirect("accounts:system-settings")
+
+            # -------------------------------------------------
+            # Keep a copy of ZIP media in memory
+            # -------------------------------------------------
+            media_files = {}
+
+            for name in zip_file.namelist():
+
+                if not name.startswith("media/"):
+                    continue
+
+                if name.endswith("/"):
+                    continue
+
+                relative_path = name[len("media/") :]
+
+                # Security: prevent files escaping MEDIA_ROOT
+                if (
+                    not relative_path
+                    or relative_path.startswith("/")
+                    or ".." in relative_path.split("/")
+                ):
+                    continue
+
+                media_files[relative_path] = zip_file.read(name)
+
+            # -------------------------------------------------
+            # Separate school record from other records
+            # -------------------------------------------------
+            backup_records = [
+                obj for obj in data if obj.get("model") != "accounts.school"
+            ]
+
+            with transaction.atomic():
+
+                # =================================================
+                # 1. REMOVE CURRENT SCHOOL DATA
+                # =================================================
+                #
+                # We preserve the School record itself.
+                # Everything belonging to that school is removed.
+                #
+                # Django's cascade relationships take care of
+                # records such as FeePayment, PaymentItem,
+                # AnnouncementRead, etc.
+                # =================================================
+
+                school_models = []
+
+                for model in apps.get_app_config("accounts").get_models():
+
+                    if model.__name__ == "School":
+                        continue
+
+                    if any(field.name == "school" for field in model._meta.fields):
+                        school_models.append(model)
+
+                # Delete models with direct school relationships.
+                #
+                # Foreign-key cascades will remove many indirect
+                # records automatically.
+                for model in reversed(school_models):
+
+                    try:
+                        model.objects.filter(school=school).delete()
+                    except Exception:
+                        # Some models may already have been removed
+                        # through a cascade.
+                        continue
+
+                # =================================================
+                # 2. RESTORE SCHOOL SETTINGS / SCHOOL RECORD
+                # =================================================
+
+                for deserialized in serializers.deserialize(
+                    "json", json.dumps([backup_school])
+                ):
+                    restored_school = deserialized.object
+
+                    # Keep the existing School object/primary key.
+                    restored_school.pk = school.pk
+                    restored_school.save()
+
+                # =================================================
+                # 3. RESTORE RECORDS IN DEPENDENCY ORDER
+                # =================================================
+
+                priority = {
+                    # Base records
+                    "accounts.academicyear": 10,
+                    "accounts.term": 20,
+                    # Users/classes/subjects
+                    "accounts.schoolclass": 30,
+                    "accounts.subject": 40,
+                    "accounts.user": 50,
+                    # Academic relationships
+                    "accounts.studentsubjectclass": 60,
+                    "accounts.teachersubjectclass": 60,
+                    # Settings
+                    "accounts.systemsettings": 70,
+                    "accounts.schoolsetting": 70,
+                    "accounts.headmasterpermission": 70,
+                    # Fees
+                    "accounts.paymenttype": 80,
+                    "accounts.feestructure": 90,
+                    "accounts.studentfee": 100,
+                    "accounts.fee": 100,
+                    "accounts.dynamicfeestructure": 100,
+                    "accounts.dynamicfeestructureitem": 110,
+                    "accounts.dynamicstudentfeeitem": 120,
+                    # Attendance / results
+                    "accounts.attendancesession": 130,
+                    "accounts.attendancerecord": 140,
+                    "accounts.result": 140,
+                    "accounts.continuousassessment": 140,
+                    "accounts.studentremark": 140,
+                    "accounts.studenttermsummary": 140,
+                    "accounts.teacherattendance": 140,
+                    # Timetable
+                    "accounts.break": 150,
+                    "accounts.academiccalendar": 150,
+                    "accounts.timetable": 160,
+                    # Payments
+                    "accounts.paymenttransaction": 170,
+                    "accounts.pendingpayment": 170,
+                    "accounts.feepayment": 180,
+                    "accounts.canteenpayment": 180,
+                    "accounts.paymentitem": 180,
+                    "accounts.pendingpaymentitem": 180,
+                    "accounts.feeauditlog": 190,
+                    # Parent relationships
+                    "accounts.parentstudentlink": 200,
+                    # Communication
+                    "accounts.announcement": 210,
+                    "accounts.announcementread": 220,
+                    "accounts.notification": 230,
+                    "accounts.notificationrecipient": 240,
+                    "accounts.message": 250,
+                    "accounts.smslog": 260,
+                }
+
+                # -------------------------------------------------
+                # Sort records
+                # -------------------------------------------------
+                backup_records.sort(
+                    key=lambda obj: priority.get(obj.get("model", "").lower(), 500)
+                )
+
+                # -------------------------------------------------
+                # Restore each record
+                # -------------------------------------------------
+                for obj in backup_records:
+
+                    model_name = obj.get("model", "").lower()
+
+                    # Ignore unsupported/global records.
+                    if model_name == "accounts.termsetting":
+                        continue
+
+                    try:
+                        deserialized_objects = serializers.deserialize(
+                            "json", json.dumps([obj])
+                        )
+
+                        for deserialized in deserialized_objects:
+                            deserialized.save()
+
+                    except Exception as restore_error:
+
+                        raise Exception(
+                            f"Could not restore "
+                            f"{model_name} "
+                            f"(ID {obj.get('pk')}): "
+                            f"{restore_error}"
+                        )
+
+                # =================================================
+                # 4. RESTORE MEDIA FILES
+                # =================================================
+
+                media_root = settings.MEDIA_ROOT
+                media_root.mkdir(parents=True, exist_ok=True)
+
+                for relative_path, file_data in media_files.items():
+
+                    destination = media_root / relative_path
+
+                    # Final security check
+                    try:
+                        destination.resolve().relative_to(media_root.resolve())
+                    except ValueError:
+                        continue
+
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+
+                    destination.write_bytes(file_data)
+
+        # =====================================================
+        # SUCCESS
+        # =====================================================
+
+        messages.success(request, "School backup restored successfully.")
+
+    except zipfile.BadZipFile:
+
+        messages.error(request, "The selected file is not a valid ZIP backup.")
+
+    except Exception as e:
+
+        messages.error(request, f"Restore failed: {e}")
+
+    return redirect("accounts:system-settings")
+
+
+@login_required
+def backup_database(request):
+    if request.user.role not in [
+        "admin",
+        "proprietor",
+        "proprietress",
+        "headmaster",
+        "headmistress",
+    ]:
+        messages.error(request, "You do not have permission to create a backup.")
+        return redirect("accounts:dashboard")
+
+    db_path = settings.DATABASES["default"]["NAME"]
+
+    backup_dir = settings.BASE_DIR / "backups"
+    backup_dir.mkdir(exist_ok=True)
+
+    timestamp = timezone.now().strftime("%Y-%m-%d_%H-%M-%S")
+    backup_path = backup_dir / f"school_sms_backup_{timestamp}.sqlite3"
+
+    source = sqlite3.connect(db_path)
+    destination = sqlite3.connect(backup_path)
+
+    try:
+        source.backup(destination)
+    finally:
+        destination.close()
+        source.close()
+
+    messages.success(request, "Database backup created successfully.")
+
+    return FileResponse(
+        open(backup_path, "rb"),
+        as_attachment=True,
+        filename=backup_path.name,
+    )
+
+
+@login_required
+def basic_daily_fee_settings(request):
+    if request.user.role not in ["headmaster", "headmistress"]:
+        messages.error(request, "You do not have permission to access this page.")
+        return redirect("accounts:dashboard")
+
+    school = request.user.school
+
+    if not school or school.edition != "basic":
+        messages.error(request, "This feature is only available for Basic schools.")
+        return redirect("accounts:dashboard")
+
+    classes = SchoolClass.objects.filter(school=school).order_by("stage", "name")
+
+    if request.method == "POST":
+        class_id = request.POST.get("school_class")
+        amount = request.POST.get("amount")
+
+        school_class = get_object_or_404(SchoolClass, id=class_id, school=school)
+
+        BasicDailyFeeSetting.objects.update_or_create(
+            school=school, school_class=school_class, defaults={"amount": amount}
+        )
+
+        messages.success(
+            request, f"Daily fee for {school_class.name} updated successfully."
+        )
+
+        return redirect("accounts:basic_daily_fee_settings")
+
+    settings = BasicDailyFeeSetting.objects.filter(school=school).select_related(
+        "school_class"
+    )
+
+    return render(
+        request,
+        "accounts/basic_daily_fee_settings.html",
+        {
+            "classes": classes,
+            "settings": settings,
+            "is_basic_school": True,
+        },
+    )
+
+
+@login_required
+def basic_daily_fee_collection(request):
+    if request.user.role != "teacher":
+        messages.error(request, "Only teachers can record daily fees.")
+        return redirect("accounts:dashboard")
+
+    school = request.user.school
+
+    if not school or school.edition != "basic":
+        messages.error(request, "This feature is only available for Basic schools.")
+        return redirect("accounts:dashboard")
+
+    # --------------------------------------------------
+    # CLASS TEACHER
+    # --------------------------------------------------
+
+    school_class = request.user.class_teacher_of
+
+    if not school_class or school_class.school != school:
+        messages.error(request, "You are not assigned as a class teacher.")
+        return redirect("accounts:dashboard")
+
+    # --------------------------------------------------
+    # STUDENTS
+    # --------------------------------------------------
+
+    students = User.objects.filter(
+        school=school, role="student", school_class=school_class
+    ).order_by("first_name", "last_name")
+
+    # --------------------------------------------------
+    # DAILY FEE
+    # --------------------------------------------------
+
+    daily_fee = BasicDailyFeeSetting.objects.filter(
+        school=school, school_class=school_class
+    ).first()
+
+    if not daily_fee:
+        messages.error(request, "A daily fee has not been configured for your class.")
+        return redirect("accounts:dashboard")
+
+    # --------------------------------------------------
+    # ACADEMIC YEARS
+    # --------------------------------------------------
+
+    academic_years = AcademicYear.objects.filter(school=school).order_by("-name")
+
+    selected_academic_year_id = request.GET.get("academic_year")
+
+    selected_academic_year = None
+
+    if selected_academic_year_id:
+        selected_academic_year = academic_years.filter(
+            id=selected_academic_year_id
+        ).first()
+
+    # --------------------------------------------------
+    # TERMS
+    # --------------------------------------------------
+
+    terms = (
+        Term.objects.filter(school=school)
+        .select_related("academic_year")
+        .order_by("term_number")
+    )
+
+    if selected_academic_year:
+        terms = terms.filter(academic_year=selected_academic_year)
+
+    selected_term_id = request.GET.get("term")
+
+    selected_term = None
+
+    if selected_term_id:
+        selected_term = terms.filter(id=selected_term_id).first()
+
+    # --------------------------------------------------
+    # DATE
+    # --------------------------------------------------
+
+    selected_date_string = request.GET.get("date")
+
+    if selected_date_string:
+        try:
+            selected_date = datetime.strptime(selected_date_string, "%Y-%m-%d").date()
+        except ValueError:
+            selected_date = timezone.localdate()
+    else:
+        selected_date = timezone.localdate()
+
+    # --------------------------------------------------
+    # VIEW MODE
+    # --------------------------------------------------
+
+    view_mode = request.GET.get("view", "today")
+
+    if view_mode not in ["today", "week", "month", "all"]:
+        view_mode = "today"
+
+    # --------------------------------------------------
+    # WEEKEND
+    # --------------------------------------------------
+
+    is_weekend = selected_date.weekday() >= 5
+
+    # --------------------------------------------------
+    # PAYMENTS FOR SELECTED DATE
+    # --------------------------------------------------
+
+    selected_date_collections = BasicDailyFeeCollection.objects.filter(
+        school=school, school_class=school_class, date=selected_date
+    ).select_related("student", "academic_year", "term")
+
+    paid_student_ids = set(
+        selected_date_collections.values_list("student_id", flat=True)
+    )
+
+    # --------------------------------------------------
+    # COLLECTION HISTORY
+    # --------------------------------------------------
+
+    collections = BasicDailyFeeCollection.objects.filter(
+        school=school, school_class=school_class
+    ).select_related("student", "academic_year", "term")
+
+    if selected_academic_year:
+        collections = collections.filter(academic_year=selected_academic_year)
+
+    if selected_term:
+        collections = collections.filter(term=selected_term)
+
+    if view_mode == "today":
+
+        collections = collections.filter(date=selected_date)
+
+    elif view_mode == "week":
+
+        week_start = selected_date - timedelta(days=selected_date.weekday())
+
+        week_end = week_start + timedelta(days=6)
+
+        collections = collections.filter(date__range=[week_start, week_end])
+
+    elif view_mode == "month":
+
+        month_start = selected_date.replace(day=1)
+
+        if selected_date.month == 12:
+            month_end = selected_date.replace(
+                year=selected_date.year + 1, month=1, day=1
+            ) - timedelta(days=1)
+        else:
+            month_end = selected_date.replace(
+                month=selected_date.month + 1, day=1
+            ) - timedelta(days=1)
+
+        collections = collections.filter(date__range=[month_start, month_end])
+
+    collections = collections.order_by("-date", "-created_at")
+
+    collection_total = collections.aggregate(total=Sum("amount"))["total"] or 0
+        # --------------------------------------------------
+    # PAGINATION
+    # --------------------------------------------------
+
+    student_search = request.GET.get("student_search", "").strip()
+
+    if student_search:
+        search_parts = student_search.split()
+
+        if len(search_parts) >= 2:
+            students = students.filter(
+                Q(first_name__icontains=search_parts[0]) &
+                Q(last_name__icontains=search_parts[-1])
+            )
+        else:
+            students = students.filter(
+                Q(first_name__icontains=student_search) |
+                Q(last_name__icontains=student_search)
+            )
+
+    students_paginator = Paginator(students, 10)
+
+    students_page_number = request.GET.get("students_page", 1)
+
+    students_page = students_paginator.get_page(students_page_number)
+
+
+    collections_paginator = Paginator(collections, 10)
+
+    collections_page_number = request.GET.get("history_page", 1)
+
+    collections_page = collections_paginator.get_page(
+        collections_page_number
+    )
+
+    # --------------------------------------------------
+    # RECORD PAYMENT
+    # --------------------------------------------------
+
+    if request.method == "POST":
+
+        student_id = request.POST.get("student")
+
+        payment_date_string = request.POST.get("date")
+
+        try:
+            payment_date = datetime.strptime(payment_date_string, "%Y-%m-%d").date()
+        except (ValueError, TypeError):
+            messages.error(request, "Please select a valid payment date.")
+            return redirect("accounts:basic_daily_fee_collection")
+
+        if payment_date.weekday() >= 5:
+            messages.error(request, "Daily fees cannot be collected on weekends.")
+            return redirect(f"{request.path}?date={payment_date}")
+
+        if payment_date > timezone.localdate():
+            messages.error(request, "You cannot record a payment for a future date.")
+            return redirect(f"{request.path}?date={payment_date}")
+
+        student = get_object_or_404(
+            User,
+            id=student_id,
+            school=school,
+            role="student",
+            school_class=school_class,
+        )
+
+        # Find the term covering the payment date
+        payment_term = (
+            Term.objects.filter(
+                school=school, start_date__lte=payment_date, end_date__gte=payment_date
+            )
+            .select_related("academic_year")
+            .first()
+        )
+
+        if not payment_term:
+            messages.error(
+                request, "No academic term covers the selected payment date."
+            )
+            return redirect(f"{request.path}?date={payment_date}")
+
+        # Prevent duplicate payment
+        already_paid = BasicDailyFeeCollection.objects.filter(
+            school=school, student=student, school_class=school_class, date=payment_date
+        ).exists()
+
+        if already_paid:
+            messages.warning(
+                request,
+                f"{student.get_full_name()} has already paid "
+                f"the daily fee for {payment_date}.",
+            )
+            return redirect(f"{request.path}?date={payment_date}")
+
+        BasicDailyFeeCollection.objects.create(
+            school=school,
+            academic_year=payment_term.academic_year,
+            term=payment_term,
+            student=student,
+            school_class=school_class,
+            amount=daily_fee.amount,
+            date=payment_date,
+            collected_by=request.user,
+        )
+
+        messages.success(request, f"Payment recorded for {student.get_full_name()}.")
+
+        return redirect(f"{request.path}?date={payment_date}")
+
+    # --------------------------------------------------
+    # PAGE
+    # --------------------------------------------------
+
+    return render(
+        request,
+        "accounts/basic_daily_fee_collection.html",
+        {
+            "school_class": school_class,
+            "students": students_page,
+            "daily_fee": daily_fee,
+            "academic_years": academic_years,
+            "selected_academic_year": selected_academic_year,
+            "terms": terms,
+            "selected_term": selected_term,
+            "selected_date": selected_date,
+            "view_mode": view_mode,
+            "is_weekend": is_weekend,
+            "selected_date_collections": selected_date_collections,
+            "paid_student_ids": paid_student_ids,
+            "collections": collections_page,
+            "collection_total": collection_total,
+            "students_page": students_page,
+            "collections_page": collections_page,
+            "student_search": student_search,
+            "is_basic_school": True,
+        },
+    )
+
+
+@login_required
+def basic_daily_fee_monitoring(request):
+    if request.user.role not in ["headmaster", "headmistress"]:
+        messages.error(
+            request,
+            "You do not have permission to access this page."
+        )
+        return redirect("accounts:dashboard")
+
+    school = request.user.school
+
+    if not school or school.edition != "basic":
+        messages.error(
+            request,
+            "This feature is only available for Basic schools."
+        )
+        return redirect("accounts:dashboard")
+
+    # -----------------------------
+    # SELECTED DATE
+    # -----------------------------
+    date_string = request.GET.get("date")
+
+    if date_string:
+        try:
+            selected_date = datetime.strptime(
+                date_string,
+                "%Y-%m-%d"
+            ).date()
+        except ValueError:
+            selected_date = timezone.localdate()
+    else:
+        selected_date = timezone.localdate()
+
+    # -----------------------------
+    # SKIP WEEKENDS
+    # -----------------------------
+    if selected_date.weekday() >= 5:
+        selected_date = selected_date - timedelta(
+            days=selected_date.weekday() - 4
+        )
+
+    # -----------------------------
+    # PREVIOUS SCHOOL DAY
+    # -----------------------------
+    previous_date = selected_date - timedelta(days=1)
+
+    while previous_date.weekday() >= 5:
+        previous_date -= timedelta(days=1)
+
+    # -----------------------------
+    # NEXT SCHOOL DAY
+    # -----------------------------
+    next_date = selected_date + timedelta(days=1)
+
+    while next_date.weekday() >= 5:
+        next_date += timedelta(days=1)
+
+    # -----------------------------
+    # COLLECTIONS FOR SELECTED DATE
+    # -----------------------------
+    collections = BasicDailyFeeCollection.objects.filter(
+        school=school,
+        date=selected_date
+    ).select_related(
+        "student",
+        "school_class",
+        "collected_by"
+    ).order_by(
+        "school_class__stage",
+        "school_class__name",
+        "student__first_name",
+        "student__last_name"
+    )
+
+    # -----------------------------
+    # SCHOOL CLASSES
+    # -----------------------------
+    classes = SchoolClass.objects.filter(
+        school=school
+    ).order_by(
+        "stage",
+        "name"
+    )
+
+    # -----------------------------
+    # OVERALL TOTAL
+    # -----------------------------
+    total_collected = collections.aggregate(
+        total=Sum("amount")
+    )["total"] or 0
+
+    # -----------------------------
+    # CLASS TOTALS
+    # -----------------------------
+    class_totals = []
+
+    for school_class in classes:
+
+        class_students = User.objects.filter(
+            school=school,
+            role="student",
+            school_class=school_class
+        )
+
+        class_collections = collections.filter(
+            school_class=school_class
+        )
+
+        paid_student_ids = set(
+            class_collections.values_list(
+                "student_id",
+                flat=True
+            )
+        )
+
+        total_students = class_students.count()
+        paid_count = len(paid_student_ids)
+        unpaid_count = max(
+            total_students - paid_count,
+            0
+        )
+
+        class_total = class_collections.aggregate(
+            total=Sum("amount")
+        )["total"] or 0
+        unpaid_students = class_students.exclude(id__in=paid_student_ids).order_by("first_name", "last_name")
+
+        class_totals.append({
+            "school_class": school_class,
+            "total_students": total_students,
+            "paid_count": paid_count,
+            "unpaid_count": unpaid_count,
+            "total": class_total,
+            "unpaid_students": unpaid_students,
+            "collections": class_collections,
+        })
+
+    return render(
+        request,
+        "accounts/basic_daily_fee_monitoring.html",
+        {
+            "school": school,
+            "collections": collections,
+            "classes": classes,
+            "class_totals": class_totals,
+            "total_collected": total_collected,
+            "selected_date": selected_date,
+            "previous_date": previous_date,
+            "next_date": next_date,
+            "is_basic_school": True,
+        },
+    )
+
+
+@login_required
+def grading_settings(request):
+    if (
+        request.user.role
+        not in [
+            "admin",
+            "proprietor",
+            "proprietress",
+            "headmaster",
+            "headmistress",
+        ]
+        and not request.user.is_superuser
+    ):
+        messages.error(request, "Permission denied")
+        return redirect("accounts:dashboard")
+
+    school = request.user.school
+
+    # EDIT
+    edit_id = request.GET.get("edit")
+    editing_grading = None
+
+    if edit_id:
+        editing_grading = get_object_or_404(GradingScale, id=edit_id, school=school)
+
+    if request.method == "POST":
+
+        # DELETE
+        delete_id = request.POST.get("delete_id")
+
+        if delete_id:
+            grading = get_object_or_404(
+                GradingScale,
+                id=delete_id,
+                school=school
+            )
+
+            grading.delete()
+
+            messages.success(
+                request,
+                "Grading scale deleted successfully."
+            )
+
+            return redirect("accounts:grading-settings")
+
+        grading_id = request.POST.get("grading_id")
+
+        if grading_id:
+            # UPDATE EXISTING GRADING SCALE
+            grading = get_object_or_404(GradingScale, id=grading_id, school=school)
+
+            form = GradingScaleForm(request.POST, instance=grading, school=school)
+        else:
+            # CREATE NEW GRADING SCALE
+            form = GradingScaleForm(request.POST, school=school)
+
+        if form.is_valid():
+            grading = form.save(commit=False)
+            grading.school = school
+            grading.save()
+
+            messages.success(request, "Grading scale saved successfully.")
+
+            return redirect("accounts:grading-settings")
+
+    else:
+        if editing_grading:
+            form = GradingScaleForm(instance=editing_grading, school=school)
+        else:
+            form = GradingScaleForm(school=school)
+
+    grading_scales = GradingScale.objects.filter(school=school).select_related("term")
+
+    return render(
+        request,
+        "accounts/grading_settings.html",
+        {
+            "form": form,
+            "grading_scales": grading_scales,
+            "editing_grading": editing_grading,
+        },
     )
