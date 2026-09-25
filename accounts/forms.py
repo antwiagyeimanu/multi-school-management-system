@@ -624,11 +624,21 @@ class SchoolSettingForm(forms.ModelForm):
 
 
 class AcademicCalendarForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        school = kwargs.pop("school", None)
+        super().__init__(*args, **kwargs)
+
+        if school:
+            self.fields["academic_year"].queryset = AcademicYear.objects.filter(
+                school=school
+            )
+
     event_type = forms.ChoiceField(
-        choices=[('', 'Select Event')] + AcademicCalendar.TYPE_CHOICES,
-        widget=forms.Select(attrs={'class': 'form-select'})
+        choices=[("", "Select Event")] + AcademicCalendar.TYPE_CHOICES,
+        widget=forms.Select(attrs={"class": "form-select"}),
     )
-    
+
     term = forms.ChoiceField(
         choices=[('', 'Select Term')] + AcademicCalendar.TERM_CHOICES,
         required=False,  

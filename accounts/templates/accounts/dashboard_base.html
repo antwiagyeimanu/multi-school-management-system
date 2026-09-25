@@ -613,7 +613,7 @@
     {% endif %}
 
 
-    {% if hp.can_calendar and not is_basic_school %}
+    {% if hp.can_calendar  %}
     <li>
         <a href="{% url 'accounts:calendar_list' %}"
            class="{% if request.resolver_match.url_name == 'calendar_list' or request.resolver_match.url_name == 'add_event' %}active{% endif %}">

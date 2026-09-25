@@ -11092,7 +11092,7 @@ def add_calendar_event(request):
         return redirect('accounts:dashboard')
     
     if request.method == 'POST':
-        form = AcademicCalendarForm(request.POST)
+        form = AcademicCalendarForm(request.POST, school=request.user.school)
 
         if form.is_valid():
 
@@ -11145,7 +11145,7 @@ def add_calendar_event(request):
             print(request.POST)
 
     else:
-        form = AcademicCalendarForm()
+        form = AcademicCalendarForm(school=request.user.school)
 
     return render(request, 'accounts/add_event.html', {'form': form})
 
