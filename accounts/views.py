@@ -64,7 +64,7 @@ from django.utils.dateparse import parse_date
 from django.db import transaction, IntegrityError
 from django.template.loader import render_to_string, get_template
 from weasyprint import HTML
-from xhtml2pdf import pisa
+# from xhtml2pdf import pisa
 import openpyxl
 from openpyxl.styles import Font, Alignment
 from openpyxl import Workbook
@@ -12987,6 +12987,7 @@ def verify_receipt(request, verification_token):
 
 @login_required
 def generate_report(request):
+    from xhtml2pdf import pisa
     if request.user.role != 'accountant':
         return redirect('accounts:home')
     
@@ -13363,6 +13364,7 @@ def auto_fit(ws):
 
 
 def render_to_pdf(template_src, context_dict={}):
+    from xhtml2pdf import pisa
     template = get_template(template_src)
     html = template.render(context_dict)
     result = BytesIO()
@@ -13986,6 +13988,8 @@ def is_accountant_student_parent(user):
 @login_required
 @user_passes_test(is_accountant_student_parent) 
 def receipt_pdf(request, payment_id):
+    from xhtml2pdf import pisa
+
     school = request.user.school
     payment = get_object_or_404(
         PaymentTransaction.objects.select_related(
