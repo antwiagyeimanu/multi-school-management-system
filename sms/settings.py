@@ -2,15 +2,20 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'dev-secret-key'
-DEBUG = True
+import os
+
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key")
+
+DEBUG = os.environ.get("DEBUG", "True") == "True"
+
 ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
     "192.168.8.175",
+    ".onrender.com",
 ]
-QR_BASE_URL = "http://127.0.0.1:8000"
 
+QR_BASE_URL = os.environ.get("QR_BASE_URL", "http://127.0.0.1:8000")
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
