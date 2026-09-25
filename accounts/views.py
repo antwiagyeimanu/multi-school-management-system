@@ -587,6 +587,8 @@ def login_view(request):
         )
         if authenticated_user:
             login(request, authenticated_user)
+            if authenticated_user.is_superuser:
+                return redirect('/admin/')
             if not authenticated_user.is_password_changed:
                 return redirect('accounts:change-password')
             if authenticated_user.role in ["admin", "proprietor", "proprietress"]:
