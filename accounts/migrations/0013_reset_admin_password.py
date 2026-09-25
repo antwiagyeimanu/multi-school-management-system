@@ -8,7 +8,9 @@ def reset_admin_password(apps, schema_editor):
     password = os.environ.get("ADMIN_RESET_PASSWORD")
 
     if not password:
+        print("ADMIN_RESET_PASSWORD is missing")
         return
+    print("ADMIN_RESET_PASSWORD is present")
 
     try:
         user = User.objects.get(username="Nana")
