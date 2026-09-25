@@ -8986,7 +8986,7 @@ def view_student_grades(request, student_id):
             student=student,
             term=term,
             academic_year=year,
-            status__in=["submitted", "published"],
+            status= "published",
         )
         .select_related("subject")
         .order_by("subject__name")
@@ -9007,6 +9007,8 @@ def view_student_grades(request, student_id):
                     valid_count += 1
             except (ValueError, TypeError):
                 pass
+        if valid_count:
+            overall_average = total_percentage / valid_count
 
         grading = GradingScale.objects.filter(
             school=school,
@@ -17620,7 +17622,7 @@ def student_transcript(request, student_id):
     default_exam = setting.exam_score_total if setting else 0
 
     results = (
-        Result.objects.filter(student=student, school=school)
+        Result.objects.filter(student=student, school=school, status="published")
         .select_related("subject", "term", "academic_year")
         .order_by("academic_year__name", "term__term_number", "subject__name")
     )
@@ -17661,6 +17663,8 @@ def student_transcript(request, student_id):
             grand_total += sum([x.total_score for x in res_list])
             grand_max += max_total * len(res_list)
 
+
+
             transcript_data.append(
                 {
                     "academic_year": ay,
@@ -17673,7 +17677,6 @@ def student_transcript(request, student_id):
                     "average": round(avg, 2),
                 }
             )
-
     cumulative_percent = round((grand_total / grand_max * 100) if grand_max else 0, 2)
     first_year = transcript_data[0]["academic_year"] if transcript_data else "N/A"
     last_year = transcript_data[-1]["academic_year"] if transcript_data else "N/A"
@@ -17737,15 +17740,18 @@ def student_transcript(request, student_id):
     # --- REMARKS ---
     remarks = None
     if current_term:
-        remarks = StudentRemark.objects.filter(student=student, term=current_term).first()
+        remarks = StudentRemark.objects.filter(student=student, term=current_term, school=school,).first()
 
     # Fallback: if no term remark, get latest
     if not remarks:
-        remarks = StudentRemark.objects.filter(student=student).order_by('-created_at').first()
+        remarks = StudentRemark.objects.filter(student=student, school=school).order_by('-created_at').first()
 
     # If still no remark, create empty object for template
     if not remarks:
         remarks = {'class_teacher_remark': 'No remark yet', 'headmaster_remark': 'No remark yet'}
+    grading_scales = GradingScale.objects.filter(
+        school=school, term__isnull=True
+    ).order_by("-min_score")
 
     return render(
         request,
@@ -17757,6 +17763,7 @@ def student_transcript(request, student_id):
             "last_year": last_year,
             "setting": setting,
             "transcript_data": transcript_data,
+            "grading_scales": grading_scales,
             "cumulative_avg": cumulative_percent,
             "total_subjects": results.count(),
             "date_issued": timezone.now().date(),

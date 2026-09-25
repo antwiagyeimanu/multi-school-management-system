@@ -29,3 +29,4 @@ db.sqlite3
 *.txt
 __pycache__/
 *.pyc
+db_backup_before_postgresql.sqlite3

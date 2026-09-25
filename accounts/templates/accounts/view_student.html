@@ -1757,21 +1757,21 @@ Next
 
                 <td>
                     <span class="score-badge ca">
-                        {{ result.class_score }}
+                        {{ result.class_score|floatformat:"0" }}
                     </span>
                 </td>
 
 
                 <td>
                     <span class="score-badge exam">
-                        {{ result.exam_score }}
+                        {{ result.exam_score|floatformat:"0" }}
                     </span>
                 </td>
 
 
                 <td>
                     <span class="total-score">
-                        {{ result.total_score }}
+                        {{ result.total_score|floatformat:"0" }}
                     </span>
                 </td>
 

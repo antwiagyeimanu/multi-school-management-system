@@ -1,4 +1,5 @@
-={% block content %}
+{% extends 'accounts/base.html' %}
+{% block content %}
 <div style="max-width:1000px; margin:20px auto; padding:0 20px; font-family: 'Segoe UI', Arial, sans-serif;">
     
     <!-- Header Card -->
@@ -9,7 +10,7 @@
 {% endif %}
 {{ student.last_name }}</h1>
         <p style="margin:8px 0 0 0; font-size:16px; opacity:0.9;">
-            {{ student.school_class.name }} | {{ term }} | {{ academic_year }}
+            {{ student.school_class.name }} | {{ term.get_term_number_display }} | {{ academic_year }}
         </p>
     </div>
 
@@ -37,13 +38,13 @@
                         {{ result.subject.name }}
                     </td>
                         <td style="padding:18px 16px; text-align:center; color:#475569; font-size:15px;">
-                    <span style="font-weight:600;">{{ result.class_score }}</span>
-                    <span style="font-weight:600">/{{ ca_total }}</span>
+                    <span style="font-weight:600;">{{ result.class_score |floatformat:"0"}}</span>
+                    <span style="font-weight:600">/{{ ca_total|floatformat:"0" }}</span>
                 </td>
 
                 <td style="padding:18px 16px; text-align:center; color:#475569; font-size:15px;">
-                    <span style="font-weight:600;">{{ result.exam_score }}</span>
-                    <span style="font-weight:600">/{{ exam_total }}</span>
+                    <span style="font-weight:600;">{{ result.exam_converted_score|floatformat:"0" }}</span>
+                    <span style="font-weight:600">/{{ exam_total|floatformat:"0" }}</span>
                 </td>
                     <td style="padding:18px 16px; text-align:center;">
                         <span style="font-weight:800; font-size:18px; 
@@ -52,7 +53,7 @@
                             {% elif result.percentage >= 60 %}color:#7c3aed;
                             {% elif result.percentage >= 50 %}color:#d97706;
                             {% else %}color:#dc2626;{% endif %}">
-                            {{ result.percentage }}%
+                            {{ result.percentage|floatformat:"0"  }}%
                         </span>
                     </td>
                     <td style="padding:18px 16px; text-align:center;">
@@ -100,7 +101,7 @@
                     {% elif overall_average >= 50 %}color:#d97706;
                     {% elif overall_average >= 40 %}color:#d97706;
                     {% else %}color:#dc2626;{% endif %}">
-                    {{ overall_average }}%
+                    {{ overall_average|floatformat:"0"  }}%
                 </div>
             </div>
 
@@ -139,7 +140,7 @@
     </div>
     {% else %}
     <div style="background:white; padding:60px 20px; border-radius:0 0 16px 16px; text-align:center; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-        <p style="color:#64748b; font-size:18px; margin:0;">No results found for {{ term }} {{ academic_year }}</p>
+        <p style="color:#64748b; font-size:18px; margin:0;">No results found for {{ term.get_term_number_display }} | {{ academic_year }}</p>
     </div>
     {% endif %}
     

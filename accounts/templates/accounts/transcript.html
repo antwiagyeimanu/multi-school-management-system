@@ -883,7 +883,7 @@ body {
             {{ block.term }}
         </span>
         <span>
-            Average: {{ block.average }}%
+            Average: {{ block.average|floatformat:"0" }}%
             &nbsp; • &nbsp;
             {{ block.results|length }} Subjects
         </span>
@@ -907,14 +907,14 @@ body {
                         {{ r.subject.name }}
                     </td>
                     <td>
-                        {{ r.class_score }}
+                        {{ r.class_score|floatformat:"0" }}
                     </td>
                     <td>
-                        {{ r.exam_score }}
+                        {{ r.exam_converted_score|floatformat:"0" }}
                     </td>
                     <td>
                         <strong>
-                            {{ r.total_score }}
+                            {{ r.total_score|floatformat:"0" }}
                         </strong>
                     </td>
                     <td>
@@ -948,7 +948,7 @@ body {
             Cumulative Average
         </div>
         <div class="summary-value">
-            {{ cumulative_avg }}%
+            {{ cumulative_avg|floatformat:"0" }}%
         </div>
     </div>
     <div class="summary-card">
@@ -1008,17 +1008,18 @@ body {
 ====================================================== -->
 <div class="grading-box">
     <strong>Grading Scale:</strong>
-    A (80–100) Excellent
-    &nbsp; | &nbsp;
-    B (70–79) Very Good
-    &nbsp; | &nbsp;
-    C (60–69) Good
-    &nbsp; | &nbsp;
-    D (50–59) Pass
-    &nbsp; | &nbsp;
-    E (40–49) Weak
-    &nbsp; | &nbsp;
-    F (0–39) Fail
+
+    {% for grading in grading_scales %}
+        {{ grading.grade }}
+        ({{ grading.min_score|floatformat:"0" }}–{{ grading.max_score|floatformat:"0" }})
+        {{ grading.remark }}
+
+        {% if not forloop.last %}
+            &nbsp; | &nbsp;
+        {% endif %}
+    {% empty %}
+        No grading scale configured.
+    {% endfor %}
 </div>
 <!-- =====================================================
      CERTIFICATION
