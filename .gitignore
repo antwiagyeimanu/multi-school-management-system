@@ -30,3 +30,4 @@ db.sqlite3
 __pycache__/
 *.pyc
 db_backup_before_postgresql.sqlite3
+data.json
