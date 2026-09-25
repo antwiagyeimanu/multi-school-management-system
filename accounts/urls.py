@@ -37,7 +37,7 @@ from .views import (
      manage_headmaster_permissions, backup_database, school_backup, restore_school_backup,  basic_daily_fee_settings, basic_daily_fee_collection,
      basic_daily_fee_monitoring, grading_settings,
 )
-print(">>> ACCOUNTS URLS FILE LOADED")
+#print(">>> ACCOUNTS URLS FILE LOADED")
 app_name = "accounts"
 
 urlpatterns = [

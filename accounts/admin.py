@@ -16,7 +16,7 @@ from .forms import FeeStructureForm
 from django.db.models import F
 from .models import SmsLog  
 from .models import SchoolSetting
-print([f.name for f in SchoolSetting._meta.get_fields()])
+#print([f.name for f in SchoolSetting._meta.get_fields()])
 from .models import StudentRemark
 from .models import PaymentItem
 from .models import HeadmasterPermission
