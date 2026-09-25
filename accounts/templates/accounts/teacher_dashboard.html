@@ -1222,18 +1222,31 @@ Not Marked
 
     <div class="action-buttons">
 
-        {% if can_check_in %}
+{% if can_check_in %}
 
-        <a href="{% url 'accounts:teacher-check-in' %}"
-           class="btn btn-success">
+<form method="POST"
+      action="{% url 'accounts:teacher-check-in' %}"
+      id="checkInForm"
+      style="display:inline;">
 
-            <i class="fas fa-sign-in-alt"></i>
+    {% csrf_token %}
 
-            Check In
+    <input type="hidden" name="latitude" id="checkInLatitude">
+    <input type="hidden" name="longitude" id="checkInLongitude">
 
-        </a>
+    <button type="button"
+            class="btn btn-success"
+            id="checkInButton">
 
-        {% endif %}
+        <i class="fas fa-sign-in-alt"></i>
+
+        Check In
+
+    </button>
+
+</form>
+
+{% endif %}
 
 
         {% if can_check_out %}
@@ -1305,4 +1318,37 @@ Not Marked
 </div>
 
 </div>
+<script>
+document.getElementById("checkInButton")?.addEventListener("click", function () {
+
+    if (!navigator.geolocation) {
+        alert("Location services are not supported on this device.");
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        function (position) {
+
+            document.getElementById("checkInLatitude").value =
+                position.coords.latitude;
+
+            document.getElementById("checkInLongitude").value =
+                position.coords.longitude;
+
+            document.getElementById("checkInForm").submit();
+        },
+
+        function () {
+            alert("Location permission is required to check in.");
+        },
+
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        }
+    );
+
+});
+</script>
 {% endblock %}

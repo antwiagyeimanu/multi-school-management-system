@@ -70,6 +70,27 @@ class School(models.Model):
     logo = models.ImageField(upload_to='school_logos/', blank=True, null=True)
     email = models.EmailField(blank=True, null=True, verbose_name="School Email")
     gps_address = models.CharField(max_length=50, blank=True, null=True, verbose_name="GPS/Digital Address")
+    latitude = models.DecimalField(
+    max_digits=9,
+    decimal_places=6,
+    blank=True,
+    null=True,
+    verbose_name="School Latitude"
+    )
+
+    longitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        blank=True,
+        null=True,
+        verbose_name="School Longitude"
+    )
+
+    attendance_radius = models.PositiveIntegerField(
+        default=100,
+        verbose_name="Teacher Attendance Radius (metres)",
+        help_text="Maximum distance from the school where teachers can check in."
+    )
     motto = models.CharField(
         max_length=200, blank=True, null=True, verbose_name="School Motto"
     )

@@ -7,6 +7,7 @@ import string
 import uuid
 import io
 import json
+from math import radians, sin, cos, sqrt, atan2
 import zipfile
 from django.apps import apps
 from django.core import serializers
@@ -17143,12 +17144,75 @@ def teacher_check_in(request):
         )
         return redirect("accounts:home")
 
-
     school = request.user.school
+
+    # LOCATION CHECK
+    if request.method != "POST":
+        messages.error(
+            request,
+            "Please use the Check In button."
+        )
+        return redirect("accounts:teacher-dashboard")
+
+    latitude = request.POST.get("latitude")
+    longitude = request.POST.get("longitude")
+
+    if not latitude or not longitude:
+        messages.error(
+            request,
+            "Your location could not be detected. Please allow location access and try again."
+        )
+        return redirect("accounts:teacher-dashboard")
+
+    if school.latitude is None or school.longitude is None:
+        messages.error(
+            request,
+            "School attendance location has not been configured."
+        )
+        return redirect("accounts:teacher-dashboard")
+
+    try:
+        teacher_lat = float(latitude)
+        teacher_lon = float(longitude)
+        school_lat = float(school.latitude)
+        school_lon = float(school.longitude)
+
+        # Calculate distance using the Haversine formula
+        earth_radius = 6371000  # metres
+
+        lat1 = radians(school_lat)
+        lat2 = radians(teacher_lat)
+        lat_difference = radians(teacher_lat - school_lat)
+        lon_difference = radians(teacher_lon - school_lon)
+
+        a = (
+            sin(lat_difference / 2) ** 2
+            + cos(lat1)
+            * cos(lat2)
+            * sin(lon_difference / 2) ** 2
+        )
+
+        c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+        distance = earth_radius * c
+
+    except (ValueError, TypeError):
+        messages.error(
+            request,
+            "Invalid location data. Please try again."
+        )
+        return redirect("accounts:teacher-dashboard")
+
+    # Teacher must be within the school's allowed radius
+    if distance > school.attendance_radius:
+        messages.error(
+            request,
+            "You are outside the school attendance area. Please check in from the school premises."
+        )
+        return redirect("accounts:teacher-dashboard")
 
     today = timezone.localdate()
     current_time = timezone.localtime().time()
-
 
     # Get today's attendance
     attendance, created = TeacherAttendance.objects.get_or_create(
@@ -17161,7 +17225,6 @@ def teacher_check_in(request):
         }
     )
 
-
     # Already checked in
     if attendance.time_in:
         messages.info(
@@ -17170,16 +17233,13 @@ def teacher_check_in(request):
         )
         return redirect("accounts:my-attendance")
 
-
     # Get school attendance settings
     setting = SchoolSetting.objects.get(
         school=school
     )
 
-
     reporting_time = setting.teacher_reporting_time
     late_minutes = setting.late_after_minutes
-
 
     # Calculate late time
     late_limit = (
@@ -17193,25 +17253,20 @@ def teacher_check_in(request):
         )
     ).time()
 
-
     if current_time > late_limit:
         attendance.status = "L"
-
     else:
         attendance.status = "P"
-
 
     attendance.time_in = current_time
     attendance.record_source = "self"
 
     attendance.save()
 
-
     messages.success(
         request,
         "Check-in successful."
     )
-
 
     return redirect(
         "accounts:my-attendance"
